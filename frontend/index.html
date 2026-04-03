@@ -1,24 +1,207 @@
 <!DOCTYPE html>
+
 <html>
+
 <head>
-<title>GED Practice Platform</title>
+
+<title>GED Math Practice</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#1e1f26;
+color:white;
+margin:0;
+}
+
+#topbar{
+display:flex;
+justify-content:space-between;
+padding:15px;
+background:#2b2d3a;
+}
+
+#container{
+display:flex;
+height:calc(100vh - 60px);
+}
+
+#questionArea{
+flex:1;
+padding:40px;
+}
+
+#sidePanel{
+width:200px;
+background:#2b2d3a;
+padding:20px;
+}
+
+button{
+padding:10px 16px;
+margin:5px;
+cursor:pointer;
+}
+
+.choice{
+display:block;
+margin:10px 0;
+padding:10px;
+background:#3b3d4d;
+cursor:pointer;
+}
+
+.choice:hover{
+background:#4c4f63;
+}
+
+.flagged{
+color:orange;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h1>GED Practice Platform</h1>
+<div id="topbar">
 
-<button onclick="testAPI()">Test Backend</button>
+<div>
+GED Math Practice
+</div>
+
+<div id="timer">
+115:00
+</div>
+
+</div>
+
+<div id="container">
+
+<div id="questionArea">
+
+<div id="question"></div>
+
+<div id="answers"></div>
+
+</div>
+
+<div id="sidePanel">
+
+<div>
+Question <span id="qnum"></span>/45
+</div>
+
+<button onclick="prev()">⬅ Prev</button> <button onclick="next()">Next ➡</button>
+
+<br><br>
+
+<button onclick="flag()">⚑ Flag</button>
+
+</div>
+
+</div>
 
 <script>
-function testAPI(){
-fetch("https://ged-practice-platform.onrender.com")
-.then(res=>res.text())
-.then(data=>{
-alert(data)
-})
+
+let questions=[]
+let current=0
+let flagged=new Set()
+
+async function start(){
+
+const res=await fetch("http://localhost:3000/generate-test")
+
+questions=await res.json()
+
+render()
+
 }
+
+function render(){
+
+const q=questions[current]
+
+document.getElementById("qnum").innerText=current+1
+
+document.getElementById("question").innerText=q.question
+
+const answers=document.getElementById("answers")
+
+answers.innerHTML=""
+
+if(q.type==="multiple"){
+
+q.choices.forEach((c,i)=>{
+
+const div=document.createElement("div")
+
+div.className="choice"
+
+div.innerText=c
+
+div.onclick=()=>select(i)
+
+answers.appendChild(div)
+
+})
+
+}
+
+if(q.type==="fill"){
+
+const input=document.createElement("input")
+
+answers.appendChild(input)
+
+}
+
+}
+
+function select(i){
+
+questions[current].userAnswer=i
+
+}
+
+function next(){
+
+if(current<44){
+
+current++
+
+render()
+
+}
+
+}
+
+function prev(){
+
+if(current>0){
+
+current--
+
+render()
+
+}
+
+}
+
+function flag(){
+
+flagged.add(current)
+
+alert("Question flagged")
+
+}
+
+start()
+
 </script>
 
 </body>
+
 </html>
