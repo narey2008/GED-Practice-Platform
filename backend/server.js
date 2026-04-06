@@ -1,9 +1,30 @@
 const express = require("express");
+const cors = require("cors");
 const path = require("path");
 const buildTest = require("./generators/testBuilder");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://gedpracticeplatform.com",
+  "https://www.gedpracticeplatform.com"
+];
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
