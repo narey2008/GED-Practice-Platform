@@ -770,6 +770,7 @@
     const TEST_TIME_SECONDS = 115 * 60;
     const SAVE_KEY = "ged_practice_autosave_v6";
     const LIGHTING_KEY = "ged_practice_lighting_pref";
+    const API_BASE = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://api.gedpracticeplatform.com";
 
     let state = {
       mode: "menu",
@@ -1186,7 +1187,7 @@
       document.getElementById("feedback").innerText = "";
       renderChart(null);
 
-      const res = await fetch(`/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
+      const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
       const data = await res.json();
 
       state.questions = data.questions.map((q) => ({
@@ -1204,7 +1205,7 @@
       stopTimer();
 
       const count = examplesOnly ? 2 : 12;
-      const res = await fetch(`/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
+      const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
       const data = await res.json();
 
       state.mode = examplesOnly ? "practice-example" : "practice";
