@@ -1,27 +1,44 @@
-const express = require("express")
-const cors = require("cors")
+const express = require("express");
+const path = require("path");
+const buildTest = require("./generators/testBuilder");
 
-const {generateTest} = require("./generators/testBuilder")
+const app = express();
+const PORT = 3000;
 
-const app = express()
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "../frontend")));
 
-app.use(cors())
-app.use(express.json())
+app.get("/api/test", (req, res) => {
+  try {
+    const requested = Number(req.query.count) || 46;
+    const count = Math.max(1, Math.min(100, requested));
+    const difficulty = req.query.difficulty || "GED-Level";
+    const questions = buildTest({ count, difficulty });
+    res.json({ questions });
+  } catch (error) {
+    console.error("Failed to build test:", error);
+    res.status(500).json({ error: "Failed to build test" });
+  }
+});
 
-app.get("/",(req,res)=>{
- res.send("GED Practice API Running")
-})
+app.get("/api/practice", (req, res) => {
+  try {
+    const requested = Number(req.query.count) || 12;
+    const count = Math.max(1, Math.min(30, requested));
+    const difficulty = req.query.difficulty || "GED-Level";
+    const skill = req.query.skill || "";
+    const questions = buildTest({ count, difficulty, skill });
+    res.json({ questions });
+  } catch (error) {
+    console.error("Failed to build practice set:", error);
+    res.status(500).json({ error: "Failed to build practice set" });
+  }
+});
 
-app.get("/generate-test",(req,res)=>{
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
 
- const difficulty = req.query.difficulty || "medium"
-
- const test = generateTest(difficulty)
-
- res.json(test)
-
-})
-
-app.listen(3000,()=>{
- console.log("Server running on port 3000")
-})
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

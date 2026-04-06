@@ -1,0 +1,351 @@
+[1mdiff --git a/backend/generators/algebra.js b/backend/generators/algebra.js[m
+[1mdeleted file mode 100644[m
+[1mindex a0ec7f8..0000000[m
+[1m--- a/backend/generators/algebra.js[m
+[1m+++ /dev/null[m
+[36m@@ -1,25 +0,0 @@[m
+[31m-function slopeQuestion(){[m
+[31m-[m
+[31m- let x1 = Math.floor(Math.random()*5)[m
+[31m- let y1 = Math.floor(Math.random()*5)[m
+[31m-[m
+[31m- let x2 = x1 + Math.floor(Math.random()*5)+1[m
+[31m- let y2 = y1 + Math.floor(Math.random()*5)+1[m
+[31m-[m
+[31m- let slope = (y2-y1)/(x2-x1)[m
+[31m-[m
+[31m- return {[m
+[31m-[m
+[31m-  skill:"Slope",[m
+[31m-[m
+[31m-  type:"fill",[m
+[31m-[m
+[31m-  question:`Find the slope of the line passing through (${x1},${y1}) and (${x2},${y2}).`,[m
+[31m-[m
+[31m-  answer:String(slope)[m
+[31m-[m
+[31m- }[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-module.exports = {slopeQuestion}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/generators/percent.js b/backend/generators/percent.js[m
+[1mdeleted file mode 100644[m
+[1mindex 7e322b9..0000000[m
+[1m--- a/backend/generators/percent.js[m
+[1m+++ /dev/null[m
+[36m@@ -1,29 +0,0 @@[m
+[31m-function percentQuestion(difficulty){[m
+[31m-[m
+[31m- let start = Math.floor(Math.random()*100)+20[m
+[31m- let percent = Math.floor(Math.random()*30)+10[m
+[31m-[m
+[31m- let end = Math.round(start*(1+percent/100))[m
+[31m-[m
+[31m- return {[m
+[31m-[m
+[31m-  skill:"Percent Change",[m
+[31m-[m
+[31m-  type:"multiple",[m
+[31m-[m
+[31m-  question:`A value increases from ${start} to ${end}. What is the percent increase?`,[m
+[31m-[m
+[31m-  choices:[[m
+[31m-   percent+"%",[m
+[31m-   percent+5+"%",[m
+[31m-   percent-5+"%",[m
+[31m-   percent+10+"%"[m
+[31m-  ],[m
+[31m-[m
+[31m-  answer:0[m
+[31m-[m
+[31m- }[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-module.exports = {percentQuestion}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/generators/testBuilder.js b/backend/generators/testBuilder.js[m
+[1mdeleted file mode 100644[m
+[1mindex 3e0a20d..0000000[m
+[1m--- a/backend/generators/testBuilder.js[m
+[1m+++ /dev/null[m
+[36m@@ -1,29 +0,0 @@[m
+[31m-const {percentQuestion} = require("./percent")[m
+[31m-const {slopeQuestion} = require("./algebra")[m
+[31m-[m
+[31m-function randomItem(arr){[m
+[31m- return arr[Math.floor(Math.random()*arr.length)][m
+[31m-}[m
+[31m-[m
+[31m-const generators = [[m
+[31m- percentQuestion,[m
+[31m- slopeQuestion[m
+[31m-][m
+[31m-[m
+[31m-function generateTest(difficulty){[m
+[31m-[m
+[31m- const questions = [][m
+[31m-[m
+[31m- for(let i=0;i<45;i++){[m
+[31m-[m
+[31m-  const gen = randomItem(generators)[m
+[31m-[m
+[31m-  questions.push(gen(difficulty))[m
+[31m-[m
+[31m- }[m
+[31m-[m
+[31m- return questions[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-module.exports = {generateTest}[m
+\ No newline at end of file[m
+[1mdiff --git a/backend/server.js b/backend/server.js[m
+[1mdeleted file mode 100644[m
+[1mindex 618b15b..0000000[m
+[1m--- a/backend/server.js[m
+[1m+++ /dev/null[m
+[36m@@ -1,27 +0,0 @@[m
+[31m-const express = require("express")[m
+[31m-const cors = require("cors")[m
+[31m-[m
+[31m-const {generateTest} = require("./generators/testBuilder")[m
+[31m-[m
+[31m-const app = express()[m
+[31m-[m
+[31m-app.use(cors())[m
+[31m-app.use(express.json())[m
+[31m-[m
+[31m-app.get("/",(req,res)=>{[m
+[31m- res.send("GED Practice API Running")[m
+[31m-})[m
+[31m-[m
+[31m-app.get("/generate-test",(req,res)=>{[m
+[31m-[m
+[31m- const difficulty = req.query.difficulty || "medium"[m
+[31m-[m
+[31m- const test = generateTest(difficulty)[m
+[31m-[m
+[31m- res.json(test)[m
+[31m-[m
+[31m-})[m
+[31m-[m
+[31m-app.listen(3000,()=>{[m
+[31m- console.log("Server running on port 3000")[m
+[31m-})[m
+\ No newline at end of file[m
+[1mdiff --git a/frontend/index.html b/frontend/index.html[m
+[1mdeleted file mode 100644[m
+[1mindex bb34b09..0000000[m
+[1m--- a/frontend/index.html[m
+[1m+++ /dev/null[m
+[36m@@ -1,207 +0,0 @@[m
+[31m-<!DOCTYPE html>[m
+[31m-[m
+[31m-<html>[m
+[31m-[m
+[31m-<head>[m
+[31m-[m
+[31m-<title>GED Math Practice</title>[m
+[31m-[m
+[31m-<style>[m
+[31m-[m
+[31m-body{[m
+[31m-font-family:Arial;[m
+[31m-background:#1e1f26;[m
+[31m-color:white;[m
+[31m-margin:0;[m
+[31m-}[m
+[31m-[m
+[31m-#topbar{[m
+[31m-display:flex;[m
+[31m-justify-content:space-between;[m
+[31m-padding:15px;[m
+[31m-background:#2b2d3a;[m
+[31m-}[m
+[31m-[m
+[31m-#container{[m
+[31m-display:flex;[m
+[31m-height:calc(100vh - 60px);[m
+[31m-}[m
+[31m-[m
+[31m-#questionArea{[m
+[31m-flex:1;[m
+[31m-padding:40px;[m
+[31m-}[m
+[31m-[m
+[31m-#sidePanel{[m
+[31m-width:200px;[m
+[31m-background:#2b2d3a;[m
+[31m-padding:20px;[m
+[31m-}[m
+[31m-[m
+[31m-button{[m
+[31m-padding:10px 16px;[m
+[31m-margin:5px;[m
+[31m-cursor:pointer;[m
+[31m-}[m
+[31m-[m
+[31m-.choice{[m
+[31m-display:block;[m
+[31m-margin:10px 0;[m
+[31m-padding:10px;[m
+[31m-background:#3b3d4d;[m
+[31m-cursor:pointer;[m
+[31m-}[m
+[31m-[m
+[31m-.choice:hover{[m
+[31m-background:#4c4f63;[m
+[31m-}[m
+[31m-[m
+[31m-.flagged{[m
+[31m-color:orange;[m
+[31m-}[m
+[31m-[m
+[31m-</style>[m
+[31m-[m
+[31m-</head>[m
+[31m-[m
+[31m-<body>[m
+[31m-[m
+[31m-<div id="topbar">[m
+[31m-[m
+[31m-<div>[m
+[31m-GED Math Practice[m
+[31m-</div>[m
+[31m-[m
+[31m-<div id="timer">[m
+[31m-115:00[m
+[31m-</div>[m
+[31m-[m
+[31m-</div>[m
+[31m-[m
+[31m-<div id="container">[m
+[31m-[m
+[31m-<div id="questionArea">[m
+[31m-[m
+[31m-<div id="question"></div>[m
+[31m-[m
+[31m-<div id="answers"></div>[m
+[31m-[m
+[31m-</div>[m
+[31m-[m
+[31m-<div id="sidePanel">[m
+[31m-[m
+[31m-<div>[m
+[31m-Question <span id="qnum"></span>/45[m
+[31m-</div>[m
+[31m-[m
+[31m-<button onclick="prev()">⬅ Prev</button> <button onclick="next()">Next ➡</button>[m
+[31m-[m
+[31m-<br><br>[m
+[31m-[m
+[31m-<button onclick="flag()">⚑ Flag</button>[m
+[31m-[m
+[31m-</div>[m
+[31m-[m
+[31m-</div>[m
+[31m-[m
+[31m-<script>[m
+[31m-[m
+[31m-let questions=[][m
+[31m-let current=0[m
+[31m-let flagged=new Set()[m
+[31m-[m
+[31m-async function start(){[m
+[31m-[m
+[31m-const res=await fetch("http://localhost:3000/generate-test")[m
+[31m-[m
+[31m-questions=await res.json()[m
+[31m-[m
+[31m-render()[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-function render(){[m
+[31m-[m
+[31m-const q=questions[current][m
+[31m-[m
+[31m-document.getElementById("qnum").innerText=current+1[m
+[31m-[m
+[31m-document.getElementById("question").innerText=q.question[m
+[31m-[m
+[31m-const answers=document.getElementById("answers")[m
+[31m-[m
+[31m-answers.innerHTML=""[m
+[31m-[m
+[31m-if(q.type==="multiple"){[m
+[31m-[m
+[31m-q.choices.forEach((c,i)=>{[m
+[31m-[m
+[31m-const div=document.createElement("div")[m
+[31m-[m
+[31m-div.className="choice"[m
+[31m-[m
+[31m-div.innerText=c[m
+[31m-[m
+[31m-div.onclick=()=>select(i)[m
+[31m-[m
+[31m-answers.appendChild(div)[m
+[31m-[m
+[31m-})[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-if(q.type==="fill"){[m
+[31m-[m
+[31m-const input=document.createElement("input")[m
+[31m-[m
+[31m-answers.appendChild(input)[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-function select(i){[m
+[31m-[m
+[31m-questions[current].userAnswer=i[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-function next(){[m
+[31m-[m
+[31m-if(current<44){[m
+[31m-[m
+[31m-current++[m
+[31m-[m
+[31m-render()[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-function prev(){[m
+[31m-[m
+[31m-if(current>0){[m
+[31m-[m
+[31m-current--[m
+[31m-[m
+[31m-render()[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-function flag(){[m
+[31m-[m
+[31m-flagged.add(current)[m
+[31m-[m
+[31m-alert("Question flagged")[m
+[31m-[m
+[31m-}[m
+[31m-[m
+[31m-start()[m
+[31m-[m
+[31m-</script>[m
+[31m-[m
+[31m-</body>[m
+[31m-[m
+[31m-</html>[m
