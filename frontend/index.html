@@ -214,6 +214,7 @@
       color: var(--button-text);
       border: 2px solid var(--primary);
     }
+
     .primaryBtn:hover {
       background: var(--primary-2);
       border-color: var(--primary-2);
@@ -224,6 +225,7 @@
       color: var(--secondary-text);
       border: 2px solid var(--primary);
     }
+
     .secondaryBtn:hover { background: var(--panel-2); }
 
     .dangerBtn {
@@ -231,6 +233,7 @@
       color: #fff;
       border: 2px solid #8f1d15;
     }
+
     .dangerBtn:hover {
       background: #7a1912;
       border-color: #7a1912;
@@ -977,6 +980,7 @@
 
       actions.forEach((action) => {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.innerText = action.label;
         btn.className =
           action.variant === "primary"
@@ -1100,7 +1104,7 @@
                 showModal(
                   isRegister ? "Account Created" : "Signed In",
                   isRegister
-                    ? "Your account has been created successfully."
+                    ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
                     : `Welcome back, ${data.user.displayName || data.user.email}.`
                 );
               } catch (error) {
@@ -1882,7 +1886,7 @@
       document.getElementById("practiceWeakestBtn").onclick = async () => {
         await startPractice(weakest, state.difficulty, true);
       };
-      document.getElementById("reviewMenuBtn").onclick = async () => {
+      document.getElementById("reviewMenuBtn").onclick = () => {
         goToMainMenu();
       };
 
@@ -1974,9 +1978,7 @@
         showModal(
           "Sign In Required",
           "To save progress to your account, please sign in first. You can also continue as a guest, but guest progress will not be saved.",
-          [
-            { label: "Close", variant: "secondary" }
-          ]
+          [{ label: "Close", variant: "secondary" }]
         );
         return;
       }
