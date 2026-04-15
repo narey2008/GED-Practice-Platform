@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 
 const buildTest = require("./generators/testBuilder");
 const User = require("./models/User");
+const SavedProgress = require("./models/SavedProgress");
 const authMiddleware = require("./middleware/auth");
 
 dotenv.config();
@@ -191,6 +192,78 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
     return res.status(500).json({
       error: error.message || "Failed to load account."
     });
+  }
+});
+
+app.get("/api/progress", authMiddleware, async (req, res) => {
+  try {
+    const saved = await SavedProgress.findOne({ userId: req.auth.userId });
+
+    if (!saved) {
+      return res.json({ progress: null });
+    }
+
+    return res.json({
+      progress: {
+        mode: saved.mode,
+        difficulty: saved.difficulty,
+        questions: saved.questions,
+        currentIndex: saved.currentIndex,
+        timeRemaining: saved.timeRemaining,
+        practiceMeta: saved.practiceMeta,
+        overtimeUsed: saved.overtimeUsed,
+        timeoutMode: saved.timeoutMode,
+        lockedReviewMode: saved.lockedReviewMode,
+        updatedAt: saved.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error("GET PROGRESS ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to load saved progress." });
+  }
+});
+
+app.post("/api/progress/save", authMiddleware, async (req, res) => {
+  try {
+    const payload = {
+      userId: req.auth.userId,
+      mode: req.body.mode || "test",
+      difficulty: req.body.difficulty || "GED-Level",
+      questions: Array.isArray(req.body.questions) ? req.body.questions : [],
+      currentIndex: Number(req.body.currentIndex) || 0,
+      timeRemaining: Number(req.body.timeRemaining) || 0,
+      practiceMeta: req.body.practiceMeta || null,
+      overtimeUsed: !!req.body.overtimeUsed,
+      timeoutMode: !!req.body.timeoutMode,
+      lockedReviewMode: !!req.body.lockedReviewMode
+    };
+
+    const saved = await SavedProgress.findOneAndUpdate(
+      { userId: req.auth.userId },
+      payload,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    return res.json({
+      success: true,
+      updatedAt: saved.updatedAt
+    });
+  } catch (error) {
+    console.error("SAVE PROGRESS ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to save progress." });
+  }
+});
+
+app.delete("/api/progress", authMiddleware, async (req, res) => {
+  try {
+    await SavedProgress.findOneAndDelete({ userId: req.auth.userId });
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("DELETE PROGRESS ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to delete saved progress." });
   }
 });
 

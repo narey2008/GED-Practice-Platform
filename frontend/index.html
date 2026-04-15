@@ -732,7 +732,7 @@
 
         <div id="resumePanel" class="menuPanel hidden">
           <h3>Resume Unfinished Test</h3>
-          <p>Continue from your latest autosaved progress if an unfinished test or practice session exists.</p>
+          <p>Continue from your saved account progress.</p>
           <div class="menuActions">
             <button id="resumeBtn" class="secondaryBtn">Resume</button>
           </div>
@@ -787,7 +787,6 @@
   <script>
     const TEST_LENGTH = 46;
     const TEST_TIME_SECONDS = 115 * 60;
-    const SAVE_KEY = "ged_practice_autosave_v7";
     const LIGHTING_KEY = "ged_practice_lighting_pref";
     const AUTH_TOKEN_KEY = "ged_practice_auth_token";
     const API_BASE = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://api.gedpracticeplatform.com";
@@ -832,21 +831,6 @@
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
       return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-    }
-
-    function hasSavedProgress() {
-      return !!localStorage.getItem(SAVE_KEY);
-    }
-
-    function updateResumeVisibility() {
-      document.getElementById("resumePanel").classList.toggle("hidden", !hasSavedProgress());
-    }
-
-    function updateNavigatorVisibility() {
-      document.getElementById("questionNavigator").classList.toggle(
-        "hidden",
-        !(state.mode === "test" && state.navigatorVisible)
-      );
     }
 
     function getAuthHeaders() {
@@ -917,6 +901,37 @@
       updateAuthUI();
     }
 
+    async function hasSavedProgress() {
+      if (!state.auth.user || !state.auth.token) return false;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/progress`, {
+          headers: {
+            ...getAuthHeaders()
+          }
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+        return !!data.progress;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function updateResumeVisibility() {
+      const visible = await hasSavedProgress();
+      document.getElementById("resumePanel").classList.toggle("hidden", !visible);
+    }
+
+    function updateNavigatorVisibility() {
+      document.getElementById("questionNavigator").classList.toggle(
+        "hidden",
+        !(state.mode === "test" && state.navigatorVisible)
+      );
+    }
+
     function updateTopbarMode() {
       const inTestLikeView = state.mode === "test" || state.mode === "practice" || state.mode === "practice-example";
       document.getElementById("timerTop").classList.toggle("hidden", !inTestLikeView);
@@ -926,7 +941,7 @@
       updateAuthUI();
     }
 
-    function setView(view) {
+    async function setView(view) {
       document.getElementById("mainMenu").classList.add("hidden");
       document.getElementById("testView").classList.add("hidden");
       document.getElementById("reviewPanel").classList.add("hidden");
@@ -946,7 +961,7 @@
       }
 
       updateTopbarMode();
-      updateResumeVisibility();
+      await updateResumeVisibility();
     }
 
     function showModal(title, bodyHtml, actions = []) {
@@ -969,8 +984,10 @@
             : action.variant === "danger"
             ? "dangerBtn"
             : "secondaryBtn";
-        btn.onclick = () => {
-          if (action.onClick) action.onClick();
+        btn.onclick = async () => {
+          if (action.onClick) {
+            await action.onClick();
+          }
           if (!action.keepOpen) closeModal();
         };
         footer.appendChild(btn);
@@ -1078,6 +1095,7 @@
                 state.auth.guestMode = false;
                 updateAuthUI();
                 closeModal();
+                await updateResumeVisibility();
 
                 showModal(
                   isRegister ? "Account Created" : "Signed In",
@@ -1107,22 +1125,24 @@
           {
             label: "Continue as Guest",
             variant: "primary",
-            onClick: () => {
+            onClick: async () => {
               state.auth.guestMode = true;
               state.auth.user = null;
               setAuthToken("");
               updateAuthUI();
+              await updateResumeVisibility();
             }
           }
         ]
       );
     }
 
-    function logoutUser() {
+    async function logoutUser() {
       state.auth.user = null;
       state.auth.guestMode = false;
       setAuthToken("");
       updateAuthUI();
+      await updateResumeVisibility();
       showModal("Logged Out", "You have been signed out.");
     }
 
@@ -1135,9 +1155,9 @@
           {
             label: "Return",
             variant: "primary",
-            onClick: () => {
+            onClick: async () => {
               stopTimer();
-              setView("menu");
+              await setView("menu");
             }
           }
         ]
@@ -1151,21 +1171,116 @@
       }
     }
 
-    function handleTimeExpired() {
+    async function saveProgress() {
+      if (!state.auth.user || !state.auth.token) return;
+      if (state.auth.guestMode) return;
+      if (!state.questions.length) return;
+
+      try {
+        await fetch(`${API_BASE}/api/progress/save`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            mode: state.mode,
+            difficulty: state.difficulty,
+            questions: state.questions,
+            currentIndex: state.currentIndex,
+            timeRemaining: state.timeRemaining,
+            practiceMeta: state.practiceMeta,
+            overtimeUsed: state.overtimeUsed,
+            timeoutMode: state.timeoutMode,
+            lockedReviewMode: state.lockedReviewMode
+          })
+        });
+      } catch (error) {
+        console.error("Failed to save progress", error);
+      }
+    }
+
+    async function clearSavedProgress() {
+      if (!state.auth.user || !state.auth.token) {
+        await updateResumeVisibility();
+        return;
+      }
+
+      try {
+        await fetch(`${API_BASE}/api/progress`, {
+          method: "DELETE",
+          headers: {
+            ...getAuthHeaders()
+          }
+        });
+      } catch (error) {
+        console.error("Failed to clear progress", error);
+      }
+
+      await updateResumeVisibility();
+    }
+
+    async function loadSavedProgress() {
+      if (!state.auth.user || !state.auth.token) return false;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/progress`, {
+          headers: {
+            ...getAuthHeaders()
+          }
+        });
+
+        if (!res.ok) return false;
+
+        const data = await res.json();
+        if (!data.progress) return false;
+
+        const progress = data.progress;
+
+        state.mode = progress.mode || "test";
+        state.difficulty = progress.difficulty || "GED-Level";
+        state.questions = Array.isArray(progress.questions) ? progress.questions : [];
+        state.currentIndex = progress.currentIndex || 0;
+        state.timeRemaining = typeof progress.timeRemaining === "number" ? progress.timeRemaining : TEST_TIME_SECONDS;
+        state.practiceMeta = progress.practiceMeta || null;
+        state.overtimeUsed = !!progress.overtimeUsed;
+        state.timeoutMode = !!progress.timeoutMode;
+        state.lockedReviewMode = !!progress.lockedReviewMode;
+        state.navigatorVisible = false;
+        document.getElementById("difficultySelect").value = state.difficulty;
+
+        if (state.questions.length) {
+          await setView("test");
+          if (state.mode === "test" && !state.timeoutMode && !state.lockedReviewMode) {
+            startTimer();
+          }
+          renderQuestion();
+          return true;
+        }
+      } catch (error) {
+        console.error("Failed to load saved progress", error);
+      }
+
+      return false;
+    }
+
+    async function handleTimeExpired() {
       stopTimer();
       state.timeRemaining = 0;
       updateStatus();
+      await saveProgress();
 
       const actions = [
         {
           label: "Finish Last Question",
           variant: "primary",
-          onClick: () => {
+          onClick: async () => {
             state.timeoutMode = true;
             state.navigatorVisible = false;
             state.lockedReviewMode = true;
             updateStatus();
             renderQuestion();
+            await saveProgress();
           }
         }
       ];
@@ -1174,13 +1289,14 @@
         actions.push({
           label: "Add 5 More Minutes",
           variant: "secondary",
-          onClick: () => {
+          onClick: async () => {
             state.overtimeUsed = true;
             state.timeRemaining = 5 * 60;
             state.timeoutMode = false;
             state.lockedReviewMode = false;
             updateStatus();
             startTimer();
+            await saveProgress();
           }
         });
       }
@@ -1188,9 +1304,9 @@
       actions.push({
         label: "Submit Now",
         variant: "secondary",
-        onClick: () => {
+        onClick: async () => {
           state.lockedReviewMode = true;
-          showReview();
+          await showReview();
         }
       });
 
@@ -1208,19 +1324,19 @@
 
     function startTimer() {
       stopTimer();
-      state.timerId = setInterval(() => {
+      state.timerId = setInterval(async () => {
         state.timeRemaining -= 1;
 
         if (state.timeRemaining <= 0) {
           state.timeRemaining = 0;
           updateStatus();
-          saveProgress();
-          handleTimeExpired();
+          await saveProgress();
+          await handleTimeExpired();
           return;
         }
 
         updateStatus();
-        saveProgress();
+        await saveProgress();
       }, 1000);
     }
 
@@ -1243,11 +1359,11 @@
           btn.classList.add("answered");
         }
 
-        btn.onclick = () => {
+        btn.onclick = async () => {
           if (state.lockedReviewMode) return;
           state.currentIndex = index;
           renderQuestion();
-          saveProgress();
+          await saveProgress();
         };
 
         grid.appendChild(btn);
@@ -1324,60 +1440,6 @@
       updateAuthUI();
     }
 
-    function saveProgress() {
-      const saveData = {
-        mode: state.mode,
-        difficulty: state.difficulty,
-        questions: state.questions,
-        currentIndex: state.currentIndex,
-        timeRemaining: state.timeRemaining,
-        practiceMeta: state.practiceMeta,
-        overtimeUsed: state.overtimeUsed,
-        timeoutMode: state.timeoutMode,
-        lockedReviewMode: state.lockedReviewMode
-      };
-      localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
-      updateResumeVisibility();
-    }
-
-    function clearSavedProgress() {
-      localStorage.removeItem(SAVE_KEY);
-      updateResumeVisibility();
-    }
-
-    function loadSavedProgress() {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return false;
-
-      try {
-        const data = JSON.parse(raw);
-        state.mode = data.mode || "test";
-        state.difficulty = data.difficulty || "GED-Level";
-        state.questions = Array.isArray(data.questions) ? data.questions : [];
-        state.currentIndex = data.currentIndex || 0;
-        state.timeRemaining = typeof data.timeRemaining === "number" ? data.timeRemaining : TEST_TIME_SECONDS;
-        state.practiceMeta = data.practiceMeta || null;
-        state.overtimeUsed = !!data.overtimeUsed;
-        state.timeoutMode = !!data.timeoutMode;
-        state.lockedReviewMode = !!data.lockedReviewMode;
-        state.navigatorVisible = false;
-        document.getElementById("difficultySelect").value = state.difficulty;
-
-        if (state.questions.length) {
-          setView("test");
-          if (state.mode === "test" && !state.timeoutMode && !state.lockedReviewMode) {
-            startTimer();
-          }
-          renderQuestion();
-          return true;
-        }
-      } catch (e) {
-        localStorage.removeItem(SAVE_KEY);
-      }
-
-      return false;
-    }
-
     async function startTest() {
       stopTimer();
       state.difficulty = document.getElementById("difficultySelect").value;
@@ -1391,7 +1453,7 @@
       state.lockedReviewMode = false;
       state.navigatorVisible = false;
 
-      setView("test");
+      await setView("test");
       document.getElementById("questionText").innerText = "Generating test...";
       document.getElementById("choices").innerHTML = "";
       document.getElementById("feedback").innerText = "";
@@ -1413,7 +1475,8 @@
 
       startTimer();
       renderQuestion();
-      saveProgress();
+      await saveProgress();
+      await updateResumeVisibility();
     }
 
     async function startPractice(skill, difficulty, examplesOnly = false) {
@@ -1442,9 +1505,10 @@
       state.lockedReviewMode = false;
       state.navigatorVisible = false;
 
-      setView("test");
+      await setView("test");
       renderQuestion();
-      saveProgress();
+      await saveProgress();
+      await updateResumeVisibility();
     }
 
     function updateChartTheme(chartConfig) {
@@ -1524,10 +1588,10 @@
         input.placeholder = "Enter your answer";
         input.value = q.userAnswer ?? "";
         input.disabled = state.lockedReviewMode;
-        input.oninput = (e) => {
+        input.oninput = async (e) => {
           if (state.lockedReviewMode) return;
           q.userAnswer = e.target.value;
-          saveProgress();
+          await saveProgress();
         };
         container.appendChild(input);
         return;
@@ -1543,11 +1607,11 @@
           btn.classList.add("selected");
         }
 
-        btn.onclick = () => {
+        btn.onclick = async () => {
           if (state.lockedReviewMode) return;
           q.userAnswer = choice;
           renderAnswerArea(q);
-          saveProgress();
+          await saveProgress();
         };
 
         container.appendChild(btn);
@@ -1641,21 +1705,21 @@
       );
     }
 
-    function nextQuestion() {
+    async function nextQuestion() {
       if (!state.questions.length) return;
 
       const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
       if (state.mode === "practice-example") {
         if (isLastQuestion) {
-          startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+          await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
           return;
         }
       }
 
       if (state.mode === "practice") {
         if (isLastQuestion) {
-          showPracticeResults();
+          await showPracticeResults();
           return;
         }
       }
@@ -1672,25 +1736,25 @@
 
       state.currentIndex += 1;
       renderQuestion();
-      saveProgress();
+      await saveProgress();
     }
 
-    function prevQuestion() {
+    async function prevQuestion() {
       if (!state.questions.length) return;
       if (state.timeoutMode || state.lockedReviewMode) return;
       if (state.currentIndex > 0) {
         state.currentIndex -= 1;
         renderQuestion();
-        saveProgress();
+        await saveProgress();
       }
     }
 
-    function toggleFlag() {
+    async function toggleFlag() {
       if (!state.questions.length || state.mode !== "test" || state.lockedReviewMode) return;
       const q = state.questions[state.currentIndex];
       q.flagged = !q.flagged;
       updateStatus();
-      saveProgress();
+      await saveProgress();
     }
 
     function scaledScore() {
@@ -1748,13 +1812,13 @@
       return null;
     }
 
-    function submitTest() {
+    async function submitTest() {
       stopTimer();
       state.lockedReviewMode = true;
-      showReview();
+      await showReview();
     }
 
-    function showReview() {
+    async function showReview() {
       stopTimer();
 
       const score200 = scaledScore();
@@ -1812,22 +1876,26 @@
         panel.appendChild(div);
       });
 
-      setView("review");
-      clearSavedProgress();
+      await setView("review");
+      await clearSavedProgress();
 
-      document.getElementById("practiceWeakestBtn").onclick = () => startPractice(weakest, state.difficulty, true);
-      document.getElementById("reviewMenuBtn").onclick = goToMainMenu;
+      document.getElementById("practiceWeakestBtn").onclick = async () => {
+        await startPractice(weakest, state.difficulty, true);
+      };
+      document.getElementById("reviewMenuBtn").onclick = async () => {
+        goToMainMenu();
+      };
 
       const adv = document.getElementById("advanceBtn");
       if (adv) {
-        adv.onclick = () => {
+        adv.onclick = async () => {
           document.getElementById("difficultySelect").value = advance;
-          startTest();
+          await startTest();
         };
       }
     }
 
-    function showPracticeResults() {
+    async function showPracticeResults() {
       const total = state.questions.length;
       const correct = state.questions.filter((q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()).length;
 
@@ -1870,13 +1938,13 @@
         panel.appendChild(div);
       });
 
-      setView("practice-results");
-      clearSavedProgress();
+      await setView("practice-results");
+      await clearSavedProgress();
 
-      document.getElementById("practiceMenuBtn").onclick = goToMainMenu;
-      document.getElementById("practiceAgainBtn").onclick = () => {
+      document.getElementById("practiceMenuBtn").onclick = () => goToMainMenu();
+      document.getElementById("practiceAgainBtn").onclick = async () => {
         if (state.practiceMeta) {
-          startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+          await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
         }
       };
     }
@@ -1901,38 +1969,69 @@
       setView("menu");
     }
 
-    document.getElementById("startTestBtn").onclick = () => {
-      if (hasSavedProgress()) {
+    document.getElementById("startTestBtn").onclick = async () => {
+      if (!state.auth.user || !state.auth.token) {
+        showModal(
+          "Sign In Required",
+          "To save progress to your account, please sign in first. You can also continue as a guest, but guest progress will not be saved.",
+          [
+            { label: "Close", variant: "secondary" }
+          ]
+        );
+        return;
+      }
+
+      const resumeExists = await hasSavedProgress();
+
+      if (resumeExists) {
         showModal(
           "Warning",
-          "Starting a new test will replace any unfinished saved progress.",
+          "Starting a new test will replace your unfinished saved progress.",
           [
             { label: "Cancel", variant: "secondary" },
-            { label: "Start", variant: "primary", onClick: startTest }
+            {
+              label: "Start",
+              variant: "primary",
+              onClick: async () => {
+                await clearSavedProgress();
+                await startTest();
+              }
+            }
           ]
         );
       } else {
-        startTest();
+        await startTest();
       }
     };
 
-    document.getElementById("resumeBtn").onclick = loadSavedProgress;
+    document.getElementById("resumeBtn").onclick = async () => {
+      await loadSavedProgress();
+    };
     document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
     document.getElementById("menuSignInBtn").onclick = () => openAuthModal("signin");
     document.getElementById("continueGuestBtn").onclick = continueAsGuest;
-    document.getElementById("logoutBtnTop").onclick = logoutUser;
+    document.getElementById("logoutBtnTop").onclick = async () => {
+      await logoutUser();
+    };
     document.getElementById("settingsBtn").onclick = openSettings;
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
-    document.getElementById("prevBtn").onclick = prevQuestion;
-    document.getElementById("nextBtn").onclick = nextQuestion;
-    document.getElementById("flagBtn").onclick = toggleFlag;
+    document.getElementById("prevBtn").onclick = async () => {
+      await prevQuestion();
+    };
+    document.getElementById("nextBtn").onclick = async () => {
+      await nextQuestion();
+    };
+    document.getElementById("flagBtn").onclick = async () => {
+      await toggleFlag();
+    };
     document.getElementById("submitTestBtn").onclick = confirmSubmit;
 
-    applyTheme(getSavedTheme());
-    loadCurrentUser();
-    updateResumeVisibility();
-    updateStatus();
-    setView("menu");
+    (async function init() {
+      applyTheme(getSavedTheme());
+      await loadCurrentUser();
+      updateStatus();
+      await setView("menu");
+    })();
   </script>
 </body>
 </html>
