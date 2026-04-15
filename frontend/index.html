@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GED Practice Test</title>
+  <title>GED Practice Platform</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -85,7 +85,7 @@
       --choice-selected: #334155;
       --feedback: #cbd5e1;
       --topbar-text: #ffffff;
-      --chart-text: #111827; /* keep charts/tables readable */
+      --chart-text: #111827;
       --chart-grid: #94a3b8;
       --review-card-bg: #111827;
       --review-text: #e5e7eb;
@@ -166,6 +166,13 @@
       font-weight: 700;
       white-space: nowrap;
       color: var(--topbar-text);
+    }
+
+    .topbarUser {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--topbar-text);
+      white-space: nowrap;
     }
 
     .page {
@@ -376,6 +383,7 @@
       letter-spacing: 0.04em;
     }
 
+    input,
     select {
       width: 100%;
       padding: 11px;
@@ -653,6 +661,13 @@
       flex-wrap: wrap;
     }
 
+    .authError {
+      color: #b42318;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
     @media (max-width: 1100px) {
       .questionNavigator { display: none !important; }
     }
@@ -677,13 +692,15 @@
 <body class="theme-original">
   <div class="topbar">
     <div class="topbarLeft">
-      <div class="brand">GED Practice Test</div>
+      <div class="brand">GED Practice Platform</div>
     </div>
     <div class="topbarCenter">
       <div id="timerTop" class="hidden">Time Remaining: 115:00</div>
     </div>
     <div class="topbarRight">
+      <div id="userSummary" class="topbarUser hidden"></div>
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
+      <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
   </div>
@@ -699,7 +716,7 @@
       <div class="menuGrid">
         <div class="menuPanel">
           <h3>Start a New Test</h3>
-          <p>Select a difficulty level and begin a new practice test. You do not need to complete earlier levels before starting another one.</p>
+          <p>Currently math only. More subjects coming soon.</p>
           <label for="difficultySelect">Difficulty</label>
           <select id="difficultySelect">
             <option>Easy</option>
@@ -708,6 +725,8 @@
           </select>
           <div class="menuActions" style="margin-top:12px;">
             <button id="startTestBtn" class="primaryBtn">Start Test</button>
+            <button id="continueGuestBtn" class="secondaryBtn">Continue as Guest</button>
+            <button id="menuSignInBtn" class="secondaryBtn">Sign In / Create Account</button>
           </div>
         </div>
 
@@ -768,8 +787,9 @@
   <script>
     const TEST_LENGTH = 46;
     const TEST_TIME_SECONDS = 115 * 60;
-    const SAVE_KEY = "ged_practice_autosave_v6";
+    const SAVE_KEY = "ged_practice_autosave_v7";
     const LIGHTING_KEY = "ged_practice_lighting_pref";
+    const AUTH_TOKEN_KEY = "ged_practice_auth_token";
     const API_BASE = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://api.gedpracticeplatform.com";
 
     let state = {
@@ -784,7 +804,12 @@
       overtimeUsed: false,
       timeoutMode: false,
       lockedReviewMode: false,
-      navigatorVisible: false
+      navigatorVisible: false,
+      auth: {
+        token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
+        user: null,
+        guestMode: false
+      }
     };
 
     function applyTheme(theme) {
@@ -824,12 +849,81 @@
       );
     }
 
+    function getAuthHeaders() {
+      if (!state.auth.token) return {};
+      return {
+        Authorization: `Bearer ${state.auth.token}`
+      };
+    }
+
+    function setAuthToken(token) {
+      state.auth.token = token || "";
+      if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+      } else {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+    }
+
+    function updateAuthUI() {
+      const signInBtnTop = document.getElementById("signInBtnTop");
+      const logoutBtnTop = document.getElementById("logoutBtnTop");
+      const userSummary = document.getElementById("userSummary");
+
+      if (state.auth.user) {
+        signInBtnTop.classList.add("hidden");
+        logoutBtnTop.classList.remove("hidden");
+        userSummary.classList.remove("hidden");
+        userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
+      } else if (state.auth.guestMode) {
+        signInBtnTop.classList.remove("hidden");
+        logoutBtnTop.classList.add("hidden");
+        userSummary.classList.remove("hidden");
+        userSummary.textContent = "Guest Mode";
+      } else {
+        signInBtnTop.classList.remove("hidden");
+        logoutBtnTop.classList.add("hidden");
+        userSummary.classList.add("hidden");
+        userSummary.textContent = "";
+      }
+    }
+
+    async function loadCurrentUser() {
+      if (!state.auth.token) {
+        updateAuthUI();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: {
+            ...getAuthHeaders()
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error("Session invalid");
+        }
+
+        const data = await res.json();
+        state.auth.user = data.user;
+        state.auth.guestMode = false;
+      } catch (error) {
+        state.auth.user = null;
+        state.auth.guestMode = false;
+        setAuthToken("");
+      }
+
+      updateAuthUI();
+    }
+
     function updateTopbarMode() {
       const inTestLikeView = state.mode === "test" || state.mode === "practice" || state.mode === "practice-example";
       document.getElementById("timerTop").classList.toggle("hidden", !inTestLikeView);
       document.getElementById("globalMenuBtn").classList.toggle("hidden", !inTestLikeView);
       document.getElementById("submitTestBtn").classList.toggle("hidden", !inTestLikeView);
       updateNavigatorVisibility();
+      updateAuthUI();
     }
 
     function setView(view) {
@@ -874,15 +968,17 @@
             ? "primaryBtn"
             : action.variant === "danger"
             ? "dangerBtn"
-: "secondaryBtn";
+            : "secondaryBtn";
         btn.onclick = () => {
           if (action.onClick) action.onClick();
           if (!action.keepOpen) closeModal();
         };
         footer.appendChild(btn);
       });
+
       document.getElementById("modalBackdrop").style.display = "flex";
     }
+
     function closeModal() {
       document.getElementById("modalBackdrop").style.display = "none";
     }
@@ -898,8 +994,7 @@
             <option ${current === "Dark Mode" ? "selected" : ""}>Dark Mode</option>
             <option ${current === "Original Mode" ? "selected" : ""}>Original Mode</option>
           </select>
-
-                  `,
+        `,
         [
           {
             label: "Cancel",
@@ -916,6 +1011,119 @@
           }
         ]
       );
+    }
+
+    function openAuthModal(mode = "signin") {
+      const isRegister = mode === "register";
+
+      showModal(
+        isRegister ? "Create Account" : "Sign In",
+        `
+          ${isRegister ? `
+            <label for="authDisplayName">Display Name</label>
+            <input id="authDisplayName" type="text" placeholder="Enter a display name" />
+          ` : ""}
+
+          <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="Enter your email" />
+
+          <label style="margin-top:12px;" for="authPassword">Password</label>
+          <input id="authPassword" type="password" placeholder="Enter your password" />
+
+          <div id="authError" class="authError hidden"></div>
+        `,
+        [
+          {
+            label: isRegister ? "Back to Sign In" : "Create Account",
+            variant: "secondary",
+            onClick: () => openAuthModal(isRegister ? "signin" : "register")
+          },
+          {
+            label: isRegister ? "Create Account" : "Sign In",
+            variant: "primary",
+            keepOpen: true,
+            onClick: async () => {
+              const authError = document.getElementById("authError");
+              authError.classList.add("hidden");
+              authError.textContent = "";
+
+              const email = document.getElementById("authEmail").value.trim();
+              const password = document.getElementById("authPassword").value;
+              const displayName = isRegister
+                ? document.getElementById("authDisplayName").value.trim()
+                : "";
+
+              try {
+                const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+                const payload = isRegister
+                  ? { email, password, displayName }
+                  : { email, password };
+
+                const res = await fetch(`${API_BASE}${endpoint}`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                  throw new Error(data.error || "Authentication failed.");
+                }
+
+                setAuthToken(data.token);
+                state.auth.user = data.user;
+                state.auth.guestMode = false;
+                updateAuthUI();
+                closeModal();
+
+                showModal(
+                  isRegister ? "Account Created" : "Signed In",
+                  isRegister
+                    ? "Your account has been created successfully."
+                    : `Welcome back, ${data.user.displayName || data.user.email}.`
+                );
+              } catch (error) {
+                authError.textContent = error.message || "Authentication failed.";
+                authError.classList.remove("hidden");
+              }
+            }
+          }
+        ]
+      );
+    }
+
+    function continueAsGuest() {
+      showModal(
+        "Continue as Guest",
+        "Your test progress will NOT be saved when continuing as a guest.",
+        [
+          {
+            label: "Cancel",
+            variant: "secondary"
+          },
+          {
+            label: "Continue as Guest",
+            variant: "primary",
+            onClick: () => {
+              state.auth.guestMode = true;
+              state.auth.user = null;
+              setAuthToken("");
+              updateAuthUI();
+            }
+          }
+        ]
+      );
+    }
+
+    function logoutUser() {
+      state.auth.user = null;
+      state.auth.guestMode = false;
+      setAuthToken("");
+      updateAuthUI();
+      showModal("Logged Out", "You have been signed out.");
     }
 
     function askReturnToMenu() {
@@ -1112,6 +1320,8 @@
         submitBtn.classList.add("hidden");
         updateQuestionNavigator();
       }
+
+      updateAuthUI();
     }
 
     function saveProgress() {
@@ -1188,6 +1398,11 @@
       renderChart(null);
 
       const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
+
+      if (!res.ok) {
+        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+      }
+
       const data = await res.json();
 
       state.questions = data.questions.map((q) => ({
@@ -1206,6 +1421,11 @@
 
       const count = examplesOnly ? 2 : 12;
       const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
+
+      if (!res.ok) {
+        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+      }
+
       const data = await res.json();
 
       state.mode = examplesOnly ? "practice-example" : "practice";
@@ -1393,7 +1613,7 @@
 
       if (hasFlagged || hasUnanswered) {
         actions.push({
-          label: "Review Issues",
+          label: "Review Questions",
           variant: "secondary",
           onClick: () => {
             goToEarliestIssue();
@@ -1540,7 +1760,7 @@
       const score200 = scaledScore();
       const weakest = weakestSkillText();
       const correct = state.questions.filter((q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()).length;
-      const answered = state.questions.filter((q) => String(q.userAnswer ?? "").trim() !== "").length;
+      const wrongOrUnanswered = state.questions.length - correct;
       const advance = nextDifficulty(state.difficulty);
       const passed = passThreshold(score200);
 
@@ -1555,11 +1775,11 @@
           </div>
           <div class="reviewStat">
             <div class="reviewStatLabel">Correct</div>
-            <div class="reviewStatValue">${correct} / ${state.questions.length}</div>
+            <div class="reviewStatValue">${correct}</div>
           </div>
           <div class="reviewStat">
-            <div class="reviewStatLabel">Answered</div>
-            <div class="reviewStatValue">${answered} / ${state.questions.length}</div>
+            <div class="reviewStatLabel">Wrong / Unanswered</div>
+            <div class="reviewStatValue">${wrongOrUnanswered}</div>
           </div>
           <div class="reviewStat">
             <div class="reviewStatLabel">Weakest Skill</div>
@@ -1664,20 +1884,18 @@
     function goToMainMenu() {
       stopTimer();
 
-      state = {
-        mode: "menu",
-        difficulty: document.getElementById("difficultySelect").value || "GED-Level",
-        questions: [],
-        currentIndex: 0,
-        currentChart: null,
-        timerId: null,
-        timeRemaining: TEST_TIME_SECONDS,
-        practiceMeta: null,
-        overtimeUsed: false,
-        timeoutMode: false,
-        lockedReviewMode: false,
-        navigatorVisible: false
-      };
+      state.mode = "menu";
+      state.difficulty = document.getElementById("difficultySelect").value || "GED-Level";
+      state.questions = [];
+      state.currentIndex = 0;
+      state.currentChart = null;
+      state.timerId = null;
+      state.timeRemaining = TEST_TIME_SECONDS;
+      state.practiceMeta = null;
+      state.overtimeUsed = false;
+      state.timeoutMode = false;
+      state.lockedReviewMode = false;
+      state.navigatorVisible = false;
 
       renderChart(null);
       setView("menu");
@@ -1699,7 +1917,10 @@
     };
 
     document.getElementById("resumeBtn").onclick = loadSavedProgress;
-    document.getElementById("signInBtnTop").onclick = () => showModal("Sign In", "Coming soon");
+    document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
+    document.getElementById("menuSignInBtn").onclick = () => openAuthModal("signin");
+    document.getElementById("continueGuestBtn").onclick = continueAsGuest;
+    document.getElementById("logoutBtnTop").onclick = logoutUser;
     document.getElementById("settingsBtn").onclick = openSettings;
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
     document.getElementById("prevBtn").onclick = prevQuestion;
@@ -1708,13 +1929,10 @@
     document.getElementById("submitTestBtn").onclick = confirmSubmit;
 
     applyTheme(getSavedTheme());
+    loadCurrentUser();
     updateResumeVisibility();
     updateStatus();
     setView("menu");
   </script>
 </body>
 </html>
-'''
-
-Path("/mnt/data/index.html").write_text(html, encoding="utf-8")
-print("saved /mnt/data/index.html")
