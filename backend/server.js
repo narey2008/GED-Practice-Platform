@@ -75,9 +75,20 @@ app.get("/api/health", async (req, res) => {
 
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const rawEmail = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
-    const password = typeof req.body.password === "string" ? req.body.password : "";
-    const displayNameRaw = typeof req.body.displayName === "string" ? req.body.displayName.trim() : "";
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const password =
+      typeof req.body.password === "string"
+        ? req.body.password
+        : "";
+
+    const displayNameRaw =
+      typeof req.body.displayName === "string"
+        ? req.body.displayName.trim()
+        : "";
 
     if (!rawEmail) {
       return res.status(400).json({ error: "Email is required." });
@@ -115,15 +126,25 @@ app.post("/api/auth/register", async (req, res) => {
       user: sanitizeUser(user)
     });
   } catch (error) {
-    console.error("Register failed:", error);
-    return res.status(500).json({ error: "Failed to create account." });
+    console.error("REGISTER ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to create account."
+    });
   }
 });
 
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const rawEmail = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
-    const password = typeof req.body.password === "string" ? req.body.password : "";
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const password =
+      typeof req.body.password === "string"
+        ? req.body.password
+        : "";
 
     if (!rawEmail || !password) {
       return res.status(400).json({ error: "Email and password are required." });
@@ -146,8 +167,11 @@ app.post("/api/auth/login", async (req, res) => {
       user: sanitizeUser(user)
     });
   } catch (error) {
-    console.error("Login failed:", error);
-    return res.status(500).json({ error: "Failed to sign in." });
+    console.error("LOGIN ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to sign in."
+    });
   }
 });
 
@@ -162,8 +186,11 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
       user: sanitizeUser(user)
     });
   } catch (error) {
-    console.error("Fetch current user failed:", error);
-    return res.status(500).json({ error: "Failed to load account." });
+    console.error("ME ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to load account."
+    });
   }
 });
 
