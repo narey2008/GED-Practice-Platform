@@ -1871,6 +1871,27 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
         questions: state.questions
       })
     });
+    function renderHistoryDetails(questions) {
+  if (!Array.isArray(questions) || !questions.length) {
+    return `<div class="reviewItem" style="margin-top:10px;">No question data stored for this test.</div>`;
+  }
+
+  return questions.map((q, i) => {
+    const userAnswer = String(q.userAnswer ?? "").trim();
+    const correctAnswer = String(q.answer ?? "").trim();
+    const isCorrect = userAnswer === correctAnswer;
+
+    return `
+      <div class="reviewItem" style="margin-top:10px;">
+        <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
+        <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+        <div style="margin-top:10px;">Your answer: ${userAnswer || "—"}</div>
+        <div>Correct answer: ${correctAnswer || "—"}</div>
+        <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+      </div>
+    `;
+  }).join("");
+}
   } catch (error) {
     console.error("Failed to save completed test history", error);
   }
@@ -2193,18 +2214,46 @@ function renderHistoryQuestionDetails(questions) {
       history.forEach((entry, index) => {
         const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
 
-        const item = document.createElement("div");
-        item.className = "reviewItem";
-        item.innerHTML = `
-          <div><strong>Test ${history.length - index}</strong></div>
-          <div style="margin-top:8px;">Date: ${completedDate}</div>
-          <div>Difficulty: ${entry.difficulty || "—"}</div>
-          <div>Score: ${Number(entry.score200) || 0} / 200</div>
-          <div>Correct: ${Number(entry.correctCount) || 0}</div>
-          <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
-          <div>Weakest Skill: ${entry.weakestSkill || "—"}</div>
-        `;
-        panel.appendChild(item);
+        const detailsId = `historyDetails_${index}`;
+
+        panel.querySelectorAll(".historyToggleBtn").forEach((btn) => {
+  btn.onclick = () => {
+    const targetId = btn.getAttribute("data-target");
+    const details = document.getElementById(targetId);
+    if (!details) return;
+
+    const isHidden = details.classList.contains("hidden");
+
+    if (isHidden) {
+      details.classList.remove("hidden");
+      btn.textContent = "Hide Details";
+    } else {
+      details.classList.add("hidden");
+      btn.textContent = "View Details";
+    }
+  };
+});
+
+const item = document.createElement("div");
+item.className = "reviewItem";
+item.innerHTML = `
+  <div><strong>Test ${history.length - index}</strong></div>
+  <div style="margin-top:8px;">Date: ${completedDate}</div>
+  <div>Difficulty: ${entry.difficulty || "—"}</div>
+  <div>Score: ${Number(entry.score200) || 0} / 200</div>
+  <div>Correct: ${Number(entry.correctCount) || 0}</div>
+  <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
+  <div>Weakest Skill: ${entry.weakestSkill || "—"}</div>
+  <div style="margin-top:12px;">
+    <button class="secondaryBtn historyToggleBtn" data-target="${detailsId}">View Details</button>
+  </div>
+  <div id="${detailsId}" class="hidden"></div>
+`;
+
+panel.appendChild(item);
+
+const detailsContainer = item.querySelector(`#${detailsId}`);
+detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
       });
     }
 
