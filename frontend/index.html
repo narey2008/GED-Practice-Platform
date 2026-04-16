@@ -1196,13 +1196,26 @@
 }
 
     async function logoutUser() {
-      state.auth.user = null;
-      state.auth.guestMode = false;
-      setAuthToken("");
-      updateAuthUI();
-      await updateResumeVisibility();
-      showModal("Logged Out", "You have been signed out.");
-    }
+  showModal(
+    "Log Out",
+    "Are you sure you want to log out?",
+    [
+      { label: "Cancel", variant: "secondary" },
+      {
+        label: "Log Out",
+        variant: "primary",
+        onClick: async () => {
+          state.auth.user = null;
+          state.auth.guestMode = false;
+          setAuthToken("");
+          updateAuthUI();
+          await updateResumeVisibility();
+          showModal("Logged Out", "You have been signed out.");
+        }
+      }
+    ]
+  );
+}
 
     async function beginGuestMode(startImmediately = false) {
   state.auth.user = null;
@@ -1217,22 +1230,26 @@
 }
 
     function askReturnToMenu() {
-      showModal(
-        "Return to Main Menu",
-        "Your current progress is saved. Are you sure you want to return to the main menu?",
-        [
-          { label: "Cancel", variant: "secondary" },
-          {
-            label: "Return",
-            variant: "primary",
-            onClick: async () => {
-              stopTimer();
-              await setView("menu");
-            }
-          }
-        ]
-      );
-    }
+  const message = state.auth.guestMode
+    ? "Your current progress will NOT be saved in guest mode. Are you sure you want to return to the main menu?"
+    : "Are you sure you want to return to the main menu? Your current progress is saved to your account.";
+
+  showModal(
+    "Return to Main Menu",
+    message,
+    [
+      { label: "Cancel", variant: "secondary" },
+      {
+        label: "Return",
+        variant: "primary",
+        onClick: async () => {
+          stopTimer();
+          await setView("menu");
+        }
+      }
+    ]
+  );
+}
 
     function stopTimer() {
       if (state.timerId) {
@@ -2058,6 +2075,7 @@
         {
           label: "Sign In",
           variant: "secondary",
+          keepOpen: true,
           onClick: async () => {
             openAuthModal("signin");
           }
@@ -2065,7 +2083,9 @@
         {
           label: "Continue as Guest",
           variant: "primary",
+          keepOpen: true,
           onClick: async () => {
+            closeModal();
             await continueAsGuest(true);
           }
         }
@@ -2102,8 +2122,8 @@
 };
 document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
 document.getElementById("guestBtnTop").onclick = () => continueAsGuest(false);
-document.getElementById("logoutBtnTop").onclick = async () => {
-  await logoutUser();
+document.getElementById("logoutBtnTop").onclick = () => {
+  logoutUser();
 };
     document.getElementById("settingsBtn").onclick = openSettings;
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
