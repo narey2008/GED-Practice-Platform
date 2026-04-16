@@ -781,7 +781,8 @@
     </div>
 
     <div id="reviewPanel" class="card reviewWrap hidden"></div>
-    <div id="practicePanel" class="card practiceWrap hidden"></div>
+<div id="practicePanel" class="card practiceWrap hidden"></div>
+<div id="profilePanel" class="card reviewWrap hidden"></div>
   </div>
 
   <button id="settingsBtn" class="secondaryBtn iconBtn floatingLeft" title="Settings">⚙</button>
@@ -872,18 +873,21 @@
     logoutBtnTop.classList.remove("hidden");
     userSummary.classList.remove("hidden");
     userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
+    userSummary.style.cursor = "pointer";
   } else if (state.auth.guestMode) {
     signInBtnTop.classList.add("hidden");
     guestBtnTop.classList.add("hidden");
     logoutBtnTop.classList.remove("hidden");
     userSummary.classList.remove("hidden");
     userSummary.textContent = "Guest Mode";
+    userSummary.style.cursor = "default";
   } else {
     signInBtnTop.classList.remove("hidden");
     guestBtnTop.classList.remove("hidden");
     logoutBtnTop.classList.add("hidden");
     userSummary.classList.add("hidden");
     userSummary.textContent = "";
+    userSummary.style.cursor = "default";
   }
 }
 
@@ -957,27 +961,31 @@
     }
 
     async function setView(view) {
-      document.getElementById("mainMenu").classList.add("hidden");
-      document.getElementById("testView").classList.add("hidden");
-      document.getElementById("reviewPanel").classList.add("hidden");
-      document.getElementById("practicePanel").classList.add("hidden");
+  document.getElementById("mainMenu").classList.add("hidden");
+  document.getElementById("testView").classList.add("hidden");
+  document.getElementById("reviewPanel").classList.add("hidden");
+  document.getElementById("practicePanel").classList.add("hidden");
+  document.getElementById("profilePanel").classList.add("hidden");
 
-      if (view === "menu") {
-        state.mode = "menu";
-        document.getElementById("mainMenu").classList.remove("hidden");
-      } else if (view === "test") {
-        document.getElementById("testView").classList.remove("hidden");
-      } else if (view === "review") {
-        state.mode = "review";
-        document.getElementById("reviewPanel").classList.remove("hidden");
-      } else if (view === "practice-results") {
-        state.mode = "practice-results";
-        document.getElementById("practicePanel").classList.remove("hidden");
-      }
+  if (view === "menu") {
+    state.mode = "menu";
+    document.getElementById("mainMenu").classList.remove("hidden");
+  } else if (view === "test") {
+    document.getElementById("testView").classList.remove("hidden");
+  } else if (view === "review") {
+    state.mode = "review";
+    document.getElementById("reviewPanel").classList.remove("hidden");
+  } else if (view === "practice-results") {
+    state.mode = "practice-results";
+    document.getElementById("practicePanel").classList.remove("hidden");
+  } else if (view === "profile") {
+    state.mode = "profile";
+    document.getElementById("profilePanel").classList.remove("hidden");
+  }
 
-      updateTopbarMode();
-      await updateResumeVisibility();
-    }
+  updateTopbarMode();
+  await updateResumeVisibility();
+}
 
     function showModal(title, bodyHtml, actions = []) {
       document.getElementById("modalTitle").innerText = title;
@@ -1845,6 +1853,25 @@
       await saveProgress();
     }
 
+    async function saveCompletedTestToHistory() {
+  if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
+
+  try {
+    await fetch(`${API_BASE}/api/test/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        difficulty: state.difficulty,
+        questions: state.questions
+      })
+    });
+  } catch (error) {
+    console.error("Failed to save completed test history", error);
+  }
+}
     function scaledScore() {
       if (!state.questions.length) return 0;
       let correct = 0;
@@ -1901,10 +1928,11 @@
     }
 
     async function submitTest() {
-      stopTimer();
-      state.lockedReviewMode = true;
-      await showReview();
-    }
+  stopTimer();
+  state.lockedReviewMode = true;
+  await saveCompletedTestToHistory();
+  await showReview();
+}
 
     async function showReview() {
       stopTimer();
@@ -2036,6 +2064,117 @@
         }
       };
     }
+    async function openProfilePanel() {
+  if (!state.auth.user || !state.auth.token) return;
+
+  const panel = document.getElementById("profilePanel");
+  panel.innerHTML = `
+    <h2 class="sectionTitle">Profile & Test History</h2>
+    <div class="reviewItem">Loading history...</div>
+  `;
+
+  await setView("profile");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/test/history`, {
+      headers: {
+        ...getAuthHeaders()
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to load history.");
+    }
+
+    const history = Array.isArray(data.history) ? data.history : [];
+
+    let summaryHtml = `
+      <div class="reviewTop">
+        <div class="reviewStat">
+          <div class="reviewStatLabel">Tests Taken</div>
+          <div class="reviewStatValue">${history.length}</div>
+        </div>
+        <div class="reviewStat">
+          <div class="reviewStatLabel">Latest Score</div>
+          <div class="reviewStatValue">${history.length ? history[0].score200 : "—"}</div>
+        </div>
+        <div class="reviewStat">
+          <div class="reviewStatLabel">Best Score</div>
+          <div class="reviewStatValue">${history.length ? Math.max(...history.map(h => h.score200)) : "—"}</div>
+        </div>
+        <div class="reviewStat">
+          <div class="reviewStatLabel">Current Focus</div>
+          <div class="reviewStatValue">${history.length ? (history[0].weakestSkill || "—") : "—"}</div>
+        </div>
+      </div>
+    `;
+
+    let encouragement = `<div class="reviewItem"><strong>Keep going.</strong> Every test gives you more feedback on what to improve next.</div>`;
+
+    if (history.length >= 2) {
+      const latest = history[0].score200;
+      const previous = history[1].score200;
+
+      if (latest > previous) {
+        encouragement = `<div class="reviewItem"><strong>Nice progress.</strong> Your latest score improved from ${previous} to ${latest}. Keep building on that momentum.</div>`;
+      } else if (latest < previous) {
+        encouragement = `<div class="reviewItem"><strong>Stay with it.</strong> Scores can fluctuate. Review your weakest skill and keep practicing consistently.</div>`;
+      } else {
+        encouragement = `<div class="reviewItem"><strong>Steady work.</strong> Your score held at ${latest}. That’s a good time to focus on your weakest skill to push higher.</div>`;
+      }
+    }
+
+    panel.innerHTML = `
+      <h2 class="sectionTitle">Profile & Test History</h2>
+      ${summaryHtml}
+      ${encouragement}
+      <div class="reviewItem">
+        <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
+      </div>
+    `;
+
+    if (!history.length) {
+      const empty = document.createElement("div");
+      empty.className = "reviewItem";
+      empty.innerHTML = `No completed test history yet. Once you submit a test while signed in, it will appear here.`;
+      panel.appendChild(empty);
+    } else {
+      history.forEach((entry, index) => {
+        const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+
+        const item = document.createElement("div");
+        item.className = "reviewItem";
+        item.innerHTML = `
+          <div><strong>Test ${history.length - index}</strong></div>
+          <div style="margin-top:8px;">Date: ${completedDate}</div>
+          <div>Difficulty: ${entry.difficulty}</div>
+          <div>Score: ${entry.score200} / 200</div>
+          <div>Correct: ${entry.correctCount}</div>
+          <div>Wrong / Unanswered: ${entry.wrongOrUnansweredCount}</div>
+          <div>Weakest Skill: ${entry.weakestSkill || "—"}</div>
+        `;
+        panel.appendChild(item);
+      });
+    }
+
+    document.getElementById("profileBackBtn").onclick = () => {
+      goToMainMenu();
+    };
+  } catch (error) {
+    panel.innerHTML = `
+      <h2 class="sectionTitle">Profile & Test History</h2>
+      <div class="reviewItem">Failed to load history.</div>
+      <div class="reviewItem">
+        <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
+      </div>
+    `;
+    document.getElementById("profileBackBtn").onclick = () => {
+      goToMainMenu();
+    };
+  }
+}
 
     function goToMainMenu() {
       stopTimer();
@@ -2121,6 +2260,11 @@
   await loadSavedProgress();
 };
 document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
+document.getElementById("userSummary").onclick = async () => {
+  if (state.auth.user) {
+    await openProfilePanel();
+  }
+};
 document.getElementById("guestBtnTop").onclick = () => continueAsGuest(false);
 document.getElementById("logoutBtnTop").onclick = () => {
   logoutUser();
