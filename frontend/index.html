@@ -2117,12 +2117,25 @@ function renderHistoryQuestionDetails(questions) {
     });
 
     const data = await res.json();
+    console.log("PROFILE HISTORY RESPONSE:", data);
 
     if (!res.ok) {
       throw new Error(data.error || "Failed to load history.");
     }
 
     const history = Array.isArray(data.history) ? data.history : [];
+
+    const latestScore = history.length > 0 && typeof history[0].score200 === "number"
+      ? history[0].score200
+      : "—";
+
+    const bestScore = history.length > 0
+      ? Math.max(...history.map((h) => Number(h.score200) || 0))
+      : "—";
+
+    const currentFocus = history.length > 0
+      ? (history[0].weakestSkill || "—")
+      : "—";
 
     let summaryHtml = `
       <div class="reviewTop">
@@ -2132,15 +2145,15 @@ function renderHistoryQuestionDetails(questions) {
         </div>
         <div class="reviewStat">
           <div class="reviewStatLabel">Latest Score</div>
-          <div class="reviewStatValue">${history.length ? history[0].score200 : "—"}</div>
+          <div class="reviewStatValue">${latestScore}</div>
         </div>
         <div class="reviewStat">
           <div class="reviewStatLabel">Best Score</div>
-          <div class="reviewStatValue">${history.length ? Math.max(...history.map(h => h.score200)) : "—"}</div>
+          <div class="reviewStatValue">${bestScore}</div>
         </div>
         <div class="reviewStat">
           <div class="reviewStatLabel">Current Focus</div>
-          <div class="reviewStatValue">${history.length ? (history[0].weakestSkill || "—") : "—"}</div>
+          <div class="reviewStatValue">${escapeHtml(currentFocus)}</div>
         </div>
       </div>
     `;
@@ -2148,8 +2161,8 @@ function renderHistoryQuestionDetails(questions) {
     let encouragement = `<div class="reviewItem"><strong>Keep going.</strong> Every test gives you more feedback on what to improve next.</div>`;
 
     if (history.length >= 2) {
-      const latest = history[0].score200;
-      const previous = history[1].score200;
+      const latest = Number(history[0].score200) || 0;
+      const previous = Number(history[1].score200) || 0;
 
       if (latest > previous) {
         encouragement = `<div class="reviewItem"><strong>Nice progress.</strong> Your latest score improved from ${previous} to ${latest}. Keep building on that momentum.</div>`;
@@ -2183,26 +2196,30 @@ function renderHistoryQuestionDetails(questions) {
         item.className = "reviewItem";
         item.innerHTML = `
           <div><strong>Test ${history.length - index}</strong></div>
-          <div style="margin-top:8px;">Date: ${completedDate}</div>
-          <div>Difficulty: ${entry.difficulty}</div>
-          <div>Score: ${entry.score200} / 200</div>
-          <div>Correct: ${entry.correctCount}</div>
-          <div>Wrong / Unanswered: ${entry.wrongOrUnansweredCount}</div>
-          <div>Weakest Skill: ${entry.weakestSkill || "—"}</div>
+          <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
+          <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
+          <div>Score: ${Number(entry.score200) || 0} / 200</div>
+          <div>Correct: ${Number(entry.correctCount) || 0}</div>
+          <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
+          <div>Weakest Skill: ${escapeHtml(entry.weakestSkill || "—")}</div>
           <div style="margin-top:12px;">
             <button class="secondaryBtn historyToggleBtn" data-target="${detailsId}">View Details</button>
           </div>
-          <div id="${detailsId}" class="hidden">
-            ${renderHistoryQuestionDetails(entry.questions)}
-          </div>
+          <div id="${detailsId}" class="hidden"></div>
         `;
+
         panel.appendChild(item);
+
+        const detailsContainer = item.querySelector(`#${detailsId}`);
+        detailsContainer.innerHTML = renderHistoryQuestionDetails(entry.questions || []);
       });
 
       panel.querySelectorAll(".historyToggleBtn").forEach((btn) => {
         btn.onclick = () => {
           const targetId = btn.getAttribute("data-target");
           const details = document.getElementById(targetId);
+          if (!details) return;
+
           const isHidden = details.classList.contains("hidden");
 
           if (isHidden) {
@@ -2216,10 +2233,15 @@ function renderHistoryQuestionDetails(questions) {
       });
     }
 
-    document.getElementById("profileBackBtn").onclick = () => {
-      goToMainMenu();
-    };
+    const backBtn = document.getElementById("profileBackBtn");
+    if (backBtn) {
+      backBtn.onclick = () => {
+        goToMainMenu();
+      };
+    }
   } catch (error) {
+    console.error("PROFILE PANEL ERROR:", error);
+
     panel.innerHTML = `
       <h2 class="sectionTitle">Profile & Test History</h2>
       <div class="reviewItem">Failed to load history.</div>
@@ -2227,9 +2249,13 @@ function renderHistoryQuestionDetails(questions) {
         <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
       </div>
     `;
-    document.getElementById("profileBackBtn").onclick = () => {
-      goToMainMenu();
-    };
+
+    const backBtn = document.getElementById("profileBackBtn");
+    if (backBtn) {
+      backBtn.onclick = () => {
+        goToMainMenu();
+      };
+    }
   }
 }
 
