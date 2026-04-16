@@ -1885,6 +1885,37 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
         }
       });
 
+      function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderHistoryQuestionDetails(questions) {
+  if (!Array.isArray(questions) || !questions.length) {
+    return `<div class="reviewItem" style="margin-top:10px;">No question data stored for this test.</div>`;
+  }
+
+  return questions.map((q, i) => {
+    const user = String(q.userAnswer ?? "").trim();
+    const correct = String(q.answer ?? "").trim();
+    const isCorrect = user === correct;
+
+    return `
+      <div class="reviewItem" style="margin-top:10px;">
+        <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
+        <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+        <div style="margin-top:10px;">Your answer: ${escapeHtml(user || "—")}</div>
+        <div>Correct answer: ${escapeHtml(correct || "—")}</div>
+        <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+      </div>
+    `;
+  }).join("");
+}
+
       return Math.round((correct / state.questions.length) * 200);
     }
 
@@ -2146,6 +2177,7 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     } else {
       history.forEach((entry, index) => {
         const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+        const detailsId = `historyDetails_${index}`;
 
         const item = document.createElement("div");
         item.className = "reviewItem";
@@ -2157,8 +2189,30 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
           <div>Correct: ${entry.correctCount}</div>
           <div>Wrong / Unanswered: ${entry.wrongOrUnansweredCount}</div>
           <div>Weakest Skill: ${entry.weakestSkill || "—"}</div>
+          <div style="margin-top:12px;">
+            <button class="secondaryBtn historyToggleBtn" data-target="${detailsId}">View Details</button>
+          </div>
+          <div id="${detailsId}" class="hidden">
+            ${renderHistoryQuestionDetails(entry.questions)}
+          </div>
         `;
         panel.appendChild(item);
+      });
+
+      panel.querySelectorAll(".historyToggleBtn").forEach((btn) => {
+        btn.onclick = () => {
+          const targetId = btn.getAttribute("data-target");
+          const details = document.getElementById(targetId);
+          const isHidden = details.classList.contains("hidden");
+
+          if (isHidden) {
+            details.classList.remove("hidden");
+            btn.textContent = "Hide Details";
+          } else {
+            details.classList.add("hidden");
+            btn.textContent = "View Details";
+          }
+        };
       });
     }
 
