@@ -874,6 +874,9 @@
     userSummary.classList.remove("hidden");
     userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
     userSummary.style.cursor = "pointer";
+    userSummary.style.textDecoration = "none";
+userSummary.onmouseover = () => userSummary.style.textDecoration = "underline";
+userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
   } else if (state.auth.guestMode) {
     signInBtnTop.classList.add("hidden");
     guestBtnTop.classList.add("hidden");

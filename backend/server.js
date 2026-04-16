@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const buildTest = require("./generators/testBuilder");
 const User = require("./models/User");
 const SavedProgress = require("./models/SavedProgress");
+const TestHistory = require("./models/TestHistory");
 const authMiddleware = require("./middleware/auth");
 
 dotenv.config();
@@ -292,6 +293,92 @@ app.get("/api/practice", (req, res) => {
     console.error("Failed to build practice set:", error);
     res.status(500).json({ error: "Failed to build practice set" });
   }
+  app.post("/api/test/complete", authMiddleware, async (req, res) => {
+  try {
+    const {
+      questions,
+      difficulty
+    } = req.body;
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ error: "Invalid test data." });
+    }
+
+    const totalQuestions = questions.length;
+
+    let correctCount = 0;
+    const skillStats = {};
+
+    questions.forEach((q) => {
+      const isCorrect =
+        String(q.userAnswer ?? "").trim() === String(q.answer ?? "").trim();
+
+      if (isCorrect) correctCount++;
+
+      const skill = q.skill || "Unknown";
+
+      if (!skillStats[skill]) {
+        skillStats[skill] = { correct: 0, total: 0 };
+      }
+
+      skillStats[skill].total += 1;
+      if (isCorrect) skillStats[skill].correct += 1;
+    });
+
+    const wrongOrUnansweredCount = totalQuestions - correctCount;
+
+    // GED-style rough scaling (keep simple for now)
+    const score200 = Math.round(100 + (correctCount / totalQuestions) * 100);
+
+    // find weakest skill
+    let weakestSkill = "—";
+    let lowestAccuracy = 1;
+
+    Object.entries(skillStats).forEach(([skill, stats]) => {
+      const accuracy = stats.correct / stats.total;
+      if (accuracy < lowestAccuracy) {
+        lowestAccuracy = accuracy;
+        weakestSkill = skill;
+      }
+    });
+
+    const history = await TestHistory.create({
+      userId: req.auth.userId,
+      difficulty,
+      score200,
+      correctCount,
+      wrongOrUnansweredCount,
+      weakestSkill,
+      totalQuestions,
+      questions
+    });
+
+    // delete active saved test after completion
+    await SavedProgress.findOneAndDelete({ userId: req.auth.userId });
+
+    return res.json({
+      success: true,
+      historyId: history._id
+    });
+  } catch (error) {
+    console.error("COMPLETE TEST ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to save completed test." });
+  }
+});
+app.get("/api/test/history", authMiddleware, async (req, res) => {
+  try {
+    const history = await TestHistory.find({ userId: req.auth.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return res.json({ history });
+  } catch (error) {
+    console.error("GET HISTORY ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to load test history." });
+  }
+});
 });
 
 app.get("/", (req, res) => {
