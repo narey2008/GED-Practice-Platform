@@ -1034,88 +1034,113 @@
       );
     }
 
-    function openAuthModal(mode = "signin") {
-      const isRegister = mode === "register";
+    function openAuthModal(initialMode = "signin") {
+  let currentMode = initialMode;
 
-      showModal(
-        isRegister ? "Create Account" : "Sign In",
-        `
-          ${isRegister ? `
-            <label for="authDisplayName">Display Name</label>
-            <input id="authDisplayName" type="text" placeholder="Enter a display name" />
-          ` : ""}
+  function renderAuthModal() {
+    const isRegister = currentMode === "register";
 
-          <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">Email</label>
-          <input id="authEmail" type="email" placeholder="Enter your email" />
+    document.getElementById("modalTitle").innerText = isRegister ? "Create Account" : "Sign In";
+    document.getElementById("modalBody").innerHTML = `
+      <div style="display:flex; gap:10px; margin-bottom:14px;">
+        <button id="authModeSignIn" type="button" class="${!isRegister ? "primaryBtn" : "secondaryBtn"}">Sign In</button>
+        <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">Create Account</button>
+      </div>
 
-          <label style="margin-top:12px;" for="authPassword">Password</label>
-          <input id="authPassword" type="password" placeholder="Enter your password" />
+      ${isRegister ? `
+        <label for="authDisplayName">Display Name</label>
+        <input id="authDisplayName" type="text" placeholder="Enter a display name" />
+      ` : ""}
 
-          <div id="authError" class="authError hidden"></div>
-        `,
-        [
-          {
-            label: isRegister ? "Back to Sign In" : "Create Account",
-            variant: "secondary",
-            onClick: () => openAuthModal(isRegister ? "signin" : "register")
+      <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">Email</label>
+      <input id="authEmail" type="email" placeholder="Enter your email" />
+
+      <label style="margin-top:12px;" for="authPassword">Password</label>
+      <input id="authPassword" type="password" placeholder="Enter your password" />
+
+      <div id="authError" class="authError hidden"></div>
+    `;
+
+    const footer = document.getElementById("modalFooter");
+    footer.innerHTML = "";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "secondaryBtn";
+    cancelBtn.innerText = "Cancel";
+    cancelBtn.onclick = closeModal;
+
+    const submitBtn = document.createElement("button");
+    submitBtn.type = "button";
+    submitBtn.className = "primaryBtn";
+    submitBtn.innerText = isRegister ? "Create Account" : "Sign In";
+    submitBtn.onclick = async () => {
+      const authError = document.getElementById("authError");
+      authError.classList.add("hidden");
+      authError.textContent = "";
+
+      const email = document.getElementById("authEmail").value.trim();
+      const password = document.getElementById("authPassword").value;
+      const displayName = isRegister
+        ? document.getElementById("authDisplayName").value.trim()
+        : "";
+
+      try {
+        const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+        const payload = isRegister
+          ? { email, password, displayName }
+          : { email, password };
+
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
           },
-          {
-            label: isRegister ? "Create Account" : "Sign In",
-            variant: "primary",
-            keepOpen: true,
-            onClick: async () => {
-              const authError = document.getElementById("authError");
-              authError.classList.add("hidden");
-              authError.textContent = "";
+          body: JSON.stringify(payload)
+        });
 
-              const email = document.getElementById("authEmail").value.trim();
-              const password = document.getElementById("authPassword").value;
-              const displayName = isRegister
-                ? document.getElementById("authDisplayName").value.trim()
-                : "";
+        const data = await res.json();
 
-              try {
-                const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-                const payload = isRegister
-                  ? { email, password, displayName }
-                  : { email, password };
+        if (!res.ok) {
+          throw new Error(data.error || "Authentication failed.");
+        }
 
-                const res = await fetch(`${API_BASE}${endpoint}`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify(payload)
-                });
+        setAuthToken(data.token);
+        state.auth.user = data.user;
+        state.auth.guestMode = false;
+        updateAuthUI();
+        closeModal();
+        await updateResumeVisibility();
 
-                const data = await res.json();
+        showModal(
+          isRegister ? "Account Created" : "Signed In",
+          isRegister
+            ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
+            : `Welcome back, ${data.user.displayName || data.user.email}.`
+        );
+      } catch (error) {
+        authError.textContent = error.message || "Authentication failed.";
+        authError.classList.remove("hidden");
+      }
+    };
 
-                if (!res.ok) {
-                  throw new Error(data.error || "Authentication failed.");
-                }
+    footer.appendChild(cancelBtn);
+    footer.appendChild(submitBtn);
 
-                setAuthToken(data.token);
-                state.auth.user = data.user;
-                state.auth.guestMode = false;
-                updateAuthUI();
-                closeModal();
-                await updateResumeVisibility();
+    document.getElementById("authModeSignIn").onclick = () => {
+      currentMode = "signin";
+      renderAuthModal();
+    };
 
-                showModal(
-                  isRegister ? "Account Created" : "Signed In",
-                  isRegister
-                    ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
-                    : `Welcome back, ${data.user.displayName || data.user.email}.`
-                );
-              } catch (error) {
-                authError.textContent = error.message || "Authentication failed.";
-                authError.classList.remove("hidden");
-              }
-            }
-          }
-        ]
-      );
-    }
+    document.getElementById("authModeRegister").onclick = () => {
+      currentMode = "register";
+      renderAuthModal();
+    };
+  }
+
+  document.getElementById("modalBackdrop").style.display = "flex";
+  renderAuthModal();
+}
 
     function continueAsGuest() {
       showModal(
