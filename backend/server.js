@@ -12,6 +12,8 @@ const SavedProgress = require("./models/SavedProgress");
 const TestHistory = require("./models/TestHistory");
 const authMiddleware = require("./middleware/auth");
 
+console.log("RUNNING BACKEND SERVER FILE");
+
 dotenv.config();
 
 const app = express();
@@ -293,6 +295,7 @@ app.get("/api/practice", (req, res) => {
     console.error("Failed to build practice set:", error);
     res.status(500).json({ error: "Failed to build practice set" });
   }
+  });
   app.post("/api/test/complete", authMiddleware, async (req, res) => {
   try {
     const {
@@ -366,6 +369,8 @@ app.get("/api/practice", (req, res) => {
     return res.status(500).json({ error: "Failed to save completed test." });
   }
 });
+console.log("Registering /api/test/history route");
+
 app.get("/api/test/history", authMiddleware, async (req, res) => {
   try {
     const history = await TestHistory.find({ userId: req.auth.userId })
@@ -378,7 +383,6 @@ app.get("/api/test/history", authMiddleware, async (req, res) => {
     console.error(error);
     return res.status(500).json({ error: "Failed to load test history." });
   }
-});
 });
 
 app.get("/", (req, res) => {
