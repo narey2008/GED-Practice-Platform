@@ -701,12 +701,12 @@
       <div id="timerTop" class="hidden">Time Remaining: 115:00</div>
     </div>
     <div class="topbarRight">
-  <div id="userSummary" class="topbarUser hidden"></div>
-  <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
-  <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
-  <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
-  <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
-</div>
+      <div id="userSummary" class="topbarUser hidden"></div>
+      <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
+      <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
+      <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
+      <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
+    </div>
   </div>
 
   <div id="questionNavigator" class="questionNavigator hidden">
@@ -716,40 +716,40 @@
 
   <div class="page">
     <div id="mainMenu" class="card menuWrap">
-  <h1 class="menuTitle">Main Menu</h1>
-  <div class="menuGrid">
-    <div class="menuPanel">
-      <h3>Welcome</h3>
-      <p>
-        Welcome to GED Practice Platform — a focused space to build confidence,
-        strengthen weak areas, and prepare step by step. Currently math only,
-        with more subjects coming soon.
-      </p>
-    </div>
+      <h1 class="menuTitle">Main Menu</h1>
+      <div class="menuGrid">
+        <div class="menuPanel">
+          <h3>Welcome</h3>
+          <p>
+            Welcome to GED Practice Platform — a focused space to build confidence,
+            strengthen weak areas, and prepare step by step. Currently math only,
+            with more subjects coming soon.
+          </p>
+        </div>
 
-    <div class="menuPanel">
-      <h3>Start a New Test</h3>
-      <p>Choose your difficulty level and begin.</p>
-      <label for="difficultySelect">Difficulty</label>
-      <select id="difficultySelect">
-        <option>Easy</option>
-        <option>Medium</option>
-        <option selected>GED-Level</option>
-      </select>
-      <div class="menuActions" style="margin-top:12px;">
-        <button id="startTestBtn" class="primaryBtn">Start Test</button>
+        <div class="menuPanel">
+          <h3>Start a New Test</h3>
+          <p>Choose your difficulty level and begin.</p>
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect">
+            <option>Easy</option>
+            <option>Medium</option>
+            <option selected>GED-Level</option>
+          </select>
+          <div class="menuActions" style="margin-top:12px;">
+            <button id="startTestBtn" class="primaryBtn">Start Test</button>
+          </div>
+        </div>
+
+        <div id="resumePanel" class="menuPanel hidden">
+          <h3>Resume Unfinished Test</h3>
+          <p>Continue from your saved account progress.</p>
+          <div class="menuActions">
+            <button id="resumeBtn" class="secondaryBtn">Resume</button>
+          </div>
+        </div>
       </div>
     </div>
-
-    <div id="resumePanel" class="menuPanel hidden">
-      <h3>Resume Unfinished Test</h3>
-      <p>Continue from your saved account progress.</p>
-      <div class="menuActions">
-        <button id="resumeBtn" class="secondaryBtn">Resume</button>
-      </div>
-    </div>
-  </div>
-</div>
 
     <div id="testView" class="testCard hidden">
       <div class="testHeader">
@@ -781,8 +781,8 @@
     </div>
 
     <div id="reviewPanel" class="card reviewWrap hidden"></div>
-<div id="practicePanel" class="card practiceWrap hidden"></div>
-<div id="profilePanel" class="card reviewWrap hidden"></div>
+    <div id="practicePanel" class="card practiceWrap hidden"></div>
+    <div id="profilePanel" class="card reviewWrap hidden"></div>
   </div>
 
   <button id="settingsBtn" class="secondaryBtn iconBtn floatingLeft" title="Settings">⚙</button>
@@ -801,7 +801,10 @@
     const TEST_TIME_SECONDS = 115 * 60;
     const LIGHTING_KEY = "ged_practice_lighting_pref";
     const AUTH_TOKEN_KEY = "ged_practice_auth_token";
-    const API_BASE = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://api.gedpracticeplatform.com";
+    const API_BASE =
+      window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "https://api.gedpracticeplatform.com";
 
     let state = {
       mode: "menu",
@@ -822,6 +825,37 @@
         guestMode: false
       }
     };
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderHistoryDetails(questions) {
+      if (!Array.isArray(questions) || !questions.length) {
+        return `<div class="reviewItem" style="margin-top:10px;">No question data stored for this test.</div>`;
+      }
+
+      return questions.map((q, i) => {
+        const userAnswer = String(q.userAnswer ?? "").trim();
+        const correctAnswer = String(q.answer ?? "").trim();
+        const isCorrect = userAnswer === correctAnswer;
+
+        return `
+          <div class="reviewItem" style="margin-top:10px;">
+            <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
+            <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+            <div style="margin-top:10px;">Your answer: ${escapeHtml(userAnswer || "—")}</div>
+            <div>Correct answer: ${escapeHtml(correctAnswer || "—")}</div>
+            <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+          </div>
+        `;
+      }).join("");
+    }
 
     function applyTheme(theme) {
       document.body.classList.remove("theme-light", "theme-dark", "theme-original");
@@ -847,9 +881,7 @@
 
     function getAuthHeaders() {
       if (!state.auth.token) return {};
-      return {
-        Authorization: `Bearer ${state.auth.token}`
-      };
+      return { Authorization: `Bearer ${state.auth.token}` };
     }
 
     function setAuthToken(token) {
@@ -862,37 +894,43 @@
     }
 
     function updateAuthUI() {
-  const signInBtnTop = document.getElementById("signInBtnTop");
-  const guestBtnTop = document.getElementById("guestBtnTop");
-  const logoutBtnTop = document.getElementById("logoutBtnTop");
-  const userSummary = document.getElementById("userSummary");
+      const signInBtnTop = document.getElementById("signInBtnTop");
+      const guestBtnTop = document.getElementById("guestBtnTop");
+      const logoutBtnTop = document.getElementById("logoutBtnTop");
+      const userSummary = document.getElementById("userSummary");
 
-  if (state.auth.user) {
-    signInBtnTop.classList.add("hidden");
-    guestBtnTop.classList.add("hidden");
-    logoutBtnTop.classList.remove("hidden");
-    userSummary.classList.remove("hidden");
-    userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
-    userSummary.style.cursor = "pointer";
-    userSummary.style.textDecoration = "none";
-userSummary.onmouseover = () => userSummary.style.textDecoration = "underline";
-userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
-  } else if (state.auth.guestMode) {
-    signInBtnTop.classList.add("hidden");
-    guestBtnTop.classList.add("hidden");
-    logoutBtnTop.classList.remove("hidden");
-    userSummary.classList.remove("hidden");
-    userSummary.textContent = "Guest Mode";
-    userSummary.style.cursor = "default";
-  } else {
-    signInBtnTop.classList.remove("hidden");
-    guestBtnTop.classList.remove("hidden");
-    logoutBtnTop.classList.add("hidden");
-    userSummary.classList.add("hidden");
-    userSummary.textContent = "";
-    userSummary.style.cursor = "default";
-  }
-}
+      if (state.auth.user) {
+        signInBtnTop.classList.add("hidden");
+        guestBtnTop.classList.add("hidden");
+        logoutBtnTop.classList.remove("hidden");
+        userSummary.classList.remove("hidden");
+        userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
+        userSummary.style.cursor = "pointer";
+        userSummary.style.textDecoration = "none";
+        userSummary.onmouseover = () => { userSummary.style.textDecoration = "underline"; };
+        userSummary.onmouseout = () => { userSummary.style.textDecoration = "none"; };
+      } else if (state.auth.guestMode) {
+        signInBtnTop.classList.add("hidden");
+        guestBtnTop.classList.add("hidden");
+        logoutBtnTop.classList.remove("hidden");
+        userSummary.classList.remove("hidden");
+        userSummary.textContent = "Guest Mode";
+        userSummary.style.cursor = "default";
+        userSummary.style.textDecoration = "none";
+        userSummary.onmouseover = null;
+        userSummary.onmouseout = null;
+      } else {
+        signInBtnTop.classList.remove("hidden");
+        guestBtnTop.classList.remove("hidden");
+        logoutBtnTop.classList.add("hidden");
+        userSummary.classList.add("hidden");
+        userSummary.textContent = "";
+        userSummary.style.cursor = "default";
+        userSummary.style.textDecoration = "none";
+        userSummary.onmouseover = null;
+        userSummary.onmouseout = null;
+      }
+    }
 
     async function loadCurrentUser() {
       if (!state.auth.token) {
@@ -902,14 +940,10 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
 
       try {
         const res = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: {
-            ...getAuthHeaders()
-          }
+          headers: { ...getAuthHeaders() }
         });
 
-        if (!res.ok) {
-          throw new Error("Session invalid");
-        }
+        if (!res.ok) throw new Error("Session invalid");
 
         const data = await res.json();
         state.auth.user = data.user;
@@ -924,17 +958,14 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     }
 
     async function hasSavedProgress() {
-      if (!state.auth.user || !state.auth.token) return false;
+      if (!state.auth.user || !state.auth.token || state.auth.guestMode) return false;
 
       try {
         const res = await fetch(`${API_BASE}/api/progress`, {
-          headers: {
-            ...getAuthHeaders()
-          }
+          headers: { ...getAuthHeaders() }
         });
 
         if (!res.ok) return false;
-
         const data = await res.json();
         return !!data.progress;
       } catch (error) {
@@ -955,7 +986,11 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     }
 
     function updateTopbarMode() {
-      const inTestLikeView = state.mode === "test" || state.mode === "practice" || state.mode === "practice-example";
+      const inTestLikeView =
+        state.mode === "test" ||
+        state.mode === "practice" ||
+        state.mode === "practice-example";
+
       document.getElementById("timerTop").classList.toggle("hidden", !inTestLikeView);
       document.getElementById("globalMenuBtn").classList.toggle("hidden", !inTestLikeView);
       document.getElementById("submitTestBtn").classList.toggle("hidden", !inTestLikeView);
@@ -964,31 +999,31 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     }
 
     async function setView(view) {
-  document.getElementById("mainMenu").classList.add("hidden");
-  document.getElementById("testView").classList.add("hidden");
-  document.getElementById("reviewPanel").classList.add("hidden");
-  document.getElementById("practicePanel").classList.add("hidden");
-  document.getElementById("profilePanel").classList.add("hidden");
+      document.getElementById("mainMenu").classList.add("hidden");
+      document.getElementById("testView").classList.add("hidden");
+      document.getElementById("reviewPanel").classList.add("hidden");
+      document.getElementById("practicePanel").classList.add("hidden");
+      document.getElementById("profilePanel").classList.add("hidden");
 
-  if (view === "menu") {
-    state.mode = "menu";
-    document.getElementById("mainMenu").classList.remove("hidden");
-  } else if (view === "test") {
-    document.getElementById("testView").classList.remove("hidden");
-  } else if (view === "review") {
-    state.mode = "review";
-    document.getElementById("reviewPanel").classList.remove("hidden");
-  } else if (view === "practice-results") {
-    state.mode = "practice-results";
-    document.getElementById("practicePanel").classList.remove("hidden");
-  } else if (view === "profile") {
-    state.mode = "profile";
-    document.getElementById("profilePanel").classList.remove("hidden");
-  }
+      if (view === "menu") {
+        state.mode = "menu";
+        document.getElementById("mainMenu").classList.remove("hidden");
+      } else if (view === "test") {
+        document.getElementById("testView").classList.remove("hidden");
+      } else if (view === "review") {
+        state.mode = "review";
+        document.getElementById("reviewPanel").classList.remove("hidden");
+      } else if (view === "practice-results") {
+        state.mode = "practice-results";
+        document.getElementById("practicePanel").classList.remove("hidden");
+      } else if (view === "profile") {
+        state.mode = "profile";
+        document.getElementById("profilePanel").classList.remove("hidden");
+      }
 
-  updateTopbarMode();
-  await updateResumeVisibility();
-}
+      updateTopbarMode();
+      await updateResumeVisibility();
+    }
 
     function showModal(title, bodyHtml, actions = []) {
       document.getElementById("modalTitle").innerText = title;
@@ -1011,12 +1046,14 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
             : action.variant === "danger"
             ? "dangerBtn"
             : "secondaryBtn";
+
         btn.onclick = async () => {
           if (action.onClick) {
             await action.onClick();
           }
           if (!action.keepOpen) closeModal();
         };
+
         footer.appendChild(btn);
       });
 
@@ -1040,10 +1077,7 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
           </select>
         `,
         [
-          {
-            label: "Cancel",
-            variant: "secondary"
-          },
+          { label: "Cancel", variant: "secondary" },
           {
             label: "Save",
             variant: "primary",
@@ -1058,209 +1092,202 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     }
 
     function openAuthModal(initialMode = "signin") {
-  let currentMode = initialMode;
+      let currentMode = initialMode;
 
-  function renderAuthModal() {
-    const isRegister = currentMode === "register";
+      function renderAuthModal() {
+        const isRegister = currentMode === "register";
 
-    document.getElementById("modalTitle").innerText = isRegister ? "Create Account" : "Sign In";
-    document.getElementById("modalBody").innerHTML = `
-      <div style="display:flex; gap:10px; margin-bottom:14px;">
-        <button id="authModeSignIn" type="button" class="${!isRegister ? "primaryBtn" : "secondaryBtn"}">Sign In</button>
-        <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">Create Account</button>
-      </div>
+        document.getElementById("modalTitle").innerText = isRegister ? "Create Account" : "Sign In";
+        document.getElementById("modalBody").innerHTML = `
+          <div style="display:flex; gap:10px; margin-bottom:14px;">
+            <button id="authModeSignIn" type="button" class="${!isRegister ? "primaryBtn" : "secondaryBtn"}">Sign In</button>
+            <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">Create Account</button>
+          </div>
 
-      ${isRegister ? `
-        <label for="authDisplayName">Display Name</label>
-        <input id="authDisplayName" type="text" placeholder="Enter a display name" />
-      ` : ""}
+          ${isRegister ? `
+            <label for="authDisplayName">Display Name</label>
+            <input id="authDisplayName" type="text" placeholder="Enter a display name" />
+          ` : ""}
 
-      <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">Email</label>
-      <input id="authEmail" type="email" placeholder="Enter your email" />
+          <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="Enter your email" />
 
-      <label style="margin-top:12px;" for="authPassword">Password</label>
-      <input id="authPassword" type="password" placeholder="Enter your password" />
+          <label style="margin-top:12px;" for="authPassword">Password</label>
+          <input id="authPassword" type="password" placeholder="Enter your password" />
 
-      <div id="authError" class="authError hidden"></div>
-    `;
+          <div id="authError" class="authError hidden"></div>
+        `;
 
-    const footer = document.getElementById("modalFooter");
-    footer.innerHTML = "";
+        const footer = document.getElementById("modalFooter");
+        footer.innerHTML = "";
 
-    const cancelBtn = document.createElement("button");
-    cancelBtn.type = "button";
-    cancelBtn.className = "secondaryBtn";
-    cancelBtn.innerText = "Cancel";
-    cancelBtn.onclick = closeModal;
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "secondaryBtn";
+        cancelBtn.innerText = "Cancel";
+        cancelBtn.onclick = closeModal;
 
-    const submitBtn = document.createElement("button");
-    submitBtn.type = "button";
-    submitBtn.className = "primaryBtn";
-    submitBtn.innerText = isRegister ? "Create Account" : "Sign In";
-    submitBtn.onclick = async () => {
-      const authError = document.getElementById("authError");
-      authError.classList.add("hidden");
-      authError.textContent = "";
+        const submitBtn = document.createElement("button");
+        submitBtn.type = "button";
+        submitBtn.className = "primaryBtn";
+        submitBtn.innerText = isRegister ? "Create Account" : "Sign In";
 
-      const email = document.getElementById("authEmail").value.trim();
-      const password = document.getElementById("authPassword").value;
-      const displayName = isRegister
-        ? document.getElementById("authDisplayName").value.trim()
-        : "";
+        submitBtn.onclick = async () => {
+          const authError = document.getElementById("authError");
+          authError.classList.add("hidden");
+          authError.textContent = "";
 
-      try {
-        const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-        const payload = isRegister
-          ? { email, password, displayName }
-          : { email, password };
+          const email = document.getElementById("authEmail").value.trim();
+          const password = document.getElementById("authPassword").value;
+          const displayName = isRegister
+            ? document.getElementById("authDisplayName").value.trim()
+            : "";
 
-        const res = await fetch(`${API_BASE}${endpoint}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
+          try {
+            const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+            const payload = isRegister
+              ? { email, password, displayName }
+              : { email, password };
 
-        const data = await res.json();
+            const res = await fetch(`${API_BASE}${endpoint}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
 
-        if (!res.ok) {
-          throw new Error(data.error || "Authentication failed.");
-        }
+            const data = await res.json();
 
-        setAuthToken(data.token);
-        state.auth.user = data.user;
-        state.auth.guestMode = false;
-        updateAuthUI();
-        closeModal();
-        await updateResumeVisibility();
+            if (!res.ok) {
+              throw new Error(data.error || "Authentication failed.");
+            }
 
-        showModal(
-          isRegister ? "Account Created" : "Signed In",
-          isRegister
-            ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
-            : `Welcome back, ${data.user.displayName || data.user.email}.`
-        );
-      } catch (error) {
-        authError.textContent = error.message || "Authentication failed.";
-        authError.classList.remove("hidden");
-      }
-    };
+            setAuthToken(data.token);
+            state.auth.user = data.user;
+            state.auth.guestMode = false;
+            updateAuthUI();
+            closeModal();
+            await updateResumeVisibility();
 
-    footer.appendChild(cancelBtn);
-    footer.appendChild(submitBtn);
-
-    document.getElementById("authModeSignIn").onclick = () => {
-      currentMode = "signin";
-      renderAuthModal();
-    };
-
-    document.getElementById("authModeRegister").onclick = () => {
-      currentMode = "register";
-      renderAuthModal();
-    };
-  }
-
-  document.getElementById("modalBackdrop").style.display = "flex";
-  renderAuthModal();
-}
-
-    function continueAsGuest(startImmediately = false) {
-  if (state.auth.user || state.auth.token) {
-    showModal(
-      "Leave Account and Continue as Guest",
-      "Continuing as a guest will sign you out first. Guest test progress will NOT be saved.",
-      [
-        {
-          label: "Cancel",
-          variant: "secondary"
-        },
-        {
-          label: "Sign Out and Continue",
-          variant: "primary",
-          onClick: async () => {
-            await beginGuestMode(startImmediately);
+            showModal(
+              isRegister ? "Account Created" : "Signed In",
+              isRegister
+                ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
+                : `Welcome back, ${data.user.displayName || data.user.email}.`
+            );
+          } catch (error) {
+            authError.textContent = error.message || "Authentication failed.";
+            authError.classList.remove("hidden");
           }
-        }
-      ]
-    );
-    return;
-  }
+        };
 
-  showModal(
-    "Continue as Guest",
-    "Your test progress will NOT be saved when continuing as a guest.",
-    [
-      {
-        label: "Cancel",
-        variant: "secondary"
-      },
-      {
-        label: "Continue as Guest",
-        variant: "primary",
-        onClick: async () => {
-          await beginGuestMode(startImmediately);
-        }
-      }
-    ]
-  );
-}
+        footer.appendChild(cancelBtn);
+        footer.appendChild(submitBtn);
 
-    async function logoutUser() {
-  showModal(
-    "Log Out",
-    "Are you sure you want to log out?",
-    [
-      { label: "Cancel", variant: "secondary" },
-      {
-        label: "Log Out",
-        variant: "primary",
-        onClick: async () => {
-          state.auth.user = null;
-          state.auth.guestMode = false;
-          setAuthToken("");
-          updateAuthUI();
-          await updateResumeVisibility();
-          showModal("Logged Out", "You have been signed out.");
-        }
+        document.getElementById("authModeSignIn").onclick = () => {
+          currentMode = "signin";
+          renderAuthModal();
+        };
+
+        document.getElementById("authModeRegister").onclick = () => {
+          currentMode = "register";
+          renderAuthModal();
+        };
       }
-    ]
-  );
-}
+
+      document.getElementById("modalBackdrop").style.display = "flex";
+      renderAuthModal();
+    }
 
     async function beginGuestMode(startImmediately = false) {
-  state.auth.user = null;
-  state.auth.guestMode = true;
-  setAuthToken("");
-  updateAuthUI();
-  await updateResumeVisibility();
+      state.auth.user = null;
+      state.auth.guestMode = true;
+      setAuthToken("");
+      updateAuthUI();
+      await updateResumeVisibility();
 
-  if (startImmediately) {
-    await startTest();
-  }
-}
+      if (startImmediately) {
+        await startTest();
+      }
+    }
+
+    function continueAsGuest(startImmediately = false) {
+      if (state.auth.user || state.auth.token) {
+        showModal(
+          "Leave Account and Continue as Guest",
+          "Continuing as a guest will sign you out first. Guest test progress will NOT be saved.",
+          [
+            { label: "Cancel", variant: "secondary" },
+            {
+              label: "Sign Out and Continue",
+              variant: "primary",
+              onClick: async () => {
+                await beginGuestMode(startImmediately);
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      showModal(
+        "Continue as Guest",
+        "Your test progress will NOT be saved when continuing as a guest.",
+        [
+          { label: "Cancel", variant: "secondary" },
+          {
+            label: "Continue as Guest",
+            variant: "primary",
+            onClick: async () => {
+              await beginGuestMode(startImmediately);
+            }
+          }
+        ]
+      );
+    }
+
+    function logoutUser() {
+      showModal(
+        "Log Out",
+        "Are you sure you want to log out?",
+        [
+          { label: "Cancel", variant: "secondary" },
+          {
+            label: "Log Out",
+            variant: "primary",
+            onClick: async () => {
+              state.auth.user = null;
+              state.auth.guestMode = false;
+              setAuthToken("");
+              updateAuthUI();
+              await updateResumeVisibility();
+              showModal("Logged Out", "You have been signed out.");
+            }
+          }
+        ]
+      );
+    }
 
     function askReturnToMenu() {
-  const message = state.auth.guestMode
-    ? "Your current progress will NOT be saved in guest mode. Are you sure you want to return to the main menu?"
-    : "Are you sure you want to return to the main menu? Your current progress is saved to your account.";
+      const message = state.auth.guestMode
+        ? "Your current progress will NOT be saved in guest mode. Are you sure you want to return to the main menu?"
+        : "Are you sure you want to return to the main menu? Your current progress is saved to your account.";
 
-  showModal(
-    "Return to Main Menu",
-    message,
-    [
-      { label: "Cancel", variant: "secondary" },
-      {
-        label: "Return",
-        variant: "primary",
-        onClick: async () => {
-          stopTimer();
-          await setView("menu");
-        }
-      }
-    ]
-  );
-}
+      showModal(
+        "Return to Main Menu",
+        message,
+        [
+          { label: "Cancel", variant: "secondary" },
+          {
+            label: "Return",
+            variant: "primary",
+            onClick: async () => {
+              stopTimer();
+              await setView("menu");
+            }
+          }
+        ]
+      );
+    }
 
     function stopTimer() {
       if (state.timerId) {
@@ -1270,34 +1297,34 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     }
 
     async function saveProgress() {
-  if (!state.auth.user || !state.auth.token) return;
-  if (state.auth.guestMode) return;
-  if (!state.questions.length) return;
-  if (state.mode !== "test") return;
+      if (!state.auth.user || !state.auth.token) return;
+      if (state.auth.guestMode) return;
+      if (!state.questions.length) return;
+      if (state.mode !== "test") return;
 
-  try {
-    await fetch(`${API_BASE}/api/progress/save`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders()
-      },
-      body: JSON.stringify({
-        mode: state.mode,
-        difficulty: state.difficulty,
-        questions: state.questions,
-        currentIndex: state.currentIndex,
-        timeRemaining: state.timeRemaining,
-        practiceMeta: state.practiceMeta,
-        overtimeUsed: state.overtimeUsed,
-        timeoutMode: state.timeoutMode,
-        lockedReviewMode: state.lockedReviewMode
-      })
-    });
-  } catch (error) {
-    console.error("Failed to save progress", error);
-  }
-}
+      try {
+        await fetch(`${API_BASE}/api/progress/save`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            mode: state.mode,
+            difficulty: state.difficulty,
+            questions: state.questions,
+            currentIndex: state.currentIndex,
+            timeRemaining: state.timeRemaining,
+            practiceMeta: state.practiceMeta,
+            overtimeUsed: state.overtimeUsed,
+            timeoutMode: state.timeoutMode,
+            lockedReviewMode: state.lockedReviewMode
+          })
+        });
+      } catch (error) {
+        console.error("Failed to save progress", error);
+      }
+    }
 
     async function clearSavedProgress() {
       if (!state.auth.user || !state.auth.token) {
@@ -1308,9 +1335,7 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
       try {
         await fetch(`${API_BASE}/api/progress`, {
           method: "DELETE",
-          headers: {
-            ...getAuthHeaders()
-          }
+          headers: { ...getAuthHeaders() }
         });
       } catch (error) {
         console.error("Failed to clear progress", error);
@@ -1324,9 +1349,7 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
 
       try {
         const res = await fetch(`${API_BASE}/api/progress`, {
-          headers: {
-            ...getAuthHeaders()
-          }
+          headers: { ...getAuthHeaders() }
         });
 
         if (!res.ok) return false;
@@ -1340,7 +1363,10 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
         state.difficulty = progress.difficulty || "GED-Level";
         state.questions = Array.isArray(progress.questions) ? progress.questions : [];
         state.currentIndex = progress.currentIndex || 0;
-        state.timeRemaining = typeof progress.timeRemaining === "number" ? progress.timeRemaining : TEST_TIME_SECONDS;
+        state.timeRemaining =
+          typeof progress.timeRemaining === "number"
+            ? progress.timeRemaining
+            : TEST_TIME_SECONDS;
         state.practiceMeta = progress.practiceMeta || null;
         state.overtimeUsed = !!progress.overtimeUsed;
         state.timeoutMode = !!progress.timeoutMode;
@@ -1559,7 +1585,6 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
       renderChart(null);
 
       const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
-
       if (!res.ok) {
         throw new Error(`API request failed: ${res.status} ${res.statusText}`);
       }
@@ -1583,7 +1608,6 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
 
       const count = examplesOnly ? 2 : 12;
       const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
-
       if (!res.ok) {
         throw new Error(`API request failed: ${res.status} ${res.statusText}`);
       }
@@ -1606,7 +1630,6 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
 
       await setView("test");
       renderQuestion();
-      await saveProgress();
       await updateResumeVisibility();
     }
 
@@ -1809,18 +1832,14 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
 
       const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
-      if (state.mode === "practice-example") {
-        if (isLastQuestion) {
-          await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
-          return;
-        }
+      if (state.mode === "practice-example" && isLastQuestion) {
+        await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+        return;
       }
 
-      if (state.mode === "practice") {
-        if (isLastQuestion) {
-          await showPracticeResults();
-          return;
-        }
+      if (state.mode === "practice" && isLastQuestion) {
+        await showPracticeResults();
+        return;
       }
 
       if (state.timeoutMode) {
@@ -1857,45 +1876,25 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
     }
 
     async function saveCompletedTestToHistory() {
-  if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
+      if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
 
-  try {
-    await fetch(`${API_BASE}/api/test/complete`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders()
-      },
-      body: JSON.stringify({
-        difficulty: state.difficulty,
-        questions: state.questions
-      })
-    });
-    function renderHistoryDetails(questions) {
-  if (!Array.isArray(questions) || !questions.length) {
-    return `<div class="reviewItem" style="margin-top:10px;">No question data stored for this test.</div>`;
-  }
+      try {
+        await fetch(`${API_BASE}/api/test/complete`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            difficulty: state.difficulty,
+            questions: state.questions
+          })
+        });
+      } catch (error) {
+        console.error("Failed to save completed test history", error);
+      }
+    }
 
-  return questions.map((q, i) => {
-    const userAnswer = String(q.userAnswer ?? "").trim();
-    const correctAnswer = String(q.answer ?? "").trim();
-    const isCorrect = userAnswer === correctAnswer;
-
-    return `
-      <div class="reviewItem" style="margin-top:10px;">
-        <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
-        <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
-        <div style="margin-top:10px;">Your answer: ${userAnswer || "—"}</div>
-        <div>Correct answer: ${correctAnswer || "—"}</div>
-        <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
-      </div>
-    `;
-  }).join("");
-}
-  } catch (error) {
-    console.error("Failed to save completed test history", error);
-  }
-}
     function scaledScore() {
       if (!state.questions.length) return 0;
       let correct = 0;
@@ -1905,37 +1904,6 @@ userSummary.onmouseout = () => userSummary.style.textDecoration = "none";
           correct += 1;
         }
       });
-
-      function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function renderHistoryQuestionDetails(questions) {
-  if (!Array.isArray(questions) || !questions.length) {
-    return `<div class="reviewItem" style="margin-top:10px;">No question data stored for this test.</div>`;
-  }
-
-  return questions.map((q, i) => {
-    const user = String(q.userAnswer ?? "").trim();
-    const correct = String(q.answer ?? "").trim();
-    const isCorrect = user === correct;
-
-    return `
-      <div class="reviewItem" style="margin-top:10px;">
-        <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
-        <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
-        <div style="margin-top:10px;">Your answer: ${escapeHtml(user || "—")}</div>
-        <div>Correct answer: ${escapeHtml(correct || "—")}</div>
-        <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
-      </div>
-    `;
-  }).join("");
-}
 
       return Math.round((correct / state.questions.length) * 200);
     }
@@ -1983,18 +1951,20 @@ function renderHistoryQuestionDetails(questions) {
     }
 
     async function submitTest() {
-  stopTimer();
-  state.lockedReviewMode = true;
-  await saveCompletedTestToHistory();
-  await showReview();
-}
+      stopTimer();
+      state.lockedReviewMode = true;
+      await saveCompletedTestToHistory();
+      await showReview();
+    }
 
     async function showReview() {
       stopTimer();
 
       const score200 = scaledScore();
       const weakest = weakestSkillText();
-      const correct = state.questions.filter((q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()).length;
+      const correct = state.questions.filter(
+        (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
+      ).length;
       const wrongOrUnanswered = state.questions.length - correct;
       const advance = nextDifficulty(state.difficulty);
       const passed = passThreshold(score200);
@@ -2068,7 +2038,9 @@ function renderHistoryQuestionDetails(questions) {
 
     async function showPracticeResults() {
       const total = state.questions.length;
-      const correct = state.questions.filter((q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()).length;
+      const correct = state.questions.filter(
+        (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
+      ).length;
 
       const panel = document.getElementById("practicePanel");
       panel.innerHTML = `
@@ -2119,163 +2091,160 @@ function renderHistoryQuestionDetails(questions) {
         }
       };
     }
+
     async function openProfilePanel() {
-  if (!state.auth.user || !state.auth.token) return;
+      if (!state.auth.user || !state.auth.token) return;
 
-  const panel = document.getElementById("profilePanel");
-  panel.innerHTML = `
-    <h2 class="sectionTitle">Profile & Test History</h2>
-    <div class="reviewItem">Loading history...</div>
-  `;
+      const panel = document.getElementById("profilePanel");
+      panel.innerHTML = `
+        <h2 class="sectionTitle">Profile & Test History</h2>
+        <div class="reviewItem">Loading history...</div>
+      `;
 
-  await setView("profile");
+      await setView("profile");
 
-  try {
-    const res = await fetch(`${API_BASE}/api/test/history`, {
-      headers: {
-        ...getAuthHeaders()
+      try {
+        const res = await fetch(`${API_BASE}/api/test/history`, {
+          headers: { ...getAuthHeaders() }
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load history.");
+        }
+
+        const history = Array.isArray(data.history) ? data.history : [];
+
+        const latestScore =
+          history.length > 0 && typeof history[0].score200 === "number"
+            ? history[0].score200
+            : "—";
+
+        const bestScore =
+          history.length > 0
+            ? Math.max(...history.map((h) => Number(h.score200) || 0))
+            : "—";
+
+        const currentFocus =
+          history.length > 0
+            ? (history[0].weakestSkill || "—")
+            : "—";
+
+        let encouragement = `<div class="reviewItem"><strong>Keep going.</strong> Every test gives you more feedback on what to improve next.</div>`;
+
+        if (history.length >= 2) {
+          const latest = Number(history[0].score200) || 0;
+          const previous = Number(history[1].score200) || 0;
+
+          if (latest > previous) {
+            encouragement = `<div class="reviewItem"><strong>Nice progress.</strong> Your latest score improved from ${previous} to ${latest}. Keep building on that momentum.</div>`;
+          } else if (latest < previous) {
+            encouragement = `<div class="reviewItem"><strong>Stay with it.</strong> Scores can fluctuate. Review your weakest skill and keep practicing consistently.</div>`;
+          } else {
+            encouragement = `<div class="reviewItem"><strong>Steady work.</strong> Your score held at ${latest}. That’s a good time to focus on your weakest skill to push higher.</div>`;
+          }
+        }
+
+        panel.innerHTML = `
+          <h2 class="sectionTitle">Profile & Test History</h2>
+
+          <div class="reviewTop">
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Tests Taken</div>
+              <div class="reviewStatValue">${history.length}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Latest Score</div>
+              <div class="reviewStatValue">${latestScore}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Best Score</div>
+              <div class="reviewStatValue">${bestScore}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Current Focus</div>
+              <div class="reviewStatValue">${escapeHtml(currentFocus)}</div>
+            </div>
+          </div>
+
+          ${encouragement}
+
+          <div class="reviewItem">
+            <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
+          </div>
+        `;
+
+        if (!history.length) {
+          const empty = document.createElement("div");
+          empty.className = "reviewItem";
+          empty.innerHTML = `No completed test history yet. Once you submit a test while signed in, it will appear here.`;
+          panel.appendChild(empty);
+        } else {
+          history.forEach((entry, index) => {
+            const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+            const detailsId = `historyDetails_${index}`;
+
+            const item = document.createElement("div");
+            item.className = "reviewItem";
+            item.innerHTML = `
+              <div><strong>Test ${history.length - index}</strong></div>
+              <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
+              <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>Score: ${Number(entry.score200) || 0} / 200</div>
+              <div>Correct: ${Number(entry.correctCount) || 0}</div>
+              <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
+              <div>Weakest Skill: ${escapeHtml(entry.weakestSkill || "—")}</div>
+              <div style="margin-top:12px;">
+                <button class="secondaryBtn historyToggleBtn" data-target="${detailsId}">View Details</button>
+              </div>
+              <div id="${detailsId}" class="hidden"></div>
+            `;
+
+            panel.appendChild(item);
+
+            const detailsContainer = item.querySelector(`#${detailsId}`);
+            detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
+          });
+
+          panel.querySelectorAll(".historyToggleBtn").forEach((btn) => {
+            btn.onclick = () => {
+              const targetId = btn.getAttribute("data-target");
+              const details = document.getElementById(targetId);
+              if (!details) return;
+
+              const isHidden = details.classList.contains("hidden");
+
+              if (isHidden) {
+                details.classList.remove("hidden");
+                btn.textContent = "Hide Details";
+              } else {
+                details.classList.add("hidden");
+                btn.textContent = "View Details";
+              }
+            };
+          });
+        }
+
+        document.getElementById("profileBackBtn").onclick = () => {
+          goToMainMenu();
+        };
+      } catch (error) {
+        console.error("PROFILE PANEL ERROR:", error);
+
+        panel.innerHTML = `
+          <h2 class="sectionTitle">Profile & Test History</h2>
+          <div class="reviewItem">Failed to load history.</div>
+          <div class="reviewItem">
+            <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
+          </div>
+        `;
+
+        document.getElementById("profileBackBtn").onclick = () => {
+          goToMainMenu();
+        };
       }
-    });
-
-    const data = await res.json();
-    console.log("PROFILE HISTORY RESPONSE:", data);
-
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to load history.");
     }
-
-    const history = Array.isArray(data.history) ? data.history : [];
-
-    const latestScore =
-      history.length > 0 && typeof history[0].score200 === "number"
-        ? history[0].score200
-        : "—";
-
-    const bestScore =
-      history.length > 0
-        ? Math.max(...history.map((h) => Number(h.score200) || 0))
-        : "—";
-
-    const currentFocus =
-      history.length > 0
-        ? (history[0].weakestSkill || "—")
-        : "—";
-
-    let encouragement = `<div class="reviewItem"><strong>Keep going.</strong> Every test gives you more feedback on what to improve next.</div>`;
-
-    if (history.length >= 2) {
-      const latest = Number(history[0].score200) || 0;
-      const previous = Number(history[1].score200) || 0;
-
-      if (latest > previous) {
-        encouragement = `<div class="reviewItem"><strong>Nice progress.</strong> Your latest score improved from ${previous} to ${latest}. Keep building on that momentum.</div>`;
-      } else if (latest < previous) {
-        encouragement = `<div class="reviewItem"><strong>Stay with it.</strong> Scores can fluctuate. Review your weakest skill and keep practicing consistently.</div>`;
-      } else {
-        encouragement = `<div class="reviewItem"><strong>Steady work.</strong> Your score held at ${latest}. That’s a good time to focus on your weakest skill to push higher.</div>`;
-      }
-    }
-
-    panel.innerHTML = `
-      <h2 class="sectionTitle">Profile & Test History</h2>
-
-      <div class="reviewTop">
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Tests Taken</div>
-          <div class="reviewStatValue">${history.length}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Latest Score</div>
-          <div class="reviewStatValue">${latestScore}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Best Score</div>
-          <div class="reviewStatValue">${bestScore}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Current Focus</div>
-          <div class="reviewStatValue">${currentFocus}</div>
-        </div>
-      </div>
-
-      ${encouragement}
-
-      <div class="reviewItem">
-        <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
-      </div>
-    `;
-
-    if (!history.length) {
-      const empty = document.createElement("div");
-      empty.className = "reviewItem";
-      empty.innerHTML = `No completed test history yet. Once you submit a test while signed in, it will appear here.`;
-      panel.appendChild(empty);
-    } else {
-      history.forEach((entry, index) => {
-        const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
-
-        const detailsId = `historyDetails_${index}`;
-
-        panel.querySelectorAll(".historyToggleBtn").forEach((btn) => {
-  btn.onclick = () => {
-    const targetId = btn.getAttribute("data-target");
-    const details = document.getElementById(targetId);
-    if (!details) return;
-
-    const isHidden = details.classList.contains("hidden");
-
-    if (isHidden) {
-      details.classList.remove("hidden");
-      btn.textContent = "Hide Details";
-    } else {
-      details.classList.add("hidden");
-      btn.textContent = "View Details";
-    }
-  };
-});
-
-const item = document.createElement("div");
-item.className = "reviewItem";
-item.innerHTML = `
-  <div><strong>Test ${history.length - index}</strong></div>
-  <div style="margin-top:8px;">Date: ${completedDate}</div>
-  <div>Difficulty: ${entry.difficulty || "—"}</div>
-  <div>Score: ${Number(entry.score200) || 0} / 200</div>
-  <div>Correct: ${Number(entry.correctCount) || 0}</div>
-  <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
-  <div>Weakest Skill: ${entry.weakestSkill || "—"}</div>
-  <div style="margin-top:12px;">
-    <button class="secondaryBtn historyToggleBtn" data-target="${detailsId}">View Details</button>
-  </div>
-  <div id="${detailsId}" class="hidden"></div>
-`;
-
-panel.appendChild(item);
-
-const detailsContainer = item.querySelector(`#${detailsId}`);
-detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
-      });
-    }
-
-    document.getElementById("profileBackBtn").onclick = () => {
-      goToMainMenu();
-    };
-  } catch (error) {
-    console.error("PROFILE PANEL ERROR:", error);
-
-    panel.innerHTML = `
-      <h2 class="sectionTitle">Profile & Test History</h2>
-      <div class="reviewItem">Failed to load history.</div>
-      <div class="reviewItem">
-        <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
-      </div>
-    `;
-
-    document.getElementById("profileBackBtn").onclick = () => {
-      goToMainMenu();
-    };
-  }
-}
 
     function goToMainMenu() {
       stopTimer();
@@ -2298,78 +2267,75 @@ detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
     }
 
     document.getElementById("startTestBtn").onclick = async () => {
-  if (state.auth.guestMode) {
-    await startTest();
-    return;
-  }
+      if (state.auth.guestMode) {
+        await startTest();
+        return;
+      }
 
-  if (!state.auth.user || !state.auth.token) {
-    showModal(
-      "Sign In Required",
-      "Sign in to save progress to your account, or continue as a guest to start without saving.",
-      [
-        {
-          label: "Cancel",
-          variant: "secondary"
-        },
-        {
-          label: "Sign In",
-          variant: "secondary",
-          keepOpen: true,
-          onClick: async () => {
-            openAuthModal("signin");
-          }
-        },
-        {
-          label: "Continue as Guest",
-          variant: "primary",
-          keepOpen: true,
-          onClick: async () => {
-            closeModal();
-            await continueAsGuest(true);
-          }
-        }
-      ]
-    );
-    return;
-  }
+      if (!state.auth.user || !state.auth.token) {
+        showModal(
+          "Sign In Required",
+          "Sign in to save progress to your account, or continue as a guest to start without saving.",
+          [
+            { label: "Cancel", variant: "secondary" },
+            {
+              label: "Sign In",
+              variant: "secondary",
+              keepOpen: true,
+              onClick: async () => {
+                openAuthModal("signin");
+              }
+            },
+            {
+              label: "Continue as Guest",
+              variant: "primary",
+              keepOpen: true,
+              onClick: async () => {
+                closeModal();
+                await continueAsGuest(true);
+              }
+            }
+          ]
+        );
+        return;
+      }
 
-  const resumeExists = await hasSavedProgress();
+      const resumeExists = await hasSavedProgress();
 
-  if (resumeExists) {
-    showModal(
-      "Warning",
-      "Starting a new test will replace your unfinished saved progress.",
-      [
-        { label: "Cancel", variant: "secondary" },
-        {
-          label: "Start",
-          variant: "primary",
-          onClick: async () => {
-            await clearSavedProgress();
-            await startTest();
-          }
-        }
-      ]
-    );
-  } else {
-    await startTest();
-  }
-};
+      if (resumeExists) {
+        showModal(
+          "Warning",
+          "Starting a new test will replace your unfinished saved progress.",
+          [
+            { label: "Cancel", variant: "secondary" },
+            {
+              label: "Start",
+              variant: "primary",
+              onClick: async () => {
+                await clearSavedProgress();
+                await startTest();
+              }
+            }
+          ]
+        );
+      } else {
+        await startTest();
+      }
+    };
 
     document.getElementById("resumeBtn").onclick = async () => {
-  await loadSavedProgress();
-};
-document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
-document.getElementById("userSummary").onclick = async () => {
-  if (state.auth.user) {
-    await openProfilePanel();
-  }
-};
-document.getElementById("guestBtnTop").onclick = () => continueAsGuest(false);
-document.getElementById("logoutBtnTop").onclick = () => {
-  logoutUser();
-};
+      await loadSavedProgress();
+    };
+    document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
+    document.getElementById("userSummary").onclick = async () => {
+      if (state.auth.user) {
+        await openProfilePanel();
+      }
+    };
+    document.getElementById("guestBtnTop").onclick = () => continueAsGuest(false);
+    document.getElementById("logoutBtnTop").onclick = () => {
+      logoutUser();
+    };
     document.getElementById("settingsBtn").onclick = openSettings;
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
     document.getElementById("prevBtn").onclick = async () => {
