@@ -701,11 +701,12 @@
       <div id="timerTop" class="hidden">Time Remaining: 115:00</div>
     </div>
     <div class="topbarRight">
-      <div id="userSummary" class="topbarUser hidden"></div>
-      <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
-      <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
-      <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
-    </div>
+  <div id="userSummary" class="topbarUser hidden"></div>
+  <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
+  <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
+  <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
+  <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
+</div>
   </div>
 
   <div id="questionNavigator" class="questionNavigator hidden">
@@ -715,33 +716,40 @@
 
   <div class="page">
     <div id="mainMenu" class="card menuWrap">
-      <h1 class="menuTitle">Main Menu</h1>
-      <div class="menuGrid">
-        <div class="menuPanel">
-          <h3>Start a New Test</h3>
-          <p>Currently math only. More subjects coming soon.</p>
-          <label for="difficultySelect">Difficulty</label>
-          <select id="difficultySelect">
-            <option>Easy</option>
-            <option>Medium</option>
-            <option selected>GED-Level</option>
-          </select>
-          <div class="menuActions" style="margin-top:12px;">
-            <button id="startTestBtn" class="primaryBtn">Start Test</button>
-            <button id="continueGuestBtn" class="secondaryBtn">Continue as Guest</button>
-            <button id="menuSignInBtn" class="secondaryBtn">Sign In / Create Account</button>
-          </div>
-        </div>
+  <h1 class="menuTitle">Main Menu</h1>
+  <div class="menuGrid">
+    <div class="menuPanel">
+      <h3>Welcome</h3>
+      <p>
+        Welcome to GED Practice Platform — a focused space to build confidence,
+        strengthen weak areas, and prepare step by step. Currently math only,
+        with more subjects coming soon.
+      </p>
+    </div>
 
-        <div id="resumePanel" class="menuPanel hidden">
-          <h3>Resume Unfinished Test</h3>
-          <p>Continue from your saved account progress.</p>
-          <div class="menuActions">
-            <button id="resumeBtn" class="secondaryBtn">Resume</button>
-          </div>
-        </div>
+    <div class="menuPanel">
+      <h3>Start a New Test</h3>
+      <p>Choose your difficulty level and begin.</p>
+      <label for="difficultySelect">Difficulty</label>
+      <select id="difficultySelect">
+        <option>Easy</option>
+        <option>Medium</option>
+        <option selected>GED-Level</option>
+      </select>
+      <div class="menuActions" style="margin-top:12px;">
+        <button id="startTestBtn" class="primaryBtn">Start Test</button>
       </div>
     </div>
+
+    <div id="resumePanel" class="menuPanel hidden">
+      <h3>Resume Unfinished Test</h3>
+      <p>Continue from your saved account progress.</p>
+      <div class="menuActions">
+        <button id="resumeBtn" class="secondaryBtn">Resume</button>
+      </div>
+    </div>
+  </div>
+</div>
 
     <div id="testView" class="testCard hidden">
       <div class="testHeader">
@@ -853,27 +861,31 @@
     }
 
     function updateAuthUI() {
-      const signInBtnTop = document.getElementById("signInBtnTop");
-      const logoutBtnTop = document.getElementById("logoutBtnTop");
-      const userSummary = document.getElementById("userSummary");
+  const signInBtnTop = document.getElementById("signInBtnTop");
+  const guestBtnTop = document.getElementById("guestBtnTop");
+  const logoutBtnTop = document.getElementById("logoutBtnTop");
+  const userSummary = document.getElementById("userSummary");
 
-      if (state.auth.user) {
-        signInBtnTop.classList.add("hidden");
-        logoutBtnTop.classList.remove("hidden");
-        userSummary.classList.remove("hidden");
-        userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
-      } else if (state.auth.guestMode) {
-        signInBtnTop.classList.remove("hidden");
-        logoutBtnTop.classList.add("hidden");
-        userSummary.classList.remove("hidden");
-        userSummary.textContent = "Guest Mode";
-      } else {
-        signInBtnTop.classList.remove("hidden");
-        logoutBtnTop.classList.add("hidden");
-        userSummary.classList.add("hidden");
-        userSummary.textContent = "";
-      }
-    }
+  if (state.auth.user) {
+    signInBtnTop.classList.add("hidden");
+    guestBtnTop.classList.add("hidden");
+    logoutBtnTop.classList.remove("hidden");
+    userSummary.classList.remove("hidden");
+    userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
+  } else if (state.auth.guestMode) {
+    signInBtnTop.classList.add("hidden");
+    guestBtnTop.classList.add("hidden");
+    logoutBtnTop.classList.remove("hidden");
+    userSummary.classList.remove("hidden");
+    userSummary.textContent = "Guest Mode";
+  } else {
+    signInBtnTop.classList.remove("hidden");
+    guestBtnTop.classList.remove("hidden");
+    logoutBtnTop.classList.add("hidden");
+    userSummary.classList.add("hidden");
+    userSummary.textContent = "";
+  }
+}
 
     async function loadCurrentUser() {
       if (!state.auth.token) {
@@ -1142,29 +1154,46 @@
   renderAuthModal();
 }
 
-    function continueAsGuest() {
-      showModal(
-        "Continue as Guest",
-        "Your test progress will NOT be saved when continuing as a guest.",
-        [
-          {
-            label: "Cancel",
-            variant: "secondary"
-          },
-          {
-            label: "Continue as Guest",
-            variant: "primary",
-            onClick: async () => {
-              state.auth.guestMode = true;
-              state.auth.user = null;
-              setAuthToken("");
-              updateAuthUI();
-              await updateResumeVisibility();
-            }
+    function continueAsGuest(startImmediately = false) {
+  if (state.auth.user || state.auth.token) {
+    showModal(
+      "Leave Account and Continue as Guest",
+      "Continuing as a guest will sign you out first. Guest test progress will NOT be saved.",
+      [
+        {
+          label: "Cancel",
+          variant: "secondary"
+        },
+        {
+          label: "Sign Out and Continue",
+          variant: "primary",
+          onClick: async () => {
+            await beginGuestMode(startImmediately);
           }
-        ]
-      );
-    }
+        }
+      ]
+    );
+    return;
+  }
+
+  showModal(
+    "Continue as Guest",
+    "Your test progress will NOT be saved when continuing as a guest.",
+    [
+      {
+        label: "Cancel",
+        variant: "secondary"
+      },
+      {
+        label: "Continue as Guest",
+        variant: "primary",
+        onClick: async () => {
+          await beginGuestMode(startImmediately);
+        }
+      }
+    ]
+  );
+}
 
     async function logoutUser() {
       state.auth.user = null;
@@ -1174,6 +1203,18 @@
       await updateResumeVisibility();
       showModal("Logged Out", "You have been signed out.");
     }
+
+    async function beginGuestMode(startImmediately = false) {
+  state.auth.user = null;
+  state.auth.guestMode = true;
+  setAuthToken("");
+  updateAuthUI();
+  await updateResumeVisibility();
+
+  if (startImmediately) {
+    await startTest();
+  }
+}
 
     function askReturnToMenu() {
       showModal(
@@ -1201,33 +1242,34 @@
     }
 
     async function saveProgress() {
-      if (!state.auth.user || !state.auth.token) return;
-      if (state.auth.guestMode) return;
-      if (!state.questions.length) return;
+  if (!state.auth.user || !state.auth.token) return;
+  if (state.auth.guestMode) return;
+  if (!state.questions.length) return;
+  if (state.mode !== "test") return;
 
-      try {
-        await fetch(`${API_BASE}/api/progress/save`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders()
-          },
-          body: JSON.stringify({
-            mode: state.mode,
-            difficulty: state.difficulty,
-            questions: state.questions,
-            currentIndex: state.currentIndex,
-            timeRemaining: state.timeRemaining,
-            practiceMeta: state.practiceMeta,
-            overtimeUsed: state.overtimeUsed,
-            timeoutMode: state.timeoutMode,
-            lockedReviewMode: state.lockedReviewMode
-          })
-        });
-      } catch (error) {
-        console.error("Failed to save progress", error);
-      }
-    }
+  try {
+    await fetch(`${API_BASE}/api/progress/save`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        mode: state.mode,
+        difficulty: state.difficulty,
+        questions: state.questions,
+        currentIndex: state.currentIndex,
+        timeRemaining: state.timeRemaining,
+        practiceMeta: state.practiceMeta,
+        overtimeUsed: state.overtimeUsed,
+        timeoutMode: state.timeoutMode,
+        lockedReviewMode: state.lockedReviewMode
+      })
+    });
+  } catch (error) {
+    console.error("Failed to save progress", error);
+  }
+}
 
     async function clearSavedProgress() {
       if (!state.auth.user || !state.auth.token) {
@@ -1999,47 +2041,70 @@
     }
 
     document.getElementById("startTestBtn").onclick = async () => {
-      if (!state.auth.user || !state.auth.token) {
-        showModal(
-          "Sign In Required",
-          "To save progress to your account, please sign in first. You can also continue as a guest, but guest progress will not be saved.",
-          [{ label: "Close", variant: "secondary" }]
-        );
-        return;
-      }
+  if (state.auth.guestMode) {
+    await startTest();
+    return;
+  }
 
-      const resumeExists = await hasSavedProgress();
+  if (!state.auth.user || !state.auth.token) {
+    showModal(
+      "Sign In Required",
+      "Sign in to save progress to your account, or continue as a guest to start without saving.",
+      [
+        {
+          label: "Cancel",
+          variant: "secondary"
+        },
+        {
+          label: "Sign In",
+          variant: "secondary",
+          onClick: async () => {
+            openAuthModal("signin");
+          }
+        },
+        {
+          label: "Continue as Guest",
+          variant: "primary",
+          onClick: async () => {
+            await continueAsGuest(true);
+          }
+        }
+      ]
+    );
+    return;
+  }
 
-      if (resumeExists) {
-        showModal(
-          "Warning",
-          "Starting a new test will replace your unfinished saved progress.",
-          [
-            { label: "Cancel", variant: "secondary" },
-            {
-              label: "Start",
-              variant: "primary",
-              onClick: async () => {
-                await clearSavedProgress();
-                await startTest();
-              }
-            }
-          ]
-        );
-      } else {
-        await startTest();
-      }
-    };
+  const resumeExists = await hasSavedProgress();
+
+  if (resumeExists) {
+    showModal(
+      "Warning",
+      "Starting a new test will replace your unfinished saved progress.",
+      [
+        { label: "Cancel", variant: "secondary" },
+        {
+          label: "Start",
+          variant: "primary",
+          onClick: async () => {
+            await clearSavedProgress();
+            await startTest();
+          }
+        }
+      ]
+    );
+  } else {
+    await startTest();
+  }
+};
 
     document.getElementById("resumeBtn").onclick = async () => {
-      await loadSavedProgress();
-    };
-    document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
-    document.getElementById("menuSignInBtn").onclick = () => openAuthModal("signin");
-    document.getElementById("continueGuestBtn").onclick = continueAsGuest;
-    document.getElementById("logoutBtnTop").onclick = async () => {
-      await logoutUser();
-    };
+  await loadSavedProgress();
+};
+document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
+document.getElementById("guestBtnTop").onclick = () => continueAsGuest(false);
+document.getElementById("logoutBtnTop").onclick = async () => {
+  await logoutUser();
+};
     document.getElementById("settingsBtn").onclick = openSettings;
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
     document.getElementById("prevBtn").onclick = async () => {
