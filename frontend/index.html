@@ -1225,7 +1225,7 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
 
   const repeatedWeakSkillCount = testHistory
     .slice(0, 4)
-    .filter((entry) => (entry.weakestSkill || "—") === currentFocus)
+    .filter((entry) => translateSkillLabel(entry.weakestSkill || "—") === currentFocus)
     .length;
 
   const practiceCountForFocus = practiceHistory.filter(
@@ -1406,6 +1406,11 @@ couldNotOpenGmail: isSpanish ? "No pudimos abrir Gmail automáticamente." : "We 
 youCanEmailUs: isSpanish ? "Puedes escribirnos a" : "You can email us at",
 tryAgain: isSpanish ? "Intentar de Nuevo" : "Try Again",
 message: isSpanish ? "Mensaje" : "Message",
+
+multipleChoice: isSpanish ? "Opción Múltiple" : "Multiple Choice",
+fillBlank: isSpanish ? "Respuesta Abierta" : "Fill Blank",
+dragDrop: isSpanish ? "Arrastrar y Soltar" : "Drag and Drop",
+hotSpot: isSpanish ? "Punto Activo" : "Hot Spot",
 
     continueGuest: isSpanish ? "Continuar como Invitado" : "Continue as Guest",
     contactUs: isSpanish ? "Contáctanos" : "Contact Us",
@@ -1643,6 +1648,18 @@ function translateSkillLabel(value) {
   if (value === "Linear Equations") return tr("skillLinearEquations");
   if (value === "Slope") return tr("skillLinearSlope");
   if (value === "Mixed Practice") return tr("mixedPractice");
+  return value || "—";
+}
+
+function getQuestionDisplaySkill(q) {
+  return translateSkillLabel(q?.skill || state.practiceMeta?.skill || "—");
+}
+
+function translateQuestionType(value) {
+  if (value === "multiple") return tr("multipleChoice");
+  if (value === "fill") return tr("fillBlank");
+  if (value === "dragdrop") return tr("dragDrop");
+  if (value === "hotspot") return tr("hotSpot");
   return value || "—";
 }
 
@@ -2149,10 +2166,10 @@ function buildCurrentQuestionReportDetails() {
 
   return `${tr("mode")}: ${modeLabel}
 ${tr("difficulty")}: ${translateDifficultyLabel(state.practiceMeta?.difficulty || state.difficulty || "—")}
-${tr("skill")}: ${translateSkillLabel(q.skill || state.practiceMeta?.skill || "—")}
+${tr("skill")}: ${getQuestionDisplaySkill(q)}
 ${tr("questionNumber")}: ${currentQuestionNumber} / ${state.questions.length}
 ${tr("flaggedLabel")}: ${q.flagged ? tr("yes") : tr("no")}
-${tr("questionType")}: ${q.type || "—"}
+${tr("questionType")}: ${translateQuestionType(q.type)}
 
 ${tr("questionTextLabel")}:
 ${String(q.question || "").replace(/<[^>]*>/g, " ").trim() || "—"}
@@ -3347,34 +3364,34 @@ async function saveCompletedPracticeToHistory() {
     }
 
     function weakestSkillText() {
-      if (!state.questions.length) return "—";
+  if (!state.questions.length) return "—";
 
-      const stats = {};
+  const stats = {};
 
-      state.questions.forEach((q) => {
-        const skill = q.skill || "Mixed Practice";
-        if (!stats[skill]) stats[skill] = { total: 0, correct: 0 };
+  state.questions.forEach((q) => {
+    const skill = q.skill || "Mixed Practice";
+    if (!stats[skill]) stats[skill] = { total: 0, correct: 0 };
 
-        stats[skill].total += 1;
+    stats[skill].total += 1;
 
-        if (String(q.userAnswer ?? "").trim() === String(q.answer).trim()) {
-          stats[skill].correct += 1;
-        }
-      });
-
-      let weakest = null;
-      let lowest = Infinity;
-
-      Object.keys(stats).forEach((skill) => {
-        const rate = stats[skill].correct / stats[skill].total;
-        if (rate < lowest) {
-          lowest = rate;
-          weakest = skill;
-        }
-      });
-
-      return weakest || "—";
+    if (String(q.userAnswer ?? "").trim() === String(q.answer).trim()) {
+      stats[skill].correct += 1;
     }
+  });
+
+  let weakest = null;
+  let lowest = Infinity;
+
+  Object.keys(stats).forEach((skill) => {
+    const rate = stats[skill].correct / stats[skill].total;
+    if (rate < lowest) {
+      lowest = rate;
+      weakest = skill;
+    }
+  });
+
+  return translateSkillLabel(weakest || "—");
+}
 
     function passThreshold(score) {
       if (state.difficulty === "Easy") return score >= 120;
