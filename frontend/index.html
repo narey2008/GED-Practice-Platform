@@ -802,9 +802,11 @@
 
   <script>
     const TEST_LENGTH = 46;
-    const TEST_TIME_SECONDS = 115 * 60;
-    const LIGHTING_KEY = "ged_practice_lighting_pref";
-    const AUTH_TOKEN_KEY = "ged_practice_auth_token";
+const TEST_TIME_SECONDS = 115 * 60;
+const IDLE_AUTO_PAUSE_SECONDS = 15 * 60;
+const IDLE_ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "input"];
+const LIGHTING_KEY = "ged_practice_lighting_pref";
+const AUTH_TOKEN_KEY = "ged_practice_auth_token";
     const API_BASE =
       window.location.hostname === "localhost"
         ? "http://localhost:3000"
@@ -824,6 +826,8 @@
   lockedReviewMode: false,
   navigatorVisible: false,
   isPaused: false,
+  idleSeconds: 0,
+  autoPaused: false,
   auth: {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
     user: null,
@@ -1404,6 +1408,25 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
       }
     }
 
+    function resetIdleTracking() {
+  state.idleSeconds = 0;
+}
+
+function shouldTrackIdleActivity() {
+  return (
+    state.mode === "test" &&
+    state.questions.length > 0 &&
+    !state.timeoutMode &&
+    !state.lockedReviewMode &&
+    !state.isPaused
+  );
+}
+
+function handleUserActivity() {
+  if (!shouldTrackIdleActivity()) return;
+  resetIdleTracking();
+}
+
     async function saveProgress() {
   if (!state.auth.user || !state.auth.token) return;
   if (state.auth.guestMode) return;
@@ -1427,7 +1450,9 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
         overtimeUsed: state.overtimeUsed,
         timeoutMode: state.timeoutMode,
         lockedReviewMode: state.lockedReviewMode,
-        isPaused: state.isPaused
+        isPaused: state.isPaused,
+        idleSeconds: state.idleSeconds,
+        autoPaused: state.autoPaused
       })
     });
   } catch (error) {
@@ -1477,11 +1502,13 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
         ? progress.timeRemaining
         : TEST_TIME_SECONDS;
     state.practiceMeta = progress.practiceMeta || null;
-    state.overtimeUsed = !!progress.overtimeUsed;
-    state.timeoutMode = !!progress.timeoutMode;
-    state.lockedReviewMode = !!progress.lockedReviewMode;
-    state.isPaused = !!progress.isPaused;
-    state.navigatorVisible = false;
+state.overtimeUsed = !!progress.overtimeUsed;
+state.timeoutMode = !!progress.timeoutMode;
+state.lockedReviewMode = !!progress.lockedReviewMode;
+state.isPaused = !!progress.isPaused;
+state.idleSeconds = Number(progress.idleSeconds) || 0;
+state.autoPaused = !!progress.autoPaused;
+state.navigatorVisible = false;
 
     document.getElementById("difficultySelect").value = state.difficulty;
 
@@ -1578,6 +1605,7 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     if (state.isPaused) return;
 
     state.timeRemaining -= 1;
+    state.idleSeconds += 1;
 
     if (state.timeRemaining <= 0) {
       state.timeRemaining = 0;
@@ -1586,20 +1614,31 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
       return;
     }
 
+    if (
+      state.mode === "test" &&
+      !state.timeoutMode &&
+      !state.lockedReviewMode &&
+      state.idleSeconds >= IDLE_AUTO_PAUSE_SECONDS
+    ) {
+      await pauseTest(true);
+      return;
+    }
+
     updateStatus();
   }, 1000);
 }
 
-async function pauseTest() {
+async function pauseTest(isAutoPause = false) {
   if (state.mode !== "test") return;
   if (!state.questions.length) return;
   if (state.timeoutMode || state.lockedReviewMode || state.isPaused) return;
 
   state.isPaused = true;
+  state.autoPaused = !!isAutoPause;
   stopTimer();
   updateStatus();
   await saveProgress();
-  showPausedModal();
+  showPausedModal(isAutoPause);
 }
 
 async function resumeTest() {
@@ -1608,6 +1647,8 @@ async function resumeTest() {
   if (!state.isPaused) return;
 
   state.isPaused = false;
+  state.autoPaused = false;
+  resetIdleTracking();
   updateStatus();
   closeModal();
   await saveProgress();
@@ -1617,14 +1658,20 @@ async function resumeTest() {
   }
 }
 
-function showPausedModal() {
+function showPausedModal(isAutoPause = false) {
   showModal(
-    "Test Paused",
-    `
-      <p>Your test is paused.</p>
-      <p>The timer is stopped and your progress has been saved.</p>
-      <p>Press <strong>Resume Test</strong> when you are ready to continue.</p>
-    `,
+    isAutoPause ? "Test Auto-Paused" : "Test Paused",
+    isAutoPause
+      ? `
+        <p>Your test was automatically paused due to inactivity.</p>
+        <p>The timer is stopped and your progress has been saved.</p>
+        <p>Press <strong>Resume Test</strong> when you are ready to continue.</p>
+      `
+      : `
+        <p>Your test is paused.</p>
+        <p>The timer is stopped and your progress has been saved.</p>
+        <p>Press <strong>Resume Test</strong> when you are ready to continue.</p>
+      `,
     [
       {
         label: "Resume Test",
@@ -1779,6 +1826,8 @@ function showPausedModal() {
   state.lockedReviewMode = false;
   state.navigatorVisible = false;
   state.isPaused = false;
+  state.idleSeconds = 0;
+  state.autoPaused = false;
 
   await setView("test");
   document.getElementById("questionText").innerText = "Generating test...";
@@ -1799,6 +1848,7 @@ function showPausedModal() {
     flagged: false
   }));
 
+  resetIdleTracking();
   startTimer();
   renderQuestion();
   await saveProgress();
@@ -1829,6 +1879,8 @@ function showPausedModal() {
   state.lockedReviewMode = false;
   state.navigatorVisible = false;
   state.isPaused = false;
+  state.idleSeconds = 0;
+  state.autoPaused = false;
 
   await setView("test");
   renderQuestion();
@@ -2597,6 +2649,8 @@ ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primar
   state.lockedReviewMode = false;
   state.navigatorVisible = false;
   state.isPaused = false;
+  state.idleSeconds = 0;
+  state.autoPaused = false;
 
   renderChart(null);
   setView("menu");
@@ -2706,7 +2760,11 @@ document.getElementById("submitTestBtn").onclick = () => {
   }
 };
 
-    (async function init() {
+    IDLE_ACTIVITY_EVENTS.forEach((eventName) => {
+  window.addEventListener(eventName, handleUserActivity, { passive: true });
+});
+
+(async function init() {
       applyTheme(getSavedTheme());
       await loadCurrentUser();
       updateStatus();
