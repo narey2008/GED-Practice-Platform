@@ -1470,6 +1470,11 @@ message: isSpanish ? "Mensaje" : "Message",
       : "Are you sure you want to return to the main menu? Your current progress is saved to your account.",
     returnBtn: isSpanish ? "Volver" : "Return",
 
+    enterYourAnswer: isSpanish ? "Ingresa tu respuesta" : "Enter your answer",
+closeToast: isSpanish ? "Cerrar" : "Close",
+sessionInvalid: isSpanish ? "Sesión no válida" : "Session invalid",
+apiRequestFailed: isSpanish ? "La solicitud a la API falló" : "API request failed",
+
     logoutTitle: isSpanish ? "Cerrar Sesión" : "Log Out",
     exitGuestMode: isSpanish ? "Salir del Modo Invitado" : "Exit Guest Mode",
     leaveGuestModeQuestion: isSpanish ? "¿Seguro que quieres salir del modo invitado?" : "Are you sure you want to leave guest mode?",
@@ -1822,7 +1827,7 @@ function applyLanguage(language) {
           headers: { ...getAuthHeaders() }
         });
 
-        if (!res.ok) throw new Error("Session invalid");
+        if (!res.ok) throw new Error(tr("sessionInvalid"));
 
         const data = await res.json();
         state.auth.user = data.user;
@@ -2157,7 +2162,7 @@ function showToast(title, text, duration = 6000) {
       <div class="toastTitle">${escapeHtml(title)}</div>
       <div class="toastText">${escapeHtml(text)}</div>
       <div class="toastActions">
-        <button id="toastCloseBtn" class="toastCloseBtn" type="button">Close</button>
+        <button id="toastCloseBtn" class="toastCloseBtn" type="button">${tr("closeToast")}</button>
       </div>
     </div>
   `;
@@ -2918,7 +2923,7 @@ function showPausedModal(isAutoPause = false) {
 
       const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
       if (!res.ok) {
-        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+        throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
       }
 
       const data = await res.json();
@@ -2950,7 +2955,7 @@ function showPausedModal(isAutoPause = false) {
       const count = examplesOnly ? 2 : 12;
       const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
       if (!res.ok) {
-        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+        throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
       }
 
       const data = await res.json();
@@ -3054,7 +3059,7 @@ function showPausedModal(isAutoPause = false) {
     const input = document.createElement("input");
     input.id = "fillAnswer";
     input.type = "text";
-    input.placeholder = "Enter your answer";
+    input.placeholder = tr("enterYourAnswer");
     input.value = q.userAnswer ?? "";
     input.disabled = state.lockedReviewMode || state.isPaused;
     input.oninput = async (e) => {
