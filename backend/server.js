@@ -152,6 +152,14 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
+app.get("/api/debug-forgot-password", (req, res) => {
+  res.json({
+    ok: true,
+    forgotPasswordRouteLoaded: true,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.post("/api/auth/register", async (req, res) => {
   try {
     const rawEmail =
@@ -255,17 +263,24 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 app.post("/api/auth/forgot-password", async (req, res) => {
+  console.log("FORGOT PASSWORD HIT");
+  console.log("BODY:", req.body);
+
   try {
     const rawEmail =
       typeof req.body.email === "string"
         ? req.body.email.trim().toLowerCase()
         : "";
 
+    console.log("EMAIL:", rawEmail);
+
     if (!rawEmail) {
+      console.log("FORGOT PASSWORD: missing email");
       return res.status(400).json({ error: "Email is required." });
     }
 
     const user = await User.findOne({ email: rawEmail });
+    console.log("USER FOUND:", !!user);
 
     if (user) {
       const { rawToken, tokenHash, expiresAt } = createPasswordResetToken();
@@ -274,10 +289,14 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       user.passwordResetExpiresAt = expiresAt;
       await user.save();
 
+      console.log("RESET TOKEN SAVED");
+
       await sendPasswordResetEmail({
         email: user.email,
         rawToken
       });
+
+      console.log("RESET EMAIL SENT");
     }
 
     return res.json({
@@ -287,6 +306,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
   } catch (error) {
     console.error("FORGOT PASSWORD ERROR:");
     console.error(error);
+
     return res.status(500).json({
       error: error.message || "Failed to start password reset."
     });
