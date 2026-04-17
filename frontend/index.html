@@ -1928,6 +1928,30 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
       );
     }
 
+    function confirmPracticeSubmit() {
+  const hasUnanswered = state.questions.some(
+    (q) => String(q.userAnswer ?? "").trim() === ""
+  );
+
+  showModal(
+    "Submit Practice",
+    `
+      <p>Are you sure you want to submit this practice set?</p>
+      ${hasUnanswered ? "<p>⚠ You still have unanswered questions.</p>" : ""}
+    `,
+    [
+      { label: "Cancel", variant: "secondary" },
+      {
+        label: "Submit Practice",
+        variant: "primary",
+        onClick: async () => {
+          await showPracticeResults();
+        }
+      }
+    ]
+  );
+}
+
     async function nextQuestion() {
       if (!state.questions.length) return;
 
@@ -2551,7 +2575,16 @@ ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primar
     document.getElementById("flagBtn").onclick = async () => {
       await toggleFlag();
     };
-    document.getElementById("submitTestBtn").onclick = confirmSubmit;
+    document.getElementById("submitTestBtn").onclick = () => {
+  if (state.mode === "practice") {
+    confirmPracticeSubmit();
+    return;
+  }
+
+  if (state.mode === "test") {
+    confirmSubmit();
+  }
+};
 
     (async function init() {
       applyTheme(getSavedTheme());
