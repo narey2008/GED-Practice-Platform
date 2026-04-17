@@ -3623,11 +3623,11 @@ async function saveCompletedPracticeToHistory() {
           <div class="reviewTop">
             <div class="reviewStat">
               <div class="reviewStatLabel">${tr("currentFocus")}</div>
-              <div class="reviewStatValue">${escapeHtml(currentFocus)}</div>
+              <div class="reviewStatValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
             </div>
             <div class="reviewStat">
               <div class="reviewStatLabel">${tr("nextFocus")}</div>
-              <div class="reviewStatValue">${escapeHtml(nextFocus)}</div>
+              <div class="reviewStatValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
             </div>
             <div class="reviewStat" style="grid-column: span 2;">
               <div class="reviewStatLabel">${tr("progressNote")}</div>
@@ -3637,7 +3637,7 @@ async function saveCompletedPracticeToHistory() {
 
           <div class="reviewItem">
             <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-            ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
+                        ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
           </div>
 
           <div class="reviewItem">
@@ -3672,7 +3672,7 @@ async function saveCompletedPracticeToHistory() {
               <div>${tr("score")}: ${Number(entry.score200) || 0} / 200</div>
               <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
               <div>${tr("wrongUnanswered")}: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
-              <div>${tr("weakestSkill")}: ${escapeHtml(entry.weakestSkill || "—")}</div>
+              <div>${tr("weakestSkill")}: ${escapeHtml(translateSkillLabel(entry.weakestSkill || "—"))}</div>
               <div style="margin-top:12px;">
                 <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">${tr("viewDetails")}</button>
               </div>
