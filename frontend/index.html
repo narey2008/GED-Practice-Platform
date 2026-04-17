@@ -1694,7 +1694,7 @@ function applyLanguage(language) {
 
         const data = await res.json();
         state.auth.user = data.user;
-        state.auth.guestMode = false;
+        setGuestMode(false);
       } catch (error) {
         state.auth.user = null;
         setGuestMode(false);
@@ -3508,26 +3508,7 @@ async function saveCompletedPracticeToHistory() {
             testSection.appendChild(item);
 
             const detailsContainer = item.querySelector(`#${detailsId}`);
-            const questions = Array.isArray(entry.questions) ? entry.questions : [];
-            if (!questions.length) {
-              detailsContainer.innerHTML = `<div class="reviewItem" style="margin-top:10px;">${tr("noQuestionDataTest")}</div>`;
-            } else {
-              detailsContainer.innerHTML = questions.map((q, i) => {
-                const userAnswer = String(q.userAnswer ?? "").trim();
-                const correctAnswer = String(q.answer ?? "").trim();
-                const isCorrect = userAnswer === correctAnswer;
-
-                return `
-                  <div class="reviewItem" style="margin-top:10px;">
-                    <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
-                    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
-                    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
-                    <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
-                    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
-                  </div>
-                `;
-              }).join("");
-            }
+            detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
           });
         }
 
@@ -3559,26 +3540,7 @@ async function saveCompletedPracticeToHistory() {
             practiceSection.appendChild(item);
 
             const detailsContainer = item.querySelector(`#${detailsId}`);
-            const questions = Array.isArray(entry.questions) ? entry.questions : [];
-            if (!questions.length) {
-              detailsContainer.innerHTML = `<div class="reviewItem" style="margin-top:10px;">${tr("noQuestionDataPractice")}</div>`;
-            } else {
-              detailsContainer.innerHTML = questions.map((q, i) => {
-                const userAnswer = String(q.userAnswer ?? "").trim();
-                const correctAnswer = String(q.answer ?? "").trim();
-                const isCorrect = userAnswer === correctAnswer;
-
-                return `
-                  <div class="reviewItem" style="margin-top:10px;">
-                    <div><strong>Q${i + 1}</strong></div>
-                    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
-                    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
-                    <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
-                    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
-                  </div>
-                `;
-              }).join("");
-            }
+            detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
           });
         }
 
