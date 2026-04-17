@@ -124,11 +124,12 @@
       --nav-active-text: #ffffff;
     }
 
-    body {
+      body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
+      font-size: var(--app-font-scale, 100%);
     }
 
     .hidden { display: none !important; }
@@ -171,11 +172,14 @@
       color: var(--topbar-text);
     }
 
-    .topbarUser {
+        .topbarUser {
       font-size: 13px;
       font-weight: 700;
       color: var(--topbar-text);
       white-space: nowrap;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .page {
@@ -993,6 +997,8 @@ const TEST_TIME_SECONDS = 115 * 60;
 const IDLE_AUTO_PAUSE_SECONDS = 15 * 60;
 const IDLE_ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "input"];
 const LIGHTING_KEY = "ged_practice_lighting_pref";
+const LANGUAGE_KEY = "ged_practice_language_pref";
+const FONT_SIZE_KEY = "ged_practice_font_size_pref";
 const AUTH_TOKEN_KEY = "ged_practice_auth_token";
     const API_BASE =
       window.location.hostname === "localhost"
@@ -1169,6 +1175,32 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     function getSavedTheme() {
       return localStorage.getItem(LIGHTING_KEY) || "Original Mode";
     }
+
+    function getSavedLanguage() {
+  return localStorage.getItem(LANGUAGE_KEY) || "English";
+}
+
+function saveLanguage(language) {
+  localStorage.setItem(LANGUAGE_KEY, language);
+}
+
+function getSavedFontSize() {
+  return localStorage.getItem(FONT_SIZE_KEY) || "Standard";
+}
+
+function getFontScaleValue(sizeLabel) {
+  if (sizeLabel === "Medium") return "125%";
+  if (sizeLabel === "Big") return "150%";
+  if (sizeLabel === "Large") return "175%";
+  if (sizeLabel === "Extra Large") return "200%";
+  return "100%";
+}
+
+function applyFontSize(sizeLabel) {
+  const scale = getFontScaleValue(sizeLabel);
+  document.documentElement.style.setProperty("--app-font-scale", scale);
+  localStorage.setItem(FONT_SIZE_KEY, sizeLabel);
+}
 
     function formatTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
@@ -1590,31 +1622,54 @@ function showToast(title, text, duration = 6000) {
 }
 
     function openSettings() {
-      const current = getSavedTheme();
-      showModal(
-        "Settings",
-        `
-          <label for="lightingSelect">Appearance Preference</label>
-          <select id="lightingSelect">
-            <option ${current === "Light Mode" ? "selected" : ""}>Light Mode</option>
-            <option ${current === "Dark Mode" ? "selected" : ""}>Dark Mode</option>
-            <option ${current === "Original Mode" ? "selected" : ""}>Original Mode</option>
-          </select>
-        `,
-        [
-          { label: "Cancel", variant: "secondary" },
-          {
-            label: "Save",
-            variant: "primary",
-            onClick: () => {
-              const selected = document.getElementById("lightingSelect").value;
-              applyTheme(selected);
-              renderQuestion();
-            }
-          }
-        ]
-      );
-    }
+  const currentTheme = getSavedTheme();
+  const currentLanguage = getSavedLanguage();
+  const currentFontSize = getSavedFontSize();
+
+  showModal(
+    "Settings",
+    `
+      <label for="lightingSelect">Appearance Preference</label>
+      <select id="lightingSelect">
+        <option ${currentTheme === "Light Mode" ? "selected" : ""}>Light Mode</option>
+        <option ${currentTheme === "Dark Mode" ? "selected" : ""}>Dark Mode</option>
+        <option ${currentTheme === "Original Mode" ? "selected" : ""}>Original Mode</option>
+      </select>
+
+      <label for="languageSelect" style="margin-top:12px;">Language</label>
+      <select id="languageSelect">
+        <option ${currentLanguage === "English" ? "selected" : ""}>English</option>
+        <option ${currentLanguage === "Spanish" ? "selected" : ""}>Spanish</option>
+      </select>
+
+      <label for="fontSizeSelect" style="margin-top:12px;">Font Size</label>
+      <select id="fontSizeSelect">
+        <option ${currentFontSize === "Standard" ? "selected" : ""}>Standard</option>
+        <option ${currentFontSize === "Medium" ? "selected" : ""}>Medium</option>
+        <option ${currentFontSize === "Big" ? "selected" : ""}>Big</option>
+        <option ${currentFontSize === "Large" ? "selected" : ""}>Large</option>
+        <option ${currentFontSize === "Extra Large" ? "selected" : ""}>Extra Large</option>
+      </select>
+    `,
+    [
+      { label: "Cancel", variant: "secondary" },
+      {
+        label: "Save",
+        variant: "primary",
+        onClick: () => {
+          const selectedTheme = document.getElementById("lightingSelect").value;
+          const selectedLanguage = document.getElementById("languageSelect").value;
+          const selectedFontSize = document.getElementById("fontSizeSelect").value;
+
+          applyTheme(selectedTheme);
+          saveLanguage(selectedLanguage);
+          applyFontSize(selectedFontSize);
+          renderQuestion();
+        }
+      }
+    ]
+  );
+}
 
     function openAuthModal(initialMode = "signin") {
       let currentMode = initialMode;
@@ -3267,6 +3322,7 @@ window.addEventListener("unhandledrejection", () => {
 
 (async function init() {
       applyTheme(getSavedTheme());
+      applyFontSize(getSavedFontSize());
       await loadCurrentUser();
       updateStatus();
       await setView("menu");
