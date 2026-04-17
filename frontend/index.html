@@ -2263,7 +2263,7 @@ async function saveCompletedPracticeToHistory() {
     const currentFocus = skillStats.length > 0 ? skillStats[0].skill : "—";
     const nextFocus = skillStats.length > 1 ? skillStats[1].skill : "—";
 
-    const encouragement = getTrendMessage(testHistory);
+    const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
 
     panel.innerHTML = `
       <h2 class="sectionTitle">Profile</h2>
