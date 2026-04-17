@@ -733,9 +733,79 @@ body.loadingActive {
   overflow: hidden;
 }
 
+.toastWrap {
+  position: fixed;
+  top: 76px;
+  right: 18px;
+  z-index: 2200;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 420px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--primary);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.2);
+  padding: 14px 16px;
+  pointer-events: auto;
+  animation: toastSlideIn 0.18s ease-out;
+}
+
+.toastTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.toastText {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.toastActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.toastCloseBtn {
+  background: transparent;
+  color: var(--secondary-text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toastCloseBtn:hover {
+  background: var(--panel-2);
+}
+
 @keyframes loadingSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
 }
 
     @media (max-width: 1100px) {
@@ -894,7 +964,7 @@ body.loadingActive {
     </div>
   </div>
 
-  <div id="loadingOverlay" class="loadingOverlay" aria-live="polite" aria-busy="true">
+    <div id="loadingOverlay" class="loadingOverlay" aria-live="polite" aria-busy="true">
     <div class="loadingCard">
       <div class="loadingSpinner"></div>
       <div id="loadingTitle" class="loadingTitle">Loading...</div>
@@ -902,6 +972,8 @@ body.loadingActive {
       <div class="loadingSubtext">Please do not refresh</div>
     </div>
   </div>
+
+  <div id="toastWrap" class="toastWrap"></div>
 
   <script>
     const TEST_LENGTH = 46;
@@ -1303,6 +1375,46 @@ async function withLoading(title, text, work) {
   }
 }
 
+let toastTimeoutId = null;
+
+function hideToast() {
+  const wrap = document.getElementById("toastWrap");
+  wrap.innerHTML = "";
+
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+}
+
+function showToast(title, text, duration = 6000) {
+  const wrap = document.getElementById("toastWrap");
+
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+
+  wrap.innerHTML = `
+    <div class="toast">
+      <div class="toastTitle">${escapeHtml(title)}</div>
+      <div class="toastText">${escapeHtml(text)}</div>
+      <div class="toastActions">
+        <button id="toastCloseBtn" class="toastCloseBtn" type="button">Close</button>
+      </div>
+    </div>
+  `;
+
+  const closeBtn = document.getElementById("toastCloseBtn");
+  if (closeBtn) {
+    closeBtn.onclick = () => hideToast();
+  }
+
+  toastTimeoutId = setTimeout(() => {
+    hideToast();
+  }, duration);
+}
+
     function openSettings() {
       const current = getSavedTheme();
       showModal(
@@ -1493,26 +1605,39 @@ async function withLoading(title, text, work) {
     }
 
     function logoutUser() {
-      showModal(
-        "Log Out",
-        "Are you sure you want to log out?",
-        [
-          { label: "Cancel", variant: "secondary" },
-          {
-            label: "Log Out",
-            variant: "primary",
-            onClick: async () => {
-              state.auth.user = null;
-              state.auth.guestMode = false;
-              setAuthToken("");
-              updateAuthUI();
-              await updateResumeVisibility();
-              showModal("Logged Out", "You have been signed out.");
-            }
-          }
-        ]
-      );
-    }
+  const logoutLabel = state.auth.guestMode ? "Exit Guest Mode" : "Log Out";
+  const logoutMessage = state.auth.guestMode
+    ? "Are you sure you want to leave guest mode?"
+    : "Are you sure you want to log out?";
+
+  showModal(
+    logoutLabel,
+    logoutMessage,
+    [
+      { label: "Cancel", variant: "secondary" },
+      {
+        label: logoutLabel,
+        variant: "primary",
+        onClick: async () => {
+          stopTimer();
+
+          state.auth.user = null;
+          state.auth.guestMode = false;
+          setAuthToken("");
+
+          goToMainMenu();
+          updateAuthUI();
+          await updateResumeVisibility();
+
+          showToast(
+            "Successfully Signed Out",
+            "You have been returned to the main menu."
+          );
+        }
+      }
+    ]
+  );
+}
 
     function askReturnToMenu() {
       const message = state.auth.guestMode
@@ -1958,7 +2083,8 @@ function showPausedModal(isAutoPause = false) {
   await withLoading(
     "Starting Test...",
     "Your test is being generated. Please wait.",
-    async () => {
+        async () => {
+      hideToast();
       stopTimer();
       state.difficulty = document.getElementById("difficultySelect").value;
       state.mode = "test";
@@ -2008,6 +2134,7 @@ function showPausedModal(isAutoPause = false) {
       ? "Worked examples are being prepared. Please wait."
       : "Your practice set is being prepared. Please wait.",
     async () => {
+      hideToast();
       stopTimer();
 
       const count = examplesOnly ? 2 : 12;
@@ -2416,6 +2543,7 @@ async function saveCompletedPracticeToHistory() {
     "Submitting Test...",
     "Your test is being submitted and scored. Please wait.",
     async () => {
+      hideToast();
       stopTimer();
       state.lockedReviewMode = true;
       state.isPaused = false;
