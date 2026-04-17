@@ -1386,15 +1386,19 @@ async function withLoading(title, text, work) {
   }
 }
 
-function buildSupportEmailLink() {
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
+}
+
+function buildSupportEmailData() {
   const userStatus = state.auth.user
     ? `Signed in as: ${state.auth.user.displayName || state.auth.user.email}`
     : state.auth.guestMode
     ? "Guest Mode"
     : "Not signed in";
 
-  const subject = encodeURIComponent("GED Practice Platform Support Request");
-  const body = encodeURIComponent(
+  const subject = "GED Practice Platform Support Request";
+  const body =
 `Hello,
 
 I am contacting support about GED Practice Platform.
@@ -1417,10 +1421,53 @@ ${userStatus}
 Device/browser:
 [Optional]
 
-Thank you.`
-  );
+Thank you.`;
 
-  return `mailto:gedpracticeplatform@gmail.com?subject=${subject}&body=${body}`;
+  return {
+    to: "gedpracticeplatform@gmail.com",
+    subject,
+    body
+  };
+}
+
+function buildSupportMailtoLink() {
+  const emailData = buildSupportEmailData();
+  return `mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
+}
+
+function buildSupportGmailLink() {
+  const emailData = buildSupportEmailData();
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailData.to)}&su=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
+}
+
+function openSupportEmail() {
+  if (isMobileDevice()) {
+    window.location.href = buildSupportMailtoLink();
+    return;
+  }
+
+  const gmailUrl = buildSupportGmailLink();
+  const newTab = window.open(gmailUrl, "_blank", "noopener,noreferrer");
+
+  if (!newTab) {
+    showModal(
+      "Support Contact",
+      `
+        <p>We could not open a new tab automatically.</p>
+        <p>You can email us at <strong>gedpracticeplatform@gmail.com</strong>.</p>
+      `,
+      [
+        { label: "Close", variant: "secondary" },
+        {
+          label: "Try Gmail Tab Again",
+          variant: "primary",
+          onClick: () => {
+            window.open(buildSupportGmailLink(), "_blank", "noopener,noreferrer");
+          }
+        }
+      ]
+    );
+  }
 }
 
 let toastTimeoutId = null;
