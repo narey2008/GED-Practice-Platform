@@ -16,7 +16,8 @@ const PracticeHistory = require("./models/PracticeHistory");
 const authMiddleware = require("./middleware/auth");
 
 console.log("RUNNING BACKEND SERVER FILE");
-console.log("DEBUG VERSION: forgot-password-build-2026-04-17-a");
+console.log("DEBUG VERSION: forgot-password-route-check-2026-04-17");
+console.log("DEBUG VERSION: backend/server.js forgot-password build marker");
 
 dotenv.config();
 
@@ -150,6 +151,15 @@ app.get("/api/health", async (req, res) => {
   res.json({
     ok: true,
     databaseConnected: dbState === 1
+  });
+});
+
+app.get("/api/debug-nathan-2026-reset-check", (req, res) => {
+  res.json({
+    ok: true,
+    route: "api/debug-nathan-2026-reset-check",
+    serverFileReached: true,
+    timestamp: new Date().toISOString()
   });
 });
 
