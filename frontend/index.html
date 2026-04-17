@@ -668,11 +668,75 @@
     }
 
     .authError {
-      color: #b42318;
-      font-size: 13px;
-      font-weight: 700;
-      margin-top: 10px;
-    }
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 39, 71, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 2000;
+}
+
+.loadingCard {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  border: 5px solid var(--border);
+  border-top-color: var(--primary);
+  animation: loadingSpin 0.9s linear infinite;
+}
+
+.loadingTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.loadingText {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.loadingSubtext {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+body.loadingActive {
+  overflow: hidden;
+}
+
+@keyframes loadingSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
     @media (max-width: 1100px) {
       .questionNavigator { display: none !important; }
@@ -792,11 +856,20 @@
   <button id="settingsBtn" class="secondaryBtn iconBtn floatingLeft" title="Settings">⚙</button>
   <button id="submitTestBtn" class="primaryBtn floatingRight hidden">Submit Test</button>
 
-  <div id="modalBackdrop" class="modalBackdrop">
+    <div id="modalBackdrop" class="modalBackdrop">
     <div class="modal">
       <div id="modalTitle" class="modalHeader">Message</div>
       <div id="modalBody" class="modalBody"></div>
       <div id="modalFooter" class="modalFooter"></div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="loadingOverlay" aria-live="polite" aria-busy="true">
+    <div class="loadingCard">
+      <div class="loadingSpinner"></div>
+      <div id="loadingTitle" class="loadingTitle">Loading...</div>
+      <div id="loadingText" class="loadingText">The system is working. Please wait.</div>
+      <div class="loadingSubtext">Please do not refresh</div>
     </div>
   </div>
 
@@ -1176,6 +1249,28 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
       document.getElementById("modalBackdrop").style.display = "none";
     }
 
+    function showLoading(title = "Loading...", text = "The system is working. Please wait.") {
+  document.getElementById("loadingTitle").innerText = title;
+  document.getElementById("loadingText").innerText = text;
+  document.getElementById("loadingOverlay").style.display = "flex";
+  document.body.classList.add("loadingActive");
+}
+
+function hideLoading() {
+  document.getElementById("loadingOverlay").style.display = "none";
+  document.body.classList.remove("loadingActive");
+}
+
+async function withLoading(title, text, work) {
+  showLoading(title, text);
+
+  try {
+    return await work();
+  } finally {
+    hideLoading();
+  }
+}
+
     function openSettings() {
       const current = getSavedTheme();
       showModal(
@@ -1481,62 +1576,68 @@ function handleUserActivity() {
     async function loadSavedProgress() {
   if (!state.auth.user || !state.auth.token) return false;
 
-  try {
-    const res = await fetch(`${API_BASE}/api/progress`, {
-      headers: { ...getAuthHeaders() }
-    });
+  return await withLoading(
+    "Resuming Test...",
+    "Your saved progress is being loaded. Please wait.",
+    async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/progress`, {
+          headers: { ...getAuthHeaders() }
+        });
 
-    if (!res.ok) return false;
+        if (!res.ok) return false;
 
-    const data = await res.json();
-    if (!data.progress) return false;
+        const data = await res.json();
+        if (!data.progress) return false;
 
-    const progress = data.progress;
+        const progress = data.progress;
 
-    state.mode = progress.mode || "test";
-    state.difficulty = progress.difficulty || "GED-Level";
-    state.questions = Array.isArray(progress.questions) ? progress.questions : [];
-    state.currentIndex = progress.currentIndex || 0;
-    state.timeRemaining =
-      typeof progress.timeRemaining === "number"
-        ? progress.timeRemaining
-        : TEST_TIME_SECONDS;
-    state.practiceMeta = progress.practiceMeta || null;
-state.overtimeUsed = !!progress.overtimeUsed;
-state.timeoutMode = !!progress.timeoutMode;
-state.lockedReviewMode = !!progress.lockedReviewMode;
-state.isPaused = !!progress.isPaused;
-state.idleSeconds = Number(progress.idleSeconds) || 0;
-state.autoPaused = !!progress.autoPaused;
-state.navigatorVisible = false;
+        state.mode = progress.mode || "test";
+        state.difficulty = progress.difficulty || "GED-Level";
+        state.questions = Array.isArray(progress.questions) ? progress.questions : [];
+        state.currentIndex = progress.currentIndex || 0;
+        state.timeRemaining =
+          typeof progress.timeRemaining === "number"
+            ? progress.timeRemaining
+            : TEST_TIME_SECONDS;
+        state.practiceMeta = progress.practiceMeta || null;
+        state.overtimeUsed = !!progress.overtimeUsed;
+        state.timeoutMode = !!progress.timeoutMode;
+        state.lockedReviewMode = !!progress.lockedReviewMode;
+        state.isPaused = !!progress.isPaused;
+        state.idleSeconds = Number(progress.idleSeconds) || 0;
+        state.autoPaused = !!progress.autoPaused;
+        state.navigatorVisible = false;
 
-    document.getElementById("difficultySelect").value = state.difficulty;
+        document.getElementById("difficultySelect").value = state.difficulty;
 
-    if (state.questions.length) {
-      await setView("test");
+        if (state.questions.length) {
+          await setView("test");
 
-      if (
-        state.mode === "test" &&
-        !state.timeoutMode &&
-        !state.lockedReviewMode &&
-        !state.isPaused
-      ) {
-        startTimer();
+          if (
+            state.mode === "test" &&
+            !state.timeoutMode &&
+            !state.lockedReviewMode &&
+            !state.isPaused
+          ) {
+            startTimer();
+          }
+
+          renderQuestion();
+
+          if (state.isPaused) {
+            showPausedModal(state.autoPaused);
+          }
+
+          return true;
+        }
+      } catch (error) {
+        console.error("Failed to load saved progress", error);
       }
 
-      renderQuestion();
-
-      if (state.isPaused) {
-        showPausedModal();
-      }
-
-      return true;
+      return false;
     }
-  } catch (error) {
-    console.error("Failed to load saved progress", error);
-  }
-
-  return false;
+  );
 }
 
     async function handleTimeExpired() {
@@ -1813,78 +1914,92 @@ function showPausedModal(isAutoPause = false) {
   updateAuthUI();
 }
 
-    async function startTest() {
-  stopTimer();
-  state.difficulty = document.getElementById("difficultySelect").value;
-  state.mode = "test";
-  state.questions = [];
-  state.currentIndex = 0;
-  state.timeRemaining = TEST_TIME_SECONDS;
-  state.practiceMeta = null;
-  state.overtimeUsed = false;
-  state.timeoutMode = false;
-  state.lockedReviewMode = false;
-  state.navigatorVisible = false;
-  state.isPaused = false;
-  state.idleSeconds = 0;
-  state.autoPaused = false;
+   async function startTest() {
+  await withLoading(
+    "Starting Test...",
+    "Your test is being generated. Please wait.",
+    async () => {
+      stopTimer();
+      state.difficulty = document.getElementById("difficultySelect").value;
+      state.mode = "test";
+      state.questions = [];
+      state.currentIndex = 0;
+      state.timeRemaining = TEST_TIME_SECONDS;
+      state.practiceMeta = null;
+      state.overtimeUsed = false;
+      state.timeoutMode = false;
+      state.lockedReviewMode = false;
+      state.navigatorVisible = false;
+      state.isPaused = false;
+      state.idleSeconds = 0;
+      state.autoPaused = false;
 
-  await setView("test");
-  document.getElementById("questionText").innerText = "Generating test...";
-  document.getElementById("choices").innerHTML = "";
-  document.getElementById("feedback").innerText = "";
-  renderChart(null);
+      await setView("test");
+      document.getElementById("questionText").innerText = "Generating test...";
+      document.getElementById("choices").innerHTML = "";
+      document.getElementById("feedback").innerText = "";
+      renderChart(null);
 
-  const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
-  if (!res.ok) {
-    throw new Error(`API request failed: ${res.status} ${res.statusText}`);
-  }
+      const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
+      if (!res.ok) {
+        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+      }
 
-  const data = await res.json();
+      const data = await res.json();
 
-  state.questions = data.questions.map((q) => ({
-    ...q,
-    userAnswer: null,
-    flagged: false
-  }));
+      state.questions = data.questions.map((q) => ({
+        ...q,
+        userAnswer: null,
+        flagged: false
+      }));
 
-  resetIdleTracking();
-  startTimer();
-  renderQuestion();
-  await saveProgress();
-  await updateResumeVisibility();
+      resetIdleTracking();
+      startTimer();
+      renderQuestion();
+      await saveProgress();
+      await updateResumeVisibility();
+    }
+  );
 }
     async function startPractice(skill, difficulty, examplesOnly = false) {
-  stopTimer();
+  await withLoading(
+    examplesOnly ? "Loading Examples..." : "Starting Practice...",
+    examplesOnly
+      ? "Worked examples are being prepared. Please wait."
+      : "Your practice set is being prepared. Please wait.",
+    async () => {
+      stopTimer();
 
-  const count = examplesOnly ? 2 : 12;
-  const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
-  if (!res.ok) {
-    throw new Error(`API request failed: ${res.status} ${res.statusText}`);
-  }
+      const count = examplesOnly ? 2 : 12;
+      const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
+      if (!res.ok) {
+        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+      }
 
-  const data = await res.json();
+      const data = await res.json();
 
-  state.mode = examplesOnly ? "practice-example" : "practice";
-  state.questions = data.questions.map((q) => ({
-    ...q,
-    userAnswer: null,
-    flagged: false,
-    example: examplesOnly
-  }));
-  state.currentIndex = 0;
-  state.practiceMeta = { skill, difficulty };
-  state.overtimeUsed = false;
-  state.timeoutMode = false;
-  state.lockedReviewMode = false;
-  state.navigatorVisible = false;
-  state.isPaused = false;
-  state.idleSeconds = 0;
-  state.autoPaused = false;
+      state.mode = examplesOnly ? "practice-example" : "practice";
+      state.questions = data.questions.map((q) => ({
+        ...q,
+        userAnswer: null,
+        flagged: false,
+        example: examplesOnly
+      }));
+      state.currentIndex = 0;
+      state.practiceMeta = { skill, difficulty };
+      state.overtimeUsed = false;
+      state.timeoutMode = false;
+      state.lockedReviewMode = false;
+      state.navigatorVisible = false;
+      state.isPaused = false;
+      state.idleSeconds = 0;
+      state.autoPaused = false;
 
-  await setView("test");
-  renderQuestion();
-  await updateResumeVisibility();
+      await setView("test");
+      renderQuestion();
+      await updateResumeVisibility();
+    }
+  );
 }
 
     function updateChartTheme(chartConfig) {
@@ -2257,11 +2372,17 @@ async function saveCompletedPracticeToHistory() {
     async function submitTest() {
   if (state.isPaused) return;
 
-  stopTimer();
-  state.lockedReviewMode = true;
-  state.isPaused = false;
-  await saveCompletedTestToHistory();
-  await showReview();
+  await withLoading(
+    "Submitting Test...",
+    "Your test is being submitted and scored. Please wait.",
+    async () => {
+      stopTimer();
+      state.lockedReviewMode = true;
+      state.isPaused = false;
+      await saveCompletedTestToHistory();
+      await showReview();
+    }
+  );
 }
 
     async function showReview() {
@@ -2343,294 +2464,307 @@ async function saveCompletedPracticeToHistory() {
       }
     }
 
-    async function showPracticeResults() {
-  await saveCompletedPracticeToHistory();
+   async function showPracticeResults() {
+  await withLoading(
+    "Submitting Practice...",
+    "Your practice results are being prepared. Please wait.",
+    async () => {
+      await saveCompletedPracticeToHistory();
 
-  const total = state.questions.length;
-  const correct = state.questions.filter(
-    (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
-  ).length;
+      const total = state.questions.length;
+      const correct = state.questions.filter(
+        (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
+      ).length;
 
-  const panel = document.getElementById("practicePanel");
-  panel.innerHTML = `
-    <h2 class="sectionTitle">Practice Results</h2>
+      const panel = document.getElementById("practicePanel");
+      panel.innerHTML = `
+        <h2 class="sectionTitle">Practice Results</h2>
 
-    <div class="practiceSummary">
-      <div class="reviewStat">
-        <div class="reviewStatLabel">Correct</div>
-        <div class="reviewStatValue">${correct}</div>
-      </div>
-      <div class="reviewStat">
-        <div class="reviewStatLabel">Wrong</div>
-        <div class="reviewStatValue">${total - correct}</div>
-      </div>
-    </div>
+        <div class="practiceSummary">
+          <div class="reviewStat">
+            <div class="reviewStatLabel">Correct</div>
+            <div class="reviewStatValue">${correct}</div>
+          </div>
+          <div class="reviewStat">
+            <div class="reviewStatLabel">Wrong</div>
+            <div class="reviewStatValue">${total - correct}</div>
+          </div>
+        </div>
 
-    <div class="practiceItem">
-      <button id="practiceMenuBtn" class="secondaryBtn">Main Menu</button>
-      <button id="practiceAgainBtn" class="primaryBtn">Practice Again</button>
-    </div>
-  `;
+        <div class="practiceItem">
+          <button id="practiceMenuBtn" class="secondaryBtn">Main Menu</button>
+          <button id="practiceAgainBtn" class="primaryBtn">Practice Again</button>
+        </div>
+      `;
 
-  state.questions.forEach((q, i) => {
-    const user = String(q.userAnswer ?? "").trim();
-    const correctAns = String(q.answer).trim();
-    const isCorrect = user === correctAns;
+      state.questions.forEach((q, i) => {
+        const user = String(q.userAnswer ?? "").trim();
+        const correctAns = String(q.answer).trim();
+        const isCorrect = user === correctAns;
 
-    const div = document.createElement("div");
-    div.className = "practiceItem";
-    div.innerHTML = `
-      <div><strong>Q${i + 1}</strong></div>
-      <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
-      <div style="margin-top:10px;">Your answer: ${user || "—"}</div>
-      <div>Correct: ${correctAns}</div>
-      <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
-      <div class="explanationBox">${q.explanation}</div>
-    `;
-    panel.appendChild(div);
-  });
+        const div = document.createElement("div");
+        div.className = "practiceItem";
+        div.innerHTML = `
+          <div><strong>Q${i + 1}</strong></div>
+          <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
+          <div style="margin-top:10px;">Your answer: ${user || "—"}</div>
+          <div>Correct: ${correctAns}</div>
+          <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+          <div class="explanationBox">${q.explanation}</div>
+        `;
+        panel.appendChild(div);
+      });
 
-  await setView("practice-results");
+      await setView("practice-results");
 
-  document.getElementById("practiceMenuBtn").onclick = () => goToMainMenu();
-  document.getElementById("practiceAgainBtn").onclick = async () => {
-    if (state.practiceMeta) {
-      await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+      document.getElementById("practiceMenuBtn").onclick = () => goToMainMenu();
+      document.getElementById("practiceAgainBtn").onclick = async () => {
+        if (state.practiceMeta) {
+          await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+        }
+      };
     }
-  };
+  );
 }
 
     async function openProfilePanel(defaultTab = "tests") {
   if (!state.auth.user || !state.auth.token) return;
 
-  const panel = document.getElementById("profilePanel");
-  panel.innerHTML = `
-    <h2 class="sectionTitle">Profile</h2>
-    <div class="reviewItem">Loading history...</div>
-  `;
-
-  await setView("profile");
-
-  try {
-    const [testRes, practiceRes] = await Promise.all([
-  fetch(`${API_BASE}/api/test/history`, {
-    headers: { ...getAuthHeaders() }
-  }),
-  fetch(`${API_BASE}/api/practice/history`, {
-    headers: { ...getAuthHeaders() }
-  })
-]);
-
-    const testData = await testRes.json();
-    const practiceData = await practiceRes.json();
-
-    if (!testRes.ok) {
-      throw new Error(testData.error || "Failed to load test history.");
-    }
-
-    if (!practiceRes.ok) {
-      throw new Error(practiceData.error || "Failed to load practice history.");
-    }
-
-    const testHistory = Array.isArray(testData.history) ? testData.history : [];
-    const practiceHistory = Array.isArray(practiceData.history) ? practiceData.history : [];
-
-    const bestScore =
-      testHistory.length > 0
-        ? Math.max(...testHistory.map((h) => Number(h.score200) || 0))
-        : "—";
-
-    const averageScore = getAverageScore(testHistory);
-
-    const skillStats = getHistorySkillStats(testHistory);
-    const currentFocus = skillStats.length > 0 ? skillStats[0].skill : "—";
-    const nextFocus = skillStats.length > 1 ? skillStats[1].skill : "—";
-
-    const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
-
-    panel.innerHTML = `
-      <h2 class="sectionTitle">Profile</h2>
-
-      <div class="reviewTop">
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Tests Taken</div>
-          <div class="reviewStatValue">${testHistory.length}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Best Score</div>
-          <div class="reviewStatValue">${bestScore}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Average Score</div>
-          <div class="reviewStatValue">${averageScore}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Practice Sessions</div>
-          <div class="reviewStatValue">${practiceHistory.length}</div>
-        </div>
-      </div>
-
-      <div class="reviewTop">
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Current Focus</div>
-          <div class="reviewStatValue">${escapeHtml(currentFocus)}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Next Focus</div>
-          <div class="reviewStatValue">${escapeHtml(nextFocus)}</div>
-        </div>
-        <div class="reviewStat" style="grid-column: span 2;">
-          <div class="reviewStatLabel">Progress Note</div>
-          <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
-        </div>
-      </div>
-
-      <div class="reviewItem">
-        <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
-${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">Practice ${escapeHtml(currentFocus)}</button>` : ""}      </div>
-
-      <div class="reviewItem">
-        <div class="menuActions">
-          <button id="testHistoryTabBtn" class="secondaryBtn">Test History</button>
-          <button id="practiceHistoryTabBtn" class="secondaryBtn">Practice History</button>
-        </div>
-      </div>
-
-      <div id="testHistorySection" class="hidden"></div>
-      <div id="practiceHistorySection" class="hidden"></div>
-    `;
-
-    const testSection = document.getElementById("testHistorySection");
-    const practiceSection = document.getElementById("practiceHistorySection");
-
-    if (!testHistory.length) {
-      testSection.innerHTML = `
-        <div class="reviewItem">No completed test history yet. Once you submit a test while signed in, it will appear here.</div>
+  await withLoading(
+    "Loading Profile...",
+    "Your history and progress report are being loaded. Please wait.",
+    async () => {
+      const panel = document.getElementById("profilePanel");
+      panel.innerHTML = `
+        <h2 class="sectionTitle">Profile</h2>
+        <div class="reviewItem">Loading history...</div>
       `;
-    } else {
-      testHistory.forEach((entry, index) => {
-        const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
-        const detailsId = `testHistoryDetails_${index}`;
 
-        const item = document.createElement("div");
-        item.className = "reviewItem";
-        item.innerHTML = `
-          <div><strong>Test ${testHistory.length - index}</strong></div>
-          <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
-          <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
-          <div>Score: ${Number(entry.score200) || 0} / 200</div>
-          <div>Correct: ${Number(entry.correctCount) || 0}</div>
-          <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
-          <div>Weakest Skill: ${escapeHtml(entry.weakestSkill || "—")}</div>
-          <div style="margin-top:12px;">
-            <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+      await setView("profile");
+
+      try {
+        const [testRes, practiceRes] = await Promise.all([
+          fetch(`${API_BASE}/api/test/history`, {
+            headers: { ...getAuthHeaders() }
+          }),
+          fetch(`${API_BASE}/api/practice/history`, {
+            headers: { ...getAuthHeaders() }
+          })
+        ]);
+
+        const testData = await testRes.json();
+        const practiceData = await practiceRes.json();
+
+        if (!testRes.ok) {
+          throw new Error(testData.error || "Failed to load test history.");
+        }
+
+        if (!practiceRes.ok) {
+          throw new Error(practiceData.error || "Failed to load practice history.");
+        }
+
+        const testHistory = Array.isArray(testData.history) ? testData.history : [];
+        const practiceHistory = Array.isArray(practiceData.history) ? practiceData.history : [];
+
+        const bestScore =
+          testHistory.length > 0
+            ? Math.max(...testHistory.map((h) => Number(h.score200) || 0))
+            : "—";
+
+        const averageScore = getAverageScore(testHistory);
+
+        const skillStats = getHistorySkillStats(testHistory);
+        const currentFocus = skillStats.length > 0 ? skillStats[0].skill : "—";
+        const nextFocus = skillStats.length > 1 ? skillStats[1].skill : "—";
+
+        const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
+
+        panel.innerHTML = `
+          <h2 class="sectionTitle">Profile</h2>
+
+          <div class="reviewTop">
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Tests Taken</div>
+              <div class="reviewStatValue">${testHistory.length}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Best Score</div>
+              <div class="reviewStatValue">${bestScore}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Average Score</div>
+              <div class="reviewStatValue">${averageScore}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Practice Sessions</div>
+              <div class="reviewStatValue">${practiceHistory.length}</div>
+            </div>
           </div>
-          <div id="${detailsId}" class="hidden"></div>
+
+          <div class="reviewTop">
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Current Focus</div>
+              <div class="reviewStatValue">${escapeHtml(currentFocus)}</div>
+            </div>
+            <div class="reviewStat">
+              <div class="reviewStatLabel">Next Focus</div>
+              <div class="reviewStatValue">${escapeHtml(nextFocus)}</div>
+            </div>
+            <div class="reviewStat" style="grid-column: span 2;">
+              <div class="reviewStatLabel">Progress Note</div>
+              <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
+            </div>
+          </div>
+
+          <div class="reviewItem">
+            <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
+            ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">Practice ${escapeHtml(currentFocus)}</button>` : ""}
+          </div>
+
+          <div class="reviewItem">
+            <div class="menuActions">
+              <button id="testHistoryTabBtn" class="secondaryBtn">Test History</button>
+              <button id="practiceHistoryTabBtn" class="secondaryBtn">Practice History</button>
+            </div>
+          </div>
+
+          <div id="testHistorySection" class="hidden"></div>
+          <div id="practiceHistorySection" class="hidden"></div>
         `;
 
-        testSection.appendChild(item);
+        const testSection = document.getElementById("testHistorySection");
+        const practiceSection = document.getElementById("practiceHistorySection");
 
-        const detailsContainer = item.querySelector(`#${detailsId}`);
-        detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
-      });
-    }
+        if (!testHistory.length) {
+          testSection.innerHTML = `
+            <div class="reviewItem">No completed test history yet. Once you submit a test while signed in, it will appear here.</div>
+          `;
+        } else {
+          testHistory.forEach((entry, index) => {
+            const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+            const detailsId = `testHistoryDetails_${index}`;
 
-    if (!practiceHistory.length) {
-      practiceSection.innerHTML = `
-        <div class="reviewItem">No completed practice history yet. Once you finish a practice set while signed in, it will appear here.</div>
-      `;
-    } else {
-      practiceHistory.forEach((entry, index) => {
-        const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
-        const detailsId = `practiceHistoryDetails_${index}`;
+            const item = document.createElement("div");
+            item.className = "reviewItem";
+            item.innerHTML = `
+              <div><strong>Test ${testHistory.length - index}</strong></div>
+              <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
+              <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>Score: ${Number(entry.score200) || 0} / 200</div>
+              <div>Correct: ${Number(entry.correctCount) || 0}</div>
+              <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
+              <div>Weakest Skill: ${escapeHtml(entry.weakestSkill || "—")}</div>
+              <div style="margin-top:12px;">
+                <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+              </div>
+              <div id="${detailsId}" class="hidden"></div>
+            `;
 
-        const item = document.createElement("div");
-        item.className = "reviewItem";
-        item.innerHTML = `
-          <div><strong>Practice ${practiceHistory.length - index}</strong></div>
-          <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
-          <div>Skill: ${escapeHtml(entry.skill || "Mixed Practice")}</div>
-          <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
-          <div>Correct: ${Number(entry.correctCount) || 0}</div>
-          <div>Wrong: ${Number(entry.wrongCount) || 0}</div>
-          <div>Accuracy: ${Number(entry.accuracyPercent) || 0}%</div>
-          <div style="margin-top:12px;">
-            <button class="secondaryBtn practiceHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+            testSection.appendChild(item);
+
+            const detailsContainer = item.querySelector(`#${detailsId}`);
+            detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
+          });
+        }
+
+        if (!practiceHistory.length) {
+          practiceSection.innerHTML = `
+            <div class="reviewItem">No completed practice history yet. Once you finish a practice set while signed in, it will appear here.</div>
+          `;
+        } else {
+          practiceHistory.forEach((entry, index) => {
+            const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+            const detailsId = `practiceHistoryDetails_${index}`;
+
+            const item = document.createElement("div");
+            item.className = "reviewItem";
+            item.innerHTML = `
+              <div><strong>Practice ${practiceHistory.length - index}</strong></div>
+              <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
+              <div>Skill: ${escapeHtml(entry.skill || "Mixed Practice")}</div>
+              <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>Correct: ${Number(entry.correctCount) || 0}</div>
+              <div>Wrong: ${Number(entry.wrongCount) || 0}</div>
+              <div>Accuracy: ${Number(entry.accuracyPercent) || 0}%</div>
+              <div style="margin-top:12px;">
+                <button class="secondaryBtn practiceHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+              </div>
+              <div id="${detailsId}" class="hidden"></div>
+            `;
+
+            practiceSection.appendChild(item);
+
+            const detailsContainer = item.querySelector(`#${detailsId}`);
+            detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
+          });
+        }
+
+        function showTab(tabName) {
+          testSection.classList.toggle("hidden", tabName !== "tests");
+          practiceSection.classList.toggle("hidden", tabName !== "practice");
+        }
+
+        document.getElementById("testHistoryTabBtn").onclick = () => {
+          showTab("tests");
+        };
+
+        document.getElementById("practiceHistoryTabBtn").onclick = () => {
+          showTab("practice");
+        };
+
+        showTab(defaultTab);
+
+        panel.querySelectorAll(".testHistoryToggleBtn").forEach((btn) => {
+          btn.onclick = () => {
+            const targetId = btn.getAttribute("data-target");
+            const details = document.getElementById(targetId);
+            if (!details) return;
+
+            const isHidden = details.classList.contains("hidden");
+            details.classList.toggle("hidden", !isHidden);
+            btn.textContent = isHidden ? "Hide Details" : "View Details";
+          };
+        });
+
+        panel.querySelectorAll(".practiceHistoryToggleBtn").forEach((btn) => {
+          btn.onclick = () => {
+            const targetId = btn.getAttribute("data-target");
+            const details = document.getElementById(targetId);
+            if (!details) return;
+
+            const isHidden = details.classList.contains("hidden");
+            details.classList.toggle("hidden", !isHidden);
+            btn.textContent = isHidden ? "Hide Details" : "View Details";
+          };
+        });
+
+        document.getElementById("profileBackBtn").onclick = () => {
+          goToMainMenu();
+        };
+
+        const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
+        if (practiceBtn) {
+          practiceBtn.onclick = async () => {
+            await startPractice(currentFocus, state.difficulty, true);
+          };
+        }
+      } catch (error) {
+        console.error("PROFILE PANEL ERROR:", error);
+
+        panel.innerHTML = `
+          <h2 class="sectionTitle">Profile</h2>
+          <div class="reviewItem">Failed to load history.</div>
+          <div class="reviewItem">
+            <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
           </div>
-          <div id="${detailsId}" class="hidden"></div>
         `;
 
-        practiceSection.appendChild(item);
-
-        const detailsContainer = item.querySelector(`#${detailsId}`);
-        detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
-      });
+        document.getElementById("profileBackBtn").onclick = () => {
+          goToMainMenu();
+        };
+      }
     }
-
-    function showTab(tabName) {
-      testSection.classList.toggle("hidden", tabName !== "tests");
-      practiceSection.classList.toggle("hidden", tabName !== "practice");
-    }
-
-    document.getElementById("testHistoryTabBtn").onclick = () => {
-      showTab("tests");
-    };
-
-    document.getElementById("practiceHistoryTabBtn").onclick = () => {
-      showTab("practice");
-    };
-
-    showTab(defaultTab);
-
-    panel.querySelectorAll(".testHistoryToggleBtn").forEach((btn) => {
-      btn.onclick = () => {
-        const targetId = btn.getAttribute("data-target");
-        const details = document.getElementById(targetId);
-        if (!details) return;
-
-        const isHidden = details.classList.contains("hidden");
-        details.classList.toggle("hidden", !isHidden);
-        btn.textContent = isHidden ? "Hide Details" : "View Details";
-      };
-    });
-
-    panel.querySelectorAll(".practiceHistoryToggleBtn").forEach((btn) => {
-      btn.onclick = () => {
-        const targetId = btn.getAttribute("data-target");
-        const details = document.getElementById(targetId);
-        if (!details) return;
-
-        const isHidden = details.classList.contains("hidden");
-        details.classList.toggle("hidden", !isHidden);
-        btn.textContent = isHidden ? "Hide Details" : "View Details";
-      };
-    });
-
-    document.getElementById("profileBackBtn").onclick = () => {
-      goToMainMenu();
-    };
-
-    const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
-    if (practiceBtn) {
-      practiceBtn.onclick = async () => {
-        await startPractice(currentFocus, state.difficulty, true);
-      };
-    }
-  } catch (error) {
-    console.error("PROFILE PANEL ERROR:", error);
-
-    panel.innerHTML = `
-      <h2 class="sectionTitle">Profile</h2>
-      <div class="reviewItem">Failed to load history.</div>
-      <div class="reviewItem">
-        <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
-      </div>
-    `;
-
-    document.getElementById("profileBackBtn").onclick = () => {
-      goToMainMenu();
-    };
-  }
+  );
 }
 
     function goToMainMenu() {
@@ -2762,6 +2896,14 @@ document.getElementById("submitTestBtn").onclick = () => {
 
     IDLE_ACTIVITY_EVENTS.forEach((eventName) => {
   window.addEventListener(eventName, handleUserActivity, { passive: true });
+});
+
+window.addEventListener("error", () => {
+  hideLoading();
+});
+
+window.addEventListener("unhandledrejection", () => {
+  hideLoading();
 });
 
 (async function init() {
