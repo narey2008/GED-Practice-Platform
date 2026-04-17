@@ -835,6 +835,15 @@ body.loadingActive {
       content: "Time Remaining: 115:00";
     }
 
+        html.js-ready #timerTop::before,
+    html.js-ready #questionNavigator .questionNavigatorTitle::before,
+    html.js-ready #modalTitle::before,
+    html.js-ready #loadingTitle::before,
+    html.js-ready #loadingText::before,
+    html.js-ready .loadingSubtext::before {
+      content: none !important;
+    }
+
     html[data-language="Spanish"] #questionNavigator .questionNavigatorTitle::before {
       content: "Revisión";
     }
@@ -1727,6 +1736,7 @@ function applyLanguage(language) {
   const globalMenuBtn = document.getElementById("globalMenuBtn");
   const prevBtn = document.getElementById("prevBtn");
   const reportQuestionBtn = document.getElementById("reportQuestionBtn");
+  const submitTestBtn = document.getElementById("submitTestBtn");
 
   if (signInBtnTop) signInBtnTop.textContent = t.signIn;
   if (guestBtnTop) guestBtnTop.textContent = t.continueGuest;
@@ -1735,6 +1745,10 @@ function applyLanguage(language) {
   if (globalMenuBtn) globalMenuBtn.textContent = t.mainMenuBtn;
   if (prevBtn) prevBtn.textContent = t.previous;
   if (reportQuestionBtn) reportQuestionBtn.textContent = t.reportQuestion;
+  if (submitTestBtn) {
+    submitTestBtn.textContent =
+      state.mode === "practice" ? t.submitPractice : t.submitTest;
+  }
 
   const loadingTitle = document.getElementById("loadingTitle");
   const loadingText = document.getElementById("loadingText");
@@ -2870,6 +2884,7 @@ function showPausedModal(isAutoPause = false) {
     }
 
     submitBtn.disabled = state.isPaused;
+    submitBtn.innerText = state.mode === "practice" ? tr("submitPractice") : tr("submitTest");
     updateQuestionNavigator();
   } else {
     document.getElementById("questionIndicator").innerText = `${tr("questionWord")} 1 / 46`;
@@ -2887,6 +2902,7 @@ function showPausedModal(isAutoPause = false) {
     reportQuestionBtn.disabled = true;
     pauseBtn.disabled = true;
     submitBtn.disabled = false;
+    submitBtn.innerText = tr("submitTest");
     submitBtn.classList.add("hidden");
     updateQuestionNavigator();
   }
@@ -3907,6 +3923,7 @@ window.addEventListener("unhandledrejection", () => {
       updateStatus();
       await setView("menu");
       applyLanguage(getSavedLanguage());
+      document.documentElement.classList.add("js-ready");
     })();
   </script>
 </body>
