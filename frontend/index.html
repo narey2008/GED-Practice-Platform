@@ -2438,7 +2438,15 @@ function openForgotPasswordModal() {
                   body: JSON.stringify({ email })
                 });
 
-                const data = await res.json();
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Forgot password returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
 
                 if (!res.ok) {
                   throw new Error(data.error || tr("failedAuthentication"));
@@ -2518,7 +2526,15 @@ function openResetPasswordModal(resetEmail, resetToken) {
                   })
                 });
 
-                const data = await res.json();
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Reset password returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
 
                 if (!res.ok) {
                   throw new Error(data.error || tr("invalidResetLink"));
