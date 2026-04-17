@@ -2265,23 +2265,7 @@ function showToast(title, text, duration = 6000) {
       }
     ]
   );
-}
-
-      showModal(
-        "Continue as Guest",
-        "Your test progress will NOT be saved when continuing as a guest.",
-        [
-          { label: "Cancel", variant: "secondary" },
-          {
-            label: "Continue as Guest",
-            variant: "primary",
-            onClick: async () => {
-              await beginGuestMode(startImmediately);
-            }
-          }
-        ]
-      );
-    
+}   
 
     function logoutUser() {
   const logoutLabel = state.auth.guestMode ? tr("exitGuestMode") : tr("logoutTitle");
