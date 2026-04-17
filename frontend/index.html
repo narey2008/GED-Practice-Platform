@@ -1433,7 +1433,31 @@ function getTranslations(language) {
     noQuestionDataTest: isSpanish ? "No hay datos de preguntas guardados para este examen." : "No question data stored for this test.",
     noQuestionDataPractice: isSpanish ? "No hay datos de preguntas guardados para esta sesión de práctica." : "No question data stored for this practice session.",
     mixedPractice: isSpanish ? "Práctica Mixta" : "Mixed Practice",
-    failedLoadHistory: isSpanish ? "No se pudo cargar el historial." : "Failed to load history."
+    failedLoadHistory: isSpanish ? "No se pudo cargar el historial." : "Failed to load history.",
+    guestMode: isSpanish ? "Modo Invitado" : "Guest Mode",
+createAccountSuccess: isSpanish ? "Cuenta creada e inicio de sesión completado como" : "Account created and signed in as",
+timeRemaining: isSpanish ? "Tiempo Restante" : "Time Remaining",
+pausedShort: isSpanish ? "Pausado" : "Paused",
+startPracticeShort: isSpanish ? "Comenzar Práctica" : "Start Practice",
+questionWord: isSpanish ? "Pregunta" : "Question",
+finishLastQuestion: isSpanish ? "Terminar Última Pregunta" : "Finish Last Question",
+addFiveMoreMinutes: isSpanish ? "Agregar 5 Minutos Más" : "Add 5 More Minutes",
+submitNow: isSpanish ? "Enviar Ahora" : "Submit Now",
+timeHasRunOut: isSpanish ? "Se Acabó el Tiempo" : "Time Has Run Out",
+timeExpiredBody1: isSpanish ? "Tu temporizador llegó a 00:00." : "Your timer has reached 00:00.",
+timeExpiredBody2: isSpanish ? "Terminar Última Pregunta mantiene el temporizador en 00:00 y trata tu pregunta actual como la última." : "Finish Last Question keeps the timer at 00:00 and treats your current question as the last one.",
+timeExpiredBody3: isSpanish ? "Agregar 5 Minutos Más te da una extensión única de 5 minutos." : "Add 5 More Minutes gives you one extra 5-minute extension.",
+timeExpiredBody4: isSpanish ? "Enviar Ahora envía el examen tal como está." : "Submit Now submits the test as it is.",
+testPausedTitle: isSpanish ? "Examen en Pausa" : "Test Paused",
+testAutoPausedTitle: isSpanish ? "Examen Pausado Automáticamente" : "Test Auto-Paused",
+testPausedBody1: isSpanish ? "Tu examen está en pausa." : "Your test is paused.",
+testPausedBody2: isSpanish ? "Tu examen se pausó automáticamente por inactividad." : "Your test was automatically paused due to inactivity.",
+testPausedBody3: isSpanish ? "El temporizador está detenido y tu progreso ha sido guardado." : "The timer is stopped and your progress has been saved.",
+testPausedBody4: isSpanish ? "Presiona Reanudar Examen cuando estés listo para continuar." : "Press Resume Test when you are ready to continue.",
+generatingTestText: isSpanish ? "Generando examen..." : "Generating test...",
+chooseDifficultyStart: isSpanish ? "Elige una dificultad y comienza el examen." : "Choose a difficulty and start the test.",
+failedAuthentication: isSpanish ? "La autenticación falló." : "Authentication failed.",
+failedLoadHistoryTitle: isSpanish ? "Perfil" : "Profile"
   };
 }
 
@@ -1544,43 +1568,43 @@ function applyLanguage(language) {
     }
 
     function updateAuthUI() {
-      const signInBtnTop = document.getElementById("signInBtnTop");
-      const guestBtnTop = document.getElementById("guestBtnTop");
-      const logoutBtnTop = document.getElementById("logoutBtnTop");
-      const userSummary = document.getElementById("userSummary");
+  const signInBtnTop = document.getElementById("signInBtnTop");
+  const guestBtnTop = document.getElementById("guestBtnTop");
+  const logoutBtnTop = document.getElementById("logoutBtnTop");
+  const userSummary = document.getElementById("userSummary");
 
-      if (state.auth.user) {
-        signInBtnTop.classList.add("hidden");
-        guestBtnTop.classList.add("hidden");
-        logoutBtnTop.classList.remove("hidden");
-        userSummary.classList.remove("hidden");
-        userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
-        userSummary.style.cursor = "pointer";
-        userSummary.style.textDecoration = "none";
-        userSummary.onmouseover = () => { userSummary.style.textDecoration = "underline"; };
-        userSummary.onmouseout = () => { userSummary.style.textDecoration = "none"; };
-      } else if (state.auth.guestMode) {
-        signInBtnTop.classList.add("hidden");
-        guestBtnTop.classList.add("hidden");
-        logoutBtnTop.classList.remove("hidden");
-        userSummary.classList.remove("hidden");
-        userSummary.textContent = "Guest Mode";
-        userSummary.style.cursor = "default";
-        userSummary.style.textDecoration = "none";
-        userSummary.onmouseover = null;
-        userSummary.onmouseout = null;
-      } else {
-        signInBtnTop.classList.remove("hidden");
-        guestBtnTop.classList.remove("hidden");
-        logoutBtnTop.classList.add("hidden");
-        userSummary.classList.add("hidden");
-        userSummary.textContent = "";
-        userSummary.style.cursor = "default";
-        userSummary.style.textDecoration = "none";
-        userSummary.onmouseover = null;
-        userSummary.onmouseout = null;
-      }
-    }
+  if (state.auth.user) {
+    signInBtnTop.classList.add("hidden");
+    guestBtnTop.classList.add("hidden");
+    logoutBtnTop.classList.remove("hidden");
+    userSummary.classList.remove("hidden");
+    userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
+    userSummary.style.cursor = "pointer";
+    userSummary.style.textDecoration = "none";
+    userSummary.onmouseover = () => { userSummary.style.textDecoration = "underline"; };
+    userSummary.onmouseout = () => { userSummary.style.textDecoration = "none"; };
+  } else if (state.auth.guestMode) {
+    signInBtnTop.classList.add("hidden");
+    guestBtnTop.classList.add("hidden");
+    logoutBtnTop.classList.remove("hidden");
+    userSummary.classList.remove("hidden");
+    userSummary.textContent = tr("guestMode");
+    userSummary.style.cursor = "default";
+    userSummary.style.textDecoration = "none";
+    userSummary.onmouseover = null;
+    userSummary.onmouseout = null;
+  } else {
+    signInBtnTop.classList.remove("hidden");
+    guestBtnTop.classList.remove("hidden");
+    logoutBtnTop.classList.add("hidden");
+    userSummary.classList.add("hidden");
+    userSummary.textContent = "";
+    userSummary.style.cursor = "default";
+    userSummary.style.textDecoration = "none";
+    userSummary.onmouseover = null;
+    userSummary.onmouseout = null;
+  }
+}
 
     async function loadCurrentUser() {
       if (!state.auth.token) {
@@ -1948,39 +1972,56 @@ function showToast(title, text, duration = 6000) {
   const currentFontSize = getSavedFontSize();
 
   showModal(
-    "Settings",
+    tr("settings"),
     `
-      <label for="lightingSelect">Appearance Preference</label>
+      <label for="lightingSelect">${tr("appearancePreference")}</label>
       <select id="lightingSelect">
-        <option ${currentTheme === "Light Mode" ? "selected" : ""}>Light Mode</option>
-        <option ${currentTheme === "Dark Mode" ? "selected" : ""}>Dark Mode</option>
-        <option ${currentTheme === "Original Mode" ? "selected" : ""}>Original Mode</option>
+        <option ${currentTheme === "Light Mode" ? "selected" : ""}>${tr("lightMode")}</option>
+        <option ${currentTheme === "Dark Mode" ? "selected" : ""}>${tr("darkMode")}</option>
+        <option ${currentTheme === "Original Mode" ? "selected" : ""}>${tr("originalMode")}</option>
       </select>
 
-      <label for="languageSelect" style="margin-top:12px;">Language</label>
+      <label for="languageSelect" style="margin-top:12px;">${tr("language")}</label>
       <select id="languageSelect">
         <option ${currentLanguage === "English" ? "selected" : ""}>English</option>
         <option ${currentLanguage === "Spanish" ? "selected" : ""}>Spanish</option>
       </select>
 
-      <label for="fontSizeSelect" style="margin-top:12px;">Font Size</label>
+      <label for="fontSizeSelect" style="margin-top:12px;">${tr("fontSize")}</label>
       <select id="fontSizeSelect">
-        <option ${currentFontSize === "Standard" ? "selected" : ""}>Standard</option>
-        <option ${currentFontSize === "Medium" ? "selected" : ""}>Medium</option>
-        <option ${currentFontSize === "Big" ? "selected" : ""}>Big</option>
-        <option ${currentFontSize === "Large" ? "selected" : ""}>Large</option>
-        <option ${currentFontSize === "Extra Large" ? "selected" : ""}>Extra Large</option>
+        <option ${currentFontSize === "Standard" ? "selected" : ""}>${tr("standard")}</option>
+        <option ${currentFontSize === "Medium" ? "selected" : ""}>${tr("medium")}</option>
+        <option ${currentFontSize === "Big" ? "selected" : ""}>${tr("big")}</option>
+        <option ${currentFontSize === "Large" ? "selected" : ""}>${tr("large")}</option>
+        <option ${currentFontSize === "Extra Large" ? "selected" : ""}>${tr("extraLarge")}</option>
       </select>
     `,
     [
-      { label: "Cancel", variant: "secondary" },
+      { label: tr("cancel"), variant: "secondary" },
       {
-        label: "Save",
+        label: tr("save"),
         variant: "primary",
         onClick: () => {
-          const selectedTheme = document.getElementById("lightingSelect").value;
+          const selectedThemeLabel = document.getElementById("lightingSelect").value;
           const selectedLanguage = document.getElementById("languageSelect").value;
-          const selectedFontSize = document.getElementById("fontSizeSelect").value;
+          const selectedFontSizeLabel = document.getElementById("fontSizeSelect").value;
+
+          const themeMap = {
+            [tr("lightMode")]: "Light Mode",
+            [tr("darkMode")]: "Dark Mode",
+            [tr("originalMode")]: "Original Mode"
+          };
+
+          const fontMap = {
+            [tr("standard")]: "Standard",
+            [tr("medium")]: "Medium",
+            [tr("big")]: "Big",
+            [tr("large")]: "Large",
+            [tr("extraLarge")]: "Extra Large"
+          };
+
+          const selectedTheme = themeMap[selectedThemeLabel] || selectedThemeLabel;
+          const selectedFontSize = fontMap[selectedFontSizeLabel] || selectedFontSizeLabel;
 
           applyTheme(selectedTheme);
           saveLanguage(selectedLanguage);
@@ -1994,119 +2035,117 @@ function showToast(title, text, duration = 6000) {
 }
 
     function openAuthModal(initialMode = "signin") {
-      let currentMode = initialMode;
+  let currentMode = initialMode;
 
-      function renderAuthModal() {
-        const isRegister = currentMode === "register";
+  function renderAuthModal() {
+    const isRegister = currentMode === "register";
 
-        document.getElementById("modalTitle").innerText = isRegister ? "Create Account" : "Sign In";
-        document.getElementById("modalBody").innerHTML = `
-          <div style="display:flex; gap:10px; margin-bottom:14px;">
-            <button id="authModeSignIn" type="button" class="${!isRegister ? "primaryBtn" : "secondaryBtn"}">Sign In</button>
-            <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">Create Account</button>
-          </div>
+    document.getElementById("modalTitle").innerText = isRegister ? tr("createAccount") : tr("signIn");
+    document.getElementById("modalBody").innerHTML = `
+      <div style="display:flex; gap:10px; margin-bottom:14px;">
+        <button id="authModeSignIn" type="button" class="${!isRegister ? "primaryBtn" : "secondaryBtn"}">${tr("signIn")}</button>
+        <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">${tr("createAccount")}</button>
+      </div>
 
-          ${isRegister ? `
-            <label for="authDisplayName">Display Name</label>
-            <input id="authDisplayName" type="text" placeholder="Enter a display name" />
-          ` : ""}
+      ${isRegister ? `
+        <label for="authDisplayName">${tr("displayName")}</label>
+        <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
+      ` : ""}
 
-          <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">Email</label>
-          <input id="authEmail" type="email" placeholder="Enter your email" />
+      <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
+      <input id="authEmail" type="email" placeholder="${tr("enterEmail")}" />
 
-          <label style="margin-top:12px;" for="authPassword">Password</label>
-          <input id="authPassword" type="password" placeholder="Enter your password" />
+      <label style="margin-top:12px;" for="authPassword">${tr("password")}</label>
+      <input id="authPassword" type="password" placeholder="${tr("enterPassword")}" />
 
-          <div id="authError" class="authError hidden"></div>
-        `;
+      <div id="authError" class="authError hidden"></div>
+    `;
 
-        const footer = document.getElementById("modalFooter");
-        footer.innerHTML = "";
+    const footer = document.getElementById("modalFooter");
+    footer.innerHTML = "";
 
-        const cancelBtn = document.createElement("button");
-        cancelBtn.type = "button";
-        cancelBtn.className = "secondaryBtn";
-        cancelBtn.innerText = "Cancel";
-        cancelBtn.onclick = closeModal;
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "secondaryBtn";
+    cancelBtn.innerText = tr("cancel");
+    cancelBtn.onclick = closeModal;
 
-        const submitBtn = document.createElement("button");
-        submitBtn.type = "button";
-        submitBtn.className = "primaryBtn";
-        submitBtn.innerText = isRegister ? "Create Account" : "Sign In";
+    const submitBtn = document.createElement("button");
+    submitBtn.type = "button";
+    submitBtn.className = "primaryBtn";
+    submitBtn.innerText = isRegister ? tr("createAccount") : tr("signIn");
 
-        submitBtn.onclick = async () => {
-  const authError = document.getElementById("authError");
-  authError.classList.add("hidden");
-  authError.textContent = "";
+    submitBtn.onclick = async () => {
+      const authError = document.getElementById("authError");
+      authError.classList.add("hidden");
+      authError.textContent = "";
 
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-  const displayName = isRegister
-    ? document.getElementById("authDisplayName").value.trim()
-    : "";
+      const email = document.getElementById("authEmail").value.trim();
+      const password = document.getElementById("authPassword").value;
+      const displayName = isRegister
+        ? document.getElementById("authDisplayName").value.trim()
+        : "";
 
-  try {
-    await withLoading(
-      isRegister ? "Creating Account..." : "Signing In...",
-      isRegister
-        ? "Your account is being created. Please wait."
-        : "Your account is being signed in. Please wait.",
-      async () => {
-        const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-        const payload = isRegister
-          ? { email, password, displayName }
-          : { email, password };
+      try {
+        await withLoading(
+          isRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
+          isRegister ? tr("systemWorking") : tr("systemWorking"),
+          async () => {
+            const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+            const payload = isRegister
+              ? { email, password, displayName }
+              : { email, password };
 
-        const res = await fetch(`${API_BASE}${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+            const res = await fetch(`${API_BASE}${endpoint}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (!res.ok) {
-          throw new Error(data.error || "Authentication failed.");
-        }
+            if (!res.ok) {
+              throw new Error(data.error || tr("failedAuthentication"));
+            }
 
-        setAuthToken(data.token);
-        state.auth.user = data.user;
-        state.auth.guestMode = false;
-        updateAuthUI();
-        closeModal();
-        await updateResumeVisibility();
+            setAuthToken(data.token);
+            state.auth.user = data.user;
+            state.auth.guestMode = false;
+            updateAuthUI();
+            closeModal();
+            await updateResumeVisibility();
 
-        showModal(
-          isRegister ? "Account Created" : "Signed In",
-          isRegister
-            ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
-            : `Welcome back, ${data.user.displayName || data.user.email}.`
+            showModal(
+              isRegister ? tr("accountCreated") : tr("signedIn"),
+              isRegister
+                ? `${tr("createAccountSuccess")} ${data.user.displayName || data.user.email}.`
+                : `${tr("welcomeBack")}, ${data.user.displayName || data.user.email}.`
+            );
+          }
         );
+      } catch (error) {
+        authError.textContent = error.message || tr("failedAuthentication");
+        authError.classList.remove("hidden");
       }
-    );
-  } catch (error) {
-    authError.textContent = error.message || "Authentication failed.";
-    authError.classList.remove("hidden");
-  }
-};
+    };
 
-        footer.appendChild(cancelBtn);
-        footer.appendChild(submitBtn);
+    footer.appendChild(cancelBtn);
+    footer.appendChild(submitBtn);
 
-        document.getElementById("authModeSignIn").onclick = () => {
-          currentMode = "signin";
-          renderAuthModal();
-        };
-
-        document.getElementById("authModeRegister").onclick = () => {
-          currentMode = "register";
-          renderAuthModal();
-        };
-      }
-
-      document.getElementById("modalBackdrop").style.display = "flex";
+    document.getElementById("authModeSignIn").onclick = () => {
+      currentMode = "signin";
       renderAuthModal();
-    }
+    };
+
+    document.getElementById("authModeRegister").onclick = () => {
+      currentMode = "register";
+      renderAuthModal();
+    };
+  }
+
+  document.getElementById("modalBackdrop").style.display = "flex";
+  renderAuthModal();
+}
 
     async function beginGuestMode(startImmediately = false) {
       state.auth.user = null;
@@ -2121,23 +2160,39 @@ function showToast(title, text, duration = 6000) {
     }
 
     function continueAsGuest(startImmediately = false) {
-      if (state.auth.user || state.auth.token) {
-        showModal(
-          "Leave Account and Continue as Guest",
-          "Continuing as a guest will sign you out first. Guest test progress will NOT be saved.",
-          [
-            { label: "Cancel", variant: "secondary" },
-            {
-              label: "Sign Out and Continue",
-              variant: "primary",
-              onClick: async () => {
-                await beginGuestMode(startImmediately);
-              }
-            }
-          ]
-        );
-        return;
+  if (state.auth.user || state.auth.token) {
+    showModal(
+      tr("leaveAccountGuestTitle"),
+      tr("leaveAccountGuestBody"),
+      [
+        { label: tr("cancel"), variant: "secondary" },
+        {
+          label: tr("signOutAndContinue"),
+          variant: "primary",
+          onClick: async () => {
+            await beginGuestMode(startImmediately);
+          }
+        }
+      ]
+    );
+    return;
+  }
+
+  showModal(
+    tr("continueAsGuestTitle"),
+    tr("continueAsGuestBody"),
+    [
+      { label: tr("cancel"), variant: "secondary" },
+      {
+        label: tr("continueGuest"),
+        variant: "primary",
+        onClick: async () => {
+          await beginGuestMode(startImmediately);
+        }
       }
+    ]
+  );
+}
 
       showModal(
         "Continue as Guest",
@@ -2153,19 +2208,19 @@ function showToast(title, text, duration = 6000) {
           }
         ]
       );
-    }
+    
 
     function logoutUser() {
-  const logoutLabel = state.auth.guestMode ? "Exit Guest Mode" : "Log Out";
+  const logoutLabel = state.auth.guestMode ? tr("exitGuestMode") : tr("logoutTitle");
   const logoutMessage = state.auth.guestMode
-    ? "Are you sure you want to leave guest mode?"
-    : "Are you sure you want to log out?";
+    ? tr("leaveGuestModeQuestion")
+    : tr("logoutQuestion");
 
   showModal(
     logoutLabel,
     logoutMessage,
     [
-      { label: "Cancel", variant: "secondary" },
+      { label: tr("cancel"), variant: "secondary" },
       {
         label: logoutLabel,
         variant: "primary",
@@ -2181,8 +2236,8 @@ function showToast(title, text, duration = 6000) {
           await updateResumeVisibility();
 
           showToast(
-            "Successfully Signed Out",
-            "You have been returned to the main menu."
+            tr("signedOutToastTitle"),
+            tr("signedOutToastText")
           );
         }
       }
@@ -2191,27 +2246,26 @@ function showToast(title, text, duration = 6000) {
 }
 
     function askReturnToMenu() {
-      const message = state.auth.guestMode
-        ? "Your current progress will NOT be saved in guest mode. Are you sure you want to return to the main menu?"
-        : "Are you sure you want to return to the main menu? Your current progress is saved to your account.";
+  const message = state.auth.guestMode
+    ? tr("returnToMenuGuestBody")
+    : tr("returnToMenuAccountBody");
 
-      showModal(
-        "Return to Main Menu",
-        message,
-        [
-          { label: "Cancel", variant: "secondary" },
-          {
-            label: "Return",
-            variant: "primary",
-            onClick: async () => {
-              stopTimer();
-              await setView("menu");
-            }
-          }
-        ]
-      );
-    }
-
+  showModal(
+    tr("returnToMainMenu"),
+    message,
+    [
+      { label: tr("cancel"), variant: "secondary" },
+      {
+        label: tr("returnBtn"),
+        variant: "primary",
+        onClick: async () => {
+          stopTimer();
+          await setView("menu");
+        }
+      }
+    ]
+  );
+}
     function stopTimer() {
       if (state.timerId) {
         clearInterval(state.timerId);
@@ -2293,8 +2347,8 @@ function handleUserActivity() {
   if (!state.auth.user || !state.auth.token) return false;
 
   return await withLoading(
-    "Resuming Test...",
-    "Your saved progress is being loaded. Please wait.",
+    tr("resumingTest"),
+    tr("loadingSavedProgress"),
     async () => {
       try {
         const res = await fetch(`${API_BASE}/api/progress`, {
@@ -2357,62 +2411,62 @@ function handleUserActivity() {
 }
 
     async function handleTimeExpired() {
-      stopTimer();
-      state.timeRemaining = 0;
-      updateStatus();
-      await saveProgress();
+  stopTimer();
+  state.timeRemaining = 0;
+  updateStatus();
+  await saveProgress();
 
-      const actions = [
-        {
-          label: "Finish Last Question",
-          variant: "primary",
-          onClick: async () => {
-            state.timeoutMode = true;
-            state.navigatorVisible = false;
-            state.lockedReviewMode = true;
-            updateStatus();
-            renderQuestion();
-            await saveProgress();
-          }
-        }
-      ];
-
-      if (!state.overtimeUsed) {
-        actions.push({
-          label: "Add 5 More Minutes",
-          variant: "secondary",
-          onClick: async () => {
-            state.overtimeUsed = true;
-            state.timeRemaining = 5 * 60;
-            state.timeoutMode = false;
-            state.lockedReviewMode = false;
-            updateStatus();
-            startTimer();
-            await saveProgress();
-          }
-        });
+  const actions = [
+    {
+      label: tr("finishLastQuestion"),
+      variant: "primary",
+      onClick: async () => {
+        state.timeoutMode = true;
+        state.navigatorVisible = false;
+        state.lockedReviewMode = true;
+        updateStatus();
+        renderQuestion();
+        await saveProgress();
       }
-
-      actions.push({
-        label: "Submit Now",
-        variant: "secondary",
-        onClick: async () => {
-          state.lockedReviewMode = true;
-          await showReview();
-        }
-      });
-
-      showModal(
-        "Time Has Run Out",
-        `
-          <p>Your timer has reached 00:00.</p>
-          <p><strong>Finish Last Question</strong> keeps the timer at 00:00 and treats your current question as the last one.</p>
-          ${!state.overtimeUsed ? `<p><strong>Add 5 More Minutes</strong> gives you one extra 5-minute extension.</p>` : ""}
-          <p><strong>Submit Now</strong> submits the test as it is.</p>
-        `,
-        actions
-      );
     }
+  ];
+
+  if (!state.overtimeUsed) {
+    actions.push({
+      label: tr("addFiveMoreMinutes"),
+      variant: "secondary",
+      onClick: async () => {
+        state.overtimeUsed = true;
+        state.timeRemaining = 5 * 60;
+        state.timeoutMode = false;
+        state.lockedReviewMode = false;
+        updateStatus();
+        startTimer();
+        await saveProgress();
+      }
+    });
+  }
+
+  actions.push({
+    label: tr("submitNow"),
+    variant: "secondary",
+    onClick: async () => {
+      state.lockedReviewMode = true;
+      await showReview();
+    }
+  });
+
+  showModal(
+    tr("timeHasRunOut"),
+    `
+      <p>${tr("timeExpiredBody1")}</p>
+      <p><strong>${tr("finishLastQuestion")}</strong> ${tr("timeExpiredBody2")}</p>
+      ${!state.overtimeUsed ? `<p><strong>${tr("addFiveMoreMinutes")}</strong> ${tr("timeExpiredBody3")}</p>` : ""}
+      <p><strong>${tr("submitNow")}</strong> ${tr("timeExpiredBody4")}</p>
+    `,
+    actions
+  );
+}
 
     function startTimer() {
   if (state.isPaused) return;
@@ -2477,21 +2531,21 @@ async function resumeTest() {
 
 function showPausedModal(isAutoPause = false) {
   showModal(
-    isAutoPause ? "Test Auto-Paused" : "Test Paused",
+    isAutoPause ? tr("testAutoPausedTitle") : tr("testPausedTitle"),
     isAutoPause
       ? `
-        <p>Your test was automatically paused due to inactivity.</p>
-        <p>The timer is stopped and your progress has been saved.</p>
-        <p>Press <strong>Resume Test</strong> when you are ready to continue.</p>
+        <p>${tr("testPausedBody2")}</p>
+        <p>${tr("testPausedBody3")}</p>
+        <p>${tr("testPausedBody4")}</p>
       `
       : `
-        <p>Your test is paused.</p>
-        <p>The timer is stopped and your progress has been saved.</p>
-        <p>Press <strong>Resume Test</strong> when you are ready to continue.</p>
+        <p>${tr("testPausedBody1")}</p>
+        <p>${tr("testPausedBody3")}</p>
+        <p>${tr("testPausedBody4")}</p>
       `,
     [
       {
-        label: "Resume Test",
+        label: tr("resumeTest"),
         variant: "primary",
         keepOpen: true,
         onClick: async () => {
@@ -2535,12 +2589,11 @@ function showPausedModal(isAutoPause = false) {
 }
 
     function updateStatus() {
-  const timerLabel = state.isPaused
-    ? `Time Remaining: ${formatTime(state.timeRemaining)} (Paused)`
-    : `Time Remaining: ${formatTime(state.timeRemaining)}`;
+    const timerLabel = state.isPaused
+    ? `${tr("timeRemaining")}: ${formatTime(state.timeRemaining)} (${tr("pausedShort")})`
+    : `${tr("timeRemaining")}: ${formatTime(state.timeRemaining)}`;
 
   document.getElementById("timerTop").innerText = timerLabel;
-
     const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const submitBtn = document.getElementById("submitTestBtn");
@@ -2550,7 +2603,7 @@ function showPausedModal(isAutoPause = false) {
 
   if (state.questions.length) {
     const pos = `${state.currentIndex + 1} / ${state.questions.length}`;
-    document.getElementById("questionIndicator").innerText = `Question ${pos}`;
+    document.getElementById("questionIndicator").innerText = `${tr("questionWord")} ${pos}`;
     document.getElementById("questionPosition").innerText = pos;
 
     const current = state.questions[state.currentIndex];
@@ -2586,10 +2639,10 @@ function showPausedModal(isAutoPause = false) {
       pauseBtn.disabled = true;
 
       if (isLastQuestion) {
-        nextBtn.innerText = "Start Practice";
+                nextBtn.innerText = tr("startPracticeShort");
         submitBtn.classList.add("hidden");
       } else {
-        nextBtn.innerText = "Next";
+        nextBtn.innerText = tr("next");
         submitBtn.classList.remove("hidden");
       }
     } else if (state.mode === "practice") {
@@ -2600,10 +2653,10 @@ function showPausedModal(isAutoPause = false) {
       pauseBtn.disabled = true;
 
       if (isLastQuestion) {
-        nextBtn.innerText = "Submit Practice";
+        nextBtn.innerText = tr("submitPractice");
         submitBtn.classList.add("hidden");
       } else {
-        nextBtn.innerText = "Next";
+        nextBtn.innerText = tr("next");
         submitBtn.classList.remove("hidden");
       }
     } else if (state.mode === "test") {
@@ -2614,10 +2667,10 @@ function showPausedModal(isAutoPause = false) {
       pauseBtn.disabled = state.lockedReviewMode;
 
       if (isLastQuestion) {
-        nextBtn.innerText = "Submit Test";
+               nextBtn.innerText = tr("submitTest");
         submitBtn.classList.add("hidden");
       } else {
-        nextBtn.innerText = "Next";
+        nextBtn.innerText = tr("next");
         submitBtn.classList.remove("hidden");
       }
     }
@@ -2625,7 +2678,7 @@ function showPausedModal(isAutoPause = false) {
     submitBtn.disabled = state.isPaused;
     updateQuestionNavigator();
   } else {
-    document.getElementById("questionIndicator").innerText = "Question 1 / 46";
+    document.getElementById("questionIndicator").innerText = `${tr("questionWord")} 1 / 46`;
     document.getElementById("questionPosition").innerText = "1 / 46";
     document.getElementById("flagIndicator").classList.add("hidden");
             const currentLanguage = getSavedLanguage();
@@ -2634,7 +2687,7 @@ function showPausedModal(isAutoPause = false) {
     flagBtn.innerText = isSpanish ? "🚩 Marcar Pregunta" : "🚩 Flag Question";
     pauseBtn.innerText = isSpanish ? "⏸ Pausar Examen" : "⏸ Pause Test";
     prevBtn.disabled = true;
-    nextBtn.innerText = "Next";
+    nextBtn.innerText = tr("next");
     nextBtn.disabled = false;
     flagBtn.disabled = false;
     reportQuestionBtn.disabled = true;
@@ -2649,8 +2702,8 @@ function showPausedModal(isAutoPause = false) {
 
    async function startTest() {
   await withLoading(
-    "Starting Test...",
-    "Your test is being generated. Please wait.",
+    tr("startingTest"),
+    tr("generatingTest"),
         async () => {
       hideToast();
       stopTimer();
@@ -2669,7 +2722,7 @@ function showPausedModal(isAutoPause = false) {
       state.autoPaused = false;
 
       await setView("test");
-      document.getElementById("questionText").innerText = "Generating test...";
+      document.getElementById("questionText").innerText = tr("generatingTestText");
       document.getElementById("choices").innerHTML = "";
       document.getElementById("feedback").innerText = "";
       renderChart(null);
@@ -2697,10 +2750,10 @@ function showPausedModal(isAutoPause = false) {
 }
     async function startPractice(skill, difficulty, examplesOnly = false) {
   await withLoading(
-    examplesOnly ? "Loading Examples..." : "Starting Practice...",
+    examplesOnly ? tr("loadingExamples") : tr("startingPractice"),
     examplesOnly
-      ? "Worked examples are being prepared. Please wait."
-      : "Your practice set is being prepared. Please wait.",
+      ? tr("examplesPreparing")
+      : tr("practicePreparing"),
     async () => {
       hideToast();
       stopTimer();
@@ -2767,7 +2820,7 @@ function showPausedModal(isAutoPause = false) {
 
     function renderQuestion() {
   if (!state.questions.length) {
-    document.getElementById("questionText").innerText = "Choose a difficulty and start the test.";
+    document.getElementById("questionText").innerText = tr("chooseDifficultyStart");
     document.getElementById("choices").innerHTML = "";
     document.getElementById("feedback").innerText = "";
     renderChart(null);
@@ -2778,17 +2831,16 @@ function showPausedModal(isAutoPause = false) {
   const q = state.questions[state.currentIndex];
   document.getElementById("questionText").innerHTML = q.question;
 
-  if (state.isPaused) {
-    document.getElementById("feedback").innerText = "This test is paused. Resume to continue answering questions.";
+    if (state.isPaused) {
+    document.getElementById("feedback").innerText = tr("testPausedMessage");
   } else if (q.example) {
     document.getElementById("feedback").innerHTML =
-      `<strong>Worked Example</strong><br><div class="explanationBox"><div><strong>Answer:</strong> ${q.answer}</div><div style="margin-top:8px;">${q.explanation}</div></div>`;
+      `<strong>${tr("workedExample")}</strong><br><div class="explanationBox"><div><strong>${tr("answer")}:</strong> ${q.answer}</div><div style="margin-top:8px;">${q.explanation}</div></div>`;
   } else if (state.lockedReviewMode) {
-    document.getElementById("feedback").innerText = "Review mode: you may look over your answers, but changes are locked.";
+    document.getElementById("feedback").innerText = tr("reviewModeLocked");
   } else {
     document.getElementById("feedback").innerText = "";
   }
-
   renderAnswerArea(q);
   renderChart(updateChartTheme(q.chart));
   updateStatus();
@@ -2798,12 +2850,12 @@ function showPausedModal(isAutoPause = false) {
   const container = document.getElementById("choices");
   container.innerHTML = "";
 
-  if (q.example) {
+    if (q.example) {
     const box = document.createElement("div");
     box.className = "practiceItem";
     box.innerHTML = `
-      <div><strong>This is a guided example.</strong></div>
-      <div class="muted" style="margin-top:8px;">Read the explanation above, then move to the next example or practice question.</div>
+      <div><strong>${tr("guidedExampleText")}</strong></div>
+      <div class="muted" style="margin-top:8px;">${tr("guidedExampleSubtext")}</div>
     `;
     container.appendChild(box);
     return;
@@ -2898,40 +2950,40 @@ function showPausedModal(isAutoPause = false) {
     }
 
     function confirmSubmit() {
-      const hasFlagged = state.questions.some((q) => q.flagged);
-      const hasUnanswered = state.questions.some((q) => String(q.userAnswer ?? "").trim() === "");
+  const hasFlagged = state.questions.some((q) => q.flagged);
+  const hasUnanswered = state.questions.some((q) => String(q.userAnswer ?? "").trim() === "");
 
-      const actions = [];
+  const actions = [];
 
-      if (hasFlagged || hasUnanswered) {
-        actions.push({
-          label: "Review Questions",
-          variant: "secondary",
-          onClick: () => {
-            goToEarliestIssue();
-          }
-        });
+  if (hasFlagged || hasUnanswered) {
+    actions.push({
+      label: tr("reviewQuestions"),
+      variant: "secondary",
+      onClick: () => {
+        goToEarliestIssue();
       }
+    });
+  }
 
-      actions.push(
-        { label: "Cancel", variant: "secondary" },
-        {
-          label: "Submit",
-          variant: "primary",
-          onClick: () => submitTest()
-        }
-      );
-
-      showModal(
-        "Submit Test",
-        `
-          <p>Are you sure you want to submit your test?</p>
-          ${hasFlagged ? "<p>⚠ You still have flagged questions.</p>" : ""}
-          ${hasUnanswered ? "<p>⚠ You still have unanswered questions.</p>" : ""}
-        `,
-        actions
-      );
+  actions.push(
+    { label: tr("cancel"), variant: "secondary" },
+    {
+      label: tr("submit"),
+      variant: "primary",
+      onClick: () => submitTest()
     }
+  );
+
+  showModal(
+    tr("submitTestTitle"),
+    `
+      <p>${tr("submitTestConfirm")}</p>
+      ${hasFlagged ? `<p>${tr("flaggedWarning")}</p>` : ""}
+      ${hasUnanswered ? `<p>${tr("unansweredWarning")}</p>` : ""}
+    `,
+    actions
+  );
+}
 
     function confirmPracticeSubmit() {
   const hasUnanswered = state.questions.some(
@@ -2939,15 +2991,15 @@ function showPausedModal(isAutoPause = false) {
   );
 
   showModal(
-    "Submit Practice",
+    tr("submitPracticeTitle"),
     `
-      <p>Are you sure you want to submit this practice set?</p>
-      ${hasUnanswered ? "<p>⚠ You still have unanswered questions.</p>" : ""}
+      <p>${tr("submitPracticeConfirm")}</p>
+      ${hasUnanswered ? `<p>${tr("unansweredWarning")}</p>` : ""}
     `,
     [
-      { label: "Cancel", variant: "secondary" },
+      { label: tr("cancel"), variant: "secondary" },
       {
-        label: "Submit Practice",
+        label: tr("submitPractice"),
         variant: "primary",
         onClick: async () => {
           await showPracticeResults();
@@ -3108,8 +3160,8 @@ async function saveCompletedPracticeToHistory() {
   if (state.isPaused) return;
 
   await withLoading(
-    "Submitting Test...",
-    "Your test is being submitted and scored. Please wait.",
+    tr("submittingTestLoading"),
+    tr("submittingTestPreparing"),
     async () => {
       hideToast();
       stopTimer();
@@ -3122,88 +3174,88 @@ async function saveCompletedPracticeToHistory() {
 }
 
     async function showReview() {
-      stopTimer();
+  stopTimer();
 
-      const score200 = scaledScore();
-      const weakest = weakestSkillText();
-      const correct = state.questions.filter(
-        (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
-      ).length;
-      const wrongOrUnanswered = state.questions.length - correct;
-      const advance = nextDifficulty(state.difficulty);
-      const passed = passThreshold(score200);
+  const score200 = scaledScore();
+  const weakest = weakestSkillText();
+  const correct = state.questions.filter(
+    (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
+  ).length;
+  const wrongOrUnanswered = state.questions.length - correct;
+  const advance = nextDifficulty(state.difficulty);
+  const passed = passThreshold(score200);
 
-      const panel = document.getElementById("reviewPanel");
-      panel.innerHTML = `
-        <h2 class="sectionTitle">Test Review</h2>
+  const panel = document.getElementById("reviewPanel");
+  panel.innerHTML = `
+    <h2 class="sectionTitle">${tr("testReview")}</h2>
 
-        <div class="reviewTop">
-          <div class="reviewStat">
-            <div class="reviewStatLabel">Score</div>
-            <div class="reviewStatValue">${score200} / 200</div>
-          </div>
-          <div class="reviewStat">
-            <div class="reviewStatLabel">Correct</div>
-            <div class="reviewStatValue">${correct}</div>
-          </div>
-          <div class="reviewStat">
-            <div class="reviewStatLabel">Wrong / Unanswered</div>
-            <div class="reviewStatValue">${wrongOrUnanswered}</div>
-          </div>
-          <div class="reviewStat">
-            <div class="reviewStatLabel">Weakest Skill</div>
-            <div class="reviewStatValue">${weakest}</div>
-          </div>
-        </div>
+    <div class="reviewTop">
+      <div class="reviewStat">
+        <div class="reviewStatLabel">${tr("score")}</div>
+        <div class="reviewStatValue">${score200} / 200</div>
+      </div>
+      <div class="reviewStat">
+        <div class="reviewStatLabel">${tr("correctCount")}</div>
+        <div class="reviewStatValue">${correct}</div>
+      </div>
+      <div class="reviewStat">
+        <div class="reviewStatLabel">${tr("wrongUnanswered")}</div>
+        <div class="reviewStatValue">${wrongOrUnanswered}</div>
+      </div>
+      <div class="reviewStat">
+        <div class="reviewStatLabel">${tr("weakestSkill")}</div>
+        <div class="reviewStatValue">${weakest}</div>
+      </div>
+    </div>
 
-        <div class="reviewItem">
-          <button id="practiceWeakestBtn" class="primaryBtn">Practice Weakest Skill</button>
-          <button id="reviewMenuBtn" class="secondaryBtn">Main Menu</button>
-          ${advance && passed ? `<button id="advanceBtn" class="secondaryBtn">Next Level</button>` : ""}
-        </div>
-      `;
+    <div class="reviewItem">
+      <button id="practiceWeakestBtn" class="primaryBtn">${tr("practiceWeakestSkill")}</button>
+      <button id="reviewMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+      ${advance && passed ? `<button id="advanceBtn" class="secondaryBtn">${tr("nextLevel")}</button>` : ""}
+    </div>
+  `;
 
-      state.questions.forEach((q, i) => {
-        const user = String(q.userAnswer ?? "").trim();
-        const correctAns = String(q.answer).trim();
-        const isCorrect = user === correctAns;
+  state.questions.forEach((q, i) => {
+    const user = String(q.userAnswer ?? "").trim();
+    const correctAns = String(q.answer).trim();
+    const isCorrect = user === correctAns;
 
-        const div = document.createElement("div");
-        div.className = "reviewItem";
-        div.innerHTML = `
-          <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
-          <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
-          <div style="margin-top:10px;">Your answer: ${user || "—"}</div>
-          <div>Correct: ${correctAns}</div>
-          <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
-          ${!isCorrect ? `<div class="explanationBox">${q.explanation}</div>` : ""}
-        `;
-        panel.appendChild(div);
-      });
+    const div = document.createElement("div");
+    div.className = "reviewItem";
+    div.innerHTML = `
+      <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
+      <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
+      <div style="margin-top:10px;">${tr("yourAnswer")}: ${user || tr("noAnswerDash")}</div>
+      <div>${tr("correct")}: ${correctAns}</div>
+      <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+      ${!isCorrect ? `<div class="explanationBox">${q.explanation}</div>` : ""}
+    `;
+    panel.appendChild(div);
+  });
 
-      await setView("review");
-      await clearSavedProgress();
+  await setView("review");
+  await clearSavedProgress();
 
-      document.getElementById("practiceWeakestBtn").onclick = async () => {
-        await startPractice(weakest, state.difficulty, true);
-      };
-      document.getElementById("reviewMenuBtn").onclick = () => {
-        goToMainMenu();
-      };
+  document.getElementById("practiceWeakestBtn").onclick = async () => {
+    await startPractice(weakest, state.difficulty, true);
+  };
+  document.getElementById("reviewMenuBtn").onclick = () => {
+    goToMainMenu();
+  };
 
-      const adv = document.getElementById("advanceBtn");
-      if (adv) {
-        adv.onclick = async () => {
-          document.getElementById("difficultySelect").value = advance;
-          await startTest();
-        };
-      }
-    }
+  const adv = document.getElementById("advanceBtn");
+  if (adv) {
+    adv.onclick = async () => {
+      document.getElementById("difficultySelect").value = advance;
+      await startTest();
+    };
+  }
+}
 
    async function showPracticeResults() {
   await withLoading(
-    "Submitting Practice...",
-    "Your practice results are being prepared. Please wait.",
+    tr("submittingPracticeLoading"),
+    tr("practiceResultsPreparing"),
     async () => {
       await saveCompletedPracticeToHistory();
 
@@ -3214,22 +3266,22 @@ async function saveCompletedPracticeToHistory() {
 
       const panel = document.getElementById("practicePanel");
       panel.innerHTML = `
-        <h2 class="sectionTitle">Practice Results</h2>
+        <h2 class="sectionTitle">${tr("practiceResults")}</h2>
 
         <div class="practiceSummary">
           <div class="reviewStat">
-            <div class="reviewStatLabel">Correct</div>
+            <div class="reviewStatLabel">${tr("correctCount")}</div>
             <div class="reviewStatValue">${correct}</div>
           </div>
           <div class="reviewStat">
-            <div class="reviewStatLabel">Wrong</div>
+            <div class="reviewStatLabel">${tr("wrong")}</div>
             <div class="reviewStatValue">${total - correct}</div>
           </div>
         </div>
 
         <div class="practiceItem">
-          <button id="practiceMenuBtn" class="secondaryBtn">Main Menu</button>
-          <button id="practiceAgainBtn" class="primaryBtn">Practice Again</button>
+          <button id="practiceMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+          <button id="practiceAgainBtn" class="primaryBtn">${tr("practiceAgain")}</button>
         </div>
       `;
 
@@ -3243,9 +3295,9 @@ async function saveCompletedPracticeToHistory() {
         div.innerHTML = `
           <div><strong>Q${i + 1}</strong></div>
           <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
-          <div style="margin-top:10px;">Your answer: ${user || "—"}</div>
-          <div>Correct: ${correctAns}</div>
-          <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+          <div style="margin-top:10px;">${tr("yourAnswer")}: ${user || tr("noAnswerDash")}</div>
+          <div>${tr("correct")}: ${correctAns}</div>
+          <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
           <div class="explanationBox">${q.explanation}</div>
         `;
         panel.appendChild(div);
@@ -3267,13 +3319,13 @@ async function saveCompletedPracticeToHistory() {
   if (!state.auth.user || !state.auth.token) return;
 
   await withLoading(
-    "Loading Profile...",
-    "Your history and progress report are being loaded. Please wait.",
+    tr("loadingProfile"),
+    tr("loadingHistory"),
     async () => {
       const panel = document.getElementById("profilePanel");
       panel.innerHTML = `
-        <h2 class="sectionTitle">Profile</h2>
-        <div class="reviewItem">Loading history...</div>
+        <h2 class="sectionTitle">${tr("profile")}</h2>
+        <div class="reviewItem">${tr("loadingHistoryShort")}</div>
       `;
 
       await setView("profile");
@@ -3292,11 +3344,11 @@ async function saveCompletedPracticeToHistory() {
         const practiceData = await practiceRes.json();
 
         if (!testRes.ok) {
-          throw new Error(testData.error || "Failed to load test history.");
+          throw new Error(testData.error || tr("failedLoadHistory"));
         }
 
         if (!practiceRes.ok) {
-          throw new Error(practiceData.error || "Failed to load practice history.");
+          throw new Error(practiceData.error || tr("failedLoadHistory"));
         }
 
         const testHistory = Array.isArray(testData.history) ? testData.history : [];
@@ -3316,51 +3368,51 @@ async function saveCompletedPracticeToHistory() {
         const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
 
         panel.innerHTML = `
-          <h2 class="sectionTitle">Profile</h2>
+          <h2 class="sectionTitle">${tr("profile")}</h2>
 
           <div class="reviewTop">
             <div class="reviewStat">
-              <div class="reviewStatLabel">Tests Taken</div>
+              <div class="reviewStatLabel">${tr("testsTaken")}</div>
               <div class="reviewStatValue">${testHistory.length}</div>
             </div>
             <div class="reviewStat">
-              <div class="reviewStatLabel">Best Score</div>
+              <div class="reviewStatLabel">${tr("bestScore")}</div>
               <div class="reviewStatValue">${bestScore}</div>
             </div>
             <div class="reviewStat">
-              <div class="reviewStatLabel">Average Score</div>
+              <div class="reviewStatLabel">${tr("averageScore")}</div>
               <div class="reviewStatValue">${averageScore}</div>
             </div>
             <div class="reviewStat">
-              <div class="reviewStatLabel">Practice Sessions</div>
+              <div class="reviewStatLabel">${tr("practiceSessions")}</div>
               <div class="reviewStatValue">${practiceHistory.length}</div>
             </div>
           </div>
 
           <div class="reviewTop">
             <div class="reviewStat">
-              <div class="reviewStatLabel">Current Focus</div>
+              <div class="reviewStatLabel">${tr("currentFocus")}</div>
               <div class="reviewStatValue">${escapeHtml(currentFocus)}</div>
             </div>
             <div class="reviewStat">
-              <div class="reviewStatLabel">Next Focus</div>
+              <div class="reviewStatLabel">${tr("nextFocus")}</div>
               <div class="reviewStatValue">${escapeHtml(nextFocus)}</div>
             </div>
             <div class="reviewStat" style="grid-column: span 2;">
-              <div class="reviewStatLabel">Progress Note</div>
+              <div class="reviewStatLabel">${tr("progressNote")}</div>
               <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
             </div>
           </div>
 
           <div class="reviewItem">
-            <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
-            ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">Practice ${escapeHtml(currentFocus)}</button>` : ""}
+            <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+            ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(currentFocus)}</button>` : ""}
           </div>
 
           <div class="reviewItem">
             <div class="menuActions">
-              <button id="testHistoryTabBtn" class="secondaryBtn">Test History</button>
-              <button id="practiceHistoryTabBtn" class="secondaryBtn">Practice History</button>
+              <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
+              <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
             </div>
           </div>
 
@@ -3373,7 +3425,7 @@ async function saveCompletedPracticeToHistory() {
 
         if (!testHistory.length) {
           testSection.innerHTML = `
-            <div class="reviewItem">No completed test history yet. Once you submit a test while signed in, it will appear here.</div>
+            <div class="reviewItem">${tr("noTestHistory")}</div>
           `;
         } else {
           testHistory.forEach((entry, index) => {
@@ -3383,15 +3435,15 @@ async function saveCompletedPracticeToHistory() {
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
-              <div><strong>Test ${testHistory.length - index}</strong></div>
-              <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
-              <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
-              <div>Score: ${Number(entry.score200) || 0} / 200</div>
-              <div>Correct: ${Number(entry.correctCount) || 0}</div>
-              <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
-              <div>Weakest Skill: ${escapeHtml(entry.weakestSkill || "—")}</div>
+              <div><strong>${tr("testHistory")} ${testHistory.length - index}</strong></div>
+              <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
+              <div>${tr("difficulty")}: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>${tr("score")}: ${Number(entry.score200) || 0} / 200</div>
+              <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
+              <div>${tr("wrongUnanswered")}: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
+              <div>${tr("weakestSkill")}: ${escapeHtml(entry.weakestSkill || "—")}</div>
               <div style="margin-top:12px;">
-                <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+                <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">${tr("viewDetails")}</button>
               </div>
               <div id="${detailsId}" class="hidden"></div>
             `;
@@ -3399,13 +3451,32 @@ async function saveCompletedPracticeToHistory() {
             testSection.appendChild(item);
 
             const detailsContainer = item.querySelector(`#${detailsId}`);
-            detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
+            const questions = Array.isArray(entry.questions) ? entry.questions : [];
+            if (!questions.length) {
+              detailsContainer.innerHTML = `<div class="reviewItem" style="margin-top:10px;">${tr("noQuestionDataTest")}</div>`;
+            } else {
+              detailsContainer.innerHTML = questions.map((q, i) => {
+                const userAnswer = String(q.userAnswer ?? "").trim();
+                const correctAnswer = String(q.answer ?? "").trim();
+                const isCorrect = userAnswer === correctAnswer;
+
+                return `
+                  <div class="reviewItem" style="margin-top:10px;">
+                    <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
+                    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+                    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
+                    <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
+                    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+                  </div>
+                `;
+              }).join("");
+            }
           });
         }
 
         if (!practiceHistory.length) {
           practiceSection.innerHTML = `
-            <div class="reviewItem">No completed practice history yet. Once you finish a practice set while signed in, it will appear here.</div>
+            <div class="reviewItem">${tr("noPracticeHistory")}</div>
           `;
         } else {
           practiceHistory.forEach((entry, index) => {
@@ -3415,15 +3486,15 @@ async function saveCompletedPracticeToHistory() {
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
-              <div><strong>Practice ${practiceHistory.length - index}</strong></div>
-              <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
-              <div>Skill: ${escapeHtml(entry.skill || "Mixed Practice")}</div>
-              <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
-              <div>Correct: ${Number(entry.correctCount) || 0}</div>
-              <div>Wrong: ${Number(entry.wrongCount) || 0}</div>
+              <div><strong>${tr("practiceHistory")} ${practiceHistory.length - index}</strong></div>
+              <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
+              <div>${tr("skill")}: ${escapeHtml(entry.skill || tr("mixedPractice"))}</div>
+              <div>${tr("difficulty")}: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
+              <div>${tr("wrong")}: ${Number(entry.wrongCount) || 0}</div>
               <div>Accuracy: ${Number(entry.accuracyPercent) || 0}%</div>
               <div style="margin-top:12px;">
-                <button class="secondaryBtn practiceHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+                <button class="secondaryBtn practiceHistoryToggleBtn" data-target="${detailsId}">${tr("viewDetails")}</button>
               </div>
               <div id="${detailsId}" class="hidden"></div>
             `;
@@ -3431,7 +3502,26 @@ async function saveCompletedPracticeToHistory() {
             practiceSection.appendChild(item);
 
             const detailsContainer = item.querySelector(`#${detailsId}`);
-            detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
+            const questions = Array.isArray(entry.questions) ? entry.questions : [];
+            if (!questions.length) {
+              detailsContainer.innerHTML = `<div class="reviewItem" style="margin-top:10px;">${tr("noQuestionDataPractice")}</div>`;
+            } else {
+              detailsContainer.innerHTML = questions.map((q, i) => {
+                const userAnswer = String(q.userAnswer ?? "").trim();
+                const correctAnswer = String(q.answer ?? "").trim();
+                const isCorrect = userAnswer === correctAnswer;
+
+                return `
+                  <div class="reviewItem" style="margin-top:10px;">
+                    <div><strong>Q${i + 1}</strong></div>
+                    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+                    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
+                    <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
+                    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+                  </div>
+                `;
+              }).join("");
+            }
           });
         }
 
@@ -3458,7 +3548,7 @@ async function saveCompletedPracticeToHistory() {
 
             const isHidden = details.classList.contains("hidden");
             details.classList.toggle("hidden", !isHidden);
-            btn.textContent = isHidden ? "Hide Details" : "View Details";
+            btn.textContent = isHidden ? tr("hideDetails") : tr("viewDetails");
           };
         });
 
@@ -3470,7 +3560,7 @@ async function saveCompletedPracticeToHistory() {
 
             const isHidden = details.classList.contains("hidden");
             details.classList.toggle("hidden", !isHidden);
-            btn.textContent = isHidden ? "Hide Details" : "View Details";
+            btn.textContent = isHidden ? tr("hideDetails") : tr("viewDetails");
           };
         });
 
@@ -3488,10 +3578,10 @@ async function saveCompletedPracticeToHistory() {
         console.error("PROFILE PANEL ERROR:", error);
 
         panel.innerHTML = `
-          <h2 class="sectionTitle">Profile</h2>
-          <div class="reviewItem">Failed to load history.</div>
+          <h2 class="sectionTitle">${tr("profile")}</h2>
+          <div class="reviewItem">${tr("failedLoadHistory")}</div>
           <div class="reviewItem">
-            <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
+            <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
           </div>
         `;
 
@@ -3534,12 +3624,12 @@ async function saveCompletedPracticeToHistory() {
 
       if (!state.auth.user || !state.auth.token) {
         showModal(
-          "Sign In Required",
-          "Sign in to save progress to your account, or continue as a guest to start without saving.",
+          tr("signInRequired"),
+          tr("signInRequiredBody"),
           [
-            { label: "Cancel", variant: "secondary" },
+            { label: tr("cancel"), variant: "secondary" },
             {
-              label: "Sign In",
+              label: tr("signIn"),
               variant: "secondary",
               keepOpen: true,
               onClick: async () => {
@@ -3547,7 +3637,7 @@ async function saveCompletedPracticeToHistory() {
               }
             },
             {
-              label: "Continue as Guest",
+              label: tr("continueGuest"),
               variant: "primary",
               keepOpen: true,
               onClick: async () => {
@@ -3564,12 +3654,12 @@ async function saveCompletedPracticeToHistory() {
 
       if (resumeExists) {
         showModal(
-          "Warning",
-          "Starting a new test will replace your unfinished saved progress.",
+          tr("warning"),
+          tr("replaceProgressWarning"),
           [
-            { label: "Cancel", variant: "secondary" },
+            { label: tr("cancel"), variant: "secondary" },
             {
-              label: "Start",
+              label: tr("startTest"),
               variant: "primary",
               onClick: async () => {
                 await clearSavedProgress();
