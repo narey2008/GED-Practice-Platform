@@ -5,6 +5,8 @@ const path = require("path");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 const buildTest = require("./generators/testBuilder");
 const User = require("./models/User");
@@ -25,6 +27,13 @@ for (const key of requiredEnv) {
   if (!process.env[key]) {
     console.error(`Missing required environment variable: ${key}`);
     process.exit(1);
+  }
+}
+
+const emailEnv = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "APP_BASE_URL"];
+for (const key of emailEnv) {
+  if (!process.env[key]) {
+    console.warn(`Missing email environment variable: ${key}`);
   }
 }
 
@@ -68,6 +77,71 @@ function sanitizeUser(user) {
     displayName: user.displayName,
     createdAt: user.createdAt
   };
+}
+
+const mailTransport =
+  process.env.SMTP_HOST &&
+  process.env.SMTP_PORT &&
+  process.env.SMTP_USER &&
+  process.env.SMTP_PASS
+    ? nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT),
+        secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      })
+    : null;
+
+function createPasswordResetToken() {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
+
+  return {
+    rawToken,
+    tokenHash,
+    expiresAt
+  };
+}
+
+async function sendPasswordResetEmail({ email, rawToken }) {
+  if (!mailTransport) {
+    throw new Error("Email system is not configured.");
+  }
+
+  const resetUrl = `${process.env.APP_BASE_URL}/?resetToken=${encodeURIComponent(rawToken)}&resetEmail=${encodeURIComponent(email)}`;
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Reset your GED Practice Platform password",
+    text: `You requested a password reset.
+
+Open this link to reset your password:
+${resetUrl}
+
+This link expires in 30 minutes.
+
+If you did not request this, you can ignore this email.`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#10233f;">
+        <h2>Reset your GED Practice Platform password</h2>
+        <p>You requested a password reset.</p>
+        <p>
+          <a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#153e75;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;">
+            Reset Password
+          </a>
+        </p>
+        <p>If the button does not work, use this link:</p>
+        <p>${resetUrl}</p>
+        <p>This link expires in 30 minutes.</p>
+        <p>If you did not request this, you can ignore this email.</p>
+      </div>
+    `
+  });
 }
 
 app.get("/api/health", async (req, res) => {
@@ -176,6 +250,100 @@ app.post("/api/auth/login", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to sign in."
+    });
+  }
+});
+
+app.post("/api/auth/forgot-password", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    if (!rawEmail) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    const user = await User.findOne({ email: rawEmail });
+
+    if (user) {
+      const { rawToken, tokenHash, expiresAt } = createPasswordResetToken();
+
+      user.passwordResetTokenHash = tokenHash;
+      user.passwordResetExpiresAt = expiresAt;
+      await user.save();
+
+      await sendPasswordResetEmail({
+        email: user.email,
+        rawToken
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "If an account exists for that email, a reset link has been sent."
+    });
+  } catch (error) {
+    console.error("FORGOT PASSWORD ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to start password reset."
+    });
+  }
+});
+
+app.post("/api/auth/reset-password", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const rawToken =
+      typeof req.body.token === "string"
+        ? req.body.token.trim()
+        : "";
+
+    const newPassword =
+      typeof req.body.password === "string"
+        ? req.body.password
+        : "";
+
+    if (!rawEmail || !rawToken || !newPassword) {
+      return res.status(400).json({ error: "Email, token, and new password are required." });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: "Password must be at least 8 characters long." });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    const user = await User.findOne({
+      email: rawEmail,
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "This reset link is invalid or has expired." });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.passwordResetTokenHash = null;
+    user.passwordResetExpiresAt = null;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Password reset successful."
+    });
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to reset password."
     });
   }
 });

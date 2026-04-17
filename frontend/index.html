@@ -1359,6 +1359,31 @@ practiceLabel: isSpanish ? "Práctica" : "Practice",
     signedIn: isSpanish ? "Sesión Iniciada" : "Signed In",
     welcomeBack: isSpanish ? "Bienvenido de nuevo" : "Welcome back",
 
+    forgotPassword: isSpanish ? "¿Olvidaste tu contraseña?" : "Forgot Password?",
+forgotPasswordTitle: isSpanish ? "Restablecer Contraseña" : "Reset Password",
+forgotPasswordBody: isSpanish
+  ? "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña."
+  : "Enter your email and we will send you a password reset link.",
+sendResetLink: isSpanish ? "Enviar Enlace" : "Send Reset Link",
+backToSignIn: isSpanish ? "Volver a Iniciar Sesión" : "Back to Sign In",
+resetLinkSent: isSpanish ? "Enlace Enviado" : "Link Sent",
+resetLinkSentBody: isSpanish
+  ? "Si existe una cuenta para ese correo, se ha enviado un enlace de restablecimiento."
+  : "If an account exists for that email, a reset link has been sent.",
+newPassword: isSpanish ? "Nueva Contraseña" : "New Password",
+enterNewPassword: isSpanish ? "Ingresa una nueva contraseña" : "Enter a new password",
+confirmPassword: isSpanish ? "Confirmar Contraseña" : "Confirm Password",
+confirmNewPassword: isSpanish ? "Confirma tu nueva contraseña" : "Confirm your new password",
+resetPasswordNow: isSpanish ? "Restablecer Contraseña" : "Reset Password",
+passwordsDoNotMatch: isSpanish ? "Las contraseñas no coinciden." : "Passwords do not match.",
+invalidResetLink: isSpanish ? "Este enlace de restablecimiento no es válido o ya expiró." : "This reset link is invalid or has expired.",
+passwordResetSuccess: isSpanish ? "Contraseña Restablecida" : "Password Reset",
+passwordResetSuccessBody: isSpanish
+  ? "Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión."
+  : "Your password has been reset. You can now sign in.",
+forgotPasswordLoading: isSpanish ? "Enviando Enlace..." : "Sending Link...",
+resetPasswordLoading: isSpanish ? "Restableciendo Contraseña..." : "Resetting Password...",
+
     mode: isSpanish ? "Modo" : "Mode",
 fullTest: isSpanish ? "Examen Completo" : "Full Test",
 practiceMode: isSpanish ? "Práctica" : "Practice",
@@ -2373,6 +2398,164 @@ function showToast(title, text, duration = 6000) {
   );
 }
 
+function openForgotPasswordModal() {
+  showModal(
+    tr("forgotPasswordTitle"),
+    `
+      <p>${tr("forgotPasswordBody")}</p>
+      <label for="forgotPasswordEmail">${tr("email")}</label>
+      <input id="forgotPasswordEmail" type="email" placeholder="${tr("enterEmail")}" />
+      <div id="forgotPasswordError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("backToSignIn"),
+        variant: "secondary",
+        keepOpen: true,
+        onClick: () => {
+          openAuthModal("signin");
+        }
+      },
+      {
+        label: tr("sendResetLink"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("forgotPasswordError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const email = document.getElementById("forgotPasswordEmail").value.trim();
+
+          try {
+            await withLoading(
+              tr("forgotPasswordLoading"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("failedAuthentication"));
+                }
+
+                closeModal();
+                showModal(
+                  tr("resetLinkSent"),
+                  tr("resetLinkSentBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("failedAuthentication");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
+function openResetPasswordModal(resetEmail, resetToken) {
+  showModal(
+    tr("forgotPasswordTitle"),
+    `
+      <label for="resetPasswordNew">${tr("newPassword")}</label>
+      <input id="resetPasswordNew" type="password" placeholder="${tr("enterNewPassword")}" />
+
+      <label for="resetPasswordConfirm" style="margin-top:12px;">${tr("confirmPassword")}</label>
+      <input id="resetPasswordConfirm" type="password" placeholder="${tr("confirmNewPassword")}" />
+
+      <div id="resetPasswordError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary",
+        onClick: () => {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("resetToken");
+          url.searchParams.delete("resetEmail");
+          window.history.replaceState({}, "", url.toString());
+        }
+      },
+      {
+        label: tr("resetPasswordNow"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("resetPasswordError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const password = document.getElementById("resetPasswordNew").value;
+          const confirm = document.getElementById("resetPasswordConfirm").value;
+
+          if (password !== confirm) {
+            errorEl.textContent = tr("passwordsDoNotMatch");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          try {
+            await withLoading(
+              tr("resetPasswordLoading"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: resetEmail,
+                    token: resetToken,
+                    password
+                  })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("invalidResetLink"));
+                }
+
+                const url = new URL(window.location.href);
+                url.searchParams.delete("resetToken");
+                url.searchParams.delete("resetEmail");
+                window.history.replaceState({}, "", url.toString());
+
+                closeModal();
+                showModal(
+                  tr("passwordResetSuccess"),
+                  tr("passwordResetSuccessBody"),
+                  [
+                    {
+                      label: tr("signIn"),
+                      variant: "primary",
+                      keepOpen: true,
+                      onClick: () => {
+                        openAuthModal("signin");
+                      }
+                    }
+                  ]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("invalidResetLink");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
     function openAuthModal(initialMode = "signin") {
   let currentMode = initialMode;
 
@@ -2394,10 +2577,16 @@ function showToast(title, text, duration = 6000) {
       <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
       <input id="authEmail" type="email" placeholder="${tr("enterEmail")}" />
 
-      <label style="margin-top:12px;" for="authPassword">${tr("password")}</label>
-      <input id="authPassword" type="password" placeholder="${tr("enterPassword")}" />
+                <label style="margin-top:12px;" for="authPassword">${tr("password")}</label>
+          <input id="authPassword" type="password" placeholder="${tr("enterPassword")}" />
 
-      <div id="authError" class="authError hidden"></div>
+          ${!isRegister ? `
+            <div style="margin-top:10px;">
+              <button id="forgotPasswordBtn" type="button" class="secondaryBtn">${tr("forgotPassword")}</button>
+            </div>
+          ` : ""}
+
+          <div id="authError" class="authError hidden"></div>
     `;
 
     const footer = document.getElementById("modalFooter");
@@ -2440,6 +2629,13 @@ function showToast(title, text, duration = 6000) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
             });
+
+                const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.onclick = () => {
+        openForgotPasswordModal();
+      };
+    }
 
             const data = await res.json();
 
@@ -4038,6 +4234,14 @@ window.addEventListener("unhandledrejection", () => {
       updateStatus();
       await setView("menu");
       applyLanguage(getSavedLanguage());
+
+      const url = new URL(window.location.href);
+      const resetToken = url.searchParams.get("resetToken");
+      const resetEmail = url.searchParams.get("resetEmail");
+
+      if (resetToken && resetEmail) {
+        openResetPasswordModal(resetEmail, resetToken);
+      }
     })();
   </script>
 </body>
