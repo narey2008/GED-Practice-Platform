@@ -2577,16 +2577,16 @@ function openResetPasswordModal(resetEmail, resetToken) {
       <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
       <input id="authEmail" type="email" placeholder="${tr("enterEmail")}" />
 
-                <label style="margin-top:12px;" for="authPassword">${tr("password")}</label>
-          <input id="authPassword" type="password" placeholder="${tr("enterPassword")}" />
+      <label style="margin-top:12px;" for="authPassword">${tr("password")}</label>
+      <input id="authPassword" type="password" placeholder="${tr("enterPassword")}" />
 
-          ${!isRegister ? `
-            <div style="margin-top:10px;">
-              <button id="forgotPasswordBtn" type="button" class="secondaryBtn">${tr("forgotPassword")}</button>
-            </div>
-          ` : ""}
+      ${!isRegister ? `
+        <div style="margin-top:10px;">
+          <button id="forgotPasswordBtn" type="button" class="secondaryBtn">${tr("forgotPassword")}</button>
+        </div>
+      ` : ""}
 
-          <div id="authError" class="authError hidden"></div>
+      <div id="authError" class="authError hidden"></div>
     `;
 
     const footer = document.getElementById("modalFooter");
@@ -2617,7 +2617,7 @@ function openResetPasswordModal(resetEmail, resetToken) {
       try {
         await withLoading(
           isRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
-          isRegister ? tr("systemWorking") : tr("systemWorking"),
+          tr("systemWorking"),
           async () => {
             const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
             const payload = isRegister
@@ -2629,13 +2629,6 @@ function openResetPasswordModal(resetEmail, resetToken) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
             });
-
-                const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
-    if (forgotPasswordBtn) {
-      forgotPasswordBtn.onclick = () => {
-        openForgotPasswordModal();
-      };
-    }
 
             const data = await res.json();
 
@@ -2676,12 +2669,18 @@ function openResetPasswordModal(resetEmail, resetToken) {
       currentMode = "register";
       renderAuthModal();
     };
+
+    const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.onclick = () => {
+        openForgotPasswordModal();
+      };
+    }
   }
 
   document.getElementById("modalBackdrop").style.display = "flex";
   renderAuthModal();
 }
-
     async function beginGuestMode(startImmediately = false) {
   state.auth.user = null;
   setGuestMode(true);
