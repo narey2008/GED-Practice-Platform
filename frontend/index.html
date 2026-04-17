@@ -1497,6 +1497,9 @@ skillMeanMedian: isSpanish ? "Media, Mediana y Probabilidad" : "Mean, Median, an
 skillExpressions: isSpanish ? "Expresiones y Orden de Operaciones" : "Expressions and Order of Operations",
 skillEquations: isSpanish ? "Resolución de Ecuaciones y Desigualdades" : "Solving Equations and Inequalities",
 skillLinearSlope: isSpanish ? "Ecuaciones Lineales y Pendiente" : "Linear Equations and Slope",
+skillLineGraph: isSpanish ? "Gráfica de Líneas" : "Line Graph",
+skillPercentChange: isSpanish ? "Cambio Porcentual" : "Percent Change",
+skillLinearEquations: isSpanish ? "Ecuaciones Lineales" : "Linear Equations",
 
     loading: isSpanish ? "Cargando..." : "Loading...",
     doNotRefresh: isSpanish ? "Por favor no actualices" : "Please do not refresh",
@@ -1635,9 +1638,6 @@ function translateSkillLabel(value) {
   if (value === "Expressions and Order of Operations") return tr("skillExpressions");
   if (value === "Solving Equations and Inequalities") return tr("skillEquations");
   if (value === "Linear Equations and Slope") return tr("skillLinearSlope");
-  skillLineGraph: isSpanish ? "Gráfica de Líneas" : "Line Graph",
-skillPercentChange: isSpanish ? "Cambio Porcentual" : "Percent Change",
-skillLinearEquations: isSpanish ? "Ecuaciones Lineales" : "Linear Equations",
   if (value === "Line Graph") return tr("skillLineGraph");
   if (value === "Percent Change") return tr("skillPercentChange");
   if (value === "Linear Equations") return tr("skillLinearEquations");
