@@ -1296,6 +1296,40 @@ practiceLabel: isSpanish ? "Práctica" : "Practice",
     signedIn: isSpanish ? "Sesión Iniciada" : "Signed In",
     welcomeBack: isSpanish ? "Bienvenido de nuevo" : "Welcome back",
 
+    supportRequestSubject: isSpanish ? "Solicitud de Soporte de GED Practice Platform" : "GED Practice Platform Support Request",
+questionReportSubject: isSpanish ? "Reporte de Pregunta de GED Practice Platform" : "GED Practice Platform Question Report",
+signedInAs: isSpanish ? "Sesión iniciada como" : "Signed in as",
+notSignedIn: isSpanish ? "Sin iniciar sesión" : "Not signed in",
+supportEmailGreeting: isSpanish ? "Hola," : "Hello,",
+supportEmailIntro: isSpanish ? "Me comunico con soporte sobre GED Practice Platform." : "I am contacting support about GED Practice Platform.",
+supportTypeLabel: isSpanish ? "Tipo de solicitud:" : "Type of request:",
+bug: isSpanish ? "Error" : "Bug",
+additionRequest: isSpanish ? "Solicitud de nueva función" : "Addition request",
+changeRemoveRequest: isSpanish ? "Solicitud de cambio/eliminación" : "Change/remove request",
+other: isSpanish ? "Otro" : "Other",
+detailsLabel: isSpanish ? "Detalles:" : "Details:",
+detailsPlaceholder: isSpanish ? "[Describe aquí el problema o la solicitud]" : "[Please describe the issue or request here]",
+pageFeatureLabel: isSpanish ? "Página/función:" : "Page/feature:",
+pageFeaturePlaceholder: isSpanish ? "[Ejemplo: Menú Principal, Examen Completo, Modo Práctica, Perfil, Inicio de Sesión]" : "[Example: Main Menu, Full Test, Practice Mode, Profile, Login]",
+userStatusLabel: isSpanish ? "Estado del usuario:" : "User status:",
+deviceBrowserLabel: isSpanish ? "Dispositivo/navegador:" : "Device/browser:",
+optional: isSpanish ? "[Opcional]" : "[Optional]",
+thankYou: isSpanish ? "Gracias." : "Thank you.",
+reportingQuestionIntro: isSpanish ? "Estoy reportando una pregunta en GED Practice Platform." : "I am reporting a question in GED Practice Platform.",
+issueTypeLabel: isSpanish ? "Tipo de problema:" : "Issue type:",
+incorrectAnswer: isSpanish ? "Respuesta incorrecta" : "Incorrect answer",
+badWording: isSpanish ? "Redacción incorrecta" : "Bad wording",
+graphProblem: isSpanish ? "Problema con gráfica/cuadro" : "Graph/chart problem",
+renderingProblem: isSpanish ? "Problema de visualización" : "Rendering problem",
+questionInfoLabel: isSpanish ? "Información de la pregunta:" : "Question info:",
+questionDetailsUnavailable: isSpanish ? "[Detalles de la pregunta no disponibles]" : "[Question details unavailable]",
+supportContactTitle: isSpanish ? "Contacto de Soporte" : "Support Contact",
+questionReportTitle: isSpanish ? "Reporte de Pregunta" : "Question Report",
+couldNotOpenGmail: isSpanish ? "No pudimos abrir Gmail automáticamente." : "We could not open Gmail automatically.",
+youCanEmailUs: isSpanish ? "Puedes escribirnos a" : "You can email us at",
+tryAgain: isSpanish ? "Intentar de Nuevo" : "Try Again",
+message: isSpanish ? "Mensaje" : "Message",
+
     continueGuest: isSpanish ? "Continuar como Invitado" : "Continue as Guest",
     contactUs: isSpanish ? "Contáctanos" : "Contact Us",
     logOut: isSpanish ? "Cerrar Sesión" : "Log Out",
@@ -1564,6 +1598,14 @@ function applyLanguage(language) {
   if (prevBtn) prevBtn.textContent = t.previous;
   if (reportQuestionBtn) reportQuestionBtn.textContent = t.reportQuestion;
 
+  const loadingTitle = document.getElementById("loadingTitle");
+  const loadingText = document.getElementById("loadingText");
+  const loadingSubtext = document.querySelector(".loadingSubtext");
+
+  if (loadingTitle) loadingTitle.innerText = t.loading;
+  if (loadingText) loadingText.innerText = t.systemWorking;
+  if (loadingSubtext) loadingSubtext.innerText = t.doNotRefresh;
+
   updateStatus();
 }
 
@@ -1723,9 +1765,9 @@ function applyLanguage(language) {
       await updateResumeVisibility();
     }
 
-    function showModal(title, bodyHtml, actions = []) {
-      document.getElementById("modalTitle").innerText = title;
-      document.getElementById("modalBody").innerHTML = bodyHtml;
+function showModal(title, bodyHtml, actions = []) {
+  document.getElementById("modalTitle").innerText = title || tr("message");
+  document.getElementById("modalBody").innerHTML = bodyHtml;
 
       const footer = document.getElementById("modalFooter");
       footer.innerHTML = "";
@@ -1762,9 +1804,10 @@ function applyLanguage(language) {
       document.getElementById("modalBackdrop").style.display = "none";
     }
 
-    function showLoading(title = "Loading...", text = "The system is working. Please wait.") {
+    function showLoading(title = tr("loading"), text = tr("systemWorking")) {
   document.getElementById("loadingTitle").innerText = title;
   document.getElementById("loadingText").innerText = text;
+  document.querySelector(".loadingSubtext").innerText = tr("doNotRefresh");
   document.getElementById("loadingOverlay").style.display = "flex";
   document.body.classList.add("loadingActive");
 }
@@ -1790,70 +1833,70 @@ function isMobileDevice() {
 
 function buildSupportEmailData(options = {}) {
   const userStatus = state.auth.user
-    ? `Signed in as: ${state.auth.user.displayName || state.auth.user.email}`
+    ? `${tr("signedInAs")}: ${state.auth.user.displayName || state.auth.user.email}`
     : state.auth.guestMode
-    ? "Guest Mode"
-    : "Not signed in";
+    ? tr("guestMode")
+    : tr("notSignedIn");
 
   const isQuestionReport = !!options.isQuestionReport;
 
   const subject = isQuestionReport
-    ? "GED Practice Platform Question Report"
-    : "GED Practice Platform Support Request";
+    ? tr("questionReportSubject")
+    : tr("supportRequestSubject");
 
   let body = "";
 
   if (isQuestionReport) {
     body =
-`Hello,
+`${tr("supportEmailGreeting")}
 
-I am reporting a question in GED Practice Platform.
+${tr("reportingQuestionIntro")}
 
-Issue type:
-- Incorrect answer
-- Bad wording
-- Graph/chart problem
-- Rendering problem
-- Other
+${tr("issueTypeLabel")}
+- ${tr("incorrectAnswer")}
+- ${tr("badWording")}
+- ${tr("graphProblem")}
+- ${tr("renderingProblem")}
+- ${tr("other")}
 
-Details:
-[Please describe the issue here]
+${tr("detailsLabel")}
+${tr("detailsPlaceholder")}
 
-Question info:
-${options.questionDetails || "[Question details unavailable]"}
+${tr("questionInfoLabel")}
+${options.questionDetails || tr("questionDetailsUnavailable")}
 
-User status:
+${tr("userStatusLabel")}
 ${userStatus}
 
-Device/browser:
-[Optional]
+${tr("deviceBrowserLabel")}
+${tr("optional")}
 
-Thank you.`;
+${tr("thankYou")}`;
   } else {
     body =
-`Hello,
+`${tr("supportEmailGreeting")}
 
-I am contacting support about GED Practice Platform.
+${tr("supportEmailIntro")}
 
-Type of request:
-- Bug
-- Addition request
-- Change/remove request
-- Other
+${tr("supportTypeLabel")}
+- ${tr("bug")}
+- ${tr("additionRequest")}
+- ${tr("changeRemoveRequest")}
+- ${tr("other")}
 
-Details:
-[Please describe the issue or request here]
+${tr("detailsLabel")}
+${tr("detailsPlaceholder")}
 
-Page/feature:
-[Example: Main Menu, Full Test, Practice Mode, Profile, Login]
+${tr("pageFeatureLabel")}
+${tr("pageFeaturePlaceholder")}
 
-User status:
+${tr("userStatusLabel")}
 ${userStatus}
 
-Device/browser:
-[Optional]
+${tr("deviceBrowserLabel")}
+${tr("optional")}
 
-Thank you.`;
+${tr("thankYou")}`;
   }
 
   return {
@@ -1885,15 +1928,15 @@ function openSupportEmail(options = {}) {
     window.open(gmailUrl, "_blank");
   } catch (error) {
     showModal(
-      options.isQuestionReport ? "Question Report" : "Support Contact",
+      options.isQuestionReport ? tr("questionReportTitle") : tr("supportContactTitle"),
       `
-        <p>We could not open Gmail automatically.</p>
-        <p>You can email us at <strong>gedpracticeplatform@gmail.com</strong>.</p>
+        <p>${tr("couldNotOpenGmail")}</p>
+        <p>${tr("youCanEmailUs")} <strong>gedpracticeplatform@gmail.com</strong>.</p>
       `,
       [
-        { label: "Close", variant: "secondary" },
+        { label: tr("close"), variant: "secondary" },
         {
-          label: "Try Again",
+          label: tr("tryAgain"),
           variant: "primary",
           onClick: () => {
             window.open(buildSupportGmailLink(options), "_blank");
