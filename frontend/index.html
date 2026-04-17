@@ -124,12 +124,69 @@
       --nav-active-text: #ffffff;
     }
 
-      body {
+          body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-size: var(--app-font-scale, 100%);
+      --font-scale: 1;
+    }
+
+        .brand {
+      font-size: calc(22px * var(--font-scale));
+    }
+
+    #timerTop,
+    .topbarUser,
+    .questionNavigatorTitle,
+    .reviewStatLabel,
+    label,
+    .muted,
+    .modalBody,
+    .feedback,
+    .toastText,
+    .loadingSubtext {
+      font-size: calc(13px * var(--font-scale));
+    }
+
+    button,
+    input,
+    select,
+    .toastTitle,
+    .loadingText,
+    .questionNavBtn {
+      font-size: calc(14px * var(--font-scale));
+    }
+
+    .menuPanel p,
+    .explanationBox {
+      font-size: calc(14px * var(--font-scale));
+    }
+
+    .choiceBtn,
+    #fillAnswer {
+      font-size: calc(15px * var(--font-scale));
+    }
+
+    .questionIndicator,
+    .menuPanel h3 {
+      font-size: calc(16px * var(--font-scale));
+    }
+
+    .loadingTitle,
+    .modalHeader,
+    .reviewStatValue,
+    .sectionTitle {
+      font-size: calc(20px * var(--font-scale));
+    }
+
+    #questionText {
+      font-size: calc(20px * var(--font-scale));
+      line-height: 1.45;
+    }
+
+    .menuTitle {
+      font-size: calc(28px * var(--font-scale));
     }
 
     .hidden { display: none !important; }
@@ -1189,17 +1246,136 @@ function getSavedFontSize() {
 }
 
 function getFontScaleValue(sizeLabel) {
-  if (sizeLabel === "Medium") return "125%";
-  if (sizeLabel === "Big") return "150%";
-  if (sizeLabel === "Large") return "175%";
-  if (sizeLabel === "Extra Large") return "200%";
-  return "100%";
+  if (sizeLabel === "Medium") return "1.25";
+  if (sizeLabel === "Big") return "1.5";
+  if (sizeLabel === "Large") return "1.75";
+  if (sizeLabel === "Extra Large") return "2";
+  return "1";
 }
 
 function applyFontSize(sizeLabel) {
   const scale = getFontScaleValue(sizeLabel);
-  document.documentElement.style.setProperty("--app-font-scale", scale);
+  document.body.style.setProperty("--font-scale", scale);
   localStorage.setItem(FONT_SIZE_KEY, sizeLabel);
+}
+
+function getTranslations(language) {
+  const isSpanish = language === "Spanish";
+
+  return {
+    brand: isSpanish ? "Plataforma de Práctica GED" : "GED Practice Platform",
+    mainMenu: isSpanish ? "Menú Principal" : "Main Menu",
+    welcomeTitle: isSpanish ? "Bienvenido" : "Welcome",
+    welcomeText: isSpanish
+      ? "Bienvenido a GED Practice Platform — un espacio enfocado para desarrollar confianza, fortalecer áreas débiles y prepararte paso a paso. Actualmente solo matemáticas, con más materias próximamente."
+      : "Welcome to GED Practice Platform — a focused space to build confidence, strengthen weak areas, and prepare step by step. Currently math only, with more subjects coming soon.",
+    startNewTest: isSpanish ? "Comenzar un Nuevo Examen" : "Start a New Test",
+    chooseDifficulty: isSpanish ? "Elige tu nivel de dificultad y comienza." : "Choose your difficulty level and begin.",
+    difficulty: isSpanish ? "Dificultad" : "Difficulty",
+    startTest: isSpanish ? "Comenzar Examen" : "Start Test",
+    startPracticeTitle: isSpanish ? "Comenzar una Práctica" : "Start a Practice Test",
+    startPracticeText: isSpanish ? "Elige una habilidad y dificultad, luego comienza una práctica enfocada." : "Choose a skill and difficulty, then begin a focused practice set.",
+    skill: isSpanish ? "Habilidad" : "Skill",
+    startPractice: isSpanish ? "Comenzar Práctica" : "Start Practice",
+    resumeTitle: isSpanish ? "Reanudar Examen Incompleto" : "Resume Unfinished Test",
+    resumeText: isSpanish ? "Continúa desde tu progreso guardado en tu cuenta." : "Continue from your saved account progress.",
+    resume: isSpanish ? "Reanudar" : "Resume",
+    supportTitle: isSpanish ? "Soporte / Contacto" : "Support / Contact",
+    supportText: isSpanish
+      ? "Usa esto para reportar errores, solicitar nuevas funciones o pedir cambios/eliminaciones."
+      : "Use this for bug reports, additions you would like added, or things that should be changed or removed.",
+    contactSupport: isSpanish ? "Contactar Soporte" : "Contact Support",
+    signIn: isSpanish ? "Iniciar Sesión" : "Sign In",
+    continueGuest: isSpanish ? "Continuar como Invitado" : "Continue as Guest",
+    contactUs: isSpanish ? "Contáctanos" : "Contact Us",
+    logOut: isSpanish ? "Cerrar Sesión" : "Log Out",
+    mainMenuBtn: isSpanish ? "Menú Principal" : "Main Menu",
+    previous: isSpanish ? "Anterior" : "Previous",
+    next: isSpanish ? "Next" : "Next",
+    reportQuestion: isSpanish ? "Reportar Pregunta" : "Report Question",
+    flagQuestion: isSpanish ? "🚩 Marcar Pregunta" : "🚩 Flag Question",
+    pauseTest: isSpanish ? "⏸ Pausar Examen" : "⏸ Pause Test"
+  };
+}
+
+function applyLanguage(language) {
+  const t = getTranslations(language);
+
+  const brand = document.querySelector(".brand");
+  if (brand) brand.textContent = t.brand;
+
+  const menuTitle = document.querySelector("#mainMenu .menuTitle");
+  if (menuTitle) menuTitle.textContent = t.mainMenu;
+
+  const menuPanels = document.querySelectorAll("#mainMenu .menuPanel");
+  if (menuPanels[0]) {
+    const h3 = menuPanels[0].querySelector("h3");
+    const p = menuPanels[0].querySelector("p");
+    if (h3) h3.textContent = t.welcomeTitle;
+    if (p) p.textContent = t.welcomeText;
+  }
+
+  if (menuPanels[1]) {
+    const h3 = menuPanels[1].querySelector("h3");
+    const p = menuPanels[1].querySelector("p");
+    const label = menuPanels[1].querySelector('label[for="difficultySelect"]');
+    const btn = document.getElementById("startTestBtn");
+    if (h3) h3.textContent = t.startNewTest;
+    if (p) p.textContent = t.chooseDifficulty;
+    if (label) label.textContent = t.difficulty;
+    if (btn) btn.textContent = t.startTest;
+  }
+
+  if (menuPanels[2]) {
+    const h3 = menuPanels[2].querySelector("h3");
+    const p = menuPanels[2].querySelector("p");
+    const skillLabel = menuPanels[2].querySelector('label[for="practiceSkillSelect"]');
+    const difficultyLabel = menuPanels[2].querySelector('label[for="practiceDifficultySelect"]');
+    const btn = document.getElementById("startPracticeBtn");
+    if (h3) h3.textContent = t.startPracticeTitle;
+    if (p) p.textContent = t.startPracticeText;
+    if (skillLabel) skillLabel.textContent = t.skill;
+    if (difficultyLabel) difficultyLabel.textContent = t.difficulty;
+    if (btn) btn.textContent = t.startPractice;
+  }
+
+  const resumePanel = document.getElementById("resumePanel");
+  if (resumePanel) {
+    const h3 = resumePanel.querySelector("h3");
+    const p = resumePanel.querySelector("p");
+    const btn = document.getElementById("resumeBtn");
+    if (h3) h3.textContent = t.resumeTitle;
+    if (p) p.textContent = t.resumeText;
+    if (btn) btn.textContent = t.resume;
+  }
+
+  const supportPanel = menuPanels[menuPanels.length - 1];
+  if (supportPanel) {
+    const h3 = supportPanel.querySelector("h3");
+    const p = supportPanel.querySelector("p");
+    const btn = document.getElementById("supportEmailBtn");
+    if (h3) h3.textContent = t.supportTitle;
+    if (p) p.textContent = t.supportText;
+    if (btn) btn.textContent = t.contactSupport;
+  }
+
+  const signInBtnTop = document.getElementById("signInBtnTop");
+  const guestBtnTop = document.getElementById("guestBtnTop");
+  const contactBtnTop = document.getElementById("contactBtnTop");
+  const logoutBtnTop = document.getElementById("logoutBtnTop");
+  const globalMenuBtn = document.getElementById("globalMenuBtn");
+  const prevBtn = document.getElementById("prevBtn");
+  const reportQuestionBtn = document.getElementById("reportQuestionBtn");
+
+  if (signInBtnTop) signInBtnTop.textContent = t.signIn;
+  if (guestBtnTop) guestBtnTop.textContent = t.continueGuest;
+  if (contactBtnTop) contactBtnTop.textContent = t.contactUs;
+  if (logoutBtnTop) logoutBtnTop.textContent = t.logOut;
+  if (globalMenuBtn) globalMenuBtn.textContent = t.mainMenuBtn;
+  if (prevBtn) prevBtn.textContent = t.previous;
+  if (reportQuestionBtn) reportQuestionBtn.textContent = t.reportQuestion;
+
+  updateStatus();
 }
 
     function formatTime(totalSeconds) {
@@ -1663,6 +1839,7 @@ function showToast(title, text, duration = 6000) {
 
           applyTheme(selectedTheme);
           saveLanguage(selectedLanguage);
+          applyLanguage(selectedLanguage);
           applyFontSize(selectedFontSize);
           renderQuestion();
         }
@@ -2234,9 +2411,17 @@ function showPausedModal(isAutoPause = false) {
     const current = state.questions[state.currentIndex];
     const flagged = !!current.flagged;
 
+        const currentLanguage = getSavedLanguage();
+    const isSpanish = currentLanguage === "Spanish";
+
     document.getElementById("flagIndicator").classList.toggle("hidden", !flagged);
-    flagBtn.innerText = flagged ? "🚩 Unflag Question" : "🚩 Flag Question";
-    pauseBtn.innerText = state.isPaused ? "▶ Resume Test" : "⏸ Pause Test";
+    flagBtn.innerText = flagged
+      ? (isSpanish ? "🚩 Quitar Marca" : "🚩 Unflag Question")
+      : (isSpanish ? "🚩 Marcar Pregunta" : "🚩 Flag Question");
+
+    pauseBtn.innerText = state.isPaused
+      ? (isSpanish ? "▶ Reanudar Examen" : "▶ Resume Test")
+      : (isSpanish ? "⏸ Pausar Examen" : "⏸ Pause Test");
 
     const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
@@ -2298,8 +2483,11 @@ function showPausedModal(isAutoPause = false) {
     document.getElementById("questionIndicator").innerText = "Question 1 / 46";
     document.getElementById("questionPosition").innerText = "1 / 46";
     document.getElementById("flagIndicator").classList.add("hidden");
-        flagBtn.innerText = "🚩 Flag Question";
-    pauseBtn.innerText = "⏸ Pause Test";
+            const currentLanguage = getSavedLanguage();
+    const isSpanish = currentLanguage === "Spanish";
+
+    flagBtn.innerText = isSpanish ? "🚩 Marcar Pregunta" : "🚩 Flag Question";
+    pauseBtn.innerText = isSpanish ? "⏸ Pausar Examen" : "⏸ Pause Test";
     prevBtn.disabled = true;
     nextBtn.innerText = "Next";
     nextBtn.disabled = false;
@@ -3323,9 +3511,11 @@ window.addEventListener("unhandledrejection", () => {
 (async function init() {
       applyTheme(getSavedTheme());
       applyFontSize(getSavedFontSize());
+      applyLanguage(getSavedLanguage());
       await loadCurrentUser();
       updateStatus();
       await setView("menu");
+      applyLanguage(getSavedLanguage());
     })();
   </script>
 </body>
