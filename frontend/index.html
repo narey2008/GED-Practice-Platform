@@ -1403,6 +1403,20 @@ message: isSpanish ? "Mensaje" : "Message",
     signedOutToastTitle: isSpanish ? "Sesión Cerrada Correctamente" : "Successfully Signed Out",
     signedOutToastText: isSpanish ? "Has vuelto al menú principal." : "You have been returned to the main menu.",
 
+    easy: isSpanish ? "Fácil" : "Easy",
+gedLevel: isSpanish ? "Nivel GED" : "GED-Level",
+
+skillFractions: isSpanish ? "Fracciones, Decimales y Porcentajes" : "Fractions, Decimals, and Percents",
+skillRatios: isSpanish ? "Razones, Proporciones y Cambio Porcentual" : "Ratios, Proportions, and Percent Change",
+skillMeasurement: isSpanish ? "Medición y Conversión de Unidades" : "Measurement and Unit Conversion",
+skillAreaVolume: isSpanish ? "Área, Perímetro, Área de Superficie y Volumen" : "Area, Perimeter, Surface Area, and Volume",
+skillLinesAngles: isSpanish ? "Líneas, Ángulos y Plano Coordenado" : "Lines, Angles, and Coordinate Plane",
+skillDataTables: isSpanish ? "Tablas de Datos e Interpretación de Gráficas" : "Data Tables and Graph Interpretation",
+skillMeanMedian: isSpanish ? "Media, Mediana y Probabilidad" : "Mean, Median, and Probability",
+skillExpressions: isSpanish ? "Expresiones y Orden de Operaciones" : "Expressions and Order of Operations",
+skillEquations: isSpanish ? "Resolución de Ecuaciones y Desigualdades" : "Solving Equations and Inequalities",
+skillLinearSlope: isSpanish ? "Ecuaciones Lineales y Pendiente" : "Linear Equations and Slope",
+
     loading: isSpanish ? "Cargando..." : "Loading...",
     doNotRefresh: isSpanish ? "Por favor no actualices" : "Please do not refresh",
     systemWorking: isSpanish ? "El sistema está trabajando. Espera por favor." : "The system is working. Please wait.",
@@ -1545,10 +1559,22 @@ function applyLanguage(language) {
     const p = startTestPanel.querySelector("p");
     const label = startTestPanel.querySelector('label[for="difficultySelect"]');
     const btn = document.getElementById("startTestBtn");
+    const difficultySelect = document.getElementById("difficultySelect");
+
     if (h3) h3.textContent = t.startNewTest;
     if (p) p.textContent = t.chooseDifficulty;
     if (label) label.textContent = t.difficulty;
     if (btn) btn.textContent = t.startTest;
+
+    if (difficultySelect) {
+      const currentValue = difficultySelect.value;
+      difficultySelect.innerHTML = `
+        <option value="Easy">${t.easy}</option>
+        <option value="Medium">${t.medium}</option>
+        <option value="GED-Level">${t.gedLevel}</option>
+      `;
+      difficultySelect.value = currentValue;
+    }
   }
 
   const startPracticePanel = document.getElementById("startPracticePanel");
@@ -1558,11 +1584,41 @@ function applyLanguage(language) {
     const skillLabel = startPracticePanel.querySelector('label[for="practiceSkillSelect"]');
     const difficultyLabel = startPracticePanel.querySelector('label[for="practiceDifficultySelect"]');
     const btn = document.getElementById("startPracticeBtn");
+    const practiceSkillSelect = document.getElementById("practiceSkillSelect");
+    const practiceDifficultySelect = document.getElementById("practiceDifficultySelect");
+
     if (h3) h3.textContent = t.startPracticeTitle;
     if (p) p.textContent = t.startPracticeText;
     if (skillLabel) skillLabel.textContent = t.skill;
     if (difficultyLabel) difficultyLabel.textContent = t.difficulty;
     if (btn) btn.textContent = t.startPractice;
+
+    if (practiceSkillSelect) {
+      const currentSkill = practiceSkillSelect.value;
+      practiceSkillSelect.innerHTML = `
+        <option value="Fractions, Decimals, and Percents">${t.skillFractions}</option>
+        <option value="Ratios, Proportions, and Percent Change">${t.skillRatios}</option>
+        <option value="Measurement and Unit Conversion">${t.skillMeasurement}</option>
+        <option value="Area, Perimeter, Surface Area, and Volume">${t.skillAreaVolume}</option>
+        <option value="Lines, Angles, and Coordinate Plane">${t.skillLinesAngles}</option>
+        <option value="Data Tables and Graph Interpretation">${t.skillDataTables}</option>
+        <option value="Mean, Median, and Probability">${t.skillMeanMedian}</option>
+        <option value="Expressions and Order of Operations">${t.skillExpressions}</option>
+        <option value="Solving Equations and Inequalities">${t.skillEquations}</option>
+        <option value="Linear Equations and Slope">${t.skillLinearSlope}</option>
+      `;
+      practiceSkillSelect.value = currentSkill;
+    }
+
+    if (practiceDifficultySelect) {
+      const currentPracticeDifficulty = practiceDifficultySelect.value;
+      practiceDifficultySelect.innerHTML = `
+        <option value="Easy">${t.easy}</option>
+        <option value="Medium">${t.medium}</option>
+        <option value="GED-Level">${t.gedLevel}</option>
+      `;
+      practiceDifficultySelect.value = currentPracticeDifficulty;
+    }
   }
 
   const resumePanel = document.getElementById("resumePanel");
