@@ -1028,6 +1028,7 @@ const LIGHTING_KEY = "ged_practice_lighting_pref";
 const LANGUAGE_KEY = "ged_practice_language_pref";
 const FONT_SIZE_KEY = "ged_practice_font_size_pref";
 const AUTH_TOKEN_KEY = "ged_practice_auth_token";
+const GUEST_MODE_KEY = "ged_practice_guest_mode";
     const API_BASE =
       window.location.hostname === "localhost"
         ? "http://localhost:3000"
@@ -1052,7 +1053,7 @@ const AUTH_TOKEN_KEY = "ged_practice_auth_token";
   auth: {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
     user: null,
-    guestMode: false
+    guestMode: localStorage.getItem(GUEST_MODE_KEY) === "true"
   }
 };
 
@@ -1629,6 +1630,16 @@ function applyLanguage(language) {
       }
     }
 
+    function setGuestMode(enabled) {
+  state.auth.guestMode = !!enabled;
+
+  if (enabled) {
+    localStorage.setItem(GUEST_MODE_KEY, "true");
+  } else {
+    localStorage.removeItem(GUEST_MODE_KEY);
+  }
+}
+
     function updateAuthUI() {
   const signInBtnTop = document.getElementById("signInBtnTop");
   const guestBtnTop = document.getElementById("guestBtnTop");
@@ -1686,7 +1697,7 @@ function applyLanguage(language) {
         state.auth.guestMode = false;
       } catch (error) {
         state.auth.user = null;
-        state.auth.guestMode = false;
+        setGuestMode(false);
         setAuthToken("");
       }
 
@@ -2173,7 +2184,7 @@ function showToast(title, text, duration = 6000) {
 
             setAuthToken(data.token);
             state.auth.user = data.user;
-            state.auth.guestMode = false;
+            setGuestMode(false);
             updateAuthUI();
             closeModal();
             await updateResumeVisibility();
@@ -2211,17 +2222,16 @@ function showToast(title, text, duration = 6000) {
 }
 
     async function beginGuestMode(startImmediately = false) {
-      state.auth.user = null;
-      state.auth.guestMode = true;
-      setAuthToken("");
-      updateAuthUI();
-      await updateResumeVisibility();
+  state.auth.user = null;
+  setGuestMode(true);
+  setAuthToken("");
+  updateAuthUI();
+  await updateResumeVisibility();
 
-      if (startImmediately) {
-        await startTest();
-      }
-    }
-
+  if (startImmediately) {
+    await startTest();
+  }
+}
     function continueAsGuest(startImmediately = false) {
   if (state.auth.user || state.auth.token) {
     showModal(
@@ -2291,7 +2301,7 @@ function showToast(title, text, duration = 6000) {
           stopTimer();
 
           state.auth.user = null;
-          state.auth.guestMode = false;
+          setGuestMode(false);
           setAuthToken("");
 
           goToMainMenu();
