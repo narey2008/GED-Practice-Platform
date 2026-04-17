@@ -1505,6 +1505,27 @@ skillLinearSlope: isSpanish ? "Ecuaciones Lineales y Pendiente" : "Linear Equati
 skillLineGraph: isSpanish ? "Gráfica de Líneas" : "Line Graph",
 skillPercentChange: isSpanish ? "Cambio Porcentual" : "Percent Change",
 skillLinearEquations: isSpanish ? "Ecuaciones Lineales" : "Linear Equations",
+skillBarGraph: isSpanish ? "Gráfica de Barras" : "Bar Graph",
+skillScatterPlot: isSpanish ? "Diagrama de Dispersión" : "Scatter Plot",
+skillProbability: isSpanish ? "Probabilidad" : "Probability",
+skillMeanMedianMode: isSpanish ? "Media, Mediana y Moda" : "Mean, Median, and Mode",
+skillPercents: isSpanish ? "Porcentajes" : "Percents",
+skillFractions: isSpanish ? "Fracciones, Decimales y Porcentajes" : "Fractions, Decimals, and Percents",
+skillRatios: isSpanish ? "Razones, Proporciones y Cambio Porcentual" : "Ratios, Proportions, and Percent Change",
+skillMeasurement: isSpanish ? "Medición y Conversión de Unidades" : "Measurement and Unit Conversion",
+skillAreaVolume: isSpanish ? "Área, Perímetro, Área de Superficie y Volumen" : "Area, Perimeter, Surface Area, and Volume",
+skillLinesAngles: isSpanish ? "Líneas, Ángulos y Plano Coordenado" : "Lines, Angles, and Coordinate Plane",
+skillDataTables: isSpanish ? "Tablas de Datos e Interpretación de Gráficas" : "Data Tables and Graph Interpretation",
+skillMeanMedian: isSpanish ? "Media, Mediana y Probabilidad" : "Mean, Median, and Probability",
+skillExpressions: isSpanish ? "Expresiones y Orden de Operaciones" : "Expressions and Order of Operations",
+skillEquations: isSpanish ? "Resolución de Ecuaciones y Desigualdades" : "Solving Equations and Inequalities",
+skillLinearSlope: isSpanish ? "Ecuaciones Lineales y Pendiente" : "Linear Equations and Slope",
+skillLineGraph: isSpanish ? "Gráfica de Líneas" : "Line Graph",
+skillPercentChange: isSpanish ? "Cambio Porcentual" : "Percent Change",
+skillLinearEquations: isSpanish ? "Ecuaciones Lineales" : "Linear Equations",
+skillCoordinatePlane: isSpanish ? "Plano Coordenado" : "Coordinate Plane",
+skillGeometry: isSpanish ? "Geometría" : "Geometry",
+skillStatistics: isSpanish ? "Estadística" : "Statistics",
 
     loading: isSpanish ? "Cargando..." : "Loading...",
     doNotRefresh: isSpanish ? "Por favor no actualices" : "Please do not refresh",
@@ -1633,22 +1654,38 @@ function translateDifficultyLabel(value) {
 }
 
 function translateSkillLabel(value) {
-  if (value === "Fractions, Decimals, and Percents") return tr("skillFractions");
-  if (value === "Ratios, Proportions, and Percent Change") return tr("skillRatios");
-  if (value === "Measurement and Unit Conversion") return tr("skillMeasurement");
-  if (value === "Area, Perimeter, Surface Area, and Volume") return tr("skillAreaVolume");
-  if (value === "Lines, Angles, and Coordinate Plane") return tr("skillLinesAngles");
-  if (value === "Data Tables and Graph Interpretation") return tr("skillDataTables");
-  if (value === "Mean, Median, and Probability") return tr("skillMeanMedian");
-  if (value === "Expressions and Order of Operations") return tr("skillExpressions");
-  if (value === "Solving Equations and Inequalities") return tr("skillEquations");
-  if (value === "Linear Equations and Slope") return tr("skillLinearSlope");
-  if (value === "Line Graph") return tr("skillLineGraph");
-  if (value === "Percent Change") return tr("skillPercentChange");
-  if (value === "Linear Equations") return tr("skillLinearEquations");
-  if (value === "Slope") return tr("skillLinearSlope");
-  if (value === "Mixed Practice") return tr("mixedPractice");
-  return value || "—";
+  if (!value) return "—";
+
+  const normalized = String(value).trim().toLowerCase();
+
+  const skillMap = {
+    "fractions, decimals, and percents": tr("skillFractions"),
+    "ratios, proportions, and percent change": tr("skillRatios"),
+    "measurement and unit conversion": tr("skillMeasurement"),
+    "area, perimeter, surface area, and volume": tr("skillAreaVolume"),
+    "lines, angles, and coordinate plane": tr("skillLinesAngles"),
+    "data tables and graph interpretation": tr("skillDataTables"),
+    "mean, median, and probability": tr("skillMeanMedian"),
+    "expressions and order of operations": tr("skillExpressions"),
+    "solving equations and inequalities": tr("skillEquations"),
+    "linear equations and slope": tr("skillLinearSlope"),
+
+    "line graph": tr("skillLineGraph"),
+    "bar graph": tr("skillBarGraph"),
+    "scatter plot": tr("skillScatterPlot"),
+    "percent change": tr("skillPercentChange"),
+    "percents": tr("skillPercents"),
+    "probability": tr("skillProbability"),
+    "mean, median, and mode": tr("skillMeanMedianMode"),
+    "linear equations": tr("skillLinearEquations"),
+    "slope": tr("skillLinearSlope"),
+    "coordinate plane": tr("skillCoordinatePlane"),
+    "geometry": tr("skillGeometry"),
+    "statistics": tr("skillStatistics"),
+    "mixed practice": tr("mixedPractice")
+  };
+
+  return skillMap[normalized] || value;
 }
 
 function getQuestionDisplaySkill(q) {
