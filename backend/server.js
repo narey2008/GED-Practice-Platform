@@ -10,6 +10,7 @@ const buildTest = require("./generators/testBuilder");
 const User = require("./models/User");
 const SavedProgress = require("./models/SavedProgress");
 const TestHistory = require("./models/TestHistory");
+const PracticeHistory = require("./models/PracticeHistory");
 const authMiddleware = require("./middleware/auth");
 
 console.log("RUNNING BACKEND SERVER FILE");
@@ -382,6 +383,68 @@ app.get("/api/test/history", authMiddleware, async (req, res) => {
     console.error("GET HISTORY ERROR:");
     console.error(error);
     return res.status(500).json({ error: "Failed to load test history." });
+  }
+});
+
+app.post("/api/practice/complete", authMiddleware, async (req, res) => {
+  try {
+    const {
+      questions,
+      difficulty,
+      skill
+    } = req.body;
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ error: "Invalid practice data." });
+    }
+
+    const totalQuestions = questions.length;
+
+    let correctCount = 0;
+
+    questions.forEach((q) => {
+      const isCorrect =
+        String(q.userAnswer ?? "").trim() === String(q.answer ?? "").trim();
+
+      if (isCorrect) correctCount++;
+    });
+
+    const wrongCount = totalQuestions - correctCount;
+    const accuracyPercent = Math.round((correctCount / totalQuestions) * 100);
+
+    const history = await PracticeHistory.create({
+      userId: req.auth.userId,
+      skill: skill || "Mixed Practice",
+      difficulty: difficulty || "GED-Level",
+      correctCount,
+      wrongCount,
+      totalQuestions,
+      accuracyPercent,
+      questions
+    });
+
+    return res.json({
+      success: true,
+      historyId: history._id
+    });
+  } catch (error) {
+    console.error("COMPLETE PRACTICE ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to save completed practice." });
+  }
+});
+
+app.get("/api/practice/history", authMiddleware, async (req, res) => {
+  try {
+    const history = await PracticeHistory.find({ userId: req.auth.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return res.json({ history });
+  } catch (error) {
+    console.error("GET PRACTICE HISTORY ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to load practice history." });
   }
 });
 
