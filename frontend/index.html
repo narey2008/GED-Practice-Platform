@@ -954,6 +954,7 @@ body.loadingActive {
         </div>
 
         <div class="actionCluster">
+  <button id="reportQuestionBtn" class="secondaryBtn">Report Question</button>
   <button id="flagBtn" class="secondaryBtn">🚩 Flag Question</button>
 </div>
       </div>
@@ -1390,15 +1391,49 @@ function isMobileDevice() {
   return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
 }
 
-function buildSupportEmailData() {
+function buildSupportEmailData(options = {}) {
   const userStatus = state.auth.user
     ? `Signed in as: ${state.auth.user.displayName || state.auth.user.email}`
     : state.auth.guestMode
     ? "Guest Mode"
     : "Not signed in";
 
-  const subject = "GED Practice Platform Support Request";
-  const body =
+  const isQuestionReport = !!options.isQuestionReport;
+
+  const subject = isQuestionReport
+    ? "GED Practice Platform Question Report"
+    : "GED Practice Platform Support Request";
+
+  let body = "";
+
+  if (isQuestionReport) {
+    body =
+`Hello,
+
+I am reporting a question in GED Practice Platform.
+
+Issue type:
+- Incorrect answer
+- Bad wording
+- Graph/chart problem
+- Rendering problem
+- Other
+
+Details:
+[Please describe the issue here]
+
+Question info:
+${options.questionDetails || "[Question details unavailable]"}
+
+User status:
+${userStatus}
+
+Device/browser:
+[Optional]
+
+Thank you.`;
+  } else {
+    body =
 `Hello,
 
 I am contacting support about GED Practice Platform.
@@ -1422,6 +1457,7 @@ Device/browser:
 [Optional]
 
 Thank you.`;
+  }
 
   return {
     to: "gedpracticeplatform@gmail.com",
@@ -1430,28 +1466,28 @@ Thank you.`;
   };
 }
 
-function buildSupportMailtoLink() {
-  const emailData = buildSupportEmailData();
+function buildSupportMailtoLink(options = {}) {
+  const emailData = buildSupportEmailData(options);
   return `mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
 }
 
-function buildSupportGmailLink() {
-  const emailData = buildSupportEmailData();
+function buildSupportGmailLink(options = {}) {
+  const emailData = buildSupportEmailData(options);
   return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailData.to)}&su=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
 }
 
-function openSupportEmail() {
+function openSupportEmail(options = {}) {
   if (isMobileDevice()) {
-    window.location.href = buildSupportMailtoLink();
+    window.location.href = buildSupportMailtoLink(options);
     return;
   }
 
-  const gmailUrl = buildSupportGmailLink();
+  const gmailUrl = buildSupportGmailLink(options);
   const newTab = window.open(gmailUrl, "_blank", "noopener,noreferrer");
 
   if (!newTab) {
     showModal(
-      "Support Contact",
+      options.isQuestionReport ? "Question Report" : "Support Contact",
       `
         <p>We could not open a new tab automatically.</p>
         <p>You can email us at <strong>gedpracticeplatform@gmail.com</strong>.</p>
@@ -1462,12 +1498,54 @@ function openSupportEmail() {
           label: "Try Gmail Tab Again",
           variant: "primary",
           onClick: () => {
-            window.open(buildSupportGmailLink(), "_blank", "noopener,noreferrer");
+            window.open(buildSupportGmailLink(options), "_blank", "noopener,noreferrer");
           }
         }
       ]
     );
   }
+}
+
+function buildCurrentQuestionReportDetails() {
+  if (!state.questions.length) {
+    return "No active question data available.";
+  }
+
+  const q = state.questions[state.currentIndex];
+  const questionNumber = state.currentIndex + 1;
+  const modeLabel =
+    state.mode === "test"
+      ? "Full Test"
+      : state.mode === "practice"
+      ? "Practice"
+      : state.mode === "practice-example"
+      ? "Practice Example"
+      : state.mode;
+
+  return `Mode: ${modeLabel}
+Difficulty: ${state.practiceMeta?.difficulty || state.difficulty || "—"}
+Skill: ${q.skill || state.practiceMeta?.skill || "—"}
+Question Number: ${questionNumber} / ${state.questions.length}
+Flagged: ${q.flagged ? "Yes" : "No"}
+Question Type: ${q.type || "—"}
+
+Question Text:
+${String(q.question || "").replace(/<[^>]*>/g, " ").trim() || "—"}
+
+User Answer:
+${String(q.userAnswer ?? "").trim() || "—"}
+
+Correct Answer:
+${String(q.answer ?? "").trim() || "—"}`;
+}
+
+function reportCurrentQuestion() {
+  if (!state.questions.length) return;
+
+  openSupportEmail({
+    isQuestionReport: true,
+    questionDetails: buildCurrentQuestionReportDetails()
+  });
 }
 
 let toastTimeoutId = null;
@@ -2085,10 +2163,11 @@ function showPausedModal(isAutoPause = false) {
 
   document.getElementById("timerTop").innerText = timerLabel;
 
-  const prevBtn = document.getElementById("prevBtn");
+    const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const submitBtn = document.getElementById("submitTestBtn");
   const flagBtn = document.getElementById("flagBtn");
+  const reportQuestionBtn = document.getElementById("reportQuestionBtn");
   const pauseBtn = document.getElementById("pauseBtn");
 
   if (state.questions.length) {
@@ -2106,16 +2185,18 @@ function showPausedModal(isAutoPause = false) {
     const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
     if (state.timeoutMode) {
-      prevBtn.disabled = true;
+            prevBtn.disabled = true;
       nextBtn.disabled = false;
       flagBtn.disabled = true;
+      reportQuestionBtn.disabled = false;
       pauseBtn.disabled = true;
       nextBtn.innerText = "Submit Test";
       submitBtn.classList.add("hidden");
     } else if (state.mode === "practice-example") {
-      prevBtn.disabled = state.currentIndex === 0;
+            prevBtn.disabled = state.currentIndex === 0;
       nextBtn.disabled = false;
       flagBtn.disabled = false;
+      reportQuestionBtn.disabled = false;
       pauseBtn.disabled = true;
 
       if (isLastQuestion) {
@@ -2126,9 +2207,10 @@ function showPausedModal(isAutoPause = false) {
         submitBtn.classList.remove("hidden");
       }
     } else if (state.mode === "practice") {
-      prevBtn.disabled = state.currentIndex === 0;
+            prevBtn.disabled = state.currentIndex === 0;
       nextBtn.disabled = false;
       flagBtn.disabled = false;
+      reportQuestionBtn.disabled = false;
       pauseBtn.disabled = true;
 
       if (isLastQuestion) {
@@ -2139,9 +2221,10 @@ function showPausedModal(isAutoPause = false) {
         submitBtn.classList.remove("hidden");
       }
     } else if (state.mode === "test") {
-      prevBtn.disabled = state.isPaused || state.currentIndex === 0 || state.lockedReviewMode;
+            prevBtn.disabled = state.isPaused || state.currentIndex === 0 || state.lockedReviewMode;
       nextBtn.disabled = state.isPaused;
       flagBtn.disabled = state.isPaused || state.lockedReviewMode;
+      reportQuestionBtn.disabled = false;
       pauseBtn.disabled = state.lockedReviewMode;
 
       if (isLastQuestion) {
@@ -2159,12 +2242,13 @@ function showPausedModal(isAutoPause = false) {
     document.getElementById("questionIndicator").innerText = "Question 1 / 46";
     document.getElementById("questionPosition").innerText = "1 / 46";
     document.getElementById("flagIndicator").classList.add("hidden");
-    flagBtn.innerText = "🚩 Flag Question";
+        flagBtn.innerText = "🚩 Flag Question";
     pauseBtn.innerText = "⏸ Pause Test";
     prevBtn.disabled = true;
     nextBtn.innerText = "Next";
     nextBtn.disabled = false;
     flagBtn.disabled = false;
+    reportQuestionBtn.disabled = true;
     pauseBtn.disabled = true;
     submitBtn.disabled = false;
     submitBtn.classList.add("hidden");
@@ -3141,6 +3225,9 @@ async function saveCompletedPracticeToHistory() {
     };
     document.getElementById("flagBtn").onclick = async () => {
   await toggleFlag();
+};
+document.getElementById("reportQuestionBtn").onclick = () => {
+  reportCurrentQuestion();
 };
 document.getElementById("pauseBtn").onclick = async () => {
   if (state.mode !== "test") return;
