@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GED Practice Platform</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function () {
+      const savedLanguage = localStorage.getItem("ged_practice_language_pref") || "English";
+      document.documentElement.setAttribute("data-language", savedLanguage);
+    })();
+  </script>
   <style>
     * { box-sizing: border-box; }
 
@@ -820,6 +826,60 @@ body.loadingActive {
   cursor: pointer;
 }
 
+    html[data-language="Spanish"] #timerTop::before {
+      content: "Tiempo Restante: 115:00";
+    }
+
+    html[data-language="English"] #timerTop::before,
+    html:not([data-language]) #timerTop::before {
+      content: "Time Remaining: 115:00";
+    }
+
+    html[data-language="Spanish"] #questionNavigator .questionNavigatorTitle::before {
+      content: "Revisión";
+    }
+
+    html[data-language="English"] #questionNavigator .questionNavigatorTitle::before,
+    html:not([data-language]) #questionNavigator .questionNavigatorTitle::before {
+      content: "Review";
+    }
+
+    html[data-language="Spanish"] #modalTitle::before {
+      content: "Mensaje";
+    }
+
+    html[data-language="English"] #modalTitle::before,
+    html:not([data-language]) #modalTitle::before {
+      content: "Message";
+    }
+
+    html[data-language="Spanish"] #loadingTitle::before {
+      content: "Cargando...";
+    }
+
+    html[data-language="English"] #loadingTitle::before,
+    html:not([data-language]) #loadingTitle::before {
+      content: "Loading...";
+    }
+
+    html[data-language="Spanish"] #loadingText::before {
+      content: "El sistema está trabajando. Espera por favor.";
+    }
+
+    html[data-language="English"] #loadingText::before,
+    html:not([data-language]) #loadingText::before {
+      content: "The system is working. Please wait.";
+    }
+
+    html[data-language="Spanish"] .loadingSubtext::before {
+      content: "Por favor no actualices";
+    }
+
+    html[data-language="English"] .loadingSubtext::before,
+    html:not([data-language]) .loadingSubtext::before {
+      content: "Please do not refresh";
+    }
+
 .toastCloseBtn:hover {
   background: var(--panel-2);
 }
@@ -867,7 +927,7 @@ body.loadingActive {
       <div class="brand">GED Practice Platform</div>
     </div>
     <div class="topbarCenter">
-  <div id="timerTop" class="hidden">Time Remaining: 115:00</div>
+  <div id="timerTop" class="hidden"></div>
   <button id="pauseBtn" class="secondaryBtn hidden">⏸ Pause Test</button>
 </div>
     <div class="topbarRight">
@@ -881,7 +941,7 @@ body.loadingActive {
   </div>
 
   <div id="questionNavigator" class="questionNavigator hidden">
-    <div class="questionNavigatorTitle">Review</div>
+    <div class="questionNavigatorTitle"></div>
     <div id="questionNavGrid" class="questionNavGrid"></div>
   </div>
 
@@ -970,7 +1030,7 @@ body.loadingActive {
 
       <div class="testBody">
         <div class="questionArea">
-          <div id="questionText">Choose a difficulty and start the test.</div>
+          <div id="questionText"></div>
           <div id="questionChartWrap"><canvas id="questionChart"></canvas></div>
         </div>
 
@@ -1002,7 +1062,7 @@ body.loadingActive {
 
     <div id="modalBackdrop" class="modalBackdrop">
     <div class="modal">
-      <div id="modalTitle" class="modalHeader">Message</div>
+      <div id="modalTitle" class="modalHeader"></div>
       <div id="modalBody" class="modalBody"></div>
       <div id="modalFooter" class="modalFooter"></div>
     </div>
@@ -1011,9 +1071,9 @@ body.loadingActive {
     <div id="loadingOverlay" class="loadingOverlay" aria-live="polite" aria-busy="true">
     <div class="loadingCard">
       <div class="loadingSpinner"></div>
-      <div id="loadingTitle" class="loadingTitle">Loading...</div>
-      <div id="loadingText" class="loadingText">The system is working. Please wait.</div>
-      <div class="loadingSubtext">Please do not refresh</div>
+      <div id="loadingTitle" class="loadingTitle"></div>
+      <div id="loadingText" class="loadingText"></div>
+      <div class="loadingSubtext"></div>
     </div>
   </div>
 
@@ -1538,7 +1598,7 @@ function tr(key) {
 
 function applyLanguage(language) {
   const t = getTranslations(language);
-
+  document.documentElement.setAttribute("data-language", language);
   const brand = document.querySelector(".brand");
   if (brand) brand.textContent = t.brand;
 
