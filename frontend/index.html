@@ -151,7 +151,10 @@
       gap: 10px;
     }
 
-    .topbarCenter { justify-content: center; }
+    .topbarCenter {
+  justify-content: center;
+  flex-wrap: wrap;
+}
     .topbarRight { justify-content: flex-end; }
 
     .brand {
@@ -698,8 +701,9 @@
       <div class="brand">GED Practice Platform</div>
     </div>
     <div class="topbarCenter">
-      <div id="timerTop" class="hidden">Time Remaining: 115:00</div>
-    </div>
+  <div id="timerTop" class="hidden">Time Remaining: 115:00</div>
+  <button id="pauseBtn" class="secondaryBtn hidden">⏸ Pause Test</button>
+</div>
     <div class="topbarRight">
       <div id="userSummary" class="topbarUser hidden"></div>
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
@@ -775,7 +779,6 @@
         </div>
 
         <div class="actionCluster">
-  <button id="pauseBtn" class="secondaryBtn hidden">⏸ Pause Test</button>
   <button id="flagBtn" class="secondaryBtn">🚩 Flag Question</button>
 </div>
       </div>
