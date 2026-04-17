@@ -857,6 +857,28 @@
       }).join("");
     }
 
+    function renderPracticeHistoryDetails(questions) {
+  if (!Array.isArray(questions) || !questions.length) {
+    return `<div class="reviewItem" style="margin-top:10px;">No question data stored for this practice session.</div>`;
+  }
+
+  return questions.map((q, i) => {
+    const userAnswer = String(q.userAnswer ?? "").trim();
+    const correctAnswer = String(q.answer ?? "").trim();
+    const isCorrect = userAnswer === correctAnswer;
+
+    return `
+      <div class="reviewItem" style="margin-top:10px;">
+        <div><strong>Q${i + 1}</strong></div>
+        <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+        <div style="margin-top:10px;">Your answer: ${escapeHtml(userAnswer || "—")}</div>
+        <div>Correct answer: ${escapeHtml(correctAnswer || "—")}</div>
+        <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+      </div>
+    `;
+  }).join("");
+}
+
     function getHistorySkillStats(history) {
   const stats = {};
 
@@ -896,23 +918,44 @@ function getAverageScore(history) {
   return Math.round(total / history.length);
 }
 
-function getTrendMessage(history) {
-  if (history.length < 2) {
-    return `<strong>Keep going.</strong> Every test gives you more feedback on what to improve next.`;
+function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) {
+  if (!testHistory.length) {
+    return `<strong>Welcome.</strong> Once you complete a signed-in test, your progress notes will appear here.`;
   }
 
-  const latest = Number(history[0].score200) || 0;
-  const previous = Number(history[1].score200) || 0;
+  const latest = Number(testHistory[0]?.score200) || 0;
+  const previous = Number(testHistory[1]?.score200) || 0;
 
-  if (latest > previous) {
+  const repeatedWeakSkillCount = testHistory
+    .slice(0, 4)
+    .filter((entry) => (entry.weakestSkill || "—") === currentFocus)
+    .length;
+
+  const practiceCountForFocus = practiceHistory.filter(
+    (entry) => (entry.skill || "Mixed Practice") === currentFocus
+  ).length;
+
+  if (repeatedWeakSkillCount >= 2 && currentFocus !== "—" && practiceCountForFocus === 0) {
+    return `<strong>Practice more.</strong> ${escapeHtml(currentFocus)} has stayed one of your weakest areas across recent tests. A focused practice set there should help most right now.`;
+  }
+
+  if (repeatedWeakSkillCount >= 3 && currentFocus !== "—") {
+    return `<strong>Stay focused.</strong> ${escapeHtml(currentFocus)} keeps showing up as your weakest area. Keep working there first, then move to ${escapeHtml(nextFocus !== "—" ? nextFocus : "your next lowest skill")}.`;
+  }
+
+  if (testHistory.length >= 2 && latest > previous) {
     return `<strong>Nice progress.</strong> Your latest score improved from ${previous} to ${latest}. Keep building on that momentum.`;
   }
 
-  if (latest < previous) {
-    return `<strong>Stay with it.</strong> Scores can fluctuate. Review your weakest skills and keep practicing consistently.`;
+  if (testHistory.length >= 2 && latest < previous) {
+    return `<strong>Stay with it.</strong> Scores can fluctuate. Review ${escapeHtml(currentFocus !== "—" ? currentFocus : "your weakest skill")} and keep practicing consistently.`;
   }
 
-  return `<strong>Steady work.</strong> Your score held at ${latest}. This is a good time to target your weakest skills to push higher.`;
+  if (testHistory.length >= 2 && latest === previous) {
+    return `<strong>Steady work.</strong> Your score held at ${latest}. This is a good time to target ${escapeHtml(currentFocus !== "—" ? currentFocus : "your weakest skill")} to push higher.`;
+  }
+
+  return `<strong>Keep going.</strong> Your history is starting to build. Focus first on ${escapeHtml(currentFocus !== "—" ? currentFocus : "your weakest skill")} and then ${escapeHtml(nextFocus !== "—" ? nextFocus : "the next weakest area")}.`;
 }
 
     function applyTheme(theme) {
@@ -1934,24 +1977,47 @@ function getTrendMessage(history) {
     }
 
     async function saveCompletedTestToHistory() {
-      if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
+  if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
 
-      try {
-        await fetch(`${API_BASE}/api/test/complete`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders()
-          },
-          body: JSON.stringify({
-            difficulty: state.difficulty,
-            questions: state.questions
-          })
-        });
-      } catch (error) {
-        console.error("Failed to save completed test history", error);
-      }
-    }
+  try {
+    await fetch(`${API_BASE}/api/test/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        difficulty: state.difficulty,
+        questions: state.questions
+      })
+    });
+  } catch (error) {
+    console.error("Failed to save completed test history", error);
+  }
+}
+
+async function saveCompletedPracticeToHistory() {
+  if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
+  if (state.mode !== "practice") return;
+  if (!state.practiceMeta) return;
+
+  try {
+    await fetch(`${API_BASE}/api/practice/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        skill: state.practiceMeta.skill || "Mixed Practice",
+        difficulty: state.practiceMeta.difficulty || state.difficulty,
+        questions: state.questions
+      })
+    });
+  } catch (error) {
+    console.error("Failed to save completed practice history", error);
+  }
+}
 
     function scaledScore() {
       if (!state.questions.length) return 0;
@@ -2095,113 +2161,117 @@ function getTrendMessage(history) {
     }
 
     async function showPracticeResults() {
-      const total = state.questions.length;
-      const correct = state.questions.filter(
-        (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
-      ).length;
+  await saveCompletedPracticeToHistory();
 
-      const panel = document.getElementById("practicePanel");
-      panel.innerHTML = `
-        <h2 class="sectionTitle">Practice Results</h2>
+  const total = state.questions.length;
+  const correct = state.questions.filter(
+    (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
+  ).length;
 
-        <div class="practiceSummary">
-          <div class="reviewStat">
-            <div class="reviewStatLabel">Correct</div>
-            <div class="reviewStatValue">${correct}</div>
-          </div>
-          <div class="reviewStat">
-            <div class="reviewStatLabel">Wrong</div>
-            <div class="reviewStatValue">${total - correct}</div>
-          </div>
-        </div>
+  const panel = document.getElementById("practicePanel");
+  panel.innerHTML = `
+    <h2 class="sectionTitle">Practice Results</h2>
 
-        <div class="practiceItem">
-          <button id="practiceMenuBtn" class="secondaryBtn">Main Menu</button>
-          <button id="practiceAgainBtn" class="primaryBtn">Practice Again</button>
-        </div>
-      `;
+    <div class="practiceSummary">
+      <div class="reviewStat">
+        <div class="reviewStatLabel">Correct</div>
+        <div class="reviewStatValue">${correct}</div>
+      </div>
+      <div class="reviewStat">
+        <div class="reviewStatLabel">Wrong</div>
+        <div class="reviewStatValue">${total - correct}</div>
+      </div>
+    </div>
 
-      state.questions.forEach((q, i) => {
-        const user = String(q.userAnswer ?? "").trim();
-        const correctAns = String(q.answer).trim();
-        const isCorrect = user === correctAns;
+    <div class="practiceItem">
+      <button id="practiceMenuBtn" class="secondaryBtn">Main Menu</button>
+      <button id="practiceAgainBtn" class="primaryBtn">Practice Again</button>
+    </div>
+  `;
 
-        const div = document.createElement("div");
-        div.className = "practiceItem";
-        div.innerHTML = `
-          <div><strong>Q${i + 1}</strong></div>
-          <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
-          <div style="margin-top:10px;">Your answer: ${user || "—"}</div>
-          <div>Correct: ${correctAns}</div>
-          <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
-          <div class="explanationBox">${q.explanation}</div>
-        `;
-        panel.appendChild(div);
-      });
+  state.questions.forEach((q, i) => {
+    const user = String(q.userAnswer ?? "").trim();
+    const correctAns = String(q.answer).trim();
+    const isCorrect = user === correctAns;
 
-      await setView("practice-results");
-      await clearSavedProgress();
+    const div = document.createElement("div");
+    div.className = "practiceItem";
+    div.innerHTML = `
+      <div><strong>Q${i + 1}</strong></div>
+      <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
+      <div style="margin-top:10px;">Your answer: ${user || "—"}</div>
+      <div>Correct: ${correctAns}</div>
+      <div>Result: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? "Correct" : "Incorrect"}</span></div>
+      <div class="explanationBox">${q.explanation}</div>
+    `;
+    panel.appendChild(div);
+  });
 
-      document.getElementById("practiceMenuBtn").onclick = () => goToMainMenu();
-      document.getElementById("practiceAgainBtn").onclick = async () => {
-        if (state.practiceMeta) {
-          await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
-        }
-      };
+  await setView("practice-results");
+
+  document.getElementById("practiceMenuBtn").onclick = () => goToMainMenu();
+  document.getElementById("practiceAgainBtn").onclick = async () => {
+    if (state.practiceMeta) {
+      await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
     }
+  };
+}
 
-    async function openProfilePanel() {
+    async function openProfilePanel(defaultTab = "tests") {
   if (!state.auth.user || !state.auth.token) return;
 
   const panel = document.getElementById("profilePanel");
   panel.innerHTML = `
-    <h2 class="sectionTitle">Profile & Test History</h2>
+    <h2 class="sectionTitle">Profile</h2>
     <div class="reviewItem">Loading history...</div>
   `;
 
   await setView("profile");
 
   try {
-    const res = await fetch(`${API_BASE}/api/test/history`, {
-      headers: { ...getAuthHeaders() }
-    });
+    const [testRes, practiceRes] = await Promise.all([
+      fetch(`${API_BASE}/api/test/history`, {
+        headers: { ...getAuthHeaders() }
+      }),
+      fetch(`${API_BASE}/api/practice/history`, {
+        headers: { ...getAuthHeaders() }
+      })
+    ]);
 
-    const data = await res.json();
+    const testData = await testRes.json();
+    const practiceData = await practiceRes.json();
 
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to load history.");
+    if (!testRes.ok) {
+      throw new Error(testData.error || "Failed to load test history.");
     }
 
-    const history = Array.isArray(data.history) ? data.history : [];
-    const latestScore =
-      history.length > 0 && typeof history[0].score200 === "number"
-        ? history[0].score200
-        : "—";
+    if (!practiceRes.ok) {
+      throw new Error(practiceData.error || "Failed to load practice history.");
+    }
+
+    const testHistory = Array.isArray(testData.history) ? testData.history : [];
+    const practiceHistory = Array.isArray(practiceData.history) ? practiceData.history : [];
 
     const bestScore =
-      history.length > 0
-        ? Math.max(...history.map((h) => Number(h.score200) || 0))
+      testHistory.length > 0
+        ? Math.max(...testHistory.map((h) => Number(h.score200) || 0))
         : "—";
 
-    const averageScore = getAverageScore(history);
+    const averageScore = getAverageScore(testHistory);
 
-    const skillStats = getHistorySkillStats(history);
+    const skillStats = getHistorySkillStats(testHistory);
     const currentFocus = skillStats.length > 0 ? skillStats[0].skill : "—";
     const nextFocus = skillStats.length > 1 ? skillStats[1].skill : "—";
 
-    const encouragement = getTrendMessage(history);
+    const encouragement = getTrendMessage(testHistory);
 
     panel.innerHTML = `
-      <h2 class="sectionTitle">Profile & Test History</h2>
+      <h2 class="sectionTitle">Profile</h2>
 
       <div class="reviewTop">
         <div class="reviewStat">
           <div class="reviewStatLabel">Tests Taken</div>
-          <div class="reviewStatValue">${history.length}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">Latest Score</div>
-          <div class="reviewStatValue">${latestScore}</div>
+          <div class="reviewStatValue">${testHistory.length}</div>
         </div>
         <div class="reviewStat">
           <div class="reviewStatLabel">Best Score</div>
@@ -2210,6 +2280,10 @@ function getTrendMessage(history) {
         <div class="reviewStat">
           <div class="reviewStatLabel">Average Score</div>
           <div class="reviewStatValue">${averageScore}</div>
+        </div>
+        <div class="reviewStat">
+          <div class="reviewStatLabel">Practice Sessions</div>
+          <div class="reviewStatValue">${practiceHistory.length}</div>
         </div>
       </div>
 
@@ -2230,24 +2304,35 @@ function getTrendMessage(history) {
 
       <div class="reviewItem">
         <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
-        ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">Practice Weakest Skill</button>` : ""}
+${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">Practice ${escapeHtml(currentFocus)}</button>` : ""}      </div>
+
+      <div class="reviewItem">
+        <div class="menuActions">
+          <button id="testHistoryTabBtn" class="secondaryBtn">Test History</button>
+          <button id="practiceHistoryTabBtn" class="secondaryBtn">Practice History</button>
+        </div>
       </div>
+
+      <div id="testHistorySection" class="hidden"></div>
+      <div id="practiceHistorySection" class="hidden"></div>
     `;
 
-    if (!history.length) {
-      const empty = document.createElement("div");
-      empty.className = "reviewItem";
-      empty.innerHTML = `No completed test history yet. Once you submit a test while signed in, it will appear here.`;
-      panel.appendChild(empty);
+    const testSection = document.getElementById("testHistorySection");
+    const practiceSection = document.getElementById("practiceHistorySection");
+
+    if (!testHistory.length) {
+      testSection.innerHTML = `
+        <div class="reviewItem">No completed test history yet. Once you submit a test while signed in, it will appear here.</div>
+      `;
     } else {
-      history.forEach((entry, index) => {
+      testHistory.forEach((entry, index) => {
         const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
-        const detailsId = `historyDetails_${index}`;
+        const detailsId = `testHistoryDetails_${index}`;
 
         const item = document.createElement("div");
         item.className = "reviewItem";
         item.innerHTML = `
-          <div><strong>Test ${history.length - index}</strong></div>
+          <div><strong>Test ${testHistory.length - index}</strong></div>
           <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
           <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
           <div>Score: ${Number(entry.score200) || 0} / 200</div>
@@ -2255,35 +2340,88 @@ function getTrendMessage(history) {
           <div>Wrong / Unanswered: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
           <div>Weakest Skill: ${escapeHtml(entry.weakestSkill || "—")}</div>
           <div style="margin-top:12px;">
-            <button class="secondaryBtn historyToggleBtn" data-target="${detailsId}">View Details</button>
+            <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">View Details</button>
           </div>
           <div id="${detailsId}" class="hidden"></div>
         `;
 
-        panel.appendChild(item);
+        testSection.appendChild(item);
 
         const detailsContainer = item.querySelector(`#${detailsId}`);
         detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
       });
+    }
 
-      panel.querySelectorAll(".historyToggleBtn").forEach((btn) => {
-        btn.onclick = () => {
-          const targetId = btn.getAttribute("data-target");
-          const details = document.getElementById(targetId);
-          if (!details) return;
+    if (!practiceHistory.length) {
+      practiceSection.innerHTML = `
+        <div class="reviewItem">No completed practice history yet. Once you finish a practice set while signed in, it will appear here.</div>
+      `;
+    } else {
+      practiceHistory.forEach((entry, index) => {
+        const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+        const detailsId = `practiceHistoryDetails_${index}`;
 
-          const isHidden = details.classList.contains("hidden");
+        const item = document.createElement("div");
+        item.className = "reviewItem";
+        item.innerHTML = `
+          <div><strong>Practice ${practiceHistory.length - index}</strong></div>
+          <div style="margin-top:8px;">Date: ${escapeHtml(completedDate)}</div>
+          <div>Skill: ${escapeHtml(entry.skill || "Mixed Practice")}</div>
+          <div>Difficulty: ${escapeHtml(entry.difficulty || "—")}</div>
+          <div>Correct: ${Number(entry.correctCount) || 0}</div>
+          <div>Wrong: ${Number(entry.wrongCount) || 0}</div>
+          <div>Accuracy: ${Number(entry.accuracyPercent) || 0}%</div>
+          <div style="margin-top:12px;">
+            <button class="secondaryBtn practiceHistoryToggleBtn" data-target="${detailsId}">View Details</button>
+          </div>
+          <div id="${detailsId}" class="hidden"></div>
+        `;
 
-          if (isHidden) {
-            details.classList.remove("hidden");
-            btn.textContent = "Hide Details";
-          } else {
-            details.classList.add("hidden");
-            btn.textContent = "View Details";
-          }
-        };
+        practiceSection.appendChild(item);
+
+        const detailsContainer = item.querySelector(`#${detailsId}`);
+        detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
       });
     }
+
+    function showTab(tabName) {
+      testSection.classList.toggle("hidden", tabName !== "tests");
+      practiceSection.classList.toggle("hidden", tabName !== "practice");
+    }
+
+    document.getElementById("testHistoryTabBtn").onclick = () => {
+      showTab("tests");
+    };
+
+    document.getElementById("practiceHistoryTabBtn").onclick = () => {
+      showTab("practice");
+    };
+
+    showTab(defaultTab);
+
+    panel.querySelectorAll(".testHistoryToggleBtn").forEach((btn) => {
+      btn.onclick = () => {
+        const targetId = btn.getAttribute("data-target");
+        const details = document.getElementById(targetId);
+        if (!details) return;
+
+        const isHidden = details.classList.contains("hidden");
+        details.classList.toggle("hidden", !isHidden);
+        btn.textContent = isHidden ? "Hide Details" : "View Details";
+      };
+    });
+
+    panel.querySelectorAll(".practiceHistoryToggleBtn").forEach((btn) => {
+      btn.onclick = () => {
+        const targetId = btn.getAttribute("data-target");
+        const details = document.getElementById(targetId);
+        if (!details) return;
+
+        const isHidden = details.classList.contains("hidden");
+        details.classList.toggle("hidden", !isHidden);
+        btn.textContent = isHidden ? "Hide Details" : "View Details";
+      };
+    });
 
     document.getElementById("profileBackBtn").onclick = () => {
       goToMainMenu();
@@ -2299,7 +2437,7 @@ function getTrendMessage(history) {
     console.error("PROFILE PANEL ERROR:", error);
 
     panel.innerHTML = `
-      <h2 class="sectionTitle">Profile & Test History</h2>
+      <h2 class="sectionTitle">Profile</h2>
       <div class="reviewItem">Failed to load history.</div>
       <div class="reviewItem">
         <button id="profileBackBtn" class="secondaryBtn">Main Menu</button>
