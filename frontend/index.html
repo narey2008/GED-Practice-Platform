@@ -1636,7 +1636,16 @@ testPausedBody4: isSpanish ? "Presiona Reanudar Examen cuando estés listo para 
 generatingTestText: isSpanish ? "Generando examen..." : "Generating test...",
 chooseDifficultyStart: isSpanish ? "Elige una dificultad y comienza el examen." : "Choose a difficulty and start the test.",
 failedAuthentication: isSpanish ? "La autenticación falló." : "Authentication failed.",
-failedLoadHistoryTitle: isSpanish ? "Perfil" : "Profile"
+failedLoadHistoryTitle: isSpanish ? "Perfil" : "Profile",
+difficultyEasy: isSpanish ? "Fácil" : "Easy",
+difficultyMedium: isSpanish ? "Mediano" : "Medium",
+difficultyGed: isSpanish ? "Nivel GED" : "GED-Level",
+
+multipleChoice: isSpanish ? "Opción Múltiple" : "Multiple Choice",
+fillBlank: isSpanish ? "Respuesta Abierta" : "Fill Blank",
+dragDrop: isSpanish ? "Arrastrar y Soltar" : "Drag and Drop",
+hotSpot: isSpanish ? "Punto Activo" : "Hot Spot",
+unknownQuestionType: isSpanish ? "Desconocido" : "Unknown"
   };
 }
 
@@ -1647,10 +1656,19 @@ function tr(key) {
 }
 
 function translateDifficultyLabel(value) {
-  if (value === "Easy") return tr("easy");
-  if (value === "Medium") return tr("medium");
-  if (value === "GED-Level") return tr("gedLevel");
-  return value || "—";
+  if (!value) return "—";
+
+  const normalized = String(value).trim().toLowerCase();
+
+  const difficultyMap = {
+    "easy": tr("difficultyEasy"),
+    "medium": tr("difficultyMedium"),
+    "ged-level": tr("difficultyGed"),
+    "ged level": tr("difficultyGed"),
+    "ged": tr("difficultyGed")
+  };
+
+  return difficultyMap[normalized] || value;
 }
 
 function translateSkillLabel(value) {
@@ -1693,11 +1711,31 @@ function getQuestionDisplaySkill(q) {
 }
 
 function translateQuestionType(value) {
-  if (value === "multiple") return tr("multipleChoice");
-  if (value === "fill") return tr("fillBlank");
-  if (value === "dragdrop") return tr("dragDrop");
-  if (value === "hotspot") return tr("hotSpot");
-  return value || "—";
+  if (!value) return "—";
+
+  const normalized = String(value).trim().toLowerCase();
+
+  const typeMap = {
+    "multiple": tr("multipleChoice"),
+    "multiplechoice": tr("multipleChoice"),
+    "multiple-choice": tr("multipleChoice"),
+    "mcq": tr("multipleChoice"),
+
+    "fill": tr("fillBlank"),
+    "fillblank": tr("fillBlank"),
+    "fill-in-the-blank": tr("fillBlank"),
+    "fill_in_blank": tr("fillBlank"),
+
+    "dragdrop": tr("dragDrop"),
+    "drag-drop": tr("dragDrop"),
+    "drag_drop": tr("dragDrop"),
+
+    "hotspot": tr("hotSpot"),
+    "hot-spot": tr("hotSpot"),
+    "hot_spot": tr("hotSpot")
+  };
+
+  return typeMap[normalized] || value;
 }
 
 function applyLanguage(language) {
@@ -1733,9 +1771,9 @@ function applyLanguage(language) {
     if (difficultySelect) {
       const currentValue = difficultySelect.value;
       difficultySelect.innerHTML = `
-        <option value="Easy">${t.easy}</option>
-        <option value="Medium">${t.medium}</option>
-        <option value="GED-Level">${t.gedLevel}</option>
+        <option value="Easy">${translateDifficultyLabel("Easy")}</option>
+        <option value="Medium">${translateDifficultyLabel("Medium")}</option>
+        <option value="GED-Level">${translateDifficultyLabel("GED-Level")}</option>
       `;
       difficultySelect.value = currentValue;
     }
@@ -1777,9 +1815,9 @@ function applyLanguage(language) {
     if (practiceDifficultySelect) {
       const currentPracticeDifficulty = practiceDifficultySelect.value;
       practiceDifficultySelect.innerHTML = `
-        <option value="Easy">${t.easy}</option>
-        <option value="Medium">${t.medium}</option>
-        <option value="GED-Level">${t.gedLevel}</option>
+        <option value="Easy">${translateDifficultyLabel("Easy")}</option>
+        <option value="Medium">${translateDifficultyLabel("Medium")}</option>
+        <option value="GED-Level">${translateDifficultyLabel("GED-Level")}</option>
       `;
       practiceDifficultySelect.value = currentPracticeDifficulty;
     }
