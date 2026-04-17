@@ -826,66 +826,57 @@ body.loadingActive {
   cursor: pointer;
 }
 
-    html[data-language="Spanish"] #timerTop::before {
+        html:not(.js-ready)[data-language="Spanish"] #timerTop:empty::before {
       content: "Tiempo Restante: 115:00";
     }
 
-    html[data-language="English"] #timerTop::before,
-    html:not([data-language]) #timerTop::before {
+    html:not(.js-ready)[data-language="English"] #timerTop:empty::before,
+    html:not(.js-ready):not([data-language]) #timerTop:empty::before {
       content: "Time Remaining: 115:00";
     }
 
-        html.js-ready #timerTop::before,
-    html.js-ready #questionNavigator .questionNavigatorTitle::before,
-    html.js-ready #modalTitle::before,
-    html.js-ready #loadingTitle::before,
-    html.js-ready #loadingText::before,
-    html.js-ready .loadingSubtext::before {
-      content: none !important;
-    }
-
-    html[data-language="Spanish"] #questionNavigator .questionNavigatorTitle::before {
+    html:not(.js-ready)[data-language="Spanish"] #questionNavigator .questionNavigatorTitle:empty::before {
       content: "Revisión";
     }
 
-    html[data-language="English"] #questionNavigator .questionNavigatorTitle::before,
-    html:not([data-language]) #questionNavigator .questionNavigatorTitle::before {
+    html:not(.js-ready)[data-language="English"] #questionNavigator .questionNavigatorTitle:empty::before,
+    html:not(.js-ready):not([data-language]) #questionNavigator .questionNavigatorTitle:empty::before {
       content: "Review";
     }
 
-    html[data-language="Spanish"] #modalTitle::before {
+    html:not(.js-ready)[data-language="Spanish"] #modalTitle:empty::before {
       content: "Mensaje";
     }
 
-    html[data-language="English"] #modalTitle::before,
-    html:not([data-language]) #modalTitle::before {
+    html:not(.js-ready)[data-language="English"] #modalTitle:empty::before,
+    html:not(.js-ready):not([data-language]) #modalTitle:empty::before {
       content: "Message";
     }
 
-    html[data-language="Spanish"] #loadingTitle::before {
+    html:not(.js-ready)[data-language="Spanish"] #loadingTitle:empty::before {
       content: "Cargando...";
     }
 
-    html[data-language="English"] #loadingTitle::before,
-    html:not([data-language]) #loadingTitle::before {
+    html:not(.js-ready)[data-language="English"] #loadingTitle:empty::before,
+    html:not(.js-ready):not([data-language]) #loadingTitle:empty::before {
       content: "Loading...";
     }
 
-    html[data-language="Spanish"] #loadingText::before {
+    html:not(.js-ready)[data-language="Spanish"] #loadingText:empty::before {
       content: "El sistema está trabajando. Espera por favor.";
     }
 
-    html[data-language="English"] #loadingText::before,
-    html:not([data-language]) #loadingText::before {
+    html:not(.js-ready)[data-language="English"] #loadingText:empty::before,
+    html:not(.js-ready):not([data-language]) #loadingText:empty::before {
       content: "The system is working. Please wait.";
     }
 
-    html[data-language="Spanish"] .loadingSubtext::before {
+    html:not(.js-ready)[data-language="Spanish"] .loadingSubtext:empty::before {
       content: "Por favor no actualices";
     }
 
-    html[data-language="English"] .loadingSubtext::before,
-    html:not([data-language]) .loadingSubtext::before {
+    html:not(.js-ready)[data-language="English"] .loadingSubtext:empty::before,
+    html:not(.js-ready):not([data-language]) .loadingSubtext:empty::before {
       content: "Please do not refresh";
     }
 
@@ -3916,6 +3907,7 @@ window.addEventListener("unhandledrejection", () => {
 });
 
 (async function init() {
+      document.documentElement.classList.add("js-ready");
       applyTheme(getSavedTheme());
       applyFontSize(getSavedFontSize());
       applyLanguage(getSavedLanguage());
@@ -3923,7 +3915,6 @@ window.addEventListener("unhandledrejection", () => {
       updateStatus();
       await setView("menu");
       applyLanguage(getSavedLanguage());
-      document.documentElement.classList.add("js-ready");
     })();
   </script>
 </body>
