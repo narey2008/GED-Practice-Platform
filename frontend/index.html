@@ -1340,52 +1340,60 @@ async function withLoading(title, text, work) {
         submitBtn.innerText = isRegister ? "Create Account" : "Sign In";
 
         submitBtn.onclick = async () => {
-          const authError = document.getElementById("authError");
-          authError.classList.add("hidden");
-          authError.textContent = "";
+  const authError = document.getElementById("authError");
+  authError.classList.add("hidden");
+  authError.textContent = "";
 
-          const email = document.getElementById("authEmail").value.trim();
-          const password = document.getElementById("authPassword").value;
-          const displayName = isRegister
-            ? document.getElementById("authDisplayName").value.trim()
-            : "";
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const displayName = isRegister
+    ? document.getElementById("authDisplayName").value.trim()
+    : "";
 
-          try {
-            const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-            const payload = isRegister
-              ? { email, password, displayName }
-              : { email, password };
+  try {
+    await withLoading(
+      isRegister ? "Creating Account..." : "Signing In...",
+      isRegister
+        ? "Your account is being created. Please wait."
+        : "Your account is being signed in. Please wait.",
+      async () => {
+        const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+        const payload = isRegister
+          ? { email, password, displayName }
+          : { email, password };
 
-            const res = await fetch(`${API_BASE}${endpoint}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-            const data = await res.json();
+        const data = await res.json();
 
-            if (!res.ok) {
-              throw new Error(data.error || "Authentication failed.");
-            }
+        if (!res.ok) {
+          throw new Error(data.error || "Authentication failed.");
+        }
 
-            setAuthToken(data.token);
-            state.auth.user = data.user;
-            state.auth.guestMode = false;
-            updateAuthUI();
-            closeModal();
-            await updateResumeVisibility();
+        setAuthToken(data.token);
+        state.auth.user = data.user;
+        state.auth.guestMode = false;
+        updateAuthUI();
+        closeModal();
+        await updateResumeVisibility();
 
-            showModal(
-              isRegister ? "Account Created" : "Signed In",
-              isRegister
-                ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
-                : `Welcome back, ${data.user.displayName || data.user.email}.`
-            );
-          } catch (error) {
-            authError.textContent = error.message || "Authentication failed.";
-            authError.classList.remove("hidden");
-          }
-        };
+        showModal(
+          isRegister ? "Account Created" : "Signed In",
+          isRegister
+            ? `Account created and signed in as ${data.user.displayName || data.user.email}.`
+            : `Welcome back, ${data.user.displayName || data.user.email}.`
+        );
+      }
+    );
+  } catch (error) {
+    authError.textContent = error.message || "Authentication failed.";
+    authError.classList.remove("hidden");
+  }
+};
 
         footer.appendChild(cancelBtn);
         footer.appendChild(submitBtn);
