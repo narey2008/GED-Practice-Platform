@@ -1211,6 +1211,8 @@ function getAverageScore(history) {
 
 function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) {
   const isSpanish = getSavedLanguage() === "Spanish";
+  const currentFocusLabel = currentFocus !== "—" ? translateSkillLabel(currentFocus) : "—";
+  const nextFocusLabel = nextFocus !== "—" ? translateSkillLabel(nextFocus) : "—";
 
   if (!testHistory.length) {
     return isSpanish
@@ -1232,14 +1234,14 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
 
   if (repeatedWeakSkillCount >= 2 && currentFocus !== "—" && practiceCountForFocus === 0) {
     return isSpanish
-      ? `<strong>Practica más.</strong> ${escapeHtml(currentFocus)} ha seguido siendo una de tus áreas más débiles en exámenes recientes. Una práctica enfocada ahí debería ayudarte más ahora mismo.`
-      : `<strong>Practice more.</strong> ${escapeHtml(currentFocus)} has stayed one of your weakest areas across recent tests. A focused practice set there should help most right now.`;
+      ? `<strong>Practica más.</strong> ${escapeHtml(currentFocusLabel)} ha seguido siendo una de tus áreas más débiles en exámenes recientes. Una práctica enfocada ahí debería ayudarte más ahora mismo.`
+      : `<strong>Practice more.</strong> ${escapeHtml(currentFocusLabel)} has stayed one of your weakest areas across recent tests. A focused practice set there should help most right now.`;
   }
 
   if (repeatedWeakSkillCount >= 3 && currentFocus !== "—") {
     return isSpanish
-      ? `<strong>Mantén el enfoque.</strong> ${escapeHtml(currentFocus)} sigue apareciendo como tu área más débil. Trabaja ahí primero y luego pasa a ${escapeHtml(nextFocus !== "—" ? nextFocus : "tu siguiente habilidad más baja")}.`
-      : `<strong>Stay focused.</strong> ${escapeHtml(currentFocus)} keeps showing up as your weakest area. Keep working there first, then move to ${escapeHtml(nextFocus !== "—" ? nextFocus : "your next lowest skill")}.`;
+      ? `<strong>Mantén el enfoque.</strong> ${escapeHtml(currentFocusLabel)} sigue apareciendo como tu área más débil. Trabaja ahí primero y luego pasa a ${escapeHtml(nextFocus !== "—" ? nextFocusLabel : "tu siguiente habilidad más baja")}.`
+      : `<strong>Stay focused.</strong> ${escapeHtml(currentFocusLabel)} keeps showing up as your weakest area. Keep working there first, then move to ${escapeHtml(nextFocus !== "—" ? nextFocusLabel : "your next lowest skill")}.`;
   }
 
   if (testHistory.length >= 2 && latest > previous) {
@@ -1250,19 +1252,19 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
 
   if (testHistory.length >= 2 && latest < previous) {
     return isSpanish
-      ? `<strong>Sigue intentándolo.</strong> Las puntuaciones pueden variar. Revisa ${escapeHtml(currentFocus !== "—" ? currentFocus : "tu habilidad más débil")} y sigue practicando con constancia.`
-      : `<strong>Stay with it.</strong> Scores can fluctuate. Review ${escapeHtml(currentFocus !== "—" ? currentFocus : "your weakest skill")} and keep practicing consistently.`;
+      ? `<strong>Sigue intentándolo.</strong> Las puntuaciones pueden variar. Revisa ${escapeHtml(currentFocus !== "—" ? currentFocusLabel : "tu habilidad más débil")} y sigue practicando con constancia.`
+      : `<strong>Stay with it.</strong> Scores can fluctuate. Review ${escapeHtml(currentFocus !== "—" ? currentFocusLabel : "your weakest skill")} and keep practicing consistently.`;
   }
 
   if (testHistory.length >= 2 && latest === previous) {
     return isSpanish
-      ? `<strong>Trabajo constante.</strong> Tu puntuación se mantuvo en ${latest}. Este es un buen momento para enfocarte en ${escapeHtml(currentFocus !== "—" ? currentFocus : "tu habilidad más débil")} y subir más.`
-      : `<strong>Steady work.</strong> Your score held at ${latest}. This is a good time to target ${escapeHtml(currentFocus !== "—" ? currentFocus : "your weakest skill")} to push higher.`;
+      ? `<strong>Trabajo constante.</strong> Tu puntuación se mantuvo en ${latest}. Este es un buen momento para enfocarte en ${escapeHtml(currentFocus !== "—" ? currentFocusLabel : "tu habilidad más débil")} y subir más.`
+      : `<strong>Steady work.</strong> Your score held at ${latest}. This is a good time to target ${escapeHtml(currentFocus !== "—" ? currentFocusLabel : "your weakest skill")} to push higher.`;
   }
 
   return isSpanish
-    ? `<strong>Sigue adelante.</strong> Tu historial ya se está formando. Enfócate primero en ${escapeHtml(currentFocus !== "—" ? currentFocus : "tu habilidad más débil")} y luego en ${escapeHtml(nextFocus !== "—" ? nextFocus : "la siguiente área más débil")}.`
-    : `<strong>Keep going.</strong> Your history is starting to build. Focus first on ${escapeHtml(currentFocus !== "—" ? currentFocus : "your weakest skill")} and then ${escapeHtml(nextFocus !== "—" ? nextFocus : "the next weakest area")}.`;
+    ? `<strong>Sigue adelante.</strong> Tu historial ya se está formando. Enfócate primero en ${escapeHtml(currentFocus !== "—" ? currentFocusLabel : "tu habilidad más débil")} y luego en ${escapeHtml(nextFocus !== "—" ? nextFocusLabel : "la siguiente área más débil")}.`
+    : `<strong>Keep going.</strong> Your history is starting to build. Focus first on ${escapeHtml(currentFocus !== "—" ? currentFocusLabel : "your weakest skill")} and then ${escapeHtml(nextFocus !== "—" ? nextFocusLabel : "the next weakest area")}.`;
 }
 
     function applyTheme(theme) {
@@ -1613,6 +1615,28 @@ function tr(key) {
   const language = getSavedLanguage();
   const translations = getTranslations(language);
   return translations[key] || key;
+}
+
+function translateDifficultyLabel(value) {
+  if (value === "Easy") return tr("easy");
+  if (value === "Medium") return tr("medium");
+  if (value === "GED-Level") return tr("gedLevel");
+  return value || "—";
+}
+
+function translateSkillLabel(value) {
+  if (value === "Fractions, Decimals, and Percents") return tr("skillFractions");
+  if (value === "Ratios, Proportions, and Percent Change") return tr("skillRatios");
+  if (value === "Measurement and Unit Conversion") return tr("skillMeasurement");
+  if (value === "Area, Perimeter, Surface Area, and Volume") return tr("skillAreaVolume");
+  if (value === "Lines, Angles, and Coordinate Plane") return tr("skillLinesAngles");
+  if (value === "Data Tables and Graph Interpretation") return tr("skillDataTables");
+  if (value === "Mean, Median, and Probability") return tr("skillMeanMedian");
+  if (value === "Expressions and Order of Operations") return tr("skillExpressions");
+  if (value === "Solving Equations and Inequalities") return tr("skillEquations");
+  if (value === "Linear Equations and Slope") return tr("skillLinearSlope");
+  if (value === "Mixed Practice") return tr("mixedPractice");
+  return value || "—";
 }
 
 function applyLanguage(language) {
@@ -2117,8 +2141,8 @@ function buildCurrentQuestionReportDetails() {
       : state.mode;
 
   return `${tr("mode")}: ${modeLabel}
-${tr("difficulty")}: ${state.practiceMeta?.difficulty || state.difficulty || "—"}
-${tr("skill")}: ${q.skill || state.practiceMeta?.skill || "—"}
+${tr("difficulty")}: ${translateDifficultyLabel(state.practiceMeta?.difficulty || state.difficulty || "—")}
+${tr("skill")}: ${translateSkillLabel(q.skill || state.practiceMeta?.skill || "—")}
 ${tr("questionNumber")}: ${currentQuestionNumber} / ${state.questions.length}
 ${tr("flaggedLabel")}: ${q.flagged ? tr("yes") : tr("no")}
 ${tr("questionType")}: ${q.type || "—"}
@@ -3405,7 +3429,7 @@ async function saveCompletedPracticeToHistory() {
       </div>
       <div class="reviewStat">
         <div class="reviewStatLabel">${tr("weakestSkill")}</div>
-        <div class="reviewStatValue">${weakest}</div>
+        <div class="reviewStatValue">${escapeHtml(translateSkillLabel(weakest))}</div>
       </div>
     </div>
 
@@ -3607,7 +3631,7 @@ async function saveCompletedPracticeToHistory() {
 
           <div class="reviewItem">
             <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-            ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(currentFocus)}</button>` : ""}
+            ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
           </div>
 
           <div class="reviewItem">
@@ -3638,7 +3662,7 @@ async function saveCompletedPracticeToHistory() {
             item.innerHTML = `
               <div><strong>${tr("testLabel")} ${testHistory.length - index}</strong></div>
               <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
-              <div>${tr("difficulty")}: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>${tr("difficulty")}: ${escapeHtml(translateDifficultyLabel(entry.difficulty))}</div>
               <div>${tr("score")}: ${Number(entry.score200) || 0} / 200</div>
               <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
               <div>${tr("wrongUnanswered")}: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
@@ -3670,8 +3694,8 @@ async function saveCompletedPracticeToHistory() {
             item.innerHTML = `
               <div><strong>${tr("practiceLabel")} ${practiceHistory.length - index}</strong></div>
               <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
-              <div>${tr("skill")}: ${escapeHtml(entry.skill || tr("mixedPractice"))}</div>
-              <div>${tr("difficulty")}: ${escapeHtml(entry.difficulty || "—")}</div>
+              <div>${tr("skill")}: ${escapeHtml(translateSkillLabel(entry.skill || "Mixed Practice"))}</div>
+              <div>${tr("difficulty")}: ${escapeHtml(translateDifficultyLabel(entry.difficulty))}</div>
               <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
               <div>${tr("wrong")}: ${Number(entry.wrongCount) || 0}</div>
               <div>${tr("accuracy")}: ${Number(entry.accuracyPercent) || 0}%</div>
