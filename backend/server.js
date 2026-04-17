@@ -154,14 +154,7 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
-app.get("/api/debug-nathan-2026-reset-check", (req, res) => {
-  res.json({
-    ok: true,
-    route: "api/debug-nathan-2026-reset-check",
-    serverFileReached: true,
-    timestamp: new Date().toISOString()
-  });
-});
+
 
 app.get("/api/debug-forgot-password", (req, res) => {
   res.json({
