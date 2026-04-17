@@ -1357,6 +1357,20 @@ practiceLabel: isSpanish ? "Práctica" : "Practice",
     signedIn: isSpanish ? "Sesión Iniciada" : "Signed In",
     welcomeBack: isSpanish ? "Bienvenido de nuevo" : "Welcome back",
 
+    mode: isSpanish ? "Modo" : "Mode",
+fullTest: isSpanish ? "Examen Completo" : "Full Test",
+practiceMode: isSpanish ? "Práctica" : "Practice",
+practiceExample: isSpanish ? "Ejemplo de Práctica" : "Practice Example",
+questionNumber: isSpanish ? "Número de Pregunta" : "Question Number",
+flaggedLabel: isSpanish ? "Marcada" : "Flagged",
+questionType: isSpanish ? "Tipo de Pregunta" : "Question Type",
+questionTextLabel: isSpanish ? "Texto de la Pregunta" : "Question Text",
+userAnswerLabel: isSpanish ? "Respuesta del Usuario" : "User Answer",
+correctAnswerLabel: isSpanish ? "Respuesta Correcta" : "Correct Answer",
+yes: isSpanish ? "Sí" : "Yes",
+no: isSpanish ? "No" : "No",
+noActiveQuestionData: isSpanish ? "No hay datos de pregunta activos disponibles." : "No active question data available.",
+
     supportRequestSubject: isSpanish ? "Solicitud de Soporte de GED Practice Platform" : "GED Practice Platform Support Request",
 questionReportSubject: isSpanish ? "Reporte de Pregunta de GED Practice Platform" : "GED Practice Platform Question Report",
 signedInAs: isSpanish ? "Sesión iniciada como" : "Signed in as",
@@ -2078,34 +2092,34 @@ function openSupportEmail(options = {}) {
 
 function buildCurrentQuestionReportDetails() {
   if (!state.questions.length) {
-    return "No active question data available.";
+    return tr("noActiveQuestionData");
   }
 
   const q = state.questions[state.currentIndex];
-  const questionNumber = state.currentIndex + 1;
+  const currentQuestionNumber = state.currentIndex + 1;
   const modeLabel =
     state.mode === "test"
-      ? "Full Test"
+      ? tr("fullTest")
       : state.mode === "practice"
-      ? "Practice"
+      ? tr("practiceMode")
       : state.mode === "practice-example"
-      ? "Practice Example"
+      ? tr("practiceExample")
       : state.mode;
 
-  return `Mode: ${modeLabel}
-Difficulty: ${state.practiceMeta?.difficulty || state.difficulty || "—"}
-Skill: ${q.skill || state.practiceMeta?.skill || "—"}
-Question Number: ${questionNumber} / ${state.questions.length}
-Flagged: ${q.flagged ? "Yes" : "No"}
-Question Type: ${q.type || "—"}
+  return `${tr("mode")}: ${modeLabel}
+${tr("difficulty")}: ${state.practiceMeta?.difficulty || state.difficulty || "—"}
+${tr("skill")}: ${q.skill || state.practiceMeta?.skill || "—"}
+${tr("questionNumber")}: ${currentQuestionNumber} / ${state.questions.length}
+${tr("flaggedLabel")}: ${q.flagged ? tr("yes") : tr("no")}
+${tr("questionType")}: ${q.type || "—"}
 
-Question Text:
+${tr("questionTextLabel")}:
 ${String(q.question || "").replace(/<[^>]*>/g, " ").trim() || "—"}
 
-User Answer:
+${tr("userAnswerLabel")}:
 ${String(q.userAnswer ?? "").trim() || "—"}
 
-Correct Answer:
+${tr("correctAnswerLabel")}:
 ${String(q.answer ?? "").trim() || "—"}`;
 }
 
