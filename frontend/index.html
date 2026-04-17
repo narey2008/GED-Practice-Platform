@@ -809,6 +809,36 @@ body.loadingActive {
           </div>
         </div>
 
+                <div class="menuPanel">
+          <h3>Start a Practice Test</h3>
+          <p>Choose a skill and difficulty, then begin a focused practice set.</p>
+
+          <label for="practiceSkillSelect">Skill</label>
+          <select id="practiceSkillSelect">
+            <option value="Fractions, Decimals, and Percents">Fractions, Decimals, and Percents</option>
+            <option value="Ratios, Proportions, and Percent Change">Ratios, Proportions, and Percent Change</option>
+            <option value="Measurement and Unit Conversion">Measurement and Unit Conversion</option>
+            <option value="Area, Perimeter, Surface Area, and Volume">Area, Perimeter, Surface Area, and Volume</option>
+            <option value="Lines, Angles, and Coordinate Plane">Lines, Angles, and Coordinate Plane</option>
+            <option value="Data Tables and Graph Interpretation">Data Tables and Graph Interpretation</option>
+            <option value="Mean, Median, and Probability">Mean, Median, and Probability</option>
+            <option value="Expressions and Order of Operations">Expressions and Order of Operations</option>
+            <option value="Solving Equations and Inequalities">Solving Equations and Inequalities</option>
+            <option value="Linear Equations and Slope">Linear Equations and Slope</option>
+          </select>
+
+          <label for="practiceDifficultySelect" style="margin-top:12px;">Difficulty</label>
+          <select id="practiceDifficultySelect">
+            <option>Easy</option>
+            <option>Medium</option>
+            <option selected>GED-Level</option>
+          </select>
+
+          <div class="menuActions" style="margin-top:12px;">
+            <button id="startPracticeBtn" class="secondaryBtn">Start Practice</button>
+          </div>
+        </div>
+
         <div id="resumePanel" class="menuPanel hidden">
           <h3>Resume Unfinished Test</h3>
           <p>Continue from your saved account progress.</p>
@@ -1169,14 +1199,16 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     function updateTopbarMode() {
-  const inTestLikeView =
+  const inActiveSessionView =
     state.mode === "test" ||
     state.mode === "practice" ||
     state.mode === "practice-example";
 
-  document.getElementById("timerTop").classList.toggle("hidden", !inTestLikeView);
-  document.getElementById("globalMenuBtn").classList.toggle("hidden", !inTestLikeView);
-  document.getElementById("submitTestBtn").classList.toggle("hidden", !inTestLikeView);
+  const showTimer = state.mode === "test";
+
+  document.getElementById("timerTop").classList.toggle("hidden", !showTimer);
+  document.getElementById("globalMenuBtn").classList.toggle("hidden", !inActiveSessionView);
+  document.getElementById("submitTestBtn").classList.toggle("hidden", !inActiveSessionView);
   document.getElementById("pauseBtn").classList.toggle("hidden", state.mode !== "test");
 
   updateNavigatorVisibility();
@@ -2853,6 +2885,12 @@ async function saveCompletedPracticeToHistory() {
       } else {
         await startTest();
       }
+    };
+
+        document.getElementById("startPracticeBtn").onclick = async () => {
+      const skill = document.getElementById("practiceSkillSelect").value;
+      const difficulty = document.getElementById("practiceDifficultySelect").value;
+      await startPractice(skill, difficulty, false);
     };
 
     document.getElementById("resumeBtn").onclick = async () => {
