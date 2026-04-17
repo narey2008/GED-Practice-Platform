@@ -1549,22 +1549,20 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     function startTimer() {
-      stopTimer();
-      state.timerId = setInterval(async () => {
-        state.timeRemaining -= 1;
+  stopTimer();
+  state.timerId = setInterval(async () => {
+    state.timeRemaining -= 1;
 
-        if (state.timeRemaining <= 0) {
-          state.timeRemaining = 0;
-          updateStatus();
-          await saveProgress();
-          await handleTimeExpired();
-          return;
-        }
-
-        updateStatus();
-        await saveProgress();
-      }, 1000);
+    if (state.timeRemaining <= 0) {
+      state.timeRemaining = 0;
+      updateStatus();
+      await handleTimeExpired();
+      return;
     }
+
+    updateStatus();
+  }, 1000);
+}
 
     function updateQuestionNavigator() {
       const grid = document.getElementById("questionNavGrid");
