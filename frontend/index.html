@@ -842,6 +842,7 @@ body.loadingActive {
       <div id="userSummary" class="topbarUser hidden"></div>
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
       <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
+            <button id="contactBtnTop" class="secondaryBtn">Contact Us</button>
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
@@ -909,11 +910,21 @@ body.loadingActive {
           </div>
         </div>
 
-        <div id="resumePanel" class="menuPanel hidden">
+                <div id="resumePanel" class="menuPanel hidden">
           <h3>Resume Unfinished Test</h3>
           <p>Continue from your saved account progress.</p>
           <div class="menuActions">
             <button id="resumeBtn" class="secondaryBtn">Resume</button>
+          </div>
+        </div>
+
+        <div class="menuPanel">
+          <h3>Support / Contact</h3>
+          <p>
+            Use this for bug reports, additions you would like added, or things that should be changed or removed.
+          </p>
+          <div class="menuActions">
+            <button id="supportEmailBtn" class="secondaryBtn">Contact Support</button>
           </div>
         </div>
       </div>
@@ -1373,6 +1384,43 @@ async function withLoading(title, text, work) {
   } finally {
     hideLoading();
   }
+}
+
+function buildSupportEmailLink() {
+  const userStatus = state.auth.user
+    ? `Signed in as: ${state.auth.user.displayName || state.auth.user.email}`
+    : state.auth.guestMode
+    ? "Guest Mode"
+    : "Not signed in";
+
+  const subject = encodeURIComponent("GED Practice Platform Support Request");
+  const body = encodeURIComponent(
+`Hello,
+
+I am contacting support about GED Practice Platform.
+
+Type of request:
+- Bug
+- Addition request
+- Change/remove request
+- Other
+
+Details:
+[Please describe the issue or request here]
+
+Page/feature:
+[Example: Main Menu, Full Test, Practice Mode, Profile, Login]
+
+User status:
+${userStatus}
+
+Device/browser:
+[Optional]
+
+Thank you.`
+  );
+
+  return `mailto:gedpracticeplatform@gmail.com?subject=${subject}&body=${body}`;
 }
 
 let toastTimeoutId = null;
@@ -3024,7 +3072,9 @@ async function saveCompletedPracticeToHistory() {
     document.getElementById("resumeBtn").onclick = async () => {
       await loadSavedProgress();
     };
-    document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
+        document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
+    document.getElementById("contactBtnTop").onclick = () => openSupportEmail();
+    document.getElementById("supportEmailBtn").onclick = () => openSupportEmail();
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {
         await openProfilePanel();
