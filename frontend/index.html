@@ -1234,7 +1234,7 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
 
   if (repeatedWeakSkillCount >= 2 && currentFocus !== "—" && practiceCountForFocus === 0) {
     return isSpanish
-      ? `<strong>Practica más.</strong> ${escapeHtml(currentFocusLabel)} ha seguido siendo una de tus áreas más débiles en exámenes recientes. Una práctica enfocada ahí debería ayudarte más ahora mismo.`
+      ? `<strong>Practica más.</strong> ${escapeHtml(currentFocusLabel)} ha seguido siendo una de tus áreas más dfébiles en exámenes recientes. Una práctica enfocada ahí debería ayudarte más ahora mismo.`
       : `<strong>Practice more.</strong> ${escapeHtml(currentFocusLabel)} has stayed one of your weakest areas across recent tests. A focused practice set there should help most right now.`;
   }
 
@@ -1635,6 +1635,12 @@ function translateSkillLabel(value) {
   if (value === "Expressions and Order of Operations") return tr("skillExpressions");
   if (value === "Solving Equations and Inequalities") return tr("skillEquations");
   if (value === "Linear Equations and Slope") return tr("skillLinearSlope");
+  skillLineGraph: isSpanish ? "Gráfica de Líneas" : "Line Graph",
+skillPercentChange: isSpanish ? "Cambio Porcentual" : "Percent Change",
+skillLinearEquations: isSpanish ? "Ecuaciones Lineales" : "Linear Equations",
+  if (value === "Line Graph") return tr("skillLineGraph");
+  if (value === "Percent Change") return tr("skillPercentChange");
+  if (value === "Linear Equations") return tr("skillLinearEquations");
   if (value === "Mixed Practice") return tr("mixedPractice");
   return value || "—";
 }
