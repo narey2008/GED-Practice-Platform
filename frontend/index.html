@@ -1236,37 +1236,211 @@ function getTranslations(language) {
   return {
     brand: isSpanish ? "Plataforma de Práctica GED" : "GED Practice Platform",
     mainMenu: isSpanish ? "Menú Principal" : "Main Menu",
+
     welcomeTitle: isSpanish ? "Bienvenido" : "Welcome",
     welcomeText: isSpanish
       ? "Bienvenido a GED Practice Platform — un espacio enfocado para desarrollar confianza, fortalecer áreas débiles y prepararte paso a paso. Actualmente solo matemáticas, con más materias próximamente."
       : "Welcome to GED Practice Platform — a focused space to build confidence, strengthen weak areas, and prepare step by step. Currently math only, with more subjects coming soon.",
+
     startNewTest: isSpanish ? "Comenzar un Nuevo Examen" : "Start a New Test",
     chooseDifficulty: isSpanish ? "Elige tu nivel de dificultad y comienza." : "Choose your difficulty level and begin.",
     difficulty: isSpanish ? "Dificultad" : "Difficulty",
     startTest: isSpanish ? "Comenzar Examen" : "Start Test",
+
     startPracticeTitle: isSpanish ? "Comenzar una Práctica" : "Start a Practice Test",
-    startPracticeText: isSpanish ? "Elige una habilidad y dificultad, luego comienza una práctica enfocada." : "Choose a skill and difficulty, then begin a focused practice set.",
+    startPracticeText: isSpanish
+      ? "Elige una habilidad y dificultad, luego comienza una práctica enfocada."
+      : "Choose a skill and difficulty, then begin a focused practice set.",
     skill: isSpanish ? "Habilidad" : "Skill",
     startPractice: isSpanish ? "Comenzar Práctica" : "Start Practice",
+
     resumeTitle: isSpanish ? "Reanudar Examen Incompleto" : "Resume Unfinished Test",
     resumeText: isSpanish ? "Continúa desde tu progreso guardado en tu cuenta." : "Continue from your saved account progress.",
     resume: isSpanish ? "Reanudar" : "Resume",
+
     supportTitle: isSpanish ? "Soporte / Contacto" : "Support / Contact",
     supportText: isSpanish
-      ? "Usa esto para reportar errores, solicitar nuevas funciones o pedir cambios/eliminaciones."
+      ? "Usa esto para reportar errores, solicitar nuevas funciones o pedir cambios o eliminaciones."
       : "Use this for bug reports, additions you would like added, or things that should be changed or removed.",
     contactSupport: isSpanish ? "Contactar Soporte" : "Contact Support",
+
     signIn: isSpanish ? "Iniciar Sesión" : "Sign In",
+    createAccount: isSpanish ? "Crear Cuenta" : "Create Account",
+    displayName: isSpanish ? "Nombre Visible" : "Display Name",
+    enterDisplayName: isSpanish ? "Ingresa un nombre visible" : "Enter a display name",
+    email: isSpanish ? "Correo Electrónico" : "Email",
+    enterEmail: isSpanish ? "Ingresa tu correo electrónico" : "Enter your email",
+    password: isSpanish ? "Contraseña" : "Password",
+    enterPassword: isSpanish ? "Ingresa tu contraseña" : "Enter your password",
+    accountCreated: isSpanish ? "Cuenta Creada" : "Account Created",
+    signedIn: isSpanish ? "Sesión Iniciada" : "Signed In",
+    welcomeBack: isSpanish ? "Bienvenido de nuevo" : "Welcome back",
+
     continueGuest: isSpanish ? "Continuar como Invitado" : "Continue as Guest",
     contactUs: isSpanish ? "Contáctanos" : "Contact Us",
     logOut: isSpanish ? "Cerrar Sesión" : "Log Out",
     mainMenuBtn: isSpanish ? "Menú Principal" : "Main Menu",
+
     previous: isSpanish ? "Anterior" : "Previous",
-    next: isSpanish ? "Next" : "Next",
+    next: isSpanish ? "Siguiente" : "Next",
+    submit: isSpanish ? "Enviar" : "Submit",
+    submitTest: isSpanish ? "Enviar Examen" : "Submit Test",
+    submitPractice: isSpanish ? "Enviar Práctica" : "Submit Practice",
+    cancel: isSpanish ? "Cancelar" : "Cancel",
+    close: isSpanish ? "Cerrar" : "Close",
+    save: isSpanish ? "Guardar" : "Save",
+
     reportQuestion: isSpanish ? "Reportar Pregunta" : "Report Question",
     flagQuestion: isSpanish ? "🚩 Marcar Pregunta" : "🚩 Flag Question",
-    pauseTest: isSpanish ? "⏸ Pausar Examen" : "⏸ Pause Test"
+    unflagQuestion: isSpanish ? "🚩 Quitar Marca" : "🚩 Unflag Question",
+    pauseTest: isSpanish ? "⏸ Pausar Examen" : "⏸ Pause Test",
+    resumeTest: isSpanish ? "▶ Reanudar Examen" : "▶ Resume Test",
+    flagged: isSpanish ? "🚩 Marcada" : "🚩 Flagged",
+
+    settings: isSpanish ? "Configuración" : "Settings",
+    appearancePreference: isSpanish ? "Preferencia de Apariencia" : "Appearance Preference",
+    language: isSpanish ? "Idioma" : "Language",
+    fontSize: isSpanish ? "Tamaño de Fuente" : "Font Size",
+    standard: isSpanish ? "Estándar" : "Standard",
+    medium: isSpanish ? "Mediano" : "Medium",
+    big: isSpanish ? "Grande" : "Big",
+    large: isSpanish ? "Muy Grande" : "Large",
+    extraLarge: isSpanish ? "Extra Grande" : "Extra Large",
+    lightMode: isSpanish ? "Modo Claro" : "Light Mode",
+    darkMode: isSpanish ? "Modo Oscuro" : "Dark Mode",
+    originalMode: isSpanish ? "Modo Original" : "Original Mode",
+
+    signInRequired: isSpanish ? "Se Requiere Iniciar Sesión" : "Sign In Required",
+    signInRequiredBody: isSpanish
+      ? "Inicia sesión para guardar tu progreso en tu cuenta, o continúa como invitado para comenzar sin guardar."
+      : "Sign in to save progress to your account, or continue as a guest to start without saving.",
+
+    warning: isSpanish ? "Advertencia" : "Warning",
+    replaceProgressWarning: isSpanish
+      ? "Comenzar un nuevo examen reemplazará tu progreso guardado sin terminar."
+      : "Starting a new test will replace your unfinished saved progress.",
+
+    continueAsGuestTitle: isSpanish ? "Continuar como Invitado" : "Continue as Guest",
+    continueAsGuestBody: isSpanish
+      ? "Tu progreso del examen NO se guardará al continuar como invitado."
+      : "Your test progress will NOT be saved when continuing as a guest.",
+
+    leaveAccountGuestTitle: isSpanish ? "Salir de la Cuenta y Continuar como Invitado" : "Leave Account and Continue as Guest",
+    leaveAccountGuestBody: isSpanish
+      ? "Continuar como invitado cerrará tu sesión primero. El progreso del invitado NO se guardará."
+      : "Continuing as a guest will sign you out first. Guest test progress will NOT be saved.",
+
+    signOutAndContinue: isSpanish ? "Cerrar Sesión y Continuar" : "Sign Out and Continue",
+
+    returnToMainMenu: isSpanish ? "Volver al Menú Principal" : "Return to Main Menu",
+    returnToMenuGuestBody: isSpanish
+      ? "Tu progreso actual NO se guardará en modo invitado. ¿Seguro que quieres volver al menú principal?"
+      : "Your current progress will NOT be saved in guest mode. Are you sure you want to return to the main menu?",
+    returnToMenuAccountBody: isSpanish
+      ? "¿Seguro que quieres volver al menú principal? Tu progreso actual está guardado en tu cuenta."
+      : "Are you sure you want to return to the main menu? Your current progress is saved to your account.",
+    returnBtn: isSpanish ? "Volver" : "Return",
+
+    logoutTitle: isSpanish ? "Cerrar Sesión" : "Log Out",
+    exitGuestMode: isSpanish ? "Salir del Modo Invitado" : "Exit Guest Mode",
+    leaveGuestModeQuestion: isSpanish ? "¿Seguro que quieres salir del modo invitado?" : "Are you sure you want to leave guest mode?",
+    logoutQuestion: isSpanish ? "¿Seguro que quieres cerrar sesión?" : "Are you sure you want to log out?",
+    signedOutToastTitle: isSpanish ? "Sesión Cerrada Correctamente" : "Successfully Signed Out",
+    signedOutToastText: isSpanish ? "Has vuelto al menú principal." : "You have been returned to the main menu.",
+
+    loading: isSpanish ? "Cargando..." : "Loading...",
+    doNotRefresh: isSpanish ? "Por favor no actualices" : "Please do not refresh",
+    systemWorking: isSpanish ? "El sistema está trabajando. Espera por favor." : "The system is working. Please wait.",
+    startingTest: isSpanish ? "Iniciando Examen..." : "Starting Test...",
+    generatingTest: isSpanish ? "Tu examen se está generando. Espera por favor." : "Your test is being generated. Please wait.",
+    startingPractice: isSpanish ? "Iniciando Práctica..." : "Starting Practice...",
+    loadingExamples: isSpanish ? "Cargando Ejemplos..." : "Loading Examples...",
+    practicePreparing: isSpanish ? "Tu práctica se está preparando. Espera por favor." : "Your practice set is being prepared. Please wait.",
+    examplesPreparing: isSpanish ? "Los ejemplos guiados se están preparando. Espera por favor." : "Worked examples are being prepared. Please wait.",
+    resumingTest: isSpanish ? "Reanudando Examen..." : "Resuming Test...",
+    loadingSavedProgress: isSpanish ? "Tu progreso guardado se está cargando. Espera por favor." : "Your saved progress is being loaded. Please wait.",
+    submittingTestLoading: isSpanish ? "Enviando Examen..." : "Submitting Test...",
+    submittingTestPreparing: isSpanish ? "Tu examen se está enviando y calificando. Espera por favor." : "Your test is being submitted and scored. Please wait.",
+    submittingPracticeLoading: isSpanish ? "Enviando Práctica..." : "Submitting Practice...",
+    practiceResultsPreparing: isSpanish ? "Tus resultados de práctica se están preparando. Espera por favor." : "Your practice results are being prepared. Please wait.",
+    loadingProfile: isSpanish ? "Cargando Perfil..." : "Loading Profile...",
+    loadingHistory: isSpanish ? "Tu historial y reporte de progreso se están cargando. Espera por favor." : "Your history and progress report are being loaded. Please wait.",
+
+    submitTestTitle: isSpanish ? "Enviar Examen" : "Submit Test",
+    submitTestConfirm: isSpanish ? "¿Seguro que quieres enviar tu examen?" : "Are you sure you want to submit your test?",
+    flaggedWarning: isSpanish ? "⚠ Todavía tienes preguntas marcadas." : "⚠ You still have flagged questions.",
+    unansweredWarning: isSpanish ? "⚠ Todavía tienes preguntas sin responder." : "⚠ You still have unanswered questions.",
+    reviewQuestions: isSpanish ? "Revisar Preguntas" : "Review Questions",
+
+    submitPracticeTitle: isSpanish ? "Enviar Práctica" : "Submit Practice",
+    submitPracticeConfirm: isSpanish ? "¿Seguro que quieres enviar esta práctica?" : "Are you sure you want to submit this practice set?",
+
+    reviewModeLocked: isSpanish
+      ? "Modo de revisión: puedes mirar tus respuestas, pero los cambios están bloqueados."
+      : "Review mode: you may look over your answers, but changes are locked.",
+    testPausedMessage: isSpanish
+      ? "Este examen está en pausa. Reanuda para continuar respondiendo preguntas."
+      : "This test is paused. Resume to continue answering questions.",
+
+    workedExample: isSpanish ? "Ejemplo Guiado" : "Worked Example",
+    guidedExampleText: isSpanish
+      ? "Este es un ejemplo guiado."
+      : "This is a guided example.",
+    guidedExampleSubtext: isSpanish
+      ? "Lee la explicación anterior y luego pasa al siguiente ejemplo o pregunta de práctica."
+      : "Read the explanation above, then move to the next example or practice question.",
+
+    question: isSpanish ? "Pregunta" : "Question",
+    yourAnswer: isSpanish ? "Tu respuesta" : "Your answer",
+    correct: isSpanish ? "Correcta" : "Correct",
+    incorrect: isSpanish ? "Incorrecta" : "Incorrect",
+    result: isSpanish ? "Resultado" : "Result",
+    answer: isSpanish ? "Respuesta" : "Answer",
+    noAnswerDash: "—",
+
+    testReview: isSpanish ? "Revisión del Examen" : "Test Review",
+    score: isSpanish ? "Puntuación" : "Score",
+    correctCount: isSpanish ? "Correctas" : "Correct",
+    wrongUnanswered: isSpanish ? "Incorrectas / Sin Responder" : "Wrong / Unanswered",
+    weakestSkill: isSpanish ? "Habilidad Más Débil" : "Weakest Skill",
+    practiceWeakestSkill: isSpanish ? "Practicar Habilidad Más Débil" : "Practice Weakest Skill",
+    nextLevel: isSpanish ? "Siguiente Nivel" : "Next Level",
+
+    practiceResults: isSpanish ? "Resultados de Práctica" : "Practice Results",
+    wrong: isSpanish ? "Incorrectas" : "Wrong",
+    practiceAgain: isSpanish ? "Practicar Otra Vez" : "Practice Again",
+
+    profile: isSpanish ? "Perfil" : "Profile",
+    loadingHistoryShort: isSpanish ? "Cargando historial..." : "Loading history...",
+    testsTaken: isSpanish ? "Exámenes Completados" : "Tests Taken",
+    bestScore: isSpanish ? "Mejor Puntuación" : "Best Score",
+    averageScore: isSpanish ? "Puntuación Promedio" : "Average Score",
+    practiceSessions: isSpanish ? "Sesiones de Práctica" : "Practice Sessions",
+    currentFocus: isSpanish ? "Enfoque Actual" : "Current Focus",
+    nextFocus: isSpanish ? "Siguiente Enfoque" : "Next Focus",
+    progressNote: isSpanish ? "Nota de Progreso" : "Progress Note",
+    testHistory: isSpanish ? "Historial de Exámenes" : "Test History",
+    practiceHistory: isSpanish ? "Historial de Práctica" : "Practice History",
+    noTestHistory: isSpanish
+      ? "Todavía no hay historial de exámenes completados. Cuando envíes un examen con sesión iniciada, aparecerá aquí."
+      : "No completed test history yet. Once you submit a test while signed in, it will appear here.",
+    noPracticeHistory: isSpanish
+      ? "Todavía no hay historial de práctica completada. Cuando termines una práctica con sesión iniciada, aparecerá aquí."
+      : "No completed practice history yet. Once you finish a practice set while signed in, it will appear here.",
+    viewDetails: isSpanish ? "Ver Detalles" : "View Details",
+    hideDetails: isSpanish ? "Ocultar Detalles" : "Hide Details",
+    date: isSpanish ? "Fecha" : "Date",
+    noQuestionDataTest: isSpanish ? "No hay datos de preguntas guardados para este examen." : "No question data stored for this test.",
+    noQuestionDataPractice: isSpanish ? "No hay datos de preguntas guardados para esta sesión de práctica." : "No question data stored for this practice session.",
+    mixedPractice: isSpanish ? "Práctica Mixta" : "Mixed Practice",
+    failedLoadHistory: isSpanish ? "No se pudo cargar el historial." : "Failed to load history."
   };
+}
+
+function tr(key) {
+  const language = getSavedLanguage();
+  const translations = getTranslations(language);
+  return translations[key] || key;
 }
 
 function applyLanguage(language) {
