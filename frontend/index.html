@@ -775,8 +775,9 @@
         </div>
 
         <div class="actionCluster">
-          <button id="flagBtn" class="secondaryBtn">🚩 Flag Question</button>
-        </div>
+  <button id="pauseBtn" class="secondaryBtn hidden">⏸ Pause Test</button>
+  <button id="flagBtn" class="secondaryBtn">🚩 Flag Question</button>
+</div>
       </div>
     </div>
 
@@ -807,24 +808,25 @@
         : "https://api.gedpracticeplatform.com";
 
     let state = {
-      mode: "menu",
-      difficulty: "GED-Level",
-      questions: [],
-      currentIndex: 0,
-      currentChart: null,
-      timerId: null,
-      timeRemaining: TEST_TIME_SECONDS,
-      practiceMeta: null,
-      overtimeUsed: false,
-      timeoutMode: false,
-      lockedReviewMode: false,
-      navigatorVisible: false,
-      auth: {
-        token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
-        user: null,
-        guestMode: false
-      }
-    };
+  mode: "menu",
+  difficulty: "GED-Level",
+  questions: [],
+  currentIndex: 0,
+  currentChart: null,
+  timerId: null,
+  timeRemaining: TEST_TIME_SECONDS,
+  practiceMeta: null,
+  overtimeUsed: false,
+  timeoutMode: false,
+  lockedReviewMode: false,
+  navigatorVisible: false,
+  isPaused: false,
+  auth: {
+    token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
+    user: null,
+    guestMode: false
+  }
+};
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -1087,17 +1089,19 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     function updateTopbarMode() {
-      const inTestLikeView =
-        state.mode === "test" ||
-        state.mode === "practice" ||
-        state.mode === "practice-example";
+  const inTestLikeView =
+    state.mode === "test" ||
+    state.mode === "practice" ||
+    state.mode === "practice-example";
 
-      document.getElementById("timerTop").classList.toggle("hidden", !inTestLikeView);
-      document.getElementById("globalMenuBtn").classList.toggle("hidden", !inTestLikeView);
-      document.getElementById("submitTestBtn").classList.toggle("hidden", !inTestLikeView);
-      updateNavigatorVisibility();
-      updateAuthUI();
-    }
+  document.getElementById("timerTop").classList.toggle("hidden", !inTestLikeView);
+  document.getElementById("globalMenuBtn").classList.toggle("hidden", !inTestLikeView);
+  document.getElementById("submitTestBtn").classList.toggle("hidden", !inTestLikeView);
+  document.getElementById("pauseBtn").classList.toggle("hidden", state.mode !== "test");
+
+  updateNavigatorVisibility();
+  updateAuthUI();
+}
 
     async function setView(view) {
       document.getElementById("mainMenu").classList.add("hidden");
@@ -1398,34 +1402,35 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     async function saveProgress() {
-      if (!state.auth.user || !state.auth.token) return;
-      if (state.auth.guestMode) return;
-      if (!state.questions.length) return;
-      if (state.mode !== "test") return;
+  if (!state.auth.user || !state.auth.token) return;
+  if (state.auth.guestMode) return;
+  if (!state.questions.length) return;
+  if (state.mode !== "test") return;
 
-      try {
-        await fetch(`${API_BASE}/api/progress/save`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders()
-          },
-          body: JSON.stringify({
-            mode: state.mode,
-            difficulty: state.difficulty,
-            questions: state.questions,
-            currentIndex: state.currentIndex,
-            timeRemaining: state.timeRemaining,
-            practiceMeta: state.practiceMeta,
-            overtimeUsed: state.overtimeUsed,
-            timeoutMode: state.timeoutMode,
-            lockedReviewMode: state.lockedReviewMode
-          })
-        });
-      } catch (error) {
-        console.error("Failed to save progress", error);
-      }
-    }
+  try {
+    await fetch(`${API_BASE}/api/progress/save`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        mode: state.mode,
+        difficulty: state.difficulty,
+        questions: state.questions,
+        currentIndex: state.currentIndex,
+        timeRemaining: state.timeRemaining,
+        practiceMeta: state.practiceMeta,
+        overtimeUsed: state.overtimeUsed,
+        timeoutMode: state.timeoutMode,
+        lockedReviewMode: state.lockedReviewMode,
+        isPaused: state.isPaused
+      })
+    });
+  } catch (error) {
+    console.error("Failed to save progress", error);
+  }
+}
 
     async function clearSavedProgress() {
       if (!state.auth.user || !state.auth.token) {
@@ -1446,49 +1451,63 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     async function loadSavedProgress() {
-      if (!state.auth.user || !state.auth.token) return false;
+  if (!state.auth.user || !state.auth.token) return false;
 
-      try {
-        const res = await fetch(`${API_BASE}/api/progress`, {
-          headers: { ...getAuthHeaders() }
-        });
+  try {
+    const res = await fetch(`${API_BASE}/api/progress`, {
+      headers: { ...getAuthHeaders() }
+    });
 
-        if (!res.ok) return false;
+    if (!res.ok) return false;
 
-        const data = await res.json();
-        if (!data.progress) return false;
+    const data = await res.json();
+    if (!data.progress) return false;
 
-        const progress = data.progress;
+    const progress = data.progress;
 
-        state.mode = progress.mode || "test";
-        state.difficulty = progress.difficulty || "GED-Level";
-        state.questions = Array.isArray(progress.questions) ? progress.questions : [];
-        state.currentIndex = progress.currentIndex || 0;
-        state.timeRemaining =
-          typeof progress.timeRemaining === "number"
-            ? progress.timeRemaining
-            : TEST_TIME_SECONDS;
-        state.practiceMeta = progress.practiceMeta || null;
-        state.overtimeUsed = !!progress.overtimeUsed;
-        state.timeoutMode = !!progress.timeoutMode;
-        state.lockedReviewMode = !!progress.lockedReviewMode;
-        state.navigatorVisible = false;
-        document.getElementById("difficultySelect").value = state.difficulty;
+    state.mode = progress.mode || "test";
+    state.difficulty = progress.difficulty || "GED-Level";
+    state.questions = Array.isArray(progress.questions) ? progress.questions : [];
+    state.currentIndex = progress.currentIndex || 0;
+    state.timeRemaining =
+      typeof progress.timeRemaining === "number"
+        ? progress.timeRemaining
+        : TEST_TIME_SECONDS;
+    state.practiceMeta = progress.practiceMeta || null;
+    state.overtimeUsed = !!progress.overtimeUsed;
+    state.timeoutMode = !!progress.timeoutMode;
+    state.lockedReviewMode = !!progress.lockedReviewMode;
+    state.isPaused = !!progress.isPaused;
+    state.navigatorVisible = false;
 
-        if (state.questions.length) {
-          await setView("test");
-          if (state.mode === "test" && !state.timeoutMode && !state.lockedReviewMode) {
-            startTimer();
-          }
-          renderQuestion();
-          return true;
-        }
-      } catch (error) {
-        console.error("Failed to load saved progress", error);
+    document.getElementById("difficultySelect").value = state.difficulty;
+
+    if (state.questions.length) {
+      await setView("test");
+
+      if (
+        state.mode === "test" &&
+        !state.timeoutMode &&
+        !state.lockedReviewMode &&
+        !state.isPaused
+      ) {
+        startTimer();
       }
 
-      return false;
+      renderQuestion();
+
+      if (state.isPaused) {
+        showPausedModal();
+      }
+
+      return true;
     }
+  } catch (error) {
+    console.error("Failed to load saved progress", error);
+  }
+
+  return false;
+}
 
     async function handleTimeExpired() {
       stopTimer();
@@ -1549,8 +1568,12 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     function startTimer() {
+  if (state.isPaused) return;
+
   stopTimer();
   state.timerId = setInterval(async () => {
+    if (state.isPaused) return;
+
     state.timeRemaining -= 1;
 
     if (state.timeRemaining <= 0) {
@@ -1564,173 +1587,250 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
   }, 1000);
 }
 
+async function pauseTest() {
+  if (state.mode !== "test") return;
+  if (!state.questions.length) return;
+  if (state.timeoutMode || state.lockedReviewMode || state.isPaused) return;
+
+  state.isPaused = true;
+  stopTimer();
+  updateStatus();
+  await saveProgress();
+  showPausedModal();
+}
+
+async function resumeTest() {
+  if (state.mode !== "test") return;
+  if (!state.questions.length) return;
+  if (!state.isPaused) return;
+
+  state.isPaused = false;
+  updateStatus();
+  closeModal();
+  await saveProgress();
+
+  if (!state.timeoutMode && !state.lockedReviewMode) {
+    startTimer();
+  }
+}
+
+function showPausedModal() {
+  showModal(
+    "Test Paused",
+    `
+      <p>Your test is paused.</p>
+      <p>The timer is stopped and your progress has been saved.</p>
+      <p>Press <strong>Resume Test</strong> when you are ready to continue.</p>
+    `,
+    [
+      {
+        label: "Resume Test",
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          await resumeTest();
+        }
+      }
+    ]
+  );
+}
+
     function updateQuestionNavigator() {
-      const grid = document.getElementById("questionNavGrid");
-      grid.innerHTML = "";
+  const grid = document.getElementById("questionNavGrid");
+  grid.innerHTML = "";
 
-      state.questions.forEach((q, index) => {
-        const btn = document.createElement("button");
-        btn.className = "questionNavBtn";
-        btn.innerText = index + 1;
+  state.questions.forEach((q, index) => {
+    const btn = document.createElement("button");
+    btn.className = "questionNavBtn";
+    btn.innerText = index + 1;
 
-        if (index === state.currentIndex) btn.classList.add("current");
-        if (q.flagged) btn.classList.add("flagged");
+    if (index === state.currentIndex) btn.classList.add("current");
+    if (q.flagged) btn.classList.add("flagged");
 
-        const unanswered = String(q.userAnswer ?? "").trim() === "";
-        if (unanswered) {
-          btn.classList.add("unanswered");
-        } else {
-          btn.classList.add("answered");
-        }
-
-        btn.onclick = async () => {
-          if (state.lockedReviewMode) return;
-          state.currentIndex = index;
-          renderQuestion();
-          await saveProgress();
-        };
-
-        grid.appendChild(btn);
-      });
+    const unanswered = String(q.userAnswer ?? "").trim() === "";
+    if (unanswered) {
+      btn.classList.add("unanswered");
+    } else {
+      btn.classList.add("answered");
     }
 
-    function updateStatus() {
-      document.getElementById("timerTop").innerText = `Time Remaining: ${formatTime(state.timeRemaining)}`;
+    btn.disabled = state.isPaused;
 
-      const prevBtn = document.getElementById("prevBtn");
-      const nextBtn = document.getElementById("nextBtn");
-      const submitBtn = document.getElementById("submitTestBtn");
-
-      if (state.questions.length) {
-        const pos = `${state.currentIndex + 1} / ${state.questions.length}`;
-        document.getElementById("questionIndicator").innerText = `Question ${pos}`;
-        document.getElementById("questionPosition").innerText = pos;
-
-        const current = state.questions[state.currentIndex];
-        const flagged = !!current.flagged;
-
-        document.getElementById("flagIndicator").classList.toggle("hidden", !flagged);
-        document.getElementById("flagBtn").innerText = flagged ? "🚩 Unflag Question" : "🚩 Flag Question";
-
-        const isLastQuestion = state.currentIndex === state.questions.length - 1;
-
-        if (state.timeoutMode) {
-          prevBtn.disabled = true;
-          nextBtn.disabled = false;
-          nextBtn.innerText = "Submit Test";
-          submitBtn.classList.add("hidden");
-        } else if (state.mode === "practice-example") {
-          prevBtn.disabled = state.currentIndex === 0;
-          if (isLastQuestion) {
-            nextBtn.innerText = "Start Practice";
-            submitBtn.classList.add("hidden");
-          } else {
-            nextBtn.innerText = "Next";
-            submitBtn.classList.remove("hidden");
-          }
-        } else if (state.mode === "practice") {
-          prevBtn.disabled = state.currentIndex === 0;
-          if (isLastQuestion) {
-            nextBtn.innerText = "Submit Practice";
-            submitBtn.classList.add("hidden");
-          } else {
-            nextBtn.innerText = "Next";
-            submitBtn.classList.remove("hidden");
-          }
-        } else if (state.mode === "test") {
-          prevBtn.disabled = state.currentIndex === 0 || state.lockedReviewMode;
-          if (isLastQuestion) {
-            nextBtn.innerText = "Submit Test";
-            submitBtn.classList.add("hidden");
-          } else {
-            nextBtn.innerText = "Next";
-            submitBtn.classList.remove("hidden");
-          }
-        }
-
-        updateQuestionNavigator();
-      } else {
-        document.getElementById("questionIndicator").innerText = "Question 1 / 46";
-        document.getElementById("questionPosition").innerText = "1 / 46";
-        document.getElementById("flagIndicator").classList.add("hidden");
-        document.getElementById("flagBtn").innerText = "🚩 Flag Question";
-        prevBtn.disabled = true;
-        nextBtn.innerText = "Next";
-        nextBtn.disabled = false;
-        submitBtn.classList.add("hidden");
-        updateQuestionNavigator();
-      }
-
-      updateAuthUI();
-    }
-
-    async function startTest() {
-      stopTimer();
-      state.difficulty = document.getElementById("difficultySelect").value;
-      state.mode = "test";
-      state.questions = [];
-      state.currentIndex = 0;
-      state.timeRemaining = TEST_TIME_SECONDS;
-      state.practiceMeta = null;
-      state.overtimeUsed = false;
-      state.timeoutMode = false;
-      state.lockedReviewMode = false;
-      state.navigatorVisible = false;
-
-      await setView("test");
-      document.getElementById("questionText").innerText = "Generating test...";
-      document.getElementById("choices").innerHTML = "";
-      document.getElementById("feedback").innerText = "";
-      renderChart(null);
-
-      const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
-      if (!res.ok) {
-        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
-      }
-
-      const data = await res.json();
-
-      state.questions = data.questions.map((q) => ({
-        ...q,
-        userAnswer: null,
-        flagged: false
-      }));
-
-      startTimer();
+    btn.onclick = async () => {
+      if (state.lockedReviewMode || state.isPaused) return;
+      state.currentIndex = index;
       renderQuestion();
       await saveProgress();
-      await updateResumeVisibility();
-    }
+    };
 
-    async function startPractice(skill, difficulty, examplesOnly = false) {
-      stopTimer();
+    grid.appendChild(btn);
+  });
+}
 
-      const count = examplesOnly ? 2 : 12;
-      const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
-      if (!res.ok) {
-        throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+    function updateStatus() {
+  const timerLabel = state.isPaused
+    ? `Time Remaining: ${formatTime(state.timeRemaining)} (Paused)`
+    : `Time Remaining: ${formatTime(state.timeRemaining)}`;
+
+  document.getElementById("timerTop").innerText = timerLabel;
+
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const submitBtn = document.getElementById("submitTestBtn");
+  const flagBtn = document.getElementById("flagBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+
+  if (state.questions.length) {
+    const pos = `${state.currentIndex + 1} / ${state.questions.length}`;
+    document.getElementById("questionIndicator").innerText = `Question ${pos}`;
+    document.getElementById("questionPosition").innerText = pos;
+
+    const current = state.questions[state.currentIndex];
+    const flagged = !!current.flagged;
+
+    document.getElementById("flagIndicator").classList.toggle("hidden", !flagged);
+    flagBtn.innerText = flagged ? "🚩 Unflag Question" : "🚩 Flag Question";
+    pauseBtn.innerText = state.isPaused ? "▶ Resume Test" : "⏸ Pause Test";
+
+    const isLastQuestion = state.currentIndex === state.questions.length - 1;
+
+    if (state.timeoutMode) {
+      prevBtn.disabled = true;
+      nextBtn.disabled = false;
+      flagBtn.disabled = true;
+      pauseBtn.disabled = true;
+      nextBtn.innerText = "Submit Test";
+      submitBtn.classList.add("hidden");
+    } else if (state.mode === "practice-example") {
+      prevBtn.disabled = state.currentIndex === 0;
+      nextBtn.disabled = false;
+      flagBtn.disabled = false;
+      pauseBtn.disabled = true;
+
+      if (isLastQuestion) {
+        nextBtn.innerText = "Start Practice";
+        submitBtn.classList.add("hidden");
+      } else {
+        nextBtn.innerText = "Next";
+        submitBtn.classList.remove("hidden");
       }
+    } else if (state.mode === "practice") {
+      prevBtn.disabled = state.currentIndex === 0;
+      nextBtn.disabled = false;
+      flagBtn.disabled = false;
+      pauseBtn.disabled = true;
 
-      const data = await res.json();
+      if (isLastQuestion) {
+        nextBtn.innerText = "Submit Practice";
+        submitBtn.classList.add("hidden");
+      } else {
+        nextBtn.innerText = "Next";
+        submitBtn.classList.remove("hidden");
+      }
+    } else if (state.mode === "test") {
+      prevBtn.disabled = state.isPaused || state.currentIndex === 0 || state.lockedReviewMode;
+      nextBtn.disabled = state.isPaused;
+      flagBtn.disabled = state.isPaused || state.lockedReviewMode;
+      pauseBtn.disabled = state.lockedReviewMode;
 
-      state.mode = examplesOnly ? "practice-example" : "practice";
-      state.questions = data.questions.map((q) => ({
-        ...q,
-        userAnswer: null,
-        flagged: false,
-        example: examplesOnly
-      }));
-      state.currentIndex = 0;
-      state.practiceMeta = { skill, difficulty };
-      state.overtimeUsed = false;
-      state.timeoutMode = false;
-      state.lockedReviewMode = false;
-      state.navigatorVisible = false;
-
-      await setView("test");
-      renderQuestion();
-      await updateResumeVisibility();
+      if (isLastQuestion) {
+        nextBtn.innerText = "Submit Test";
+        submitBtn.classList.add("hidden");
+      } else {
+        nextBtn.innerText = "Next";
+        submitBtn.classList.remove("hidden");
+      }
     }
+
+    submitBtn.disabled = state.isPaused;
+    updateQuestionNavigator();
+  } else {
+    document.getElementById("questionIndicator").innerText = "Question 1 / 46";
+    document.getElementById("questionPosition").innerText = "1 / 46";
+    document.getElementById("flagIndicator").classList.add("hidden");
+    flagBtn.innerText = "🚩 Flag Question";
+    pauseBtn.innerText = "⏸ Pause Test";
+    prevBtn.disabled = true;
+    nextBtn.innerText = "Next";
+    nextBtn.disabled = false;
+    flagBtn.disabled = false;
+    pauseBtn.disabled = true;
+    submitBtn.disabled = false;
+    submitBtn.classList.add("hidden");
+    updateQuestionNavigator();
+  }
+
+  updateAuthUI();
+}
+
+    async function startTest() {
+  stopTimer();
+  state.difficulty = document.getElementById("difficultySelect").value;
+  state.mode = "test";
+  state.questions = [];
+  state.currentIndex = 0;
+  state.timeRemaining = TEST_TIME_SECONDS;
+  state.practiceMeta = null;
+  state.overtimeUsed = false;
+  state.timeoutMode = false;
+  state.lockedReviewMode = false;
+  state.navigatorVisible = false;
+  state.isPaused = false;
+
+  await setView("test");
+  document.getElementById("questionText").innerText = "Generating test...";
+  document.getElementById("choices").innerHTML = "";
+  document.getElementById("feedback").innerText = "";
+  renderChart(null);
+
+  const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
+  if (!res.ok) {
+    throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+
+  state.questions = data.questions.map((q) => ({
+    ...q,
+    userAnswer: null,
+    flagged: false
+  }));
+
+  startTimer();
+  renderQuestion();
+  await saveProgress();
+  await updateResumeVisibility();
+}
+    async function startPractice(skill, difficulty, examplesOnly = false) {
+  stopTimer();
+
+  const count = examplesOnly ? 2 : 12;
+  const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
+  if (!res.ok) {
+    throw new Error(`API request failed: ${res.status} ${res.statusText}`);
+  }
+
+  const data = await res.json();
+
+  state.mode = examplesOnly ? "practice-example" : "practice";
+  state.questions = data.questions.map((q) => ({
+    ...q,
+    userAnswer: null,
+    flagged: false,
+    example: examplesOnly
+  }));
+  state.currentIndex = 0;
+  state.practiceMeta = { skill, difficulty };
+  state.overtimeUsed = false;
+  state.timeoutMode = false;
+  state.lockedReviewMode = false;
+  state.navigatorVisible = false;
+  state.isPaused = false;
+
+  await setView("test");
+  renderQuestion();
+  await updateResumeVisibility();
+}
 
     function updateChartTheme(chartConfig) {
       if (!chartConfig) return null;
@@ -1761,83 +1861,85 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
     }
 
     function renderQuestion() {
-      if (!state.questions.length) {
-        document.getElementById("questionText").innerText = "Choose a difficulty and start the test.";
-        document.getElementById("choices").innerHTML = "";
-        document.getElementById("feedback").innerText = "";
-        renderChart(null);
-        updateStatus();
-        return;
-      }
+  if (!state.questions.length) {
+    document.getElementById("questionText").innerText = "Choose a difficulty and start the test.";
+    document.getElementById("choices").innerHTML = "";
+    document.getElementById("feedback").innerText = "";
+    renderChart(null);
+    updateStatus();
+    return;
+  }
 
-      const q = state.questions[state.currentIndex];
-      document.getElementById("questionText").innerHTML = q.question;
+  const q = state.questions[state.currentIndex];
+  document.getElementById("questionText").innerHTML = q.question;
 
-      if (q.example) {
-        document.getElementById("feedback").innerHTML =
-          `<strong>Worked Example</strong><br><div class="explanationBox"><div><strong>Answer:</strong> ${q.answer}</div><div style="margin-top:8px;">${q.explanation}</div></div>`;
-      } else if (state.lockedReviewMode) {
-        document.getElementById("feedback").innerText = "Review mode: you may look over your answers, but changes are locked.";
-      } else {
-        document.getElementById("feedback").innerText = "";
-      }
+  if (state.isPaused) {
+    document.getElementById("feedback").innerText = "This test is paused. Resume to continue answering questions.";
+  } else if (q.example) {
+    document.getElementById("feedback").innerHTML =
+      `<strong>Worked Example</strong><br><div class="explanationBox"><div><strong>Answer:</strong> ${q.answer}</div><div style="margin-top:8px;">${q.explanation}</div></div>`;
+  } else if (state.lockedReviewMode) {
+    document.getElementById("feedback").innerText = "Review mode: you may look over your answers, but changes are locked.";
+  } else {
+    document.getElementById("feedback").innerText = "";
+  }
 
-      renderAnswerArea(q);
-      renderChart(updateChartTheme(q.chart));
-      updateStatus();
-    }
+  renderAnswerArea(q);
+  renderChart(updateChartTheme(q.chart));
+  updateStatus();
+}
 
     function renderAnswerArea(q) {
-      const container = document.getElementById("choices");
-      container.innerHTML = "";
+  const container = document.getElementById("choices");
+  container.innerHTML = "";
 
-      if (q.example) {
-        const box = document.createElement("div");
-        box.className = "practiceItem";
-        box.innerHTML = `
-          <div><strong>This is a guided example.</strong></div>
-          <div class="muted" style="margin-top:8px;">Read the explanation above, then move to the next example or practice question.</div>
-        `;
-        container.appendChild(box);
-        return;
-      }
+  if (q.example) {
+    const box = document.createElement("div");
+    box.className = "practiceItem";
+    box.innerHTML = `
+      <div><strong>This is a guided example.</strong></div>
+      <div class="muted" style="margin-top:8px;">Read the explanation above, then move to the next example or practice question.</div>
+    `;
+    container.appendChild(box);
+    return;
+  }
 
-      if (q.type === "fill") {
-        const input = document.createElement("input");
-        input.id = "fillAnswer";
-        input.type = "text";
-        input.placeholder = "Enter your answer";
-        input.value = q.userAnswer ?? "";
-        input.disabled = state.lockedReviewMode;
-        input.oninput = async (e) => {
-          if (state.lockedReviewMode) return;
-          q.userAnswer = e.target.value;
-          await saveProgress();
-        };
-        container.appendChild(input);
-        return;
-      }
+  if (q.type === "fill") {
+    const input = document.createElement("input");
+    input.id = "fillAnswer";
+    input.type = "text";
+    input.placeholder = "Enter your answer";
+    input.value = q.userAnswer ?? "";
+    input.disabled = state.lockedReviewMode || state.isPaused;
+    input.oninput = async (e) => {
+      if (state.lockedReviewMode || state.isPaused) return;
+      q.userAnswer = e.target.value;
+      await saveProgress();
+    };
+    container.appendChild(input);
+    return;
+  }
 
-      q.choices.forEach((choice) => {
-        const btn = document.createElement("button");
-        btn.className = "choiceBtn";
-        btn.innerText = choice;
-        btn.disabled = state.lockedReviewMode;
+  q.choices.forEach((choice) => {
+    const btn = document.createElement("button");
+    btn.className = "choiceBtn";
+    btn.innerText = choice;
+    btn.disabled = state.lockedReviewMode || state.isPaused;
 
-        if (q.userAnswer == choice) {
-          btn.classList.add("selected");
-        }
-
-        btn.onclick = async () => {
-          if (state.lockedReviewMode) return;
-          q.userAnswer = choice;
-          renderAnswerArea(q);
-          await saveProgress();
-        };
-
-        container.appendChild(btn);
-      });
+    if (q.userAnswer == choice) {
+      btn.classList.add("selected");
     }
+
+    btn.onclick = async () => {
+      if (state.lockedReviewMode || state.isPaused) return;
+      q.userAnswer = choice;
+      renderAnswerArea(q);
+      await saveProgress();
+    };
+
+    container.appendChild(btn);
+  });
+}
 
     function renderChart(chartConfig) {
       const wrap = document.getElementById("questionChartWrap");
@@ -1951,52 +2053,53 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
 }
 
     async function nextQuestion() {
-      if (!state.questions.length) return;
+  if (!state.questions.length) return;
+  if (state.isPaused) return;
 
-      const isLastQuestion = state.currentIndex === state.questions.length - 1;
+  const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
-      if (state.mode === "practice-example" && isLastQuestion) {
-        await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
-        return;
-      }
+  if (state.mode === "practice-example" && isLastQuestion) {
+    await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+    return;
+  }
 
-      if (state.mode === "practice" && isLastQuestion) {
-        await showPracticeResults();
-        return;
-      }
+  if (state.mode === "practice" && isLastQuestion) {
+    await showPracticeResults();
+    return;
+  }
 
-      if (state.timeoutMode) {
-        confirmSubmit();
-        return;
-      }
+  if (state.timeoutMode) {
+    confirmSubmit();
+    return;
+  }
 
-      if (isLastQuestion) {
-        confirmSubmit();
-        return;
-      }
+  if (isLastQuestion) {
+    confirmSubmit();
+    return;
+  }
 
-      state.currentIndex += 1;
-      renderQuestion();
-      await saveProgress();
-    }
+  state.currentIndex += 1;
+  renderQuestion();
+  await saveProgress();
+}
 
     async function prevQuestion() {
-      if (!state.questions.length) return;
-      if (state.timeoutMode || state.lockedReviewMode) return;
-      if (state.currentIndex > 0) {
-        state.currentIndex -= 1;
-        renderQuestion();
-        await saveProgress();
-      }
-    }
+  if (!state.questions.length) return;
+  if (state.timeoutMode || state.lockedReviewMode || state.isPaused) return;
+  if (state.currentIndex > 0) {
+    state.currentIndex -= 1;
+    renderQuestion();
+    await saveProgress();
+  }
+}
 
     async function toggleFlag() {
-      if (!state.questions.length || state.mode !== "test" || state.lockedReviewMode) return;
-      const q = state.questions[state.currentIndex];
-      q.flagged = !q.flagged;
-      updateStatus();
-      await saveProgress();
-    }
+  if (!state.questions.length || state.mode !== "test" || state.lockedReviewMode || state.isPaused) return;
+  const q = state.questions[state.currentIndex];
+  q.flagged = !q.flagged;
+  updateStatus();
+  await saveProgress();
+}
 
     async function saveCompletedTestToHistory() {
   if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
@@ -2097,11 +2200,14 @@ async function saveCompletedPracticeToHistory() {
     }
 
     async function submitTest() {
-      stopTimer();
-      state.lockedReviewMode = true;
-      await saveCompletedTestToHistory();
-      await showReview();
-    }
+  if (state.isPaused) return;
+
+  stopTimer();
+  state.lockedReviewMode = true;
+  state.isPaused = false;
+  await saveCompletedTestToHistory();
+  await showReview();
+}
 
     async function showReview() {
       stopTimer();
@@ -2473,24 +2579,25 @@ ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primar
 }
 
     function goToMainMenu() {
-      stopTimer();
+  stopTimer();
 
-      state.mode = "menu";
-      state.difficulty = document.getElementById("difficultySelect").value || "GED-Level";
-      state.questions = [];
-      state.currentIndex = 0;
-      state.currentChart = null;
-      state.timerId = null;
-      state.timeRemaining = TEST_TIME_SECONDS;
-      state.practiceMeta = null;
-      state.overtimeUsed = false;
-      state.timeoutMode = false;
-      state.lockedReviewMode = false;
-      state.navigatorVisible = false;
+  state.mode = "menu";
+  state.difficulty = document.getElementById("difficultySelect").value || "GED-Level";
+  state.questions = [];
+  state.currentIndex = 0;
+  state.currentChart = null;
+  state.timerId = null;
+  state.timeRemaining = TEST_TIME_SECONDS;
+  state.practiceMeta = null;
+  state.overtimeUsed = false;
+  state.timeoutMode = false;
+  state.lockedReviewMode = false;
+  state.navigatorVisible = false;
+  state.isPaused = false;
 
-      renderChart(null);
-      setView("menu");
-    }
+  renderChart(null);
+  setView("menu");
+}
 
     document.getElementById("startTestBtn").onclick = async () => {
       if (state.auth.guestMode) {
@@ -2571,9 +2678,21 @@ ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primar
       await nextQuestion();
     };
     document.getElementById("flagBtn").onclick = async () => {
-      await toggleFlag();
-    };
-    document.getElementById("submitTestBtn").onclick = () => {
+  await toggleFlag();
+};
+document.getElementById("pauseBtn").onclick = async () => {
+  if (state.mode !== "test") return;
+
+  if (state.isPaused) {
+    await resumeTest();
+    return;
+  }
+
+  await pauseTest();
+};
+document.getElementById("submitTestBtn").onclick = () => {
+  if (state.isPaused) return;
+
   if (state.mode === "practice") {
     confirmPracticeSubmit();
     return;
