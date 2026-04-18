@@ -2736,7 +2736,7 @@ function openResetPasswordModal(resetEmail, resetToken) {
       authError.classList.add("hidden");
       authError.textContent = "";
 
-      const email = document.getElementById("authEmail").value.trim();
+      const email = document.getElementById("authEmail").value.trim().toLowerCase();
       const password = document.getElementById("authPassword").value;
       const displayName = isRegister
         ? document.getElementById("authDisplayName").value.trim()
@@ -2758,10 +2758,58 @@ function openResetPasswordModal(resetEmail, resetToken) {
               body: JSON.stringify(payload)
             });
 
-            const data = await res.json();
+            const contentType = res.headers.get("content-type") || "";
+            let data = null;
+
+            if (contentType.includes("application/json")) {
+              data = await res.json();
+            } else {
+              const text = await res.text();
+              throw new Error(`Auth request returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+            }
 
             if (!res.ok) {
+              if (!isRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
+                closeModal();
+                showModal(
+                  tr("verifyEmailTitle"),
+                  tr("verifyEmailBody"),
+                  [
+                    {
+                      label: tr("resendVerification"),
+                      variant: "secondary",
+                      onClick: () => openResendVerificationModal(email)
+                    },
+                    {
+                      label: tr("close"),
+                      variant: "primary"
+                    }
+                  ]
+                );
+                return;
+              }
+
               throw new Error(data.error || tr("failedAuthentication"));
+            }
+
+            if (isRegister) {
+              closeModal();
+              showModal(
+                tr("verifyEmailTitle"),
+                tr("verifyEmailBody"),
+                [
+                  {
+                    label: tr("resendVerification"),
+                    variant: "secondary",
+                    onClick: () => openResendVerificationModal(email)
+                  },
+                  {
+                    label: tr("close"),
+                    variant: "primary"
+                  }
+                ]
+              );
+              return;
             }
 
             setAuthToken(data.token);
@@ -2772,10 +2820,8 @@ function openResetPasswordModal(resetEmail, resetToken) {
             await updateResumeVisibility();
 
             showModal(
-              isRegister ? tr("accountCreated") : tr("signedIn"),
-              isRegister
-                ? `${tr("createAccountSuccess")} ${data.user.displayName || data.user.email}.`
-                : `${tr("welcomeBack")}, ${data.user.displayName || data.user.email}.`
+              tr("signedIn"),
+              `${tr("welcomeBack")}, ${data.user.displayName || data.user.email}.`
             );
           }
         );
