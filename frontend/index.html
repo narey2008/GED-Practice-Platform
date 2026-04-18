@@ -4248,6 +4248,87 @@ async function saveCompletedPracticeToHistory() {
   );
 }
 
+async function handleEmailVerificationFromUrl() {
+  const url = new URL(window.location.href);
+  const verifyToken = url.searchParams.get("verifyToken");
+  const verifyEmail = url.searchParams.get("verifyEmail");
+
+  if (!verifyToken || !verifyEmail) {
+    return;
+  }
+
+  try {
+    await withLoading(
+      tr("verifyEmailLoading"),
+      tr("systemWorking"),
+      async () => {
+        const res = await fetch(`${API_BASE}/api/auth/verify-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: verifyEmail,
+            token: verifyToken
+          })
+        });
+
+        const contentType = res.headers.get("content-type") || "";
+        let data = null;
+
+        if (contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          throw new Error(`Verify email returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+        }
+
+        if (!res.ok) {
+          throw new Error(data.error || tr("verifyEmailInvalid"));
+        }
+
+        url.searchParams.delete("verifyToken");
+        url.searchParams.delete("verifyEmail");
+        window.history.replaceState({}, "", url.toString());
+
+        closeModal();
+        showModal(
+          tr("verifyEmailSuccess"),
+          tr("verifyEmailSuccessBody"),
+          [
+            {
+              label: tr("signIn"),
+              variant: "primary",
+              keepOpen: true,
+              onClick: () => {
+                openAuthModal("signin");
+              }
+            }
+          ]
+        );
+      }
+    );
+  } catch (error) {
+    url.searchParams.delete("verifyToken");
+    url.searchParams.delete("verifyEmail");
+    window.history.replaceState({}, "", url.toString());
+
+    showModal(
+      tr("verifyEmailTitle"),
+      error.message || tr("verifyEmailInvalid"),
+      [
+        {
+          label: tr("resendVerification"),
+          variant: "secondary",
+          onClick: () => openResendVerificationModal(verifyEmail)
+        },
+        {
+          label: tr("close"),
+          variant: "primary"
+        }
+      ]
+    );
+  }
+}
+
     function goToMainMenu() {
   stopTimer();
 
@@ -4411,6 +4492,13 @@ window.addEventListener("unhandledrejection", () => {
       const url = new URL(window.location.href);
       const resetToken = url.searchParams.get("resetToken");
       const resetEmail = url.searchParams.get("resetEmail");
+      const verifyToken = url.searchParams.get("verifyToken");
+      const verifyEmail = url.searchParams.get("verifyEmail");
+
+      if (verifyToken && verifyEmail) {
+        await handleEmailVerificationFromUrl();
+        return;
+      }
 
       if (resetToken && resetEmail) {
         openResetPasswordModal(resetEmail, resetToken);
