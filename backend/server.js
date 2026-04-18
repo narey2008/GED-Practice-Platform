@@ -205,6 +205,14 @@ app.get("/api/health", async (req, res) => {
   });
 });
 
+app.get("/api/debug-email-verification-version", (req, res) => {
+  res.json({
+    ok: true,
+    version: "email-verification-backend-live-check",
+    timestamp: new Date().toISOString()
+  });
+});
+
 
 
 app.get("/api/debug-forgot-password", (req, res) => {
