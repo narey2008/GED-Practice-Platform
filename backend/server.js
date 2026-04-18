@@ -560,6 +560,45 @@ app.post("/api/auth/resend-verification", async (req, res) => {
   }
 });
 
+app.post("/api/auth/delete-account", authMiddleware, async (req, res) => {
+  try {
+    const password =
+      typeof req.body.password === "string"
+        ? req.body.password
+        : "";
+
+    if (!password) {
+      return res.status(400).json({ error: "Password is required." });
+    }
+
+    const user = await User.findById(req.auth.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const passwordMatches = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordMatches) {
+      return res.status(401).json({ error: "Incorrect password." });
+    }
+
+    await SavedProgress.findOneAndDelete({ userId: req.auth.userId });
+    await TestHistory.deleteMany({ userId: req.auth.userId });
+    await PracticeHistory.deleteMany({ userId: req.auth.userId });
+    await User.findByIdAndDelete(req.auth.userId);
+
+    return res.json({
+      success: true,
+      message: "Account and associated data deleted successfully."
+    });
+  } catch (error) {
+    console.error("DELETE ACCOUNT ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to delete account."
+    });
+  }
+});
+
 app.get("/api/progress", authMiddleware, async (req, res) => {
   try {
     const saved = await SavedProgress.findOne({ userId: req.auth.userId });

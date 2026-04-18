@@ -1547,6 +1547,21 @@ hotSpot: isSpanish ? "Punto Activo" : "Hot Spot",
       : "Are you sure you want to return to the main menu? Your current progress is saved to your account.",
     returnBtn: isSpanish ? "Volver" : "Return",
 
+    deleteAccount: isSpanish ? "Eliminar Cuenta" : "Delete Account",
+deleteAccountTitle: isSpanish ? "Eliminar Cuenta" : "Delete Account",
+deleteAccountWarning: isSpanish
+  ? "Esto eliminará permanentemente tu cuenta y todos tus datos guardados. Esta acción no se puede deshacer."
+  : "This will permanently delete your account and all saved data. This action cannot be undone.",
+deleteAccountPasswordLabel: isSpanish ? "Confirma tu Contraseña" : "Confirm Your Password",
+deleteAccountPasswordPlaceholder: isSpanish ? "Ingresa tu contraseña" : "Enter your password",
+deleteAccountFinal: isSpanish ? "Eliminar Cuenta Permanentemente" : "Delete Account Permanently",
+deleteAccountLoading: isSpanish ? "Eliminando Cuenta..." : "Deleting Account...",
+deleteAccountSuccess: isSpanish ? "Cuenta Eliminada" : "Account Deleted",
+deleteAccountSuccessBody: isSpanish
+  ? "Tu cuenta y todos tus datos guardados han sido eliminados permanentemente."
+  : "Your account and all saved data have been permanently deleted.",
+incorrectPassword: isSpanish ? "Contraseña incorrecta." : "Incorrect password.",
+
     enterYourAnswer: isSpanish ? "Ingresa tu respuesta" : "Enter your answer",
 closeToast: isSpanish ? "Cerrar" : "Close",
 sessionInvalid: isSpanish ? "Sesión no válida" : "Session invalid",
@@ -2630,6 +2645,91 @@ function openResetPasswordModal(resetEmail, resetToken) {
             );
           } catch (error) {
             errorEl.textContent = error.message || tr("failedAuthentication");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
+function openDeleteAccountModal() {
+  showModal(
+    tr("deleteAccountTitle"),
+    `
+      <div style="margin-bottom:12px; font-weight:700; color:#b42318;">
+        ${tr("deleteAccountWarning")}
+      </div>
+
+      <label for="deleteAccountPassword">${tr("deleteAccountPasswordLabel")}</label>
+      <input
+        id="deleteAccountPassword"
+        type="password"
+        placeholder="${tr("deleteAccountPasswordPlaceholder")}"
+      />
+
+      <div id="deleteAccountError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("deleteAccountFinal"),
+        variant: "danger",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("deleteAccountError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const password = document.getElementById("deleteAccountPassword").value;
+
+          try {
+            await withLoading(
+              tr("deleteAccountLoading"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/delete-account`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                  },
+                  body: JSON.stringify({ password })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Delete account returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("deleteAccountTitle"));
+                }
+
+                setAuthToken("");
+                state.auth.user = null;
+                setGuestMode(false);
+                updateAuthUI();
+                closeModal();
+                goToMainMenu();
+
+                showModal(
+                  tr("deleteAccountSuccess"),
+                  tr("deleteAccountSuccessBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("deleteAccountTitle");
             errorEl.classList.remove("hidden");
           }
         }
@@ -4106,6 +4206,7 @@ async function saveCompletedPracticeToHistory() {
                   ? `<button id="profileVerifyBtn" class="secondaryBtn">${tr("emailStatus")}: ${tr("verifiedStatus")}</button>`
                   : `<button id="profileVerifyBtn" class="primaryBtn">${tr("verifyNow")}</button>`
               }
+              <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
             </div>
           </div>
 
@@ -4247,6 +4348,13 @@ async function saveCompletedPracticeToHistory() {
               );
               return;
             }
+
+                    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+        if (deleteAccountBtn) {
+          deleteAccountBtn.onclick = () => {
+            openDeleteAccountModal();
+          };
+        }
 
             openResendVerificationModal(state.auth.user?.email || "");
           };
