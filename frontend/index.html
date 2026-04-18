@@ -2854,7 +2854,10 @@ function openDeleteAccountModal() {
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+  "Content-Type": "application/json",
+  ...getAuthHeaders()
+},
               body: JSON.stringify(payload)
             });
 
@@ -3125,7 +3128,10 @@ function handleUserActivity() {
       try {
         await fetch(`${API_BASE}/api/progress`, {
           method: "DELETE",
-          headers: { ...getAuthHeaders() }
+          headers: {
+  "Content-Type": "application/json",
+  ...getAuthHeaders()
+},
         });
       } catch (error) {
         console.error("Failed to clear progress", error);
@@ -3143,7 +3149,10 @@ function handleUserActivity() {
     async () => {
       try {
         const res = await fetch(`${API_BASE}/api/progress`, {
-          headers: { ...getAuthHeaders() }
+         headers: {
+  "Content-Type": "application/json",
+  ...getAuthHeaders()
+},
         });
 
         if (!res.ok) return false;
@@ -4349,14 +4358,14 @@ async function saveCompletedPracticeToHistory() {
               return;
             }
 
-                    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
-        if (deleteAccountBtn) {
-          deleteAccountBtn.onclick = () => {
-            openDeleteAccountModal();
+            openResendVerificationModal(state.auth.user?.email || "");
           };
         }
 
-            openResendVerificationModal(state.auth.user?.email || "");
+        const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+        if (deleteAccountBtn) {
+          deleteAccountBtn.onclick = () => {
+            openDeleteAccountModal();
           };
         }
       } catch (error) {
