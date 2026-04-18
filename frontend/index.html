@@ -2792,37 +2792,37 @@ function openResetPasswordModal(resetEmail, resetToken) {
               throw new Error(data.error || tr("failedAuthentication"));
             }
 
-            if (isRegister) {
-              closeModal();
-              showModal(
-                tr("verifyEmailTitle"),
-                tr("verifyEmailBody"),
-                [
-                  {
-                    label: tr("resendVerification"),
-                    variant: "secondary",
-                    onClick: () => openResendVerificationModal(email)
-                  },
-                  {
-                    label: tr("close"),
-                    variant: "primary"
-                  }
-                ]
-              );
-              return;
-            }
+if (isRegister) {
+  closeModal();
+  showModal(
+    tr("verifyEmailTitle"),
+    tr("verifyEmailBody"),
+    [
+      {
+        label: tr("resendVerification"),
+        variant: "secondary",
+        onClick: () => openResendVerificationModal(email)
+      },
+      {
+        label: tr("close"),
+        variant: "primary"
+      }
+    ]
+  );
+  return;
+}
 
-            setAuthToken(data.token);
-            state.auth.user = data.user;
-            setGuestMode(false);
-            updateAuthUI();
-            closeModal();
-            await updateResumeVisibility();
+setAuthToken(data.token);
+state.auth.user = data.user;
+setGuestMode(false);
+updateAuthUI();
+closeModal();
+await updateResumeVisibility();
 
-            showModal(
-              tr("signedIn"),
-              `${tr("welcomeBack")}, ${data.user.displayName || data.user.email}.`
-            );
+showModal(
+  tr("signedIn"),
+  `${tr("welcomeBack")}, ${data.user.displayName || data.user.email}.`
+);
           }
         );
       } catch (error) {
