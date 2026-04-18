@@ -77,6 +77,7 @@ function sanitizeUser(user) {
     id: user._id.toString(),
     email: user.email,
     displayName: user.displayName,
+    emailVerified: !!user.emailVerified,
     createdAt: user.createdAt
   };
 }
@@ -107,6 +108,56 @@ function createPasswordResetToken() {
     tokenHash,
     expiresAt
   };
+}
+
+function createEmailVerificationToken() {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+
+  return {
+    rawToken,
+    tokenHash,
+    expiresAt
+  };
+}
+
+async function sendEmailVerificationEmail({ email, rawToken }) {
+  if (!mailTransport) {
+    throw new Error("Email system is not configured.");
+  }
+
+  const verifyUrl = `${process.env.APP_BASE_URL}/?verifyToken=${encodeURIComponent(rawToken)}&verifyEmail=${encodeURIComponent(email)}`;
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Verify your GED Practice Platform email",
+    text: `Welcome to GED Practice Platform.
+
+Please verify your email by opening this link:
+${verifyUrl}
+
+This link expires in 24 hours.
+
+If you did not create this account, you can ignore this email.`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#10233f;">
+        <h2>Verify your email</h2>
+        <p>Welcome to GED Practice Platform.</p>
+        <p>Please confirm that this email address belongs to you.</p>
+        <p>
+          <a href="${verifyUrl}" style="display:inline-block;padding:10px 16px;background:#153e75;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;">
+            Verify Email
+          </a>
+        </p>
+        <p>If the button does not work, use this link:</p>
+        <p>${verifyUrl}</p>
+        <p>This link expires in 24 hours.</p>
+        <p>If you did not create this account, you can ignore this email.</p>
+      </div>
+    `
+  });
 }
 
 async function sendPasswordResetEmail({ email, rawToken }) {
@@ -212,24 +263,78 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken();
 
     const user = await User.create({
       email: rawEmail,
       displayName: displayNameRaw || rawEmail.split("@")[0],
-      passwordHash
+      passwordHash,
+      emailVerified: false,
+      emailVerificationTokenHash: tokenHash,
+      emailVerificationExpiresAt: expiresAt
     });
 
-    const token = createToken(user);
+    await sendEmailVerificationEmail({
+      email: user.email,
+      rawToken
+    });
 
     return res.status(201).json({
-      token,
-      user: sanitizeUser(user)
+      success: true,
+      requiresEmailVerification: true,
+      message: "Account created. Please verify your email before signing in."
     });
   } catch (error) {
     console.error("REGISTER ERROR:");
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to create account."
+    });
+  }
+});
+
+app.post("/api/auth/verify-email", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const rawToken =
+      typeof req.body.token === "string"
+        ? req.body.token.trim()
+        : "";
+
+    if (!rawEmail || !rawToken) {
+      return res.status(400).json({ error: "Email and token are required." });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    const user = await User.findOne({
+      email: rawEmail,
+      emailVerificationTokenHash: tokenHash,
+      emailVerificationExpiresAt: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "This verification link is invalid or has expired." });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationTokenHash = null;
+    user.emailVerificationExpiresAt = null;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Email verified successfully."
+    });
+  } catch (error) {
+    console.error("VERIFY EMAIL ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to verify email."
     });
   }
 });
@@ -258,6 +363,14 @@ app.post("/api/auth/login", async (req, res) => {
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatches) {
       return res.status(401).json({ error: "Invalid email or password." });
+    }
+
+    if (!user.emailVerified) {
+      return res.status(403).json({
+        error: "Please verify your email before signing in.",
+        code: "EMAIL_NOT_VERIFIED",
+        requiresEmailVerification: true
+      });
     }
 
     const token = createToken(user);
@@ -396,6 +509,45 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to load account."
+    });
+  }
+});
+
+app.post("/api/auth/resend-verification", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    if (!rawEmail) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    const user = await User.findOne({ email: rawEmail });
+
+    if (user && !user.emailVerified) {
+      const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken();
+
+      user.emailVerificationTokenHash = tokenHash;
+      user.emailVerificationExpiresAt = expiresAt;
+      await user.save();
+
+      await sendEmailVerificationEmail({
+        email: user.email,
+        rawToken
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "If an unverified account exists for that email, a new verification email has been sent."
+    });
+  } catch (error) {
+    console.error("RESEND VERIFICATION ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to resend verification email."
     });
   }
 });
