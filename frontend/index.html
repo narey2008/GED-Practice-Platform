@@ -2586,7 +2586,53 @@ function openResetPasswordModal(resetEmail, resetToken) {
                   })
                 });
 
-                function openResendVerificationModal(prefillEmail = "") {
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Reset password returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("invalidResetLink"));
+                }
+
+                const url = new URL(window.location.href);
+                url.searchParams.delete("resetToken");
+                url.searchParams.delete("resetEmail");
+                window.history.replaceState({}, "", url.toString());
+
+                closeModal();
+                showModal(
+                  tr("passwordResetSuccess"),
+                  tr("passwordResetSuccessBody"),
+                  [
+                    {
+                      label: tr("signIn"),
+                      variant: "primary",
+                      keepOpen: true,
+                      onClick: () => {
+                        openAuthModal("signin");
+                      }
+                    }
+                  ]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("invalidResetLink");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
+function openResendVerificationModal(prefillEmail = "") {
   showModal(
     tr("resendVerification"),
     `
@@ -2738,6 +2784,41 @@ function openDeleteAccountModal() {
   );
 }
 
+function openResendVerificationModal(prefillEmail = "") {
+  showModal(
+    tr("resendVerification"),
+    `
+      <label for="resendVerificationEmail">${tr("email")}</label>
+      <input id="resendVerificationEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
+      <div id="resendVerificationError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("resendVerification"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("resendVerificationError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const email = document.getElementById("resendVerificationEmail").value.trim().toLowerCase();
+
+          try {
+            await withLoading(
+              tr("resendVerificationLoading"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email })
+                });
+
                 const contentType = res.headers.get("content-type") || "";
                 let data = null;
 
@@ -2745,37 +2826,108 @@ function openDeleteAccountModal() {
                   data = await res.json();
                 } else {
                   const text = await res.text();
-                  throw new Error(`Reset password returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                  throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
                 }
 
                 if (!res.ok) {
-                  throw new Error(data.error || tr("invalidResetLink"));
+                  throw new Error(data.error || tr("failedAuthentication"));
                 }
-
-                const url = new URL(window.location.href);
-                url.searchParams.delete("resetToken");
-                url.searchParams.delete("resetEmail");
-                window.history.replaceState({}, "", url.toString());
 
                 closeModal();
                 showModal(
-                  tr("passwordResetSuccess"),
-                  tr("passwordResetSuccessBody"),
-                  [
-                    {
-                      label: tr("signIn"),
-                      variant: "primary",
-                      keepOpen: true,
-                      onClick: () => {
-                        openAuthModal("signin");
-                      }
-                    }
-                  ]
+                  tr("verificationEmailSent"),
+                  tr("verificationEmailSentBody"),
+                  [{ label: tr("close"), variant: "primary" }]
                 );
               }
             );
           } catch (error) {
-            errorEl.textContent = error.message || tr("invalidResetLink");
+            errorEl.textContent = error.message || tr("failedAuthentication");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
+function openDeleteAccountModal() {
+  showModal(
+    tr("deleteAccountTitle"),
+    `
+      <div style="margin-bottom:12px; font-weight:700; color:#b42318;">
+        ${tr("deleteAccountWarning")}
+      </div>
+
+      <label for="deleteAccountPassword">${tr("deleteAccountPasswordLabel")}</label>
+      <input
+        id="deleteAccountPassword"
+        type="password"
+        placeholder="${tr("deleteAccountPasswordPlaceholder")}"
+      />
+
+      <div id="deleteAccountError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("deleteAccountFinal"),
+        variant: "danger",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("deleteAccountError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const password = document.getElementById("deleteAccountPassword").value;
+
+          try {
+            await withLoading(
+              tr("deleteAccountLoading"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/delete-account`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                  },
+                  body: JSON.stringify({ password })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Delete account returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("deleteAccountTitle"));
+                }
+
+                setAuthToken("");
+                state.auth.user = null;
+                setGuestMode(false);
+                updateAuthUI();
+                closeModal();
+                goToMainMenu();
+
+                showModal(
+                  tr("deleteAccountSuccess"),
+                  tr("deleteAccountSuccessBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("deleteAccountTitle");
             errorEl.classList.remove("hidden");
           }
         }
@@ -4346,7 +4498,7 @@ async function saveCompletedPracticeToHistory() {
             await startPractice(currentFocus, state.difficulty, true);
           };
         }
-        const profileVerifyBtn = document.getElementById("profileVerifyBtn");
+         const profileVerifyBtn = document.getElementById("profileVerifyBtn");
         if (profileVerifyBtn) {
           profileVerifyBtn.onclick = () => {
             if (state.auth.user?.emailVerified) {
