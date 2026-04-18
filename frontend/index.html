@@ -2571,6 +2571,73 @@ function openResetPasswordModal(resetEmail, resetToken) {
                   })
                 });
 
+                function openResendVerificationModal(prefillEmail = "") {
+  showModal(
+    tr("resendVerification"),
+    `
+      <label for="resendVerificationEmail">${tr("email")}</label>
+      <input id="resendVerificationEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
+      <div id="resendVerificationError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("resendVerification"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("resendVerificationError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const email = document.getElementById("resendVerificationEmail").value.trim().toLowerCase();
+
+          try {
+            await withLoading(
+              tr("resendVerificationLoading"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("failedAuthentication"));
+                }
+
+                closeModal();
+                showModal(
+                  tr("verificationEmailSent"),
+                  tr("verificationEmailSentBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("failedAuthentication");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
                 const contentType = res.headers.get("content-type") || "";
                 let data = null;
 
