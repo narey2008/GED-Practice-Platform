@@ -4236,10 +4236,7 @@ async function saveCompletedPracticeToHistory() {
             await startPractice(currentFocus, state.difficulty, true);
           };
         }
-      } catch (error) {
-        console.error("PROFILE PANEL ERROR:", error);
-
-                const profileVerifyBtn = document.getElementById("profileVerifyBtn");
+        const profileVerifyBtn = document.getElementById("profileVerifyBtn");
         if (profileVerifyBtn) {
           profileVerifyBtn.onclick = () => {
             if (state.auth.user?.emailVerified) {
@@ -4254,6 +4251,9 @@ async function saveCompletedPracticeToHistory() {
             openResendVerificationModal(state.auth.user?.email || "");
           };
         }
+      } catch (error) {
+        console.error("PROFILE PANEL ERROR:", error);
+
 
         panel.innerHTML = `
           <h2 class="sectionTitle">${tr("profile")}</h2>
