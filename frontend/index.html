@@ -2338,14 +2338,19 @@ function openSupportContactModal(prefill = {}) {
           <option value="other" ${defaultType === "other" ? "selected" : ""}>${tr("other")}</option>
         </select>
 
-        <input
-          id="supportOtherDetails"
-          type="text"
-          placeholder="${tr("otherDetailsPlaceholder")}"
-          value="${escapeHtml(defaultOtherDetails)}"
+        <div
+          id="supportOtherDetailsWrap"
           class="${defaultType === "other" ? "" : "hidden"}"
-          style="width:180px;"
-        />
+          style="width:180px; flex:0 0 180px;"
+        >
+          <input
+            id="supportOtherDetails"
+            type="text"
+            placeholder="${tr("otherDetailsPlaceholder")}"
+            value="${escapeHtml(defaultOtherDetails)}"
+            style="width:100%;"
+          />
+        </div>
       </div>
 
       <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
@@ -2475,15 +2480,21 @@ function openSupportContactModal(prefill = {}) {
   );
 
   const supportTypeSelect = document.getElementById("supportType");
+  const supportOtherDetailsWrap = document.getElementById("supportOtherDetailsWrap");
   const supportOtherDetails = document.getElementById("supportOtherDetails");
 
-  if (supportTypeSelect && supportOtherDetails) {
-    supportTypeSelect.onchange = () => {
-      supportOtherDetails.classList.toggle("hidden", supportTypeSelect.value !== "other");
-      if (supportTypeSelect.value !== "other") {
+  if (supportTypeSelect && supportOtherDetailsWrap && supportOtherDetails) {
+    const syncOtherFieldVisibility = () => {
+      const isOther = supportTypeSelect.value === "other";
+      supportOtherDetailsWrap.classList.toggle("hidden", !isOther);
+
+      if (!isOther) {
         supportOtherDetails.value = "";
       }
     };
+
+    supportTypeSelect.addEventListener("change", syncOtherFieldVisibility);
+    syncOtherFieldVisibility();
   }
 
   const supportScreenshotInput = document.getElementById("supportScreenshot");
