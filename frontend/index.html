@@ -4539,7 +4539,7 @@ async function saveCompletedPracticeToHistory() {
   );
 }
 
-    async function openProfilePanel(defaultTab = "tests") {
+async function openProfilePanel(defaultTab = "tests") {
   if (!state.auth.user || !state.auth.token) return;
 
   await withLoading(
@@ -4761,16 +4761,15 @@ async function saveCompletedPracticeToHistory() {
         document.getElementById("profileBackBtn").onclick = () => {
           goToMainMenu();
         };
-document.getElementById("profileMainMenuBtn").onclick = () => {
-  goToMainMenu();
-};
+
         const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
         if (practiceBtn) {
           practiceBtn.onclick = async () => {
             await startPractice(currentFocus, state.difficulty, true);
           };
         }
-         const profileVerifyBtn = document.getElementById("profileVerifyBtn");
+
+        const profileVerifyBtn = document.getElementById("profileVerifyBtn");
         if (profileVerifyBtn) {
           profileVerifyBtn.onclick = () => {
             if (state.auth.user?.emailVerified) {
@@ -4795,10 +4794,11 @@ document.getElementById("profileMainMenuBtn").onclick = () => {
       } catch (error) {
         console.error("PROFILE PANEL ERROR:", error);
 
-
         panel.innerHTML = `
+          <h2 class="sectionTitle">${tr("profile")}</h2>
           <div class="reviewItem">${tr("failedLoadHistory")}</div>
           <div class="reviewItem">
+            <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
           </div>
         `;
 
