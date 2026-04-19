@@ -958,7 +958,7 @@ body.loadingActive {
         <div id="welcomePanel" class="menuPanel">
           <h3>Welcome</h3>
           <p>
-            Welcome to GED Practice Platform — a focused space to build confidence,
+            Welcome to GED Practice Platform — A focused space to build confidence,
             strengthen weak areas, and prepare step by step. Currently math only,
             with more subjects coming soon.
           </p>
@@ -4628,6 +4628,7 @@ async function saveCompletedPracticeToHistory() {
 
           <div class="reviewItem">
             <div class="menuActions">
+
               ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
               ${
                 state.auth.user?.emailVerified
@@ -4755,7 +4756,7 @@ async function saveCompletedPracticeToHistory() {
           };
         });
 
-document.getElementById("profileMainMenuBtn").onclick = () => {
+        document.getElementById("profileBackBtn").onclick = () => {
   goToMainMenu();
 };
 
@@ -4792,16 +4793,11 @@ const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
 
 
 panel.innerHTML = `
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
-    <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
-    <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-  </div>
-  <div class="reviewItem">${tr("failedLoadHistory")}</div>
+  <h2 class="sectionTitle">${tr("profile")}</h2>
 `;
-
-document.getElementById("profileMainMenuBtn").onclick = () => {
-  goToMainMenu();
-};
+      }
+    }
+  );
 }
 
 async function handleEmailVerificationFromUrl() {
