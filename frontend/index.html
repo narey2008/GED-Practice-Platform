@@ -1388,10 +1388,10 @@ resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resendin
     autoFilledHint: isSpanish
       ? "No cambies esto si ya fue completado correctamente."
       : "Do not change this if it was auto-filled correctly.",
-    otherDetailsLabel: isSpanish ? "Detalles de “Otro”" : "Other Details",
+    otherDetailsLabel: isSpanish ? "Otro" : "Other",
     otherDetailsPlaceholder: isSpanish
-      ? "Explica brevemente qué significa “Otro” en este ticket."
-      : "Briefly explain what “Other” means for this ticket.",
+      ? "Especifica"
+      : "Specify",
 
     signIn: isSpanish ? "Iniciar Sesión" : "Sign In",
     createAccount: isSpanish ? "Crear Cuenta" : "Create Account",
@@ -2330,30 +2330,31 @@ function openSupportContactModal(prefill = {}) {
     tr("supportContactTitle"),
     `
       <label for="supportType">${tr("supportTypeLabel")}</label>
-      <select id="supportType">
-        <option value="bug" ${defaultType === "bug" ? "selected" : ""}>${tr("bug")}</option>
-        <option value="addition" ${defaultType === "addition" ? "selected" : ""}>${tr("additionRequest")}</option>
-        <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>${tr("changeRemoveRequest")}</option>
-        <option value="other" ${defaultType === "other" ? "selected" : ""}>${tr("other")}</option>
-      </select>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="supportType" style="flex:1;">
+          <option value="bug" ${defaultType === "bug" ? "selected" : ""}>${tr("bug")}</option>
+          <option value="addition" ${defaultType === "addition" ? "selected" : ""}>${tr("additionRequest")}</option>
+          <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>${tr("changeRemoveRequest")}</option>
+          <option value="other" ${defaultType === "other" ? "selected" : ""}>${tr("other")}</option>
+        </select>
 
-      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
-
-      <div id="supportOtherWrap" class="${defaultType === "other" ? "" : "hidden"}" style="margin-top:12px;">
-        <label for="supportOtherDetails">${tr("otherDetailsLabel")}</label>
         <input
           id="supportOtherDetails"
           type="text"
           placeholder="${tr("otherDetailsPlaceholder")}"
           value="${escapeHtml(defaultOtherDetails)}"
+          class="${defaultType === "other" ? "" : "hidden"}"
+          style="width:180px;"
         />
       </div>
 
       <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
       <input id="supportSubject" type="text" placeholder="${tr("supportSubjectPlaceholder")}" value="${escapeHtml(defaultSubject)}" />
+      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportDetails" style="margin-top:12px;">${tr("detailsLabel")}</label>
       <textarea id="supportDetails" rows="6" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);" placeholder="${tr("detailsPlaceholder")}">${escapeHtml(defaultDetails)}</textarea>
+      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportPageFeature" style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
       <select id="supportPageFeature">
@@ -2365,7 +2366,6 @@ function openSupportContactModal(prefill = {}) {
         <option value="Question Report" ${defaultPageFeature === "Question Report" ? "selected" : ""}>Question Report</option>
         <option value="Other" ${defaultPageFeature === "Other" ? "selected" : ""}>Other</option>
       </select>
-
       <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
@@ -2373,6 +2373,7 @@ function openSupportContactModal(prefill = {}) {
 
       <label for="supportDeviceBrowser" style="margin-top:12px;">${tr("deviceBrowserLabel")}</label>
       <input id="supportDeviceBrowser" type="text" value="${escapeHtml(defaultDeviceBrowser)}" />
+      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportScreenshot" style="margin-top:12px;">Attach Screenshot</label>
       <input id="supportScreenshot" type="file" accept="image/*" />
@@ -2474,11 +2475,14 @@ function openSupportContactModal(prefill = {}) {
   );
 
   const supportTypeSelect = document.getElementById("supportType");
-  const supportOtherWrap = document.getElementById("supportOtherWrap");
+  const supportOtherDetails = document.getElementById("supportOtherDetails");
 
-  if (supportTypeSelect && supportOtherWrap) {
+  if (supportTypeSelect && supportOtherDetails) {
     supportTypeSelect.onchange = () => {
-      supportOtherWrap.classList.toggle("hidden", supportTypeSelect.value !== "other");
+      supportOtherDetails.classList.toggle("hidden", supportTypeSelect.value !== "other");
+      if (supportTypeSelect.value !== "other") {
+        supportOtherDetails.value = "";
+      }
     };
   }
 
