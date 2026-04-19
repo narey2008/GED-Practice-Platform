@@ -958,7 +958,7 @@ body.loadingActive {
         <div id="welcomePanel" class="menuPanel">
           <h3>Welcome</h3>
           <p>
-            Welcome to GED Practice Platform — A focused space to build confidence,
+            Welcome to GED Practice Platform — a focused space to build confidence,
             strengthen weak areas, and prepare step by step. Currently math only,
             with more subjects coming soon.
           </p>
@@ -1644,6 +1644,7 @@ skillStatistics: isSpanish ? "Estadística" : "Statistics",
     loadingBlank: " ",
     uploadPreviewLoading: isSpanish ? "Cargando Vista Previa..." : "Loading Preview...",
     doNotRefresh: isSpanish ? "Por favor no actualices" : "Please do not refresh",
+    systemWorking: isSpanish ? "El sistema está trabajando. Espera por favor." : "The system is working. Please wait.",
     startingTest: isSpanish ? "Iniciando Examen..." : "Starting Test...",
     generatingTest: isSpanish ? "Tu examen se está generando. Espera por favor." : "Your test is being generated. Please wait.",
     startingPractice: isSpanish ? "Iniciando Práctica..." : "Starting Practice...",
@@ -4591,6 +4592,7 @@ async function saveCompletedPracticeToHistory() {
         const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
 
         panel.innerHTML = `
+          <h2 class="sectionTitle">${tr("profile")}</h2>
 
           <div class="reviewTop">
             <div class="reviewStat">
@@ -4628,7 +4630,7 @@ async function saveCompletedPracticeToHistory() {
 
           <div class="reviewItem">
             <div class="menuActions">
-
+              <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
               ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
               ${
                 state.auth.user?.emailVerified
@@ -4757,10 +4759,10 @@ async function saveCompletedPracticeToHistory() {
         });
 
         document.getElementById("profileBackBtn").onclick = () => {
-  goToMainMenu();
-};
+          goToMainMenu();
+        };
 
-const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
+        const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
         if (practiceBtn) {
           practiceBtn.onclick = async () => {
             await startPractice(currentFocus, state.difficulty, true);
@@ -4792,9 +4794,17 @@ const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
         console.error("PROFILE PANEL ERROR:", error);
 
 
-panel.innerHTML = `
-  <h2 class="sectionTitle">${tr("profile")}</h2>
-`;
+        panel.innerHTML = `
+          <h2 class="sectionTitle">${tr("profile")}</h2>
+          <div class="reviewItem">${tr("failedLoadHistory")}</div>
+          <div class="reviewItem">
+            <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+          </div>
+        `;
+
+        document.getElementById("profileBackBtn").onclick = () => {
+          goToMainMenu();
+        };
       }
     }
   );
