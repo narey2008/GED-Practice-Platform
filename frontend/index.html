@@ -2475,15 +2475,34 @@ function openSupportContactModal(prefill = {}) {
 
     if (selectedValue === "__other_input__") {
       wrap.innerHTML = `
-        <input
-          id="supportTypeOtherInput"
-          type="text"
-          placeholder="${tr("otherDetailsPlaceholder")}"
-          style="width:100%;"
-        />
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input
+            id="supportTypeOtherInput"
+            type="text"
+            placeholder="${tr("otherDetailsPlaceholder")}"
+            style="width:100%;"
+          />
+          <button
+            id="supportTypeBackBtn"
+            type="button"
+            class="secondaryBtn"
+            style="white-space:nowrap;"
+          >
+            Back to options
+          </button>
+        </div>
       `;
+
       const input = document.getElementById("supportTypeOtherInput");
+      const backBtn = document.getElementById("supportTypeBackBtn");
+
       if (input) input.focus();
+      if (backBtn) {
+        backBtn.onclick = () => {
+          renderSupportTypeField("bug");
+        };
+      }
+
       return;
     }
 
@@ -2514,15 +2533,34 @@ function openSupportContactModal(prefill = {}) {
 
     if (selectedValue === "__other_input__") {
       wrap.innerHTML = `
-        <input
-          id="supportPageFeatureOtherInput"
-          type="text"
-          placeholder="${tr("otherDetailsPlaceholder")}"
-          style="width:100%;"
-        />
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input
+            id="supportPageFeatureOtherInput"
+            type="text"
+            placeholder="${tr("otherDetailsPlaceholder")}"
+            style="width:100%;"
+          />
+          <button
+            id="supportPageFeatureBackBtn"
+            type="button"
+            class="secondaryBtn"
+            style="white-space:nowrap;"
+          >
+            Back to options
+          </button>
+        </div>
       `;
+
       const input = document.getElementById("supportPageFeatureOtherInput");
+      const backBtn = document.getElementById("supportPageFeatureBackBtn");
+
       if (input) input.focus();
+      if (backBtn) {
+        backBtn.onclick = () => {
+          renderSupportPageFeatureField("Main Menu");
+        };
+      }
+
       return;
     }
 
