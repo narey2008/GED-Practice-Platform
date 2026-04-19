@@ -1365,6 +1365,20 @@ resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resendin
       ? "Usa esto para reportar errores, solicitar nuevas funciones o pedir cambios o eliminaciones."
       : "Use this for bug reports, additions you would like added, or things that should be changed or removed.",
     contactSupport: isSpanish ? "Contactar Soporte" : "Contact Support",
+    supportTicketSent: isSpanish ? "Solicitud Enviada" : "Support Request Sent",
+    supportTicketSentBody: isSpanish
+      ? "Tu solicitud de soporte fue enviada correctamente."
+      : "Your support request was submitted successfully.",
+    submitSupportRequest: isSpanish ? "Enviar Solicitud" : "Submit Request",
+    supportSubmitting: isSpanish ? "Enviando Solicitud..." : "Submitting Request...",
+    supportSubjectLabel: isSpanish ? "Asunto" : "Subject",
+    supportSubjectPlaceholder: isSpanish
+      ? "Escribe un asunto corto"
+      : "Enter a short subject",
+    contactEmailLabel: isSpanish ? "Correo de Contacto" : "Contact Email",
+    contactEmailPlaceholder: isSpanish
+      ? "Ingresa un correo para seguimiento"
+      : "Enter an email for follow-up",
 
     signIn: isSpanish ? "Iniciar Sesión" : "Sign In",
     createAccount: isSpanish ? "Crear Cuenta" : "Create Account",
@@ -2277,35 +2291,127 @@ function buildSupportGmailLink(options = {}) {
   return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailData.to)}&su=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
 }
 
-function openSupportEmail(options = {}) {
-  if (isMobileDevice()) {
-    window.location.href = buildSupportMailtoLink(options);
-    return;
-  }
+function openSupportContactModal(prefill = {}) {
+  const accountUser = state.auth.user || null;
+  const signedInLabel = accountUser
+    ? `${accountUser.displayName || accountUser.email} (${accountUser.email})`
+    : state.auth.guestMode
+    ? tr("guestMode")
+    : tr("notSignedIn");
 
-  const gmailUrl = buildSupportGmailLink(options);
+  const defaultType = prefill.type || "bug";
+  const defaultSubject = prefill.subject || "";
+  const defaultDetails = prefill.details || "";
+  const defaultPageFeature = prefill.pageFeature || "";
+  const defaultContactEmail = prefill.contactEmail || accountUser?.email || "";
+  const defaultDeviceBrowser = prefill.deviceBrowser || navigator.userAgent;
 
-  try {
-    window.open(gmailUrl, "_blank");
-  } catch (error) {
-    showModal(
-      options.isQuestionReport ? tr("questionReportTitle") : tr("supportContactTitle"),
-      `
-        <p>${tr("couldNotOpenGmail")}</p>
-        <p>${tr("youCanEmailUs")} <strong>gedpracticeplatform@gmail.com</strong>.</p>
-      `,
-      [
-        { label: tr("close"), variant: "secondary" },
-        {
-          label: tr("tryAgain"),
-          variant: "primary",
-          onClick: () => {
-            window.open(buildSupportGmailLink(options), "_blank");
+  showModal(
+    tr("supportContactTitle"),
+    `
+      <label for="supportType">${tr("supportTypeLabel")}</label>
+      <select id="supportType">
+        <option value="bug" ${defaultType === "bug" ? "selected" : ""}>${tr("bug")}</option>
+        <option value="addition" ${defaultType === "addition" ? "selected" : ""}>${tr("additionRequest")}</option>
+        <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>${tr("changeRemoveRequest")}</option>
+        <option value="other" ${defaultType === "other" ? "selected" : ""}>${tr("other")}</option>
+      </select>
+
+      <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
+      <input id="supportSubject" type="text" placeholder="${tr("supportSubjectPlaceholder")}" value="${escapeHtml(defaultSubject)}" />
+
+      <label for="supportDetails" style="margin-top:12px;">${tr("detailsLabel")}</label>
+      <textarea id="supportDetails" rows="6" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);" placeholder="${tr("detailsPlaceholder")}">${escapeHtml(defaultDetails)}</textarea>
+
+      <label for="supportPageFeature" style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
+      <input id="supportPageFeature" type="text" placeholder="${tr("pageFeaturePlaceholder")}" value="${escapeHtml(defaultPageFeature)}" />
+
+      <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
+      <input id="supportContactEmail" type="email" placeholder="${tr("contactEmailPlaceholder")}" value="${escapeHtml(defaultContactEmail)}" />
+
+      <label for="supportDeviceBrowser" style="margin-top:12px;">${tr("deviceBrowserLabel")}</label>
+      <input id="supportDeviceBrowser" type="text" value="${escapeHtml(defaultDeviceBrowser)}" />
+
+      <div style="margin-top:12px;" class="muted">
+        <strong>${tr("userStatusLabel")}</strong> ${escapeHtml(signedInLabel)}
+      </div>
+
+      <div id="supportContactError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("submitSupportRequest"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("supportContactError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const type = document.getElementById("supportType").value;
+          const subject = document.getElementById("supportSubject").value.trim();
+          const details = document.getElementById("supportDetails").value.trim();
+          const pageFeature = document.getElementById("supportPageFeature").value.trim();
+          const contactEmail = document.getElementById("supportContactEmail").value.trim().toLowerCase();
+          const deviceBrowser = document.getElementById("supportDeviceBrowser").value.trim();
+
+          try {
+            await withLoading(
+              tr("supportSubmitting"),
+              tr("systemWorking"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/support/ticket`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                  },
+                  body: JSON.stringify({
+                    type,
+                    subject,
+                    details,
+                    pageFeature,
+                    userStatus: signedInLabel,
+                    deviceBrowser,
+                    contactEmail,
+                    displayName: accountUser?.displayName || ""
+                  })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Support ticket returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("supportContactTitle"));
+                }
+
+                closeModal();
+                showModal(
+                  tr("supportTicketSent"),
+                  tr("supportTicketSentBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("supportContactTitle");
+            errorEl.classList.remove("hidden");
           }
         }
-      ]
-    );
-  }
+      }
+    ]
+  );
 }
 
 function buildCurrentQuestionReportDetails() {
@@ -2344,50 +2450,12 @@ ${String(q.answer ?? "").trim() || "—"}`;
 function reportCurrentQuestion() {
   if (!state.questions.length) return;
 
-  openSupportEmail({
-    isQuestionReport: true,
-    questionDetails: buildCurrentQuestionReportDetails()
+  openSupportContactModal({
+    type: "bug",
+    subject: tr("questionReportSubject"),
+    details: buildCurrentQuestionReportDetails(),
+    pageFeature: `${tr("questionWord")} ${state.currentIndex + 1}`
   });
-}
-
-let toastTimeoutId = null;
-
-function hideToast() {
-  const wrap = document.getElementById("toastWrap");
-  wrap.innerHTML = "";
-
-  if (toastTimeoutId) {
-    clearTimeout(toastTimeoutId);
-    toastTimeoutId = null;
-  }
-}
-
-function showToast(title, text, duration = 6000) {
-  const wrap = document.getElementById("toastWrap");
-
-  if (toastTimeoutId) {
-    clearTimeout(toastTimeoutId);
-    toastTimeoutId = null;
-  }
-
-  wrap.innerHTML = `
-    <div class="toast">
-      <div class="toastTitle">${escapeHtml(title)}</div>
-      <div class="toastText">${escapeHtml(text)}</div>
-      <div class="toastActions">
-        <button id="toastCloseBtn" class="toastCloseBtn" type="button">${tr("closeToast")}</button>
-      </div>
-    </div>
-  `;
-
-  const closeBtn = document.getElementById("toastCloseBtn");
-  if (closeBtn) {
-    closeBtn.onclick = () => hideToast();
-  }
-
-  toastTimeoutId = setTimeout(() => {
-    hideToast();
-  }, duration);
 }
 
     function openSettings() {
@@ -2624,158 +2692,6 @@ function openResetPasswordModal(resetEmail, resetToken) {
             );
           } catch (error) {
             errorEl.textContent = error.message || tr("invalidResetLink");
-            errorEl.classList.remove("hidden");
-          }
-        }
-      }
-    ]
-  );
-}
-
-function openResendVerificationModal(prefillEmail = "") {
-  showModal(
-    tr("resendVerification"),
-    `
-      <label for="resendVerificationEmail">${tr("email")}</label>
-      <input id="resendVerificationEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
-      <div id="resendVerificationError" class="authError hidden"></div>
-    `,
-    [
-      {
-        label: tr("cancel"),
-        variant: "secondary"
-      },
-      {
-        label: tr("resendVerification"),
-        variant: "primary",
-        keepOpen: true,
-        onClick: async () => {
-          const errorEl = document.getElementById("resendVerificationError");
-          errorEl.classList.add("hidden");
-          errorEl.textContent = "";
-
-          const email = document.getElementById("resendVerificationEmail").value.trim().toLowerCase();
-
-          try {
-            await withLoading(
-              tr("resendVerificationLoading"),
-              tr("systemWorking"),
-              async () => {
-                const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email })
-                });
-
-                const contentType = res.headers.get("content-type") || "";
-                let data = null;
-
-                if (contentType.includes("application/json")) {
-                  data = await res.json();
-                } else {
-                  const text = await res.text();
-                  throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
-                }
-
-                if (!res.ok) {
-                  throw new Error(data.error || tr("failedAuthentication"));
-                }
-
-                closeModal();
-                showModal(
-                  tr("verificationEmailSent"),
-                  tr("verificationEmailSentBody"),
-                  [{ label: tr("close"), variant: "primary" }]
-                );
-              }
-            );
-          } catch (error) {
-            errorEl.textContent = error.message || tr("failedAuthentication");
-            errorEl.classList.remove("hidden");
-          }
-        }
-      }
-    ]
-  );
-}
-
-function openDeleteAccountModal() {
-  showModal(
-    tr("deleteAccountTitle"),
-    `
-      <div style="margin-bottom:12px; font-weight:700; color:#b42318;">
-        ${tr("deleteAccountWarning")}
-      </div>
-
-      <label for="deleteAccountPassword">${tr("deleteAccountPasswordLabel")}</label>
-      <input
-        id="deleteAccountPassword"
-        type="password"
-        placeholder="${tr("deleteAccountPasswordPlaceholder")}"
-      />
-
-      <div id="deleteAccountError" class="authError hidden"></div>
-    `,
-    [
-      {
-        label: tr("cancel"),
-        variant: "secondary"
-      },
-      {
-        label: tr("deleteAccountFinal"),
-        variant: "danger",
-        keepOpen: true,
-        onClick: async () => {
-          const errorEl = document.getElementById("deleteAccountError");
-          errorEl.classList.add("hidden");
-          errorEl.textContent = "";
-
-          const password = document.getElementById("deleteAccountPassword").value;
-
-          try {
-            await withLoading(
-              tr("deleteAccountLoading"),
-              tr("systemWorking"),
-              async () => {
-                const res = await fetch(`${API_BASE}/api/auth/delete-account`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...getAuthHeaders()
-                  },
-                  body: JSON.stringify({ password })
-                });
-
-                const contentType = res.headers.get("content-type") || "";
-                let data = null;
-
-                if (contentType.includes("application/json")) {
-                  data = await res.json();
-                } else {
-                  const text = await res.text();
-                  throw new Error(`Delete account returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
-                }
-
-                if (!res.ok) {
-                  throw new Error(data.error || tr("deleteAccountTitle"));
-                }
-
-                setAuthToken("");
-                state.auth.user = null;
-                setGuestMode(false);
-                updateAuthUI();
-                closeModal();
-                goToMainMenu();
-
-                showModal(
-                  tr("deleteAccountSuccess"),
-                  tr("deleteAccountSuccessBody"),
-                  [{ label: tr("close"), variant: "primary" }]
-                );
-              }
-            );
-          } catch (error) {
-            errorEl.textContent = error.message || tr("deleteAccountTitle");
             errorEl.classList.remove("hidden");
           }
         }
@@ -4711,8 +4627,8 @@ async function handleEmailVerificationFromUrl() {
       await loadSavedProgress();
     };
         document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
-    document.getElementById("contactBtnTop").onclick = () => openSupportEmail();
-    document.getElementById("supportEmailBtn").onclick = () => openSupportEmail();
+    document.getElementById("contactBtnTop").onclick = () => openSupportContactModal();
+    document.getElementById("supportEmailBtn").onclick = () => openSupportContactModal();
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {
         await openProfilePanel();
