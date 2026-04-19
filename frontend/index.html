@@ -2330,8 +2330,8 @@ function openSupportContactModal(prefill = {}) {
     tr("supportContactTitle"),
     `
       <label for="supportType">${tr("supportTypeLabel")}</label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <select id="supportType" style="flex:1;">
+      <div style="display:grid; grid-template-columns: 1fr 180px; gap:8px; align-items:center;">
+        <select id="supportType">
           <option value="bug" ${defaultType === "bug" ? "selected" : ""}>${tr("bug")}</option>
           <option value="addition" ${defaultType === "addition" ? "selected" : ""}>${tr("additionRequest")}</option>
           <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>${tr("changeRemoveRequest")}</option>
@@ -2340,8 +2340,7 @@ function openSupportContactModal(prefill = {}) {
 
         <div
           id="supportOtherDetailsWrap"
-          class="${defaultType === "other" ? "" : "hidden"}"
-          style="width:180px; flex:0 0 180px;"
+          style="${defaultType === "other" ? "display:block;" : "display:none;"}"
         >
           <input
             id="supportOtherDetails"
@@ -2486,13 +2485,14 @@ function openSupportContactModal(prefill = {}) {
   if (supportTypeSelect && supportOtherDetailsWrap && supportOtherDetails) {
     const syncOtherFieldVisibility = () => {
       const isOther = supportTypeSelect.value === "other";
-      supportOtherDetailsWrap.classList.toggle("hidden", !isOther);
+      supportOtherDetailsWrap.style.display = isOther ? "block" : "none";
 
       if (!isOther) {
         supportOtherDetails.value = "";
       }
     };
 
+    supportTypeSelect.removeEventListener?.("change", syncOtherFieldVisibility);
     supportTypeSelect.addEventListener("change", syncOtherFieldVisibility);
     syncOtherFieldVisibility();
   }
