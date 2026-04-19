@@ -13,6 +13,7 @@ const User = require("./models/User");
 const SavedProgress = require("./models/SavedProgress");
 const TestHistory = require("./models/TestHistory");
 const PracticeHistory = require("./models/PracticeHistory");
+const SupportTicket = require("./models/SupportTicket");
 const authMiddleware = require("./middleware/auth");
 
 console.log("RUNNING BACKEND SERVER FILE");
@@ -23,6 +24,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SUPPORT_INBOX = process.env.SUPPORT_INBOX || "gedpracticeplatform@gmail.com";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 for (const key of requiredEnv) {
@@ -192,6 +194,102 @@ If you did not request this, you can ignore this email.`,
         <p>${resetUrl}</p>
         <p>This link expires in 30 minutes.</p>
         <p>If you did not request this, you can ignore this email.</p>
+      </div>
+    `
+  });
+}
+
+async function sendSupportTicketEmail({ ticket }) {
+  if (!mailTransport) {
+    throw new Error("Email system is not configured.");
+  }
+
+  const submittedAt = new Date(ticket.createdAt || Date.now()).toISOString();
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: SUPPORT_INBOX,
+    subject: `[Support Ticket] ${ticket.subject}`,
+    text: `
+New GED Practice Platform support ticket
+
+Ticket ID: ${ticket._id}
+Type: ${ticket.type}
+Tag: ${ticket.tag}
+Status: ${ticket.status}
+Source: ${ticket.source}
+Submitted At: ${submittedAt}
+
+Display Name: ${ticket.displayName || "—"}
+Contact Email: ${ticket.contactEmail || "—"}
+Account Email: ${ticket.accountEmail || "—"}
+User ID: ${ticket.userId || "—"}
+
+Page / Feature:
+${ticket.pageFeature || "—"}
+
+User Status:
+${ticket.userStatus || "—"}
+
+Device / Browser:
+${ticket.deviceBrowser || "—"}
+
+Details:
+${ticket.details}
+    `.trim(),
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#10233f;">
+        <h2>New Support Ticket</h2>
+        <p><strong>Ticket ID:</strong> ${ticket._id}</p>
+        <p><strong>Type:</strong> ${ticket.type}</p>
+        <p><strong>Tag:</strong> ${ticket.tag}</p>
+        <p><strong>Status:</strong> ${ticket.status}</p>
+        <p><strong>Source:</strong> ${ticket.source}</p>
+        <p><strong>Submitted At:</strong> ${submittedAt}</p>
+        <hr />
+        <p><strong>Display Name:</strong> ${ticket.displayName || "—"}</p>
+        <p><strong>Contact Email:</strong> ${ticket.contactEmail || "—"}</p>
+        <p><strong>Account Email:</strong> ${ticket.accountEmail || "—"}</p>
+        <p><strong>User ID:</strong> ${ticket.userId || "—"}</p>
+        <p><strong>Page / Feature:</strong><br />${ticket.pageFeature || "—"}</p>
+        <p><strong>User Status:</strong><br />${ticket.userStatus || "—"}</p>
+        <p><strong>Device / Browser:</strong><br />${ticket.deviceBrowser || "—"}</p>
+        <p><strong>Details:</strong><br />${String(ticket.details || "").replace(/\n/g, "<br />")}</p>
+      </div>
+    `
+  });
+}
+
+async function sendSupportConfirmationEmail({ to, ticket }) {
+  if (!mailTransport || !to) {
+    return;
+  }
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to,
+    subject: "We received your GED Practice Platform support request",
+    text: `
+We received your support request.
+
+Ticket ID: ${ticket._id}
+Subject: ${ticket.subject}
+Type: ${ticket.type}
+
+Our team will review it as soon as possible.
+
+Thank you,
+GED Practice Platform
+    `.trim(),
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#10233f;">
+        <h2>Support Request Received</h2>
+        <p>We received your support request.</p>
+        <p><strong>Ticket ID:</strong> ${ticket._id}</p>
+        <p><strong>Subject:</strong> ${ticket.subject}</p>
+        <p><strong>Type:</strong> ${ticket.type}</p>
+        <p>Our team will review it as soon as possible.</p>
+        <p>Thank you,<br />GED Practice Platform</p>
       </div>
     `
   });
@@ -595,6 +693,118 @@ app.post("/api/auth/delete-account", authMiddleware, async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to delete account."
+    });
+  }
+});
+
+app.post("/api/support/ticket", async (req, res) => {
+  try {
+    const rawType =
+      typeof req.body.type === "string"
+        ? req.body.type.trim()
+        : "other";
+
+    const typeMap = {
+      bug: "bug",
+      addition: "addition",
+      change_remove: "change_remove",
+      other: "other"
+    };
+
+    const type = typeMap[rawType] || "other";
+
+    const subject =
+      typeof req.body.subject === "string"
+        ? req.body.subject.trim()
+        : "";
+
+    const details =
+      typeof req.body.details === "string"
+        ? req.body.details.trim()
+        : "";
+
+    const pageFeature =
+      typeof req.body.pageFeature === "string"
+        ? req.body.pageFeature.trim()
+        : "";
+
+    const userStatus =
+      typeof req.body.userStatus === "string"
+        ? req.body.userStatus.trim()
+        : "";
+
+    const deviceBrowser =
+      typeof req.body.deviceBrowser === "string"
+        ? req.body.deviceBrowser.trim()
+        : "";
+
+    const contactEmail =
+      typeof req.body.contactEmail === "string"
+        ? req.body.contactEmail.trim().toLowerCase()
+        : "";
+
+    const displayName =
+      typeof req.body.displayName === "string"
+        ? req.body.displayName.trim()
+        : "";
+
+    if (!subject) {
+      return res.status(400).json({ error: "Subject is required." });
+    }
+
+    if (!details) {
+      return res.status(400).json({ error: "Details are required." });
+    }
+
+    const authHeader = req.headers.authorization || "";
+    let authedUser = null;
+
+    if (authHeader.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        authedUser = await User.findById(payload.userId);
+      } catch (error) {
+        authedUser = null;
+      }
+    }
+
+    const ticket = await SupportTicket.create({
+      type,
+      subject,
+      details,
+      pageFeature,
+      userStatus,
+      deviceBrowser,
+      contactEmail,
+      displayName: displayName || authedUser?.displayName || "",
+      accountEmail: authedUser?.email || "",
+      userId: authedUser?._id || null,
+      tag: type,
+      status: "open",
+      source: "support_form"
+    });
+
+    await sendSupportTicketEmail({ ticket });
+
+    if (contactEmail) {
+      await sendSupportConfirmationEmail({
+        to: contactEmail,
+        ticket
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      ticketId: ticket._id.toString(),
+      message: "Support ticket submitted successfully."
+    });
+  } catch (error) {
+    console.error("SUPPORT TICKET ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to submit support ticket."
     });
   }
 });
