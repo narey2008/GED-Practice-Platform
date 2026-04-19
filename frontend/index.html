@@ -1385,6 +1385,13 @@ resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resendin
     contactEmailPlaceholder: isSpanish
       ? "Ingresa un correo para seguimiento"
       : "Enter an email for follow-up",
+    autoFilledHint: isSpanish
+      ? "No cambies esto si ya fue completado correctamente."
+      : "Do not change this if it was auto-filled correctly.",
+    otherDetailsLabel: isSpanish ? "Detalles de “Otro”" : "Other Details",
+    otherDetailsPlaceholder: isSpanish
+      ? "Explica brevemente qué significa “Otro” en este ticket."
+      : "Briefly explain what “Other” means for this ticket.",
 
     signIn: isSpanish ? "Iniciar Sesión" : "Sign In",
     createAccount: isSpanish ? "Crear Cuenta" : "Create Account",
@@ -2307,10 +2314,15 @@ function openSupportContactModal(prefill = {}) {
     ? tr("guestMode")
     : tr("notSignedIn");
 
+  const inferredPageFeature =
+    prefill.pageFeature ||
+    (prefill.isQuestionReport ? "Question Report" : "Main Menu");
+
   const defaultType = prefill.type || "bug";
   const defaultSubject = prefill.subject || "";
   const defaultDetails = prefill.details || "";
-  const defaultPageFeature = prefill.pageFeature || "";
+  const defaultPageFeature = inferredPageFeature;
+  const defaultOtherDetails = prefill.otherDetails || "";
   const defaultContactEmail = prefill.contactEmail || accountUser?.email || "";
   const defaultDeviceBrowser = prefill.deviceBrowser || navigator.userAgent;
 
@@ -2324,6 +2336,18 @@ function openSupportContactModal(prefill = {}) {
         <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>${tr("changeRemoveRequest")}</option>
         <option value="other" ${defaultType === "other" ? "selected" : ""}>${tr("other")}</option>
       </select>
+
+      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
+
+      <div id="supportOtherWrap" class="${defaultType === "other" ? "" : "hidden"}" style="margin-top:12px;">
+        <label for="supportOtherDetails">${tr("otherDetailsLabel")}</label>
+        <input
+          id="supportOtherDetails"
+          type="text"
+          placeholder="${tr("otherDetailsPlaceholder")}"
+          value="${escapeHtml(defaultOtherDetails)}"
+        />
+      </div>
 
       <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
       <input id="supportSubject" type="text" placeholder="${tr("supportSubjectPlaceholder")}" value="${escapeHtml(defaultSubject)}" />
@@ -2341,6 +2365,8 @@ function openSupportContactModal(prefill = {}) {
         <option value="Question Report" ${defaultPageFeature === "Question Report" ? "selected" : ""}>Question Report</option>
         <option value="Other" ${defaultPageFeature === "Other" ? "selected" : ""}>Other</option>
       </select>
+
+      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
       <input id="supportContactEmail" type="email" placeholder="${tr("contactEmailPlaceholder")}" value="${escapeHtml(defaultContactEmail)}" />
@@ -2373,6 +2399,8 @@ function openSupportContactModal(prefill = {}) {
           errorEl.textContent = "";
 
           const type = document.getElementById("supportType").value;
+          const otherDetailsEl = document.getElementById("supportOtherDetails");
+          const otherDetails = otherDetailsEl ? otherDetailsEl.value.trim() : "";
           const subject = document.getElementById("supportSubject").value.trim();
           const details = document.getElementById("supportDetails").value.trim();
           const pageFeature = document.getElementById("supportPageFeature").value;
@@ -2380,10 +2408,16 @@ function openSupportContactModal(prefill = {}) {
           const deviceBrowser = document.getElementById("supportDeviceBrowser").value.trim();
           const screenshotFile = document.getElementById("supportScreenshot").files[0] || null;
 
+          if (type === "other" && !otherDetails) {
+            errorEl.textContent = tr("otherDetailsPlaceholder");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
           try {
-            await withLoading
+            await withLoading(
               tr("supportSubmitting"),
-              withLoading(tr("something"), "", async () =>
+              "",
               async () => {
                 const formData = new FormData();
                 formData.append("type", type);
@@ -2394,6 +2428,7 @@ function openSupportContactModal(prefill = {}) {
                 formData.append("deviceBrowser", deviceBrowser);
                 formData.append("contactEmail", contactEmail);
                 formData.append("displayName", accountUser?.displayName || "");
+                formData.append("otherDetails", otherDetails);
 
                 if (screenshotFile) {
                   formData.append("screenshot", screenshotFile);
@@ -2437,6 +2472,15 @@ function openSupportContactModal(prefill = {}) {
       }
     ]
   );
+
+  const supportTypeSelect = document.getElementById("supportType");
+  const supportOtherWrap = document.getElementById("supportOtherWrap");
+
+  if (supportTypeSelect && supportOtherWrap) {
+    supportTypeSelect.onchange = () => {
+      supportOtherWrap.classList.toggle("hidden", supportTypeSelect.value !== "other");
+    };
+  }
 
   const supportScreenshotInput = document.getElementById("supportScreenshot");
   const supportScreenshotPreview = document.getElementById("supportScreenshotPreview");
@@ -2514,7 +2558,8 @@ function reportCurrentQuestion() {
     type: "bug",
     subject: tr("questionReportSubject"),
     details: buildCurrentQuestionReportDetails(),
-    pageFeature: `${tr("questionWord")} ${state.currentIndex + 1}`
+    pageFeature: "Question Report",
+    isQuestionReport: true
   });
 }
 
