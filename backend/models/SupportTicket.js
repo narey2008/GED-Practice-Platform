@@ -37,12 +37,16 @@ const supportTicketSchema = new mongoose.Schema(
       trim: true,
       maxlength: 300
     },
-    contactEmail: {
+        contactEmail: {
       type: String,
       default: "",
       trim: true,
       lowercase: true,
       maxlength: 320
+    },
+    screenshotUrl: {
+      type: String,
+      default: ""
     },
     displayName: {
       type: String,

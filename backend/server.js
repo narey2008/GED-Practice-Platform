@@ -15,6 +15,7 @@ const TestHistory = require("./models/TestHistory");
 const PracticeHistory = require("./models/PracticeHistory");
 const SupportTicket = require("./models/SupportTicket");
 const authMiddleware = require("./middleware/auth");
+const upload = require("./middleware/upload");
 
 console.log("RUNNING BACKEND SERVER FILE");
 console.log("DEBUG VERSION: forgot-password-route-check-2026-04-17");
@@ -62,6 +63,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 function createToken(user) {
   return jwt.sign(
@@ -223,6 +225,7 @@ Submitted At: ${submittedAt}
 Display Name: ${ticket.displayName || "—"}
 Contact Email: ${ticket.contactEmail || "—"}
 Account Email: ${ticket.accountEmail || "—"}
+Screenshot URL: ${ticket.screenshotUrl || "—"}
 User ID: ${ticket.userId || "—"}
 
 Page / Feature:
@@ -250,6 +253,7 @@ ${ticket.details}
         <p><strong>Display Name:</strong> ${ticket.displayName || "—"}</p>
         <p><strong>Contact Email:</strong> ${ticket.contactEmail || "—"}</p>
         <p><strong>Account Email:</strong> ${ticket.accountEmail || "—"}</p>
+        <p><strong>Screenshot URL:</strong> ${ticket.screenshotUrl ? `<a href="${ticket.screenshotUrl}">${ticket.screenshotUrl}</a>` : "—"}</p>
         <p><strong>User ID:</strong> ${ticket.userId || "—"}</p>
         <p><strong>Page / Feature:</strong><br />${ticket.pageFeature || "—"}</p>
         <p><strong>User Status:</strong><br />${ticket.userStatus || "—"}</p>
@@ -703,11 +707,13 @@ app.post("/api/auth/delete-account", authMiddleware, async (req, res) => {
   }
 });
 
-app.post("/api/support/ticket", async (req, res) => {
+app.post("/api/support/ticket", upload.single("screenshot"), async (req, res) => {
   try {
+    const body = req.body || {};
+
     const rawType =
-      typeof req.body.type === "string"
-        ? req.body.type.trim()
+      typeof body.type === "string"
+        ? body.type.trim()
         : "other";
 
     const typeMap = {
@@ -720,38 +726,38 @@ app.post("/api/support/ticket", async (req, res) => {
     const type = typeMap[rawType] || "other";
 
     const subject =
-      typeof req.body.subject === "string"
-        ? req.body.subject.trim()
+      typeof body.subject === "string"
+        ? body.subject.trim()
         : "";
 
     const details =
-      typeof req.body.details === "string"
-        ? req.body.details.trim()
+      typeof body.details === "string"
+        ? body.details.trim()
         : "";
 
     const pageFeature =
-      typeof req.body.pageFeature === "string"
-        ? req.body.pageFeature.trim()
+      typeof body.pageFeature === "string"
+        ? body.pageFeature.trim()
         : "";
 
     const userStatus =
-      typeof req.body.userStatus === "string"
-        ? req.body.userStatus.trim()
+      typeof body.userStatus === "string"
+        ? body.userStatus.trim()
         : "";
 
     const deviceBrowser =
-      typeof req.body.deviceBrowser === "string"
-        ? req.body.deviceBrowser.trim()
+      typeof body.deviceBrowser === "string"
+        ? body.deviceBrowser.trim()
         : "";
 
     const contactEmail =
-      typeof req.body.contactEmail === "string"
-        ? req.body.contactEmail.trim().toLowerCase()
+      typeof body.contactEmail === "string"
+        ? body.contactEmail.trim().toLowerCase()
         : "";
 
     const displayName =
-      typeof req.body.displayName === "string"
-        ? req.body.displayName.trim()
+      typeof body.displayName === "string"
+        ? body.displayName.trim()
         : "";
 
     if (!subject) {
@@ -776,6 +782,10 @@ app.post("/api/support/ticket", async (req, res) => {
       }
     }
 
+    const screenshotUrl = req.file
+      ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`
+      : "";
+
     const ticket = await SupportTicket.create({
       type,
       subject,
@@ -784,6 +794,7 @@ app.post("/api/support/ticket", async (req, res) => {
       userStatus,
       deviceBrowser,
       contactEmail,
+      screenshotUrl,
       displayName: displayName || authedUser?.displayName || "",
       accountEmail: authedUser?.email || "",
       userId: authedUser?._id || null,
@@ -804,7 +815,8 @@ app.post("/api/support/ticket", async (req, res) => {
     return res.status(201).json({
       success: true,
       ticketId: ticket._id.toString(),
-      message: "Support ticket submitted successfully."
+      message: "Support ticket submitted successfully.",
+      screenshotUrl
     });
   } catch (error) {
     console.error("SUPPORT TICKET ERROR:");
