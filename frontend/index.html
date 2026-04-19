@@ -869,12 +869,12 @@ body.loadingActive {
     }
 
     html:not(.js-ready)[data-language="Spanish"] #loadingText:empty::before {
-      content: "El sistema está trabajando. Espera por favor.";
+      content: "";
     }
 
     html:not(.js-ready)[data-language="English"] #loadingText:empty::before,
     html:not(.js-ready):not([data-language]) #loadingText:empty::before {
-      content: "The system is working. Please wait.";
+      content: "";
     }
 
     html:not(.js-ready)[data-language="Spanish"] .loadingSubtext:empty::before {
@@ -2187,7 +2187,7 @@ function showModal(title, bodyHtml, actions = []) {
       document.getElementById("modalBackdrop").style.display = "none";
     }
 
-    function showLoading(title = tr("loading"), text = tr("loadingBlank")) {
+function showLoading(title = tr("loading"), text = "") {
   document.getElementById("loadingTitle").innerText = title;
   document.getElementById("loadingText").innerText = text || "";
   document.querySelector(".loadingSubtext").innerText = tr("doNotRefresh");
@@ -2381,9 +2381,9 @@ function openSupportContactModal(prefill = {}) {
           const screenshotFile = document.getElementById("supportScreenshot").files[0] || null;
 
           try {
-            await withLoading(
+            await withLoading
               tr("supportSubmitting"),
-              tr("systemWorking"),
+              withLoading(tr("something"), "", async () =>
               async () => {
                 const formData = new FormData();
                 formData.append("type", type);
