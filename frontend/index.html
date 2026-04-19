@@ -1633,6 +1633,8 @@ skillGeometry: isSpanish ? "Geometría" : "Geometry",
 skillStatistics: isSpanish ? "Estadística" : "Statistics",
 
     loading: isSpanish ? "Cargando..." : "Loading...",
+    loadingBlank: " ",
+    uploadPreviewLoading: isSpanish ? "Cargando Vista Previa..." : "Loading Preview...",
     doNotRefresh: isSpanish ? "Por favor no actualices" : "Please do not refresh",
     systemWorking: isSpanish ? "El sistema está trabajando. Espera por favor." : "The system is working. Please wait.",
     startingTest: isSpanish ? "Iniciando Examen..." : "Starting Test...",
@@ -1974,7 +1976,7 @@ function applyLanguage(language) {
   const loadingSubtext = document.querySelector(".loadingSubtext");
 
   if (loadingTitle) loadingTitle.innerText = t.loading;
-  if (loadingText) loadingText.innerText = t.systemWorking;
+  if (loadingText) loadingText.innerText = "";
   if (loadingSubtext) loadingSubtext.innerText = t.doNotRefresh;
 
   updateStatus();
@@ -2185,9 +2187,9 @@ function showModal(title, bodyHtml, actions = []) {
       document.getElementById("modalBackdrop").style.display = "none";
     }
 
-    function showLoading(title = tr("loading"), text = tr("systemWorking")) {
+    function showLoading(title = tr("loading"), text = tr("loadingBlank")) {
   document.getElementById("loadingTitle").innerText = title;
-  document.getElementById("loadingText").innerText = text;
+  document.getElementById("loadingText").innerText = text || "";
   document.querySelector(".loadingSubtext").innerText = tr("doNotRefresh");
   document.getElementById("loadingOverlay").style.display = "flex";
   document.body.classList.add("loadingActive");
@@ -2448,6 +2450,8 @@ function openSupportContactModal(prefill = {}) {
         return;
       }
 
+      showLoading(tr("uploadPreviewLoading"), "");
+
       const reader = new FileReader();
       reader.onload = (e) => {
         supportScreenshotPreview.innerHTML = `
@@ -2458,7 +2462,13 @@ function openSupportContactModal(prefill = {}) {
             style="max-width:100%; max-height:220px; border:1px solid var(--border); border-radius:10px;"
           />
         `;
+        hideLoading();
       };
+
+      reader.onerror = () => {
+        hideLoading();
+      };
+
       reader.readAsDataURL(file);
     };
   }
