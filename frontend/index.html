@@ -698,17 +698,23 @@ select {
   padding: 18px;
   color: var(--text);
   line-height: 1.65;
+
+  max-height: 65vh;
+  overflow-y: auto;
 }
 
-    .modalFooter {
-      padding: 14px 18px;
-      background: var(--panel-2);
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+.modalFooter {
+  padding: 14px 18px;
+  background: var(--panel-2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  position: sticky;
+  bottom: 0;
+}
 
     .authError {
   color: #b42318;
@@ -2324,13 +2330,25 @@ function openSupportContactModal(prefill = {}) {
       <textarea id="supportDetails" rows="6" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);" placeholder="${tr("detailsPlaceholder")}">${escapeHtml(defaultDetails)}</textarea>
 
       <label for="supportPageFeature" style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
-      <input id="supportPageFeature" type="text" placeholder="${tr("pageFeaturePlaceholder")}" value="${escapeHtml(defaultPageFeature)}" />
+      <select id="supportPageFeature">
+        <option value="Main Menu" ${defaultPageFeature === "Main Menu" ? "selected" : ""}>Main Menu</option>
+        <option value="Full Test" ${defaultPageFeature === "Full Test" ? "selected" : ""}>Full Test</option>
+        <option value="Practice Mode" ${defaultPageFeature === "Practice Mode" ? "selected" : ""}>Practice Mode</option>
+        <option value="Profile" ${defaultPageFeature === "Profile" ? "selected" : ""}>Profile</option>
+        <option value="Login" ${defaultPageFeature === "Login" ? "selected" : ""}>Login</option>
+        <option value="Question Report" ${defaultPageFeature === "Question Report" ? "selected" : ""}>Question Report</option>
+        <option value="Other" ${defaultPageFeature === "Other" ? "selected" : ""}>Other</option>
+      </select>
 
       <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
       <input id="supportContactEmail" type="email" placeholder="${tr("contactEmailPlaceholder")}" value="${escapeHtml(defaultContactEmail)}" />
 
       <label for="supportDeviceBrowser" style="margin-top:12px;">${tr("deviceBrowserLabel")}</label>
       <input id="supportDeviceBrowser" type="text" value="${escapeHtml(defaultDeviceBrowser)}" />
+
+      <label for="supportScreenshot" style="margin-top:12px;">Attach Screenshot</label>
+      <input id="supportScreenshot" type="file" accept="image/*" />
+      <div id="supportScreenshotPreview" style="margin-top:10px;"></div>
 
       <div style="margin-top:12px;" class="muted">
         <strong>${tr("userStatusLabel")}</strong> ${escapeHtml(signedInLabel)}
@@ -2355,31 +2373,36 @@ function openSupportContactModal(prefill = {}) {
           const type = document.getElementById("supportType").value;
           const subject = document.getElementById("supportSubject").value.trim();
           const details = document.getElementById("supportDetails").value.trim();
-          const pageFeature = document.getElementById("supportPageFeature").value.trim();
+          const pageFeature = document.getElementById("supportPageFeature").value;
           const contactEmail = document.getElementById("supportContactEmail").value.trim().toLowerCase();
           const deviceBrowser = document.getElementById("supportDeviceBrowser").value.trim();
+          const screenshotFile = document.getElementById("supportScreenshot").files[0] || null;
 
           try {
             await withLoading(
               tr("supportSubmitting"),
               tr("systemWorking"),
               async () => {
+                const formData = new FormData();
+                formData.append("type", type);
+                formData.append("subject", subject);
+                formData.append("details", details);
+                formData.append("pageFeature", pageFeature);
+                formData.append("userStatus", signedInLabel);
+                formData.append("deviceBrowser", deviceBrowser);
+                formData.append("contactEmail", contactEmail);
+                formData.append("displayName", accountUser?.displayName || "");
+
+                if (screenshotFile) {
+                  formData.append("screenshot", screenshotFile);
+                }
+
                 const res = await fetch(`${API_BASE}/api/support/ticket`, {
                   method: "POST",
                   headers: {
-                    "Content-Type": "application/json",
                     ...getAuthHeaders()
                   },
-                  body: JSON.stringify({
-                    type,
-                    subject,
-                    details,
-                    pageFeature,
-                    userStatus: signedInLabel,
-                    deviceBrowser,
-                    contactEmail,
-                    displayName: accountUser?.displayName || ""
-                  })
+                  body: formData
                 });
 
                 const contentType = res.headers.get("content-type") || "";
@@ -2412,6 +2435,33 @@ function openSupportContactModal(prefill = {}) {
       }
     ]
   );
+
+  const supportScreenshotInput = document.getElementById("supportScreenshot");
+  const supportScreenshotPreview = document.getElementById("supportScreenshotPreview");
+
+  if (supportScreenshotInput && supportScreenshotPreview) {
+    supportScreenshotInput.onchange = () => {
+      const file = supportScreenshotInput.files[0];
+
+      if (!file) {
+        supportScreenshotPreview.innerHTML = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        supportScreenshotPreview.innerHTML = `
+          <div class="muted" style="margin-bottom:8px;">Screenshot Preview</div>
+          <img
+            src="${e.target.result}"
+            alt="Screenshot Preview"
+            style="max-width:100%; max-height:220px; border:1px solid var(--border); border-radius:10px;"
+          />
+        `;
+      };
+      reader.readAsDataURL(file);
+    };
+  }
 }
 
 function buildCurrentQuestionReportDetails() {
