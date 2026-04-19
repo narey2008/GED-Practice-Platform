@@ -311,8 +311,6 @@ app.get("/api/debug-email-verification-version", (req, res) => {
   });
 });
 
-
-
 app.get("/api/debug-forgot-password", (req, res) => {
   res.json({
     ok: true,
@@ -326,6 +324,14 @@ app.get("/api/debug-nathan-2026-reset-check", (req, res) => {
     ok: true,
     route: "api/debug-nathan-2026-reset-check",
     serverFileReached: true,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get("/api/debug-support-ticket-version", (req, res) => {
+  res.json({
+    ok: true,
+    supportTicketRouteExpected: true,
     timestamp: new Date().toISOString()
   });
 });
