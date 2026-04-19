@@ -2696,7 +2696,7 @@ function openForgotPasswordModal() {
           try {
             await withLoading(
               tr("forgotPasswordLoading"),
-              tr("systemWorking"),
+              tr(""),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
                   method: "POST",
@@ -2780,7 +2780,7 @@ function openResetPasswordModal(resetEmail, resetToken) {
           try {
             await withLoading(
               tr("resetPasswordLoading"),
-              tr("systemWorking"),
+              tr(""),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
                   method: "POST",
@@ -2865,7 +2865,7 @@ function openResendVerificationModal(prefillEmail = "") {
           try {
             await withLoading(
               tr("resendVerificationLoading"),
-              tr("systemWorking"),
+              tr(""),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
                   method: "POST",
@@ -2941,7 +2941,7 @@ function openDeleteAccountModal() {
           try {
             await withLoading(
               tr("deleteAccountLoading"),
-              tr("systemWorking"),
+              tr(""),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/delete-account`, {
                   method: "POST",
@@ -3051,7 +3051,7 @@ function openDeleteAccountModal() {
       try {
         await withLoading(
           isRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
-          tr("systemWorking"),
+          tr(""),
           async () => {
             const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
             const payload = isRegister
@@ -4606,7 +4606,7 @@ async function handleEmailVerificationFromUrl() {
   try {
     await withLoading(
       tr("verifyEmailLoading"),
-      tr("systemWorking"),
+      tr(""),
       async () => {
         const res = await fetch(`${API_BASE}/api/auth/verify-email`, {
           method: "POST",
