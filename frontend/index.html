@@ -4593,7 +4593,6 @@ async function saveCompletedPracticeToHistory() {
         panel.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
    <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
-  <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
 </div>
 
           <div class="reviewTop">
@@ -4761,10 +4760,6 @@ async function saveCompletedPracticeToHistory() {
         });
 
         document.getElementById("profileBackBtn").onclick = () => {
-          goToMainMenu();
-        };
-        
-        document.getElementById("profileMainMenuBtn").onclick = () => {
           goToMainMenu();
         };
 
