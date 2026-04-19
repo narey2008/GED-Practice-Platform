@@ -2325,32 +2325,11 @@ function openSupportContactModal(prefill = {}) {
   const defaultContactEmail = prefill.contactEmail || accountUser?.email || "";
   const defaultDeviceBrowser = prefill.deviceBrowser || navigator.userAgent;
 
-  const typeDisplayMap = {
-    bug: tr("bug"),
-    addition: tr("additionRequest"),
-    change_remove: tr("changeRemoveRequest"),
-    other: tr("other")
-  };
-
-  const initialTypeValue = typeDisplayMap[defaultType] || defaultType;
-  const initialPageFeatureValue = defaultPageFeature || "Main Menu";
-
   showModal(
     tr("supportContactTitle"),
     `
-      <label for="supportTypeInput">${tr("supportTypeLabel")}</label>
-      <input
-        id="supportTypeInput"
-        list="supportTypeOptions"
-        value="${escapeHtml(initialTypeValue)}"
-        placeholder="${tr("supportTypeLabel")}"
-      />
-      <datalist id="supportTypeOptions">
-        <option value="${tr("bug")}"></option>
-        <option value="${tr("additionRequest")}"></option>
-        <option value="${tr("changeRemoveRequest")}"></option>
-        <option value="${tr("other")}"></option>
-      </datalist>
+      <label>${tr("supportTypeLabel")}</label>
+      <div id="supportTypeFieldWrap"></div>
 
       <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
       <input id="supportSubject" type="text" placeholder="${tr("supportSubjectPlaceholder")}" value="${escapeHtml(defaultSubject)}" />
@@ -2360,22 +2339,8 @@ function openSupportContactModal(prefill = {}) {
       <textarea id="supportDetails" rows="6" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);" placeholder="${tr("detailsPlaceholder")}">${escapeHtml(defaultDetails)}</textarea>
       <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
-      <label for="supportPageFeatureInput" style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
-      <input
-        id="supportPageFeatureInput"
-        list="supportPageFeatureOptions"
-        value="${escapeHtml(initialPageFeatureValue)}"
-        placeholder="${tr("pageFeatureLabel")}"
-      />
-      <datalist id="supportPageFeatureOptions">
-        <option value="Main Menu"></option>
-        <option value="Full Test"></option>
-        <option value="Practice Mode"></option>
-        <option value="Profile"></option>
-        <option value="Login"></option>
-        <option value="Question Report"></option>
-        <option value="Other"></option>
-      </datalist>
+      <label style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
+      <div id="supportPageFeatureFieldWrap"></div>
       <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
@@ -2409,21 +2374,15 @@ function openSupportContactModal(prefill = {}) {
           errorEl.classList.add("hidden");
           errorEl.textContent = "";
 
-          const typeInputValue = document.getElementById("supportTypeInput").value.trim();
+          const type = getSupportTypeValue();
           const subject = document.getElementById("supportSubject").value.trim();
           const details = document.getElementById("supportDetails").value.trim();
-          const pageFeature = document.getElementById("supportPageFeatureInput").value.trim();
+          const pageFeature = getSupportPageFeatureValue();
           const contactEmail = document.getElementById("supportContactEmail").value.trim().toLowerCase();
           const deviceBrowser = document.getElementById("supportDeviceBrowser").value.trim();
           const screenshotFile = document.getElementById("supportScreenshot").files[0] || null;
 
-          let type = "other";
-          if (typeInputValue === tr("bug")) type = "bug";
-          else if (typeInputValue === tr("additionRequest")) type = "addition";
-          else if (typeInputValue === tr("changeRemoveRequest")) type = "change_remove";
-          else if (typeInputValue === tr("other")) type = "other";
-
-          if (!typeInputValue) {
+          if (!type) {
             errorEl.textContent = tr("supportTypeLabel");
             errorEl.classList.remove("hidden");
             return;
@@ -2442,7 +2401,6 @@ function openSupportContactModal(prefill = {}) {
               async () => {
                 const formData = new FormData();
                 formData.append("type", type);
-                formData.append("typeLabel", typeInputValue);
                 formData.append("subject", subject);
                 formData.append("details", details);
                 formData.append("pageFeature", pageFeature);
@@ -2494,28 +2452,133 @@ function openSupportContactModal(prefill = {}) {
     ]
   );
 
-  const supportTypeInput = document.getElementById("supportTypeInput");
-  const supportPageFeatureInput = document.getElementById("supportPageFeatureInput");
+  const typeOptions = [
+    { value: "bug", label: tr("bug") },
+    { value: "addition", label: tr("additionRequest") },
+    { value: "change_remove", label: tr("changeRemoveRequest") },
+    { value: "other", label: tr("other") }
+  ];
 
-  if (supportTypeInput) {
-    supportTypeInput.addEventListener("change", () => {
-      if (supportTypeInput.value.trim() === tr("other")) {
-        supportTypeInput.value = "";
-        supportTypeInput.placeholder = tr("otherDetailsPlaceholder");
-        supportTypeInput.focus();
-      }
-    });
+  const pageFeatureOptions = [
+    "Main Menu",
+    "Full Test",
+    "Practice Mode",
+    "Profile",
+    "Login",
+    "Question Report",
+    "Other"
+  ];
+
+  function renderSupportTypeField(selectedValue) {
+    const wrap = document.getElementById("supportTypeFieldWrap");
+    if (!wrap) return;
+
+    if (selectedValue === "__other_input__") {
+      wrap.innerHTML = `
+        <input
+          id="supportTypeOtherInput"
+          type="text"
+          placeholder="${tr("otherDetailsPlaceholder")}"
+          style="width:100%;"
+        />
+      `;
+      const input = document.getElementById("supportTypeOtherInput");
+      if (input) input.focus();
+      return;
+    }
+
+    wrap.innerHTML = `
+      <select id="supportTypeSelect">
+        ${typeOptions
+          .map(
+            (opt) =>
+              `<option value="${opt.value}" ${opt.value === selectedValue ? "selected" : ""}>${opt.label}</option>`
+          )
+          .join("")}
+      </select>
+    `;
+
+    const select = document.getElementById("supportTypeSelect");
+    if (select) {
+      select.onchange = () => {
+        if (select.value === "other") {
+          renderSupportTypeField("__other_input__");
+        }
+      };
+    }
   }
 
-  if (supportPageFeatureInput) {
-    supportPageFeatureInput.addEventListener("change", () => {
-      if (supportPageFeatureInput.value.trim() === "Other") {
-        supportPageFeatureInput.value = "";
-        supportPageFeatureInput.placeholder = tr("otherDetailsPlaceholder");
-        supportPageFeatureInput.focus();
-      }
-    });
+  function renderSupportPageFeatureField(selectedValue) {
+    const wrap = document.getElementById("supportPageFeatureFieldWrap");
+    if (!wrap) return;
+
+    if (selectedValue === "__other_input__") {
+      wrap.innerHTML = `
+        <input
+          id="supportPageFeatureOtherInput"
+          type="text"
+          placeholder="${tr("otherDetailsPlaceholder")}"
+          style="width:100%;"
+        />
+      `;
+      const input = document.getElementById("supportPageFeatureOtherInput");
+      if (input) input.focus();
+      return;
+    }
+
+    wrap.innerHTML = `
+      <select id="supportPageFeatureSelect">
+        ${pageFeatureOptions
+          .map(
+            (opt) =>
+              `<option value="${opt}" ${opt === selectedValue ? "selected" : ""}>${opt}</option>`
+          )
+          .join("")}
+      </select>
+    `;
+
+    const select = document.getElementById("supportPageFeatureSelect");
+    if (select) {
+      select.onchange = () => {
+        if (select.value === "Other") {
+          renderSupportPageFeatureField("__other_input__");
+        }
+      };
+    }
   }
+
+  function getSupportTypeValue() {
+    const typeSelect = document.getElementById("supportTypeSelect");
+    const typeOtherInput = document.getElementById("supportTypeOtherInput");
+
+    if (typeOtherInput) {
+      return typeOtherInput.value.trim();
+    }
+
+    if (typeSelect) {
+      return typeSelect.value;
+    }
+
+    return "";
+  }
+
+  function getSupportPageFeatureValue() {
+    const featureSelect = document.getElementById("supportPageFeatureSelect");
+    const featureOtherInput = document.getElementById("supportPageFeatureOtherInput");
+
+    if (featureOtherInput) {
+      return featureOtherInput.value.trim();
+    }
+
+    if (featureSelect) {
+      return featureSelect.value;
+    }
+
+    return "";
+  }
+
+  renderSupportTypeField(defaultType);
+  renderSupportPageFeatureField(defaultPageFeature);
 
   const supportScreenshotInput = document.getElementById("supportScreenshot");
   const supportScreenshotPreview = document.getElementById("supportScreenshotPreview");
