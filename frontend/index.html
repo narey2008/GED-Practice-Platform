@@ -1116,6 +1116,7 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
   isPaused: false,
   idleSeconds: 0,
   autoPaused: false,
+  supportTicketPauseActive: false,
   auth: {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
     user: null,
@@ -2363,7 +2364,10 @@ function openSupportContactModal(prefill = {}) {
     [
       {
         label: tr("cancel"),
-        variant: "secondary"
+        variant: "secondary",
+        onClick: async () => {
+          await resumeAfterSupportTicketIfNeeded();
+        }
       },
       {
         label: tr("submitSupportRequest"),
@@ -2436,10 +2440,10 @@ function openSupportContactModal(prefill = {}) {
                 }
 
                 closeModal();
-                showModal(
+                await resumeAfterSupportTicketIfNeeded();
+                showToast(
                   tr("supportTicketSent"),
-                  tr("supportTicketSentBody"),
-                  [{ label: tr("close"), variant: "primary" }]
+                  tr("supportTicketSentBody")
                 );
               }
             );
@@ -2687,15 +2691,18 @@ ${tr("correctAnswerLabel")}:
 ${String(q.answer ?? "").trim() || "—"}`;
 }
 
-function reportCurrentQuestion() {
+async function reportCurrentQuestion() {
   if (!state.questions.length) return;
+
+  await pauseForSupportTicket();
 
   openSupportContactModal({
     type: "bug",
     subject: tr("questionReportSubject"),
     details: buildCurrentQuestionReportDetails(),
     pageFeature: "Question Report",
-    isQuestionReport: true
+    isQuestionReport: true,
+    resumeAfterClose: true
   });
 }
 
@@ -3709,6 +3716,34 @@ async function resumeTest() {
   resetIdleTracking();
   updateStatus();
   closeModal();
+  await saveProgress();
+
+  if (!state.timeoutMode && !state.lockedReviewMode) {
+    startTimer();
+  }
+}
+async function pauseForSupportTicket() {
+  if (state.mode !== "test") return false;
+  if (!state.questions.length) return false;
+  if (state.timeoutMode || state.lockedReviewMode || state.isPaused) return false;
+
+  state.isPaused = true;
+  state.autoPaused = false;
+  state.supportTicketPauseActive = true;
+  stopTimer();
+  updateStatus();
+  await saveProgress();
+  return true;
+}
+
+async function resumeAfterSupportTicketIfNeeded() {
+  if (!state.supportTicketPauseActive) return;
+
+  state.supportTicketPauseActive = false;
+  state.isPaused = false;
+  state.autoPaused = false;
+  resetIdleTracking();
+  updateStatus();
   await saveProgress();
 
   if (!state.timeoutMode && !state.lockedReviewMode) {
@@ -4874,6 +4909,7 @@ async function handleEmailVerificationFromUrl() {
   state.isPaused = false;
   state.idleSeconds = 0;
   state.autoPaused = false;
+  state.supportTicketPauseActive = false;
 
   renderChart(null);
   setView("menu");
@@ -4974,8 +5010,8 @@ async function handleEmailVerificationFromUrl() {
     document.getElementById("flagBtn").onclick = async () => {
   await toggleFlag();
 };
-document.getElementById("reportQuestionBtn").onclick = () => {
-  reportCurrentQuestion();
+document.getElementById("reportQuestionBtn").onclick = async () => {
+  await reportCurrentQuestion();
 };
 document.getElementById("pauseBtn").onclick = async () => {
   if (state.mode !== "test") return;
