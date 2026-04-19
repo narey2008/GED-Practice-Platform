@@ -2322,35 +2322,35 @@ function openSupportContactModal(prefill = {}) {
   const defaultSubject = prefill.subject || "";
   const defaultDetails = prefill.details || "";
   const defaultPageFeature = inferredPageFeature;
-  const defaultOtherDetails = prefill.otherDetails || "";
   const defaultContactEmail = prefill.contactEmail || accountUser?.email || "";
   const defaultDeviceBrowser = prefill.deviceBrowser || navigator.userAgent;
+
+  const typeDisplayMap = {
+    bug: tr("bug"),
+    addition: tr("additionRequest"),
+    change_remove: tr("changeRemoveRequest"),
+    other: tr("other")
+  };
+
+  const initialTypeValue = typeDisplayMap[defaultType] || defaultType;
+  const initialPageFeatureValue = defaultPageFeature || "Main Menu";
 
   showModal(
     tr("supportContactTitle"),
     `
-      <label for="supportType">${tr("supportTypeLabel")}</label>
-      <div style="display:grid; grid-template-columns: 1fr 180px; gap:8px; align-items:center;">
-        <select id="supportType">
-          <option value="bug" ${defaultType === "bug" ? "selected" : ""}>${tr("bug")}</option>
-          <option value="addition" ${defaultType === "addition" ? "selected" : ""}>${tr("additionRequest")}</option>
-          <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>${tr("changeRemoveRequest")}</option>
-          <option value="other" ${defaultType === "other" ? "selected" : ""}>${tr("other")}</option>
-        </select>
-
-        <div
-          id="supportOtherDetailsWrap"
-          style="${defaultType === "other" ? "display:block;" : "display:none;"}"
-        >
-          <input
-            id="supportOtherDetails"
-            type="text"
-            placeholder="${tr("otherDetailsPlaceholder")}"
-            value="${escapeHtml(defaultOtherDetails)}"
-            style="width:100%;"
-          />
-        </div>
-      </div>
+      <label for="supportTypeInput">${tr("supportTypeLabel")}</label>
+      <input
+        id="supportTypeInput"
+        list="supportTypeOptions"
+        value="${escapeHtml(initialTypeValue)}"
+        placeholder="${tr("supportTypeLabel")}"
+      />
+      <datalist id="supportTypeOptions">
+        <option value="${tr("bug")}"></option>
+        <option value="${tr("additionRequest")}"></option>
+        <option value="${tr("changeRemoveRequest")}"></option>
+        <option value="${tr("other")}"></option>
+      </datalist>
 
       <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
       <input id="supportSubject" type="text" placeholder="${tr("supportSubjectPlaceholder")}" value="${escapeHtml(defaultSubject)}" />
@@ -2360,16 +2360,22 @@ function openSupportContactModal(prefill = {}) {
       <textarea id="supportDetails" rows="6" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);" placeholder="${tr("detailsPlaceholder")}">${escapeHtml(defaultDetails)}</textarea>
       <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
-      <label for="supportPageFeature" style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
-      <select id="supportPageFeature">
-        <option value="Main Menu" ${defaultPageFeature === "Main Menu" ? "selected" : ""}>Main Menu</option>
-        <option value="Full Test" ${defaultPageFeature === "Full Test" ? "selected" : ""}>Full Test</option>
-        <option value="Practice Mode" ${defaultPageFeature === "Practice Mode" ? "selected" : ""}>Practice Mode</option>
-        <option value="Profile" ${defaultPageFeature === "Profile" ? "selected" : ""}>Profile</option>
-        <option value="Login" ${defaultPageFeature === "Login" ? "selected" : ""}>Login</option>
-        <option value="Question Report" ${defaultPageFeature === "Question Report" ? "selected" : ""}>Question Report</option>
-        <option value="Other" ${defaultPageFeature === "Other" ? "selected" : ""}>Other</option>
-      </select>
+      <label for="supportPageFeatureInput" style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
+      <input
+        id="supportPageFeatureInput"
+        list="supportPageFeatureOptions"
+        value="${escapeHtml(initialPageFeatureValue)}"
+        placeholder="${tr("pageFeatureLabel")}"
+      />
+      <datalist id="supportPageFeatureOptions">
+        <option value="Main Menu"></option>
+        <option value="Full Test"></option>
+        <option value="Practice Mode"></option>
+        <option value="Profile"></option>
+        <option value="Login"></option>
+        <option value="Question Report"></option>
+        <option value="Other"></option>
+      </datalist>
       <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
 
       <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
@@ -2403,18 +2409,28 @@ function openSupportContactModal(prefill = {}) {
           errorEl.classList.add("hidden");
           errorEl.textContent = "";
 
-          const type = document.getElementById("supportType").value;
-          const otherDetailsEl = document.getElementById("supportOtherDetails");
-          const otherDetails = otherDetailsEl ? otherDetailsEl.value.trim() : "";
+          const typeInputValue = document.getElementById("supportTypeInput").value.trim();
           const subject = document.getElementById("supportSubject").value.trim();
           const details = document.getElementById("supportDetails").value.trim();
-          const pageFeature = document.getElementById("supportPageFeature").value;
+          const pageFeature = document.getElementById("supportPageFeatureInput").value.trim();
           const contactEmail = document.getElementById("supportContactEmail").value.trim().toLowerCase();
           const deviceBrowser = document.getElementById("supportDeviceBrowser").value.trim();
           const screenshotFile = document.getElementById("supportScreenshot").files[0] || null;
 
-          if (type === "other" && !otherDetails) {
-            errorEl.textContent = tr("otherDetailsPlaceholder");
+          let type = "other";
+          if (typeInputValue === tr("bug")) type = "bug";
+          else if (typeInputValue === tr("additionRequest")) type = "addition";
+          else if (typeInputValue === tr("changeRemoveRequest")) type = "change_remove";
+          else if (typeInputValue === tr("other")) type = "other";
+
+          if (!typeInputValue) {
+            errorEl.textContent = tr("supportTypeLabel");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          if (!pageFeature) {
+            errorEl.textContent = tr("pageFeatureLabel");
             errorEl.classList.remove("hidden");
             return;
           }
@@ -2426,6 +2442,7 @@ function openSupportContactModal(prefill = {}) {
               async () => {
                 const formData = new FormData();
                 formData.append("type", type);
+                formData.append("typeLabel", typeInputValue);
                 formData.append("subject", subject);
                 formData.append("details", details);
                 formData.append("pageFeature", pageFeature);
@@ -2433,7 +2450,6 @@ function openSupportContactModal(prefill = {}) {
                 formData.append("deviceBrowser", deviceBrowser);
                 formData.append("contactEmail", contactEmail);
                 formData.append("displayName", accountUser?.displayName || "");
-                formData.append("otherDetails", otherDetails);
 
                 if (screenshotFile) {
                   formData.append("screenshot", screenshotFile);
@@ -2478,23 +2494,27 @@ function openSupportContactModal(prefill = {}) {
     ]
   );
 
-  const supportTypeSelect = document.getElementById("supportType");
-  const supportOtherDetailsWrap = document.getElementById("supportOtherDetailsWrap");
-  const supportOtherDetails = document.getElementById("supportOtherDetails");
+  const supportTypeInput = document.getElementById("supportTypeInput");
+  const supportPageFeatureInput = document.getElementById("supportPageFeatureInput");
 
-  if (supportTypeSelect && supportOtherDetailsWrap && supportOtherDetails) {
-    const syncOtherFieldVisibility = () => {
-      const isOther = supportTypeSelect.value === "other";
-      supportOtherDetailsWrap.style.display = isOther ? "block" : "none";
-
-      if (!isOther) {
-        supportOtherDetails.value = "";
+  if (supportTypeInput) {
+    supportTypeInput.addEventListener("change", () => {
+      if (supportTypeInput.value.trim() === tr("other")) {
+        supportTypeInput.value = "";
+        supportTypeInput.placeholder = tr("otherDetailsPlaceholder");
+        supportTypeInput.focus();
       }
-    };
+    });
+  }
 
-    supportTypeSelect.removeEventListener?.("change", syncOtherFieldVisibility);
-    supportTypeSelect.addEventListener("change", syncOtherFieldVisibility);
-    syncOtherFieldVisibility();
+  if (supportPageFeatureInput) {
+    supportPageFeatureInput.addEventListener("change", () => {
+      if (supportPageFeatureInput.value.trim() === "Other") {
+        supportPageFeatureInput.value = "";
+        supportPageFeatureInput.placeholder = tr("otherDetailsPlaceholder");
+        supportPageFeatureInput.focus();
+      }
+    });
   }
 
   const supportScreenshotInput = document.getElementById("supportScreenshot");
