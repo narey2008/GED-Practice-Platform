@@ -2458,6 +2458,84 @@ function reportCurrentQuestion() {
   });
 }
 
+function hideToast() {
+  const wrap = document.getElementById("toastWrap");
+  wrap.innerHTML = "";
+
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+}
+
+function showToast(title, text, duration = 6000) {
+  const wrap = document.getElementById("toastWrap");
+
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+
+  wrap.innerHTML = `
+    <div class="toast">
+      <div class="toastTitle">${escapeHtml(title)}</div>
+      <div class="toastText">${escapeHtml(text)}</div>
+      <div class="toastActions">
+        <button id="toastCloseBtn" class="toastCloseBtn" type="button">${tr("closeToast")}</button>
+      </div>
+    </div>
+  `;
+
+  const closeBtn = document.getElementById("toastCloseBtn");
+  if (closeBtn) {
+    closeBtn.onclick = () => hideToast();
+  }
+
+  toastTimeoutId = setTimeout(() => {
+    hideToast();
+  }, duration);
+}
+
+let toastTimeoutId = null;
+
+function hideToast() {
+  const wrap = document.getElementById("toastWrap");
+  wrap.innerHTML = "";
+
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+}
+
+function showToast(title, text, duration = 6000) {
+  const wrap = document.getElementById("toastWrap");
+
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+
+  wrap.innerHTML = `
+    <div class="toast">
+      <div class="toastTitle">${escapeHtml(title)}</div>
+      <div class="toastText">${escapeHtml(text)}</div>
+      <div class="toastActions">
+        <button id="toastCloseBtn" class="toastCloseBtn" type="button">${tr("closeToast")}</button>
+      </div>
+    </div>
+  `;
+
+  const closeBtn = document.getElementById("toastCloseBtn");
+  if (closeBtn) {
+    closeBtn.onclick = () => hideToast();
+  }
+
+  toastTimeoutId = setTimeout(() => {
+    hideToast();
+  }, duration);
+}
+
     function openSettings() {
   const currentTheme = getSavedTheme();
   const currentLanguage = getSavedLanguage();
@@ -4560,68 +4638,74 @@ async function handleEmailVerificationFromUrl() {
   setView("menu");
 }
 
-    document.getElementById("startTestBtn").onclick = async () => {
-      if (state.auth.guestMode) {
-        await startTest();
-        return;
-      }
+    const startTestBtn = document.getElementById("startTestBtn");
+    if (startTestBtn) {
+      startTestBtn.addEventListener("click", async () => {
+        if (state.auth.guestMode) {
+          await startTest();
+          return;
+        }
 
-      if (!state.auth.user || !state.auth.token) {
-        showModal(
-          tr("signInRequired"),
-          tr("signInRequiredBody"),
-          [
-            { label: tr("cancel"), variant: "secondary" },
-            {
-              label: tr("signIn"),
-              variant: "secondary",
-              keepOpen: true,
-              onClick: async () => {
-                openAuthModal("signin");
+        if (!state.auth.user || !state.auth.token) {
+          showModal(
+            tr("signInRequired"),
+            tr("signInRequiredBody"),
+            [
+              { label: tr("cancel"), variant: "secondary" },
+              {
+                label: tr("signIn"),
+                variant: "secondary",
+                keepOpen: true,
+                onClick: async () => {
+                  openAuthModal("signin");
+                }
+              },
+              {
+                label: tr("continueGuest"),
+                variant: "primary",
+                keepOpen: true,
+                onClick: async () => {
+                  closeModal();
+                  await continueAsGuest(true);
+                }
               }
-            },
-            {
-              label: tr("continueGuest"),
-              variant: "primary",
-              keepOpen: true,
-              onClick: async () => {
-                closeModal();
-                await continueAsGuest(true);
+            ]
+          );
+          return;
+        }
+
+        const resumeExists = await hasSavedProgress();
+
+        if (resumeExists) {
+          showModal(
+            tr("warning"),
+            tr("replaceProgressWarning"),
+            [
+              { label: tr("cancel"), variant: "secondary" },
+              {
+                label: tr("startTest"),
+                variant: "primary",
+                onClick: async () => {
+                  await clearSavedProgress();
+                  await startTest();
+                }
               }
-            }
-          ]
-        );
-        return;
-      }
+            ]
+          );
+        } else {
+          await startTest();
+        }
+      });
+    }
 
-      const resumeExists = await hasSavedProgress();
-
-      if (resumeExists) {
-        showModal(
-          tr("warning"),
-          tr("replaceProgressWarning"),
-          [
-            { label: tr("cancel"), variant: "secondary" },
-            {
-              label: tr("startTest"),
-              variant: "primary",
-              onClick: async () => {
-                await clearSavedProgress();
-                await startTest();
-              }
-            }
-          ]
-        );
-      } else {
-        await startTest();
-      }
-    };
-
-        document.getElementById("startPracticeBtn").onclick = async () => {
-      const skill = document.getElementById("practiceSkillSelect").value;
-      const difficulty = document.getElementById("practiceDifficultySelect").value;
-      await startPractice(skill, difficulty, false);
-    };
+    const startPracticeBtn = document.getElementById("startPracticeBtn");
+    if (startPracticeBtn) {
+      startPracticeBtn.addEventListener("click", async () => {
+        const skill = document.getElementById("practiceSkillSelect").value;
+        const difficulty = document.getElementById("practiceDifficultySelect").value;
+        await startPractice(skill, difficulty, false);
+      });
+    }
 
     document.getElementById("resumeBtn").onclick = async () => {
       await loadSavedProgress();
