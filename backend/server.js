@@ -610,6 +610,58 @@ app.post("/api/auth/reset-password", async (req, res) => {
   }
 });
 
+app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
+  try {
+    const currentPassword =
+      typeof req.body.currentPassword === "string"
+        ? req.body.currentPassword
+        : "";
+
+    const newPassword =
+      typeof req.body.newPassword === "string"
+        ? req.body.newPassword
+        : "";
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        error: "Current password and new password are required."
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        error: "New password must be at least 8 characters long."
+      });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!passwordMatches) {
+      return res.status(401).json({ error: "Current password is incorrect." });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.passwordResetTokenHash = null;
+    user.passwordResetExpiresAt = null;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Password changed successfully."
+    });
+  } catch (error) {
+    console.error("CHANGE PASSWORD ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to change password."
+    });
+  }
+});
+
 app.get("/api/auth/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.auth.userId);

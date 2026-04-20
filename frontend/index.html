@@ -1456,6 +1456,19 @@ passwordResetSuccessBody: isSpanish
   : "Your password has been reset. You can now sign in.",
 forgotPasswordLoading: isSpanish ? "Enviando Enlace..." : "Sending Link...",
 resetPasswordLoading: isSpanish ? "Restableciendo Contraseña..." : "Resetting Password...",
+changePassword: isSpanish ? "Cambiar Contraseña" : "Change Password",
+changePasswordTitle: isSpanish ? "Cambiar Contraseña" : "Change Password",
+currentPassword: isSpanish ? "Contraseña Actual" : "Current Password",
+enterCurrentPassword: isSpanish ? "Ingresa tu contraseña actual" : "Enter your current password",
+changePasswordNow: isSpanish ? "Cambiar Contraseña" : "Change Password",
+changePasswordLoading: isSpanish ? "Cambiando Contraseña..." : "Changing Password...",
+changePasswordSuccess: isSpanish ? "Contraseña Actualizada" : "Password Updated",
+changePasswordSuccessBody: isSpanish
+  ? "Tu contraseña fue actualizada correctamente."
+  : "Your password was updated successfully.",
+newPasswordTooShort: isSpanish
+  ? "La nueva contraseña debe tener al menos 8 caracteres."
+  : "New password must be at least 8 characters long.",
 
     mode: isSpanish ? "Modo" : "Mode",
 fullTest: isSpanish ? "Examen Completo" : "Full Test",
@@ -2884,7 +2897,7 @@ function openForgotPasswordModal() {
           try {
             await withLoading(
               tr("forgotPasswordLoading"),
-              tr(""),
+              tr("systemWorking"),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
                   method: "POST",
@@ -2968,7 +2981,7 @@ function openResetPasswordModal(resetEmail, resetToken) {
           try {
             await withLoading(
               tr("resetPasswordLoading"),
-              tr(""),
+              tr("systemWorking"),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
                   method: "POST",
@@ -3018,6 +3031,100 @@ function openResetPasswordModal(resetEmail, resetToken) {
             );
           } catch (error) {
             errorEl.textContent = error.message || tr("invalidResetLink");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
+function openChangePasswordModal() {
+  showModal(
+    tr("changePasswordTitle"),
+    `
+      <label for="changePasswordCurrent">${tr("currentPassword")}</label>
+      <input id="changePasswordCurrent" type="password" placeholder="${tr("enterCurrentPassword")}" />
+
+      <label for="changePasswordNew" style="margin-top:12px;">${tr("newPassword")}</label>
+      <input id="changePasswordNew" type="password" placeholder="${tr("enterNewPassword")}" />
+
+      <label for="changePasswordConfirm" style="margin-top:12px;">${tr("confirmPassword")}</label>
+      <input id="changePasswordConfirm" type="password" placeholder="${tr("confirmNewPassword")}" />
+
+      <div id="changePasswordError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("changePasswordNow"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("changePasswordError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const currentPassword = document.getElementById("changePasswordCurrent").value;
+          const newPassword = document.getElementById("changePasswordNew").value;
+          const confirmPassword = document.getElementById("changePasswordConfirm").value;
+
+          if (newPassword !== confirmPassword) {
+            errorEl.textContent = tr("passwordsDoNotMatch");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          if (newPassword.length < 8) {
+            errorEl.textContent = tr("newPasswordTooShort");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          try {
+            await withLoading(
+              tr("changePasswordLoading"),
+              tr("loadingBlank"),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                  },
+                  body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                  })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Change password returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("changePasswordTitle"));
+                }
+
+                closeModal();
+                showModal(
+                  tr("changePasswordSuccess"),
+                  tr("changePasswordSuccessBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("changePasswordTitle");
             errorEl.classList.remove("hidden");
           }
         }
@@ -4650,6 +4757,8 @@ async function openProfilePanel(defaultTab = "tests") {
             </div>
           </div>
 
+          <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+
           <div id="testHistorySection" class="hidden"></div>
           <div id="practiceHistorySection" class="hidden"></div>
         `;
@@ -4804,12 +4913,19 @@ const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
           <div class="reviewItem">${tr("failedLoadHistory")}</div>
           <div class="reviewItem">
             <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+            <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("resetPasswordNow")}</button>
           </div>
         `;
 
         document.getElementById("profileBackBtn").onclick = () => {
           goToMainMenu();
         };
+      const profileResetPasswordBtn = document.getElementById("profileResetPasswordBtn");
+if (profileResetPasswordBtn) {
+  profileResetPasswordBtn.onclick = () => {
+    openChangePasswordModal();
+  };
+}
       }
     }
   );
