@@ -4869,16 +4869,23 @@ async function openProfilePanel(defaultTab = "tests") {
           };
         });
 
-document.getElementById("profileMainMenuBtn").onclick = () => {
+document.getElementById("profileBackBtn").onclick = () => {
   goToMainMenu();
 };
 
+const profileResetPasswordBtn = document.getElementById("profileResetPasswordBtn");
+if (profileResetPasswordBtn) {
+  profileResetPasswordBtn.onclick = () => {
+    openChangePasswordModal();
+  };
+}
+
 const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
-        if (practiceBtn) {
-          practiceBtn.onclick = async () => {
-            await startPractice(currentFocus, state.difficulty, true);
-          };
-        }
+if (practiceBtn) {
+  practiceBtn.onclick = async () => {
+    await startPractice(currentFocus, state.difficulty, true);
+  };
+}
 
         const profileVerifyBtn = document.getElementById("profileVerifyBtn");
         if (profileVerifyBtn) {
@@ -4913,19 +4920,13 @@ const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
           <div class="reviewItem">${tr("failedLoadHistory")}</div>
           <div class="reviewItem">
             <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-            <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("resetPasswordNow")}</button>
+            <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
           </div>
         `;
 
         document.getElementById("profileBackBtn").onclick = () => {
           goToMainMenu();
         };
-      const profileResetPasswordBtn = document.getElementById("profileResetPasswordBtn");
-if (profileResetPasswordBtn) {
-  profileResetPasswordBtn.onclick = () => {
-    openChangePasswordModal();
-  };
-}
       }
     }
   );
