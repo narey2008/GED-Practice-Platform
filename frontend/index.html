@@ -4913,14 +4913,10 @@ if (practiceBtn) {
         console.error("PROFILE PANEL ERROR:", error);
 
         panel.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
-  <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
-  <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-</div>
+          <h2 class="sectionTitle">${tr("profile")}</h2>
           <div class="reviewItem">${tr("failedLoadHistory")}</div>
           <div class="reviewItem">
             <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-            <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
           </div>
         `;
 
