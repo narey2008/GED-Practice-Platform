@@ -4555,14 +4555,14 @@ async function openProfilePanel(defaultTab = "tests") {
       await setView("profile");
 
       try {
-        const [testRes, practiceRes] = await Promise.all([
-          fetch(`${API_BASE}/api/test/history`, {
-            headers: { ...getAuthHeaders() }
-          }),
-          fetch(`${API_BASE}/api/practice/history`, {
-            headers: { ...getAuthHeaders() }
-          })
-        ]);
+const [testRes, practiceRes] = await Promise.all([
+  fetch(`${API_BASE}/api/test/history`, {
+    headers: { ...getAuthHeaders() }
+  }),
+  fetch(`${API_BASE}/api/practice/history`, {
+    headers: { ...getAuthHeaders() }
+  })
+]);
 
         const testData = await testRes.json();
         const practiceData = await practiceRes.json();
