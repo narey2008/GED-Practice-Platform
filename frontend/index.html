@@ -4516,9 +4516,12 @@ async function saveCompletedPracticeToHistory() {
 
   const panel = document.getElementById("reviewPanel");
   panel.innerHTML = `
-    <h2 class="sectionTitle">${tr("testReview")}</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+    <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
+    <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+  </div>
 
-    <div class="reviewTop">
+  <div class="reviewTop">
       <div class="reviewStat">
         <div class="reviewStatLabel">${tr("score")}</div>
         <div class="reviewStatValue">${score200} / 200</div>
@@ -4736,18 +4739,18 @@ panel.innerHTML = `
             </div>
           </div>
 
-          <div class="reviewItem">
-            <div class="menuActions">
-              <button id="profileResetPasswordBtn" class="secondaryBtn" onclick="openChangePasswordModal()">${tr("changePassword")}</button>
-              ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
-              ${
-                state.auth.user?.emailVerified
-                  ? `<button id="profileVerifyBtn" class="secondaryBtn">${tr("emailStatus")}: ${tr("verifiedStatus")}</button>`
-                  : `<button id="profileVerifyBtn" class="primaryBtn">${tr("verifyNow")}</button>`
-              }
-              <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
-            </div>
-          </div>
+<div class="reviewItem">
+  <div class="menuActions">
+    <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+    ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
+    ${
+      state.auth.user?.emailVerified
+        ? `<button id="profileVerifyBtn" class="secondaryBtn">${tr("emailStatus")}: ${tr("verifiedStatus")}</button>`
+        : `<button id="profileVerifyBtn" class="primaryBtn">${tr("verifyNow")}</button>`
+    }
+    <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
+  </div>
+</div>
 
           <div class="reviewItem">
             <div class="menuActions">
@@ -4866,9 +4869,9 @@ panel.innerHTML = `
           };
         });
 
-        document.getElementById("profileBackBtn").onclick = () => {
-          goToMainMenu();
-        };
+document.getElementById("profileMainMenuBtn").onclick = () => {
+  goToMainMenu();
+};
 
         const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
         if (practiceBtn) {
