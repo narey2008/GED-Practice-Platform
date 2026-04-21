@@ -4696,10 +4696,13 @@ async function openProfilePanel(defaultTab = "tests") {
 
         const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
 
-        panel.innerHTML = `
-          <h2 class="sectionTitle">${tr("profile")}</h2>
+panel.innerHTML = `
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+    <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
+    <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+  </div>
 
-          <div class="reviewTop">
+  <div class="reviewTop">
             <div class="reviewStat">
               <div class="reviewStatLabel">${tr("testsTaken")}</div>
               <div class="reviewStatValue">${testHistory.length}</div>
@@ -4735,7 +4738,6 @@ async function openProfilePanel(defaultTab = "tests") {
 
           <div class="reviewItem">
             <div class="menuActions">
-              <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
               <button id="profileResetPasswordBtn" class="secondaryBtn" onclick="openChangePasswordModal()">${tr("changePassword")}</button>
               ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
               ${
@@ -4908,9 +4910,9 @@ async function openProfilePanel(defaultTab = "tests") {
           </div>
         `;
 
-        document.getElementById("profileBackBtn").onclick = () => {
-          goToMainMenu();
-        };
+document.getElementById("profileMainMenuBtn").onclick = () => {
+  goToMainMenu();
+};
       }
     }
   );
