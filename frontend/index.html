@@ -1434,6 +1434,19 @@ resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resendin
 
     forgotPassword: isSpanish ? "¿Olvidaste tu contraseña?" : "Forgot Password?",
 forgotPasswordTitle: isSpanish ? "Restablecer Contraseña" : "Reset Password",
+changePassword: isSpanish ? "Cambiar Contraseña" : "Change Password",
+changePasswordTitle: isSpanish ? "Cambiar Contraseña" : "Change Password",
+currentPassword: isSpanish ? "Contraseña Actual" : "Current Password",
+enterCurrentPassword: isSpanish ? "Ingresa tu contraseña actual" : "Enter your current password",
+changePasswordNow: isSpanish ? "Cambiar Contraseña" : "Change Password",
+changePasswordLoading: isSpanish ? "Cambiando Contraseña..." : "Changing Password...",
+changePasswordSuccess: isSpanish ? "Contraseña Actualizada" : "Password Updated",
+changePasswordSuccessBody: isSpanish
+  ? "Tu contraseña fue actualizada correctamente."
+  : "Your password was updated successfully.",
+newPasswordTooShort: isSpanish
+  ? "La nueva contraseña debe tener al menos 8 caracteres."
+  : "New password must be at least 8 characters long.",
 forgotPasswordBody: isSpanish
   ? "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña."
   : "Enter your email and we will send you a password reset link.",
@@ -2970,15 +2983,17 @@ function openResetPasswordModal(resetEmail, resetToken) {
               tr("resetPasswordLoading"),
               tr(""),
               async () => {
-                const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    email: resetEmail,
-                    token: resetToken,
-                    password
-                  })
-                });
+const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...getAuthHeaders()
+  },
+  body: JSON.stringify({
+    currentPassword,
+    newPassword
+  })
+});
 
                 const contentType = res.headers.get("content-type") || "";
                 let data = null;
