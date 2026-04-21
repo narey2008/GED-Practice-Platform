@@ -2983,17 +2983,15 @@ function openResetPasswordModal(resetEmail, resetToken) {
               tr("resetPasswordLoading"),
               tr(""),
               async () => {
-const res = await fetch(`${API_BASE}/api/auth/change-password`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    ...getAuthHeaders()
-  },
-  body: JSON.stringify({
-    currentPassword,
-    newPassword
-  })
-});
+                const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    email: resetEmail,
+                    token: resetToken,
+                    password
+                  })
+                });
 
                 const contentType = res.headers.get("content-type") || "";
                 let data = null;
@@ -3041,7 +3039,99 @@ const res = await fetch(`${API_BASE}/api/auth/change-password`, {
   );
 }
 
-function openResendVerificationModal(prefillEmail = "") {
+function openChangePasswordModal() {
+  showModal(
+    tr("changePasswordTitle"),
+    `
+      <label for="changePasswordCurrent">${tr("currentPassword")}</label>
+      <input id="changePasswordCurrent" type="password" placeholder="${tr("enterCurrentPassword")}" />
+
+      <label for="changePasswordNew" style="margin-top:12px;">${tr("newPassword")}</label>
+      <input id="changePasswordNew" type="password" placeholder="${tr("enterNewPassword")}" />
+
+      <label for="changePasswordConfirm" style="margin-top:12px;">${tr("confirmPassword")}</label>
+      <input id="changePasswordConfirm" type="password" placeholder="${tr("confirmNewPassword")}" />
+
+      <div id="changePasswordError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("changePasswordNow"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("changePasswordError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          const currentPassword = document.getElementById("changePasswordCurrent").value;
+          const newPassword = document.getElementById("changePasswordNew").value;
+          const confirmPassword = document.getElementById("changePasswordConfirm").value;
+
+          if (newPassword !== confirmPassword) {
+            errorEl.textContent = tr("passwordsDoNotMatch");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          if (newPassword.length < 8) {
+            errorEl.textContent = tr("newPasswordTooShort");
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          try {
+            await withLoading(
+              tr("changePasswordLoading"),
+              tr(""),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                  },
+                  body: JSON.stringify({
+                    currentPassword,
+                    newPassword
+                  })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Change password returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("changePasswordTitle"));
+                }
+
+                closeModal();
+                showModal(
+                  tr("changePasswordSuccess"),
+                  tr("changePasswordSuccessBody"),
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("changePasswordTitle");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+
   showModal(
     tr("resendVerification"),
     `
