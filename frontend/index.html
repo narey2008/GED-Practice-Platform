@@ -4646,7 +4646,7 @@ async function openProfilePanel(defaultTab = "tests") {
           <div class="reviewItem">
             <div class="menuActions">
               <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-              <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+              <button id="profileResetPasswordBtn" class="secondaryBtn" onclick="openChangePasswordModal()">${tr("changePassword")}</button>
               ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
               ${
                 state.auth.user?.emailVerified
@@ -4777,13 +4777,6 @@ async function openProfilePanel(defaultTab = "tests") {
         document.getElementById("profileBackBtn").onclick = () => {
           goToMainMenu();
         };
-
-        const profileResetPasswordBtn = document.getElementById("profileResetPasswordBtn");
-        if (profileResetPasswordBtn) {
-          profileResetPasswordBtn.onclick = () => {
-            openChangePasswordModal();
-          };
-        }
 
         const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
         if (practiceBtn) {
