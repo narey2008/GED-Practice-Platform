@@ -82,6 +82,11 @@ function sanitizeUser(user) {
     email: user.email,
     displayName: user.displayName,
     emailVerified: !!user.emailVerified,
+    twoFactorEnabled: !!user.twoFactorEnabled || !!user.emailVerified,
+    hasPendingVerifiedAction:
+      !!user.pendingVerifiedAction &&
+      !!user.pendingVerifiedActionExpiresAt &&
+      user.pendingVerifiedActionExpiresAt > new Date(),
     createdAt: user.createdAt
   };
 }
@@ -114,6 +119,48 @@ function createPasswordResetToken() {
   };
 }
 
+function buildEmailTemplate({ title, body, buttonText, buttonUrl }) {
+  return `
+    <div style="font-family:Arial,sans-serif;background:#f5f7fb;padding:30px;">
+      <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #e3e7ee;">
+        
+        <div style="font-size:20px;font-weight:800;color:#153e75;margin-bottom:12px;">
+          GED Practice Platform
+        </div>
+
+        <div style="font-size:18px;font-weight:700;color:#10233f;margin-bottom:12px;">
+          ${title}
+        </div>
+
+        <div style="font-size:14px;line-height:1.6;color:#10233f;margin-bottom:20px;">
+          ${body}
+        </div>
+
+        ${
+          buttonUrl
+            ? `<div style="text-align:center;margin-bottom:20px;">
+                <a href="${buttonUrl}" style="display:inline-block;padding:12px 18px;background:#153e75;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;">
+                  ${buttonText}
+                </a>
+              </div>`
+            : ""
+        }
+
+        <div style="font-size:12px;color:#6b7280;border-top:1px solid #e3e7ee;padding-top:12px;margin-top:12px;">
+          <div>GED Practice Platform</div>
+          <div style="margin-top:6px;">
+            <a href="#" style="color:#153e75;text-decoration:none;">Terms</a> •
+            <a href="#" style="color:#153e75;text-decoration:none;">Privacy</a> •
+            <a href="#" style="color:#153e75;text-decoration:none;">FAQ</a> •
+            <a href="#" style="color:#153e75;text-decoration:none;">About</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
 function createEmailVerificationToken() {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
@@ -125,79 +172,151 @@ function createEmailVerificationToken() {
     expiresAt
   };
 }
+function createAccountActionToken() {
+  const rawToken = String(Math.floor(100000 + Math.random() * 900000));
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
 
-async function sendEmailVerificationEmail({ email, rawToken }) {
+  return {
+    rawToken,
+    tokenHash,
+    expiresAt
+  };
+}
+
+function createLoginTwoFactorToken() {
+  const rawToken = String(Math.floor(100000 + Math.random() * 900000));
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 10); // 10 minutes
+
+  return {
+    rawToken,
+    tokenHash,
+    expiresAt
+  };
+}
+
+async function sendLoginTwoFactorEmail({ email, rawToken }) {
   if (!mailTransport) {
     throw new Error("Email system is not configured.");
   }
 
-  const verifyUrl = `${process.env.APP_BASE_URL}/?verifyToken=${encodeURIComponent(rawToken)}&verifyEmail=${encodeURIComponent(email)}`;
+  const html = buildEmailTemplate({
+    title: "Your Login Security Code",
+    body: `
+      Use the code below to complete your sign-in:<br><br>
+      <div style="font-size:24px;font-weight:800;letter-spacing:4px;text-align:center;margin:16px 0;">
+        ${rawToken}
+      </div>
+      This code expires in 10 minutes.
+    `
+  });
 
   await mailTransport.sendMail({
     from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
     to: email,
-    subject: "Verify your GED Practice Platform email",
-    text: `Welcome to GED Practice Platform.
-
-Please verify your email by opening this link:
-${verifyUrl}
-
-This link expires in 24 hours.
-
-If you did not create this account, you can ignore this email.`,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#10233f;">
-        <h2>Verify your email</h2>
-        <p>Welcome to GED Practice Platform.</p>
-        <p>Please confirm that this email address belongs to you.</p>
-        <p>
-          <a href="${verifyUrl}" style="display:inline-block;padding:10px 16px;background:#153e75;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;">
-            Verify Email
-          </a>
-        </p>
-        <p>If the button does not work, use this link:</p>
-        <p>${verifyUrl}</p>
-        <p>This link expires in 24 hours.</p>
-        <p>If you did not create this account, you can ignore this email.</p>
-      </div>
-    `
+    subject: "Your GED Practice Platform login security code",
+    html
   });
 }
 
-async function sendPasswordResetEmail({ email, rawToken }) {
+async function sendAccountActionVerificationEmail({ email, rawToken, actionType }) {
   if (!mailTransport) {
     throw new Error("Email system is not configured.");
   }
 
-  const resetUrl = `${process.env.APP_BASE_URL}/?resetToken=${encodeURIComponent(rawToken)}&resetEmail=${encodeURIComponent(email)}`;
+  const actionLabelMap = {
+    changePassword: "change your password",
+    changeUsername: "change your username",
+    changeEmail: "change your email"
+  };
+
+  const actionLabel = actionLabelMap[actionType] || "complete a sensitive account action";
 
   await mailTransport.sendMail({
     from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
     to: email,
-    subject: "Reset your GED Practice Platform password",
-    text: `You requested a password reset.
+    subject: "Your GED Practice Platform security code",
+    text: `You requested to ${actionLabel}.
 
-Open this link to reset your password:
-${resetUrl}
+Your security code is: ${rawToken}
 
-This link expires in 30 minutes.
+This code expires in 15 minutes.
 
 If you did not request this, you can ignore this email.`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#10233f;">
-        <h2>Reset your GED Practice Platform password</h2>
-        <p>You requested a password reset.</p>
-        <p>
-          <a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#153e75;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:700;">
-            Reset Password
-          </a>
-        </p>
-        <p>If the button does not work, use this link:</p>
-        <p>${resetUrl}</p>
-        <p>This link expires in 30 minutes.</p>
+        <h2>Security Confirmation Required</h2>
+        <p>You requested to ${actionLabel}.</p>
+        <p>Enter this security code to continue:</p>
+        <div style="display:inline-block;padding:12px 18px;background:#153e75;color:#ffffff;border-radius:10px;font-size:24px;font-weight:800;letter-spacing:0.12em;">
+          ${rawToken}
+        </div>
+        <p style="margin-top:16px;">This code expires in 15 minutes.</p>
         <p>If you did not request this, you can ignore this email.</p>
       </div>
     `
+  });
+}
+async function sendEmailVerificationEmail({ email, rawToken }) {
+  if (!mailTransport) throw new Error("Email system is not configured.");
+
+  const verifyUrl = `${process.env.APP_BASE_URL}/?verifyToken=${encodeURIComponent(rawToken)}&verifyEmail=${encodeURIComponent(email)}`;
+
+  const html = buildEmailTemplate({
+    title: "Verify Your Email",
+    body: `Welcome to GED Practice Platform.<br><br>Please verify your email to activate your account.`,
+    buttonText: "Verify Email",
+    buttonUrl: verifyUrl
+  });
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Verify your GED Practice Platform account",
+    html
+  });
+}
+
+async function sendPendingEmailChangeVerificationEmail({ email, rawToken }) {
+  if (!mailTransport) {
+    throw new Error("Email system is not configured.");
+  }
+
+  const verifyUrl = `${process.env.APP_BASE_URL}/?confirmEmailChangeToken=${encodeURIComponent(rawToken)}&confirmEmailChangeEmail=${encodeURIComponent(email)}`;
+
+  const html = buildEmailTemplate({
+    title: "Confirm Your New Email",
+    body: `You requested to change your account email.<br><br>Please confirm this new email address.`,
+    buttonText: "Confirm Email",
+    buttonUrl: verifyUrl
+  });
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Confirm your new GED Practice Platform email",
+    html
+  });
+}
+
+async function sendPasswordResetEmail({ email, rawToken }) {
+  if (!mailTransport) throw new Error("Email system is not configured.");
+
+  const resetUrl = `${process.env.APP_BASE_URL}/?resetToken=${encodeURIComponent(rawToken)}&resetEmail=${encodeURIComponent(email)}`;
+
+  const html = buildEmailTemplate({
+    title: "Reset Your Password",
+    body: `We received a request to reset your password.<br><br>If this was you, click below.`,
+    buttonText: "Reset Password",
+    buttonUrl: resetUrl
+  });
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Reset your password",
+    html
   });
 }
 
@@ -395,6 +514,8 @@ app.post("/api/auth/register", async (req, res) => {
       rawToken
     });
 
+    await sendWelcomeEmail(user.email);
+
     return res.status(201).json({
       success: true,
       requiresEmailVerification: true,
@@ -438,6 +559,7 @@ app.post("/api/auth/verify-email", async (req, res) => {
     }
 
     user.emailVerified = true;
+    user.twoFactorEnabled = true;
     user.emailVerificationTokenHash = null;
     user.emailVerificationExpiresAt = null;
     await user.save();
@@ -451,6 +573,82 @@ app.post("/api/auth/verify-email", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to verify email."
+    });
+  }
+});
+
+async function sendWelcomeEmail(email) {
+  if (!mailTransport) return;
+
+  const html = buildEmailTemplate({
+    title: "Welcome to GED Practice Platform",
+    body: `Your account has been successfully created.<br><br>You can now start practicing and tracking your progress.`,
+    buttonText: "Start Practicing",
+    buttonUrl: process.env.APP_BASE_URL
+  });
+
+  await mailTransport.sendMail({
+    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Welcome to GED Practice Platform",
+    html
+  });
+}
+
+app.post("/api/auth/confirm-email-change", async (req, res) => {
+  try {
+    const pendingEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const rawToken =
+      typeof req.body.token === "string"
+        ? req.body.token.trim()
+        : "";
+
+    if (!pendingEmail || !rawToken) {
+      return res.status(400).json({ error: "Email and token are required." });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    const user = await User.findOne({
+      pendingNewEmail: pendingEmail,
+      pendingNewEmailTokenHash: tokenHash,
+      pendingNewEmailExpiresAt: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "This email change link is invalid or has expired." });
+    }
+
+    const existingUser = await User.findOne({
+      email: pendingEmail,
+      _id: { $ne: user._id }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ error: "An account with that email already exists." });
+    }
+
+    user.email = pendingEmail;
+    user.emailVerified = true;
+    user.pendingNewEmail = null;
+    user.pendingNewEmailTokenHash = null;
+    user.pendingNewEmailExpiresAt = null;
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Email changed successfully."
+    });
+  } catch (error) {
+    console.error("CONFIRM EMAIL CHANGE ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to confirm email change."
     });
   }
 });
@@ -489,6 +687,25 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
+    if (user.twoFactorEnabled) {
+      const { rawToken, tokenHash, expiresAt } = createLoginTwoFactorToken();
+
+      user.loginTwoFactorTokenHash = tokenHash;
+      user.loginTwoFactorExpiresAt = expiresAt;
+      await user.save();
+
+      await sendLoginTwoFactorEmail({
+        email: user.email,
+        rawToken
+      });
+
+      return res.json({
+        requiresTwoFactor: true,
+        email: user.email,
+        message: "A login security code was sent to your email."
+      });
+    }
+
     const token = createToken(user);
 
     return res.json({
@@ -500,6 +717,57 @@ app.post("/api/auth/login", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to sign in."
+    });
+  }
+});
+
+app.post("/api/auth/verify-login-2fa", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const code =
+      typeof req.body.code === "string"
+        ? req.body.code.trim()
+        : "";
+
+    if (!rawEmail || !code) {
+      return res.status(400).json({ error: "Email and code are required." });
+    }
+
+    const user = await User.findOne({ email: rawEmail });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or code." });
+    }
+
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+
+    const isValid =
+      user.loginTwoFactorTokenHash === codeHash &&
+      user.loginTwoFactorExpiresAt &&
+      user.loginTwoFactorExpiresAt > new Date();
+
+    if (!isValid) {
+      return res.status(401).json({ error: "This login code is invalid or has expired." });
+    }
+
+    user.loginTwoFactorTokenHash = null;
+    user.loginTwoFactorExpiresAt = null;
+    await user.save();
+
+    const token = createToken(user);
+
+    return res.json({
+      token,
+      user: sanitizeUser(user)
+    });
+  } catch (error) {
+    console.error("VERIFY LOGIN 2FA ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to verify login code."
     });
   }
 });
@@ -609,7 +877,148 @@ app.post("/api/auth/reset-password", async (req, res) => {
     });
   }
 });
+app.post("/api/auth/request-account-action-verification", authMiddleware, async (req, res) => {
+  try {
+    const actionType =
+      typeof req.body.actionType === "string"
+        ? req.body.actionType.trim()
+        : "";
 
+    const allowedActionTypes = ["changePassword", "changeUsername", "changeEmail"];
+
+    if (!allowedActionTypes.includes(actionType)) {
+      return res.status(400).json({ error: "Invalid account action type." });
+    }
+
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    if (!user.email) {
+      return res.status(400).json({ error: "No email is available for this account." });
+    }
+
+    const { rawToken, tokenHash, expiresAt } = createAccountActionToken();
+
+    user.accountActionTokenHash = tokenHash;
+    user.accountActionExpiresAt = expiresAt;
+    user.accountActionType = actionType;
+    user.pendingVerifiedAction = null;
+    user.pendingVerifiedActionExpiresAt = null;
+    await user.save();
+
+    await sendAccountActionVerificationEmail({
+      email: user.email,
+      rawToken,
+      actionType
+    });
+
+    return res.json({
+      success: true,
+      message: "Verification code sent successfully."
+    });
+  } catch (error) {
+    console.error("REQUEST ACCOUNT ACTION VERIFICATION ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to send verification code."
+    });
+  }
+});
+
+app.post("/api/auth/verify-account-action", authMiddleware, async (req, res) => {
+  try {
+    const actionType =
+      typeof req.body.actionType === "string"
+        ? req.body.actionType.trim()
+        : "";
+
+    const code =
+      typeof req.body.code === "string"
+        ? req.body.code.trim()
+        : "";
+
+    if (!actionType || !code) {
+      return res.status(400).json({ error: "Action type and code are required." });
+    }
+
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+
+    const isValid =
+      user.accountActionType === actionType &&
+      user.accountActionTokenHash === codeHash &&
+      user.accountActionExpiresAt &&
+      user.accountActionExpiresAt > new Date();
+
+    if (!isValid) {
+      return res.status(400).json({ error: "This verification code is invalid or has expired." });
+    }
+
+    user.accountActionTokenHash = null;
+    user.accountActionExpiresAt = null;
+    user.accountActionType = null;
+    user.pendingVerifiedAction = actionType;
+    user.pendingVerifiedActionExpiresAt = new Date(Date.now() + 1000 * 60 * 15);
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Verification confirmed."
+    });
+  } catch (error) {
+    console.error("VERIFY ACCOUNT ACTION ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to verify account action."
+    });
+  }
+});
+
+app.post("/api/auth/change-username", authMiddleware, async (req, res) => {
+  try {
+    const newDisplayName =
+      typeof req.body.displayName === "string"
+        ? req.body.displayName.trim()
+        : "";
+
+    if (!newDisplayName) {
+      return res.status(400).json({ error: "Display name is required." });
+    }
+
+    if (newDisplayName.length > 60) {
+      return res.status(400).json({ error: "Display name must be 60 characters or fewer." });
+    }
+
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    user.displayName = newDisplayName;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Username changed successfully.",
+      user: sanitizeUser(user)
+    });
+  } catch (error) {
+    console.error("CHANGE USERNAME ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to change username."
+    });
+  }
+});
 app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
   try {
     const currentPassword =
@@ -640,6 +1049,17 @@ app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
+    const verifiedForThisAction =
+      user.pendingVerifiedAction === "changePassword" &&
+      user.pendingVerifiedActionExpiresAt &&
+      user.pendingVerifiedActionExpiresAt > new Date();
+
+    if (!verifiedForThisAction) {
+      return res.status(403).json({
+        error: "You must verify this action before changing your password."
+      });
+    }
+
     const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!passwordMatches) {
       return res.status(401).json({ error: "Current password is incorrect." });
@@ -648,6 +1068,8 @@ app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
+    user.pendingVerifiedAction = null;
+    user.pendingVerifiedActionExpiresAt = null;
     await user.save();
 
     return res.json({
@@ -659,6 +1081,117 @@ app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to change password."
+    });
+  }
+});
+
+app.post("/api/auth/change-email", authMiddleware, async (req, res) => {
+  try {
+    const newEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    const currentPassword =
+      typeof req.body.currentPassword === "string"
+        ? req.body.currentPassword
+        : "";
+
+    if (!newEmail || !currentPassword) {
+      return res.status(400).json({ error: "Email and password are required." });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      return res.status(400).json({ error: "Please enter a valid email address." });
+    }
+
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const verifiedForThisAction =
+      user.pendingVerifiedAction === "changeEmail" &&
+      user.pendingVerifiedActionExpiresAt &&
+      user.pendingVerifiedActionExpiresAt > new Date();
+
+    if (!verifiedForThisAction) {
+      return res.status(403).json({
+        error: "You must verify this action before changing your email."
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
+
+    if (!passwordMatches) {
+      return res.status(400).json({ error: "Current password is incorrect." });
+    }
+
+    if (newEmail === user.email) {
+      return res.status(400).json({ error: "Your new email must be different from your current email." });
+    }
+
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser) {
+      return res.status(409).json({ error: "An account with that email already exists." });
+    }
+
+    const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken();
+
+    user.pendingNewEmail = newEmail;
+    user.pendingNewEmailTokenHash = tokenHash;
+    user.pendingNewEmailExpiresAt = expiresAt;
+    user.pendingVerifiedAction = null;
+    user.pendingVerifiedActionExpiresAt = null;
+
+    await user.save();
+
+    await sendPendingEmailChangeVerificationEmail({
+      email: newEmail,
+      rawToken
+    });
+
+    return res.json({
+      success: true,
+      requiresNewEmailConfirmation: true,
+      message: "Please confirm your new email using the verification link that was sent."
+    });
+  } catch (error) {
+    console.error("CHANGE EMAIL ERROR:");
+    console.error(error);
+
+    return res.status(500).json({
+      error: error.message || "Failed to start email change."
+    });
+  }
+});
+
+app.post("/api/auth/enable-2fa", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    if (user.twoFactorEnabled) {
+      return res.status(400).json({ error: "Two-factor authentication is already enabled." });
+    }
+
+    user.twoFactorEnabled = true;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "Two-factor authentication enabled successfully.",
+      user: sanitizeUser(user)
+    });
+  } catch (error) {
+    console.error("ENABLE 2FA ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to enable two-factor authentication."
     });
   }
 });
