@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema(
       required: true
     },
 
+    scoringEnabled: {
+      type: Boolean,
+      default: true
+    },
+
     emailVerified: {
       type: Boolean,
       default: false

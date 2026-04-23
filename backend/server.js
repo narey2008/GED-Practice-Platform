@@ -81,6 +81,7 @@ function sanitizeUser(user) {
     id: user._id.toString(),
     email: user.email,
     displayName: user.displayName,
+    scoringEnabled: user.scoringEnabled !== false,
     emailVerified: !!user.emailVerified,
     twoFactorEnabled: !!user.twoFactorEnabled || !!user.emailVerified,
     hasPendingVerifiedAction:
@@ -476,6 +477,11 @@ app.post("/api/auth/register", async (req, res) => {
         ? req.body.displayName.trim()
         : "";
 
+        const scoringEnabled =
+  typeof req.body.scoringEnabled === "boolean"
+    ? req.body.scoringEnabled
+    : true;
+
     if (!rawEmail) {
       return res.status(400).json({ error: "Email is required." });
     }
@@ -501,13 +507,14 @@ app.post("/api/auth/register", async (req, res) => {
     const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken();
 
     const user = await User.create({
-      email: rawEmail,
-      displayName: displayNameRaw || rawEmail.split("@")[0],
-      passwordHash,
-      emailVerified: false,
-      emailVerificationTokenHash: tokenHash,
-      emailVerificationExpiresAt: expiresAt
-    });
+  email: rawEmail,
+  displayName: displayNameRaw || rawEmail.split("@")[0],
+  passwordHash,
+  scoringEnabled,
+  emailVerified: false,
+  emailVerificationTokenHash: tokenHash,
+  emailVerificationExpiresAt: expiresAt
+});
 
     await sendEmailVerificationEmail({
       email: user.email,
@@ -526,6 +533,38 @@ app.post("/api/auth/register", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       error: error.message || "Failed to create account."
+    });
+  }
+});
+
+app.patch("/api/account/scoring-preference", authMiddleware, async (req, res) => {
+  try {
+    const scoringEnabled =
+      typeof req.body.scoringEnabled === "boolean"
+        ? req.body.scoringEnabled
+        : null;
+
+    if (scoringEnabled === null) {
+      return res.status(400).json({ error: "scoringEnabled must be true or false." });
+    }
+
+    const user = await User.findById(req.auth.userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    user.scoringEnabled = scoringEnabled;
+    await user.save();
+
+    return res.json({
+      success: true,
+      user: sanitizeUser(user)
+    });
+  } catch (error) {
+    console.error("UPDATE SCORING PREFERENCE ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to update scoring preference."
     });
   }
 });
@@ -1511,6 +1550,8 @@ app.get("/api/practice", (req, res) => {
     res.status(500).json({ error: "Failed to build practice set" });
   }
   });
+
+  
   app.post("/api/test/complete", authMiddleware, async (req, res) => {
   try {
     const {
@@ -1545,6 +1586,11 @@ app.get("/api/practice", (req, res) => {
 
     const wrongOrUnansweredCount = totalQuestions - correctCount;
 
+    const user = await User.findById(req.auth.userId);
+if (!user) {
+  return res.status(404).json({ error: "User not found." });
+}
+
     // GED-style rough scaling (keep simple for now)
     const score200 = Math.round(100 + (correctCount / totalQuestions) * 100);
 
@@ -1560,16 +1606,16 @@ app.get("/api/practice", (req, res) => {
       }
     });
 
-    const history = await TestHistory.create({
-      userId: req.auth.userId,
-      difficulty,
-      score200,
-      correctCount,
-      wrongOrUnansweredCount,
-      weakestSkill,
-      totalQuestions,
-      questions
-    });
+   const history = await TestHistory.create({
+  userId: req.auth.userId,
+  difficulty,
+  score200: user.scoringEnabled === false ? null : score200,
+  correctCount,
+  wrongOrUnansweredCount,
+  weakestSkill,
+  totalQuestions,
+  questions
+});
 
     // delete active saved test after completion
     await SavedProgress.findOneAndDelete({ userId: req.auth.userId });
