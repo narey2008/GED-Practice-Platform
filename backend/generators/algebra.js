@@ -15,7 +15,7 @@ function ranges(difficulty) {
 function slopeFromPoints(difficulty) {
   const r = ranges(difficulty);
 
-  let x1 = rand(-r.coord, r.coord - 1);
+  let x1 = rand(-r.coord, r.coord - 2);
   let y1 = rand(-r.coord, r.coord);
   let run = rand(1, difficulty === "Easy" ? 3 : 5);
   let rise = rand(-r.rise, r.rise);
@@ -28,34 +28,92 @@ function slopeFromPoints(difficulty) {
   const y2 = y1 + rise;
   const slope = rise / run;
 
+  const xMin = Math.min(x1, x2) - 2;
+  const xMax = Math.max(x1, x2) + 2;
+  const yMin = Math.min(y1, y2) - 2;
+  const yMax = Math.max(y1, y2) + 2;
+
   return {
     skill: "Slope",
     difficulty,
     type: "fill",
     question: `Find the slope of the line passing through (${x1}, ${y1}) and (${x2}, ${y2}).`,
     answer: String(slope),
+    chart: {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            data: [
+              { x: x1, y: y1 },
+              { x: x2, y: y2 }
+            ],
+            parsing: false,
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0,
+            borderColor: "#153e75",
+            pointBackgroundColor: "#153e75",
+            pointBorderColor: "#153e75"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            type: "linear",
+            min: xMin,
+            max: xMax,
+            ticks: { stepSize: 1 }
+          },
+          y: {
+            min: yMin,
+            max: yMax,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    },
     explanation: `Use the slope formula: (y2 - y1) / (x2 - x1). Here that is (${y2} - ${y1}) / (${x2} - ${x1}) = ${rise}/${run} = ${slope}.`
   };
 }
 
 function slopeFromGraph(difficulty) {
   const r = ranges(difficulty);
-  let m = rand(-r.slope, r.slope);
 
+  let m = rand(-r.slope, r.slope);
   while (m === 0) {
     m = rand(-r.slope, r.slope);
   }
 
-  const b = rand(-5, 5);
-  const points = [];
+  const anchorX = rand(-3, 3);
+  const anchorY = rand(-3, 3);
 
-  for (let x = -5; x <= 5; x += 1) {
-    points.push({ x, y: m * x + b });
-  }
+  const points = [
+    { x: anchorX - 1, y: anchorY - m },
+    { x: anchorX, y: anchorY },
+    { x: anchorX + 1, y: anchorY + m }
+  ];
+
+  const xMin = anchorX - 4;
+  const xMax = anchorX + 4;
+  const yMin = Math.min(...points.map((p) => p.y)) - 2;
+  const yMax = Math.max(...points.map((p) => p.y)) + 2;
 
   const choices = new Set([m]);
   while (choices.size < 4) {
-    choices.add(rand(-r.slope - 1, r.slope + 1));
+    const wrong = rand(-r.slope - 1, r.slope + 1);
+    if (wrong !== 0) {
+      choices.add(wrong);
+    }
   }
 
   return {
@@ -71,11 +129,15 @@ function slopeFromGraph(difficulty) {
         datasets: [
           {
             data: points,
-            borderWidth: 2,
-            pointRadius: 0,
+            parsing: false,
+            borderWidth: 3,
+            pointRadius: 4,
+            pointHoverRadius: 4,
             fill: false,
             tension: 0,
-            borderColor: "#153e75"
+            borderColor: "#153e75",
+            pointBackgroundColor: "#153e75",
+            pointBorderColor: "#153e75"
           }
         ]
       },
@@ -89,13 +151,13 @@ function slopeFromGraph(difficulty) {
         scales: {
           x: {
             type: "linear",
-            min: -5,
-            max: 5,
+            min: xMin,
+            max: xMax,
             ticks: { stepSize: 1 }
           },
           y: {
-            min: -10,
-            max: 10,
+            min: yMin,
+            max: yMax,
             ticks: { stepSize: 1 }
           }
         }

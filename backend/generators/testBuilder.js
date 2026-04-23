@@ -38,6 +38,7 @@ function normalizeQuestion(q, index, difficulty) {
     choices: Array.isArray(q.choices) ? q.choices : [],
     answer: q.answer,
     chart: q.chart || null,
+    diagram: q.diagram || null,
     explanation: normalizeExplanation(q.explanation, q.answer),
     difficulty: q.difficulty || difficulty
   };
@@ -48,18 +49,39 @@ function buildTest(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
   const skill = options.skill || "";
 
-  const eligible = skill
-    ? generators.filter((g) => {
-        try {
-          const sample = g({ difficulty });
-          return sample && sample.skill === skill;
-        } catch (e) {
-          return false;
-        }
-      })
-    : generators;
+  function skillMatches(selectedSkill, questionSkill) {
+  const map = {
+    "Fractions, Decimals, and Percents": ["Percent"],
+    "Ratios, Proportions, and Percent Change": ["Percent Change", "Percent"],
+    "Measurement and Unit Conversion": [],
+    "Area, Perimeter, Surface Area, and Volume": ["Geometry"],
+    "Lines, Angles, and Coordinate Plane": ["Slope", "Geometry"],
+    "Data Tables and Graph Interpretation": ["Bar Graph", "Line Graph", "Scatter Plot", "Data Table"],
+    "Mean, Median, and Probability": ["Probability"],
+    "Expressions and Order of Operations": ["Algebra"],
+    "Solving Equations and Inequalities": ["Linear Equations", "Algebra"],
+    "Linear Equations and Slope": ["Linear Equations", "Slope", "Algebra"]
+  };
 
-  const pool = eligible.length ? eligible : generators;
+  const allowed = map[selectedSkill] || [];
+  return allowed.includes(questionSkill);
+}
+
+const eligible = skill
+  ? generators.filter((g) => {
+      try {
+        const sample = g({ difficulty });
+        return sample && skillMatches(skill, sample.skill);
+      } catch (e) {
+        return false;
+      }
+    })
+  : generators;
+
+  const pool = eligible.length ? eligible : [];
+  if (!pool.length) {
+  throw new Error(`No generators matched selected skill: ${skill}`);
+}
   const questions = [];
 
   for (let i = 0; i < count; i += 1) {

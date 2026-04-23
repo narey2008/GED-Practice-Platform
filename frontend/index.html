@@ -531,12 +531,35 @@ select {
       display: block;
     }
 
+    #questionDiagramWrap {
+  display: none;
+  min-height: 220px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--card);
+  position: relative;
+}
+
+#questionDiagramWrap svg {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+#questionDiagramWrap .diagramLabel {
+  fill: var(--text);
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
     #choices {
-      display: grid;
-      gap: 8px;
-      margin-top: auto;
-      min-height: 180px;
-    }
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+}
 
     .choiceBtn {
   width: 100%;
@@ -941,6 +964,7 @@ body.loadingActive {
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
       <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
             <button id="contactBtnTop" class="secondaryBtn">Contact Us</button>
+            <button id="legalBtnTop" class="secondaryBtn">Legal</button>
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
@@ -1028,6 +1052,16 @@ body.loadingActive {
       </div>
     </div>
 
+    <div id="legalPanel" class="menuPanel">
+  <h3>Legal / About</h3>
+  <p>
+    Review the platform terms, privacy information, frequently asked questions, and about page.
+  </p>
+  <div class="menuActions">
+    <button id="legalInfoBtn" class="secondaryBtn">Open Legal Pages</button>
+  </div>
+</div>
+
     <div id="testView" class="testCard hidden">
       <div class="testHeader">
         <div id="questionIndicator" class="questionIndicator">Question 1 / 46</div>
@@ -1035,10 +1069,11 @@ body.loadingActive {
       </div>
 
       <div class="testBody">
-        <div class="questionArea">
-          <div id="questionText"></div>
-          <div id="questionChartWrap"><canvas id="questionChart"></canvas></div>
-        </div>
+       <div class="questionArea">
+  <div id="questionText"></div>
+  <div id="questionDiagramWrap"></div>
+  <div id="questionChartWrap"><canvas id="questionChart"></canvas></div>
+</div>
 
         <div id="choices"></div>
         <div id="feedback" class="feedback"></div>
@@ -1286,6 +1321,83 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
       localStorage.setItem(LIGHTING_KEY, theme);
     }
 
+    function openTermsModal() {
+  showModal(
+    tr("termsTitle"),
+    `
+      <div class="muted" style="margin-bottom:12px;">${tr("legalIntro")}</div>
+      ${tr("termsBody")}
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
+function openPrivacyModal() {
+  showModal(
+    tr("privacyTitle"),
+    `
+      <div class="muted" style="margin-bottom:12px;">${tr("legalIntro")}</div>
+      ${tr("privacyBody")}
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
+function openFaqModal() {
+  showModal(
+    tr("faqTitle"),
+    `
+      <div class="muted" style="margin-bottom:12px;">${tr("legalIntro")}</div>
+      ${tr("faqBody")}
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
+function openAboutModal() {
+  showModal(
+    tr("aboutTitle"),
+    `
+      <div class="muted" style="margin-bottom:12px;">${tr("legalIntro")}</div>
+      ${tr("aboutBody")}
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
+function openLegalHubModal() {
+  showModal(
+    tr("message"),
+    `
+      <div class="menuActions" style="justify-content:center;">
+        <button id="legalTermsBtn" class="secondaryBtn">${tr("termsShort")}</button>
+        <button id="legalPrivacyBtn" class="secondaryBtn">${tr("privacyShort")}</button>
+        <button id="legalFaqBtn" class="secondaryBtn">${tr("faqShort")}</button>
+        <button id="legalAboutBtn" class="secondaryBtn">${tr("aboutShort")}</button>
+      </div>
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+
+  const legalTermsBtn = document.getElementById("legalTermsBtn");
+  const legalPrivacyBtn = document.getElementById("legalPrivacyBtn");
+  const legalFaqBtn = document.getElementById("legalFaqBtn");
+  const legalAboutBtn = document.getElementById("legalAboutBtn");
+
+  if (legalTermsBtn) {
+    legalTermsBtn.onclick = () => openTermsModal();
+  }
+  if (legalPrivacyBtn) {
+    legalPrivacyBtn.onclick = () => openPrivacyModal();
+  }
+  if (legalFaqBtn) {
+    legalFaqBtn.onclick = () => openFaqModal();
+  }
+  if (legalAboutBtn) {
+    legalAboutBtn.onclick = () => openAboutModal();
+  }
+}
+
     function getSavedTheme() {
       return localStorage.getItem(LIGHTING_KEY) || "Original Mode";
     }
@@ -1336,6 +1448,10 @@ function getTranslations(language) {
     accuracy: isSpanish ? "Precisión" : "Accuracy",
 testLabel: isSpanish ? "Examen" : "Test",
 practiceLabel: isSpanish ? "Práctica" : "Practice",
+
+testResults: isSpanish ? "Resultados del Examen" : "Test Results",
+passedTest: isSpanish ? "Aprobaste el examen" : "You passed",
+didNotPass: isSpanish ? "No aprobaste el examen" : "You did not pass",
 
 verifyEmailTitle: isSpanish ? "Verifica tu Correo" : "Verify Your Email",
 verifyEmailBody: isSpanish
@@ -1458,6 +1574,86 @@ twoFactorCodeSentBody: isSpanish
     otherDetailsPlaceholder: isSpanish
       ? "Especifica"
       : "Specify",
+
+      termsTitle: isSpanish ? "Términos y Condiciones" : "Terms & Conditions",
+privacyTitle: isSpanish ? "Privacidad y Cookies" : "Privacy & Cookies",
+faqTitle: isSpanish ? "Preguntas Frecuentes" : "FAQ",
+aboutTitle: isSpanish ? "Sobre Nosotros" : "About Us",
+
+termsShort: isSpanish ? "Términos" : "Terms",
+privacyShort: isSpanish ? "Privacidad" : "Privacy",
+faqShort: isSpanish ? "FAQ" : "FAQ",
+aboutShort: isSpanish ? "Sobre Nosotros" : "About Us",
+
+legalIntro: isSpanish
+  ? "Estas páginas explican cómo funciona GED Practice Platform y qué esperar al usarla."
+  : "These pages explain how GED Practice Platform works and what to expect when using it.",
+
+termsBody: isSpanish
+  ? `
+    <p><strong>Uso de la plataforma.</strong> GED Practice Platform existe para ayudar a los usuarios a practicar habilidades tipo GED y revisar su progreso.</p>
+    <p><strong>Uso aceptable.</strong> No uses la plataforma para abusos, spam, interferencia técnica o acceso no autorizado.</p>
+    <p><strong>Precisión del contenido.</strong> Hacemos lo mejor posible para ofrecer práctica útil y realista, pero el contenido puede actualizarse, corregirse o cambiarse con el tiempo.</p>
+    <p><strong>Cuentas.</strong> Eres responsable de mantener segura tu cuenta y la información asociada con ella.</p>
+    <p><strong>Disponibilidad.</strong> Algunas funciones pueden cambiar, pausarse o eliminarse mientras la plataforma sigue desarrollándose.</p>
+  `
+  : `
+    <p><strong>Use of the platform.</strong> GED Practice Platform exists to help users practice GED-style skills and review their progress.</p>
+    <p><strong>Acceptable use.</strong> Do not use the platform for abuse, spam, technical interference, or unauthorized access.</p>
+    <p><strong>Content accuracy.</strong> We do our best to provide useful and realistic practice, but content may be updated, corrected, or changed over time.</p>
+    <p><strong>Accounts.</strong> You are responsible for keeping your account and associated information secure.</p>
+    <p><strong>Availability.</strong> Some features may change, pause, or be removed while the platform continues to develop.</p>
+  `,
+
+privacyBody: isSpanish
+  ? `
+    <p><strong>Información que guardamos.</strong> Podemos guardar datos de cuenta, historial de exámenes, historial de práctica, progreso guardado y solicitudes de soporte.</p>
+    <p><strong>Cómo usamos la información.</strong> Usamos estos datos para administrar cuentas, guardar progreso, mejorar la experiencia y responder solicitudes de soporte.</p>
+    <p><strong>Correos electrónicos.</strong> Tu correo puede usarse para verificación, seguridad de inicio de sesión, recuperación de cuenta y mensajes importantes relacionados con la cuenta.</p>
+    <p><strong>Cookies y almacenamiento local.</strong> La plataforma puede usar almacenamiento local del navegador para preferencias como tema, idioma, tamaño de fuente y estado de sesión.</p>
+    <p><strong>Seguridad.</strong> Tomamos medidas para proteger la información de la cuenta, pero ningún sistema puede garantizar seguridad absoluta.</p>
+  `
+  : `
+    <p><strong>Information we store.</strong> We may store account data, test history, practice history, saved progress, and support requests.</p>
+    <p><strong>How we use information.</strong> We use this data to manage accounts, save progress, improve the experience, and respond to support requests.</p>
+    <p><strong>Email use.</strong> Your email may be used for verification, login security, account recovery, and important account-related messages.</p>
+    <p><strong>Cookies and local storage.</strong> The platform may use browser local storage for preferences like theme, language, font size, and session state.</p>
+    <p><strong>Security.</strong> We take steps to protect account information, but no system can guarantee absolute security.</p>
+  `,
+
+faqBody: isSpanish
+  ? `
+    <p><strong>¿Se guarda mi progreso?</strong> Sí, si inicias sesión con una cuenta. El modo invitado no guarda progreso permanente.</p>
+    <p><strong>¿Puedo practicar habilidades específicas?</strong> Sí. El modo práctica te permite elegir habilidades y dificultad.</p>
+    <p><strong>¿Qué pasa si no puedo acceder a mi correo?</strong> Usa las opciones de soporte y recuperación de acceso disponibles en la plataforma.</p>
+    <p><strong>¿La plataforma tiene todas las materias GED?</strong> Actualmente está enfocada en matemáticas, con más funciones planeadas para el futuro.</p>
+  `
+  : `
+    <p><strong>Is my progress saved?</strong> Yes, if you are signed in with an account. Guest mode does not save permanent progress.</p>
+    <p><strong>Can I practice specific skills?</strong> Yes. Practice mode lets you choose skills and difficulty.</p>
+    <p><strong>What if I cannot access my email?</strong> Use the support and account-access recovery options available in the platform.</p>
+    <p><strong>Does the platform include every GED subject?</strong> It is currently focused on math, with more features planned over time.</p>
+  `,
+
+aboutBody: isSpanish
+  ? `
+    <p><strong>GED Practice Platform</strong> fue creado para ofrecer una experiencia de práctica más enfocada, realista y útil para estudiantes que desean prepararse paso a paso.</p>
+    <p>La meta es combinar exámenes completos, práctica por habilidad, seguimiento de progreso y una experiencia de usuario clara en una sola plataforma.</p>
+    <p>La plataforma seguirá creciendo con mejoras de contenido, visuales, soporte y herramientas adicionales.</p>
+  `
+  : `
+    <p><strong>GED Practice Platform</strong> was built to provide a more focused, realistic, and useful practice experience for students who want to prepare step by step.</p>
+    <p>The goal is to combine full tests, skill-based practice, progress tracking, and a clean user experience in one place.</p>
+    <p>The platform will continue to grow with improved content, visuals, support, and additional tools over time.</p>
+  `,
+
+  legalPanelTitle: isSpanish ? "Legal / Información" : "Legal / About",
+legalPanelText: isSpanish
+  ? "Revisa los términos de la plataforma, privacidad, preguntas frecuentes y la página sobre nosotros."
+  : "Review the platform terms, privacy information, frequently asked questions, and about page.",
+openLegalPages: isSpanish ? "Abrir Páginas Legales" : "Open Legal Pages",
+
+legalTopBtn: isSpanish ? "Legal" : "Legal",
 
     signIn: isSpanish ? "Iniciar Sesión" : "Sign In",
     createAccount: isSpanish ? "Crear Cuenta" : "Create Account",
@@ -2072,6 +2268,22 @@ function applyLanguage(language) {
     if (btn) btn.textContent = t.contactSupport;
   }
 
+  const legalPanel = document.getElementById("legalPanel");
+if (legalPanel) {
+  const h3 = legalPanel.querySelector("h3");
+  const p = legalPanel.querySelector("p");
+  const btn = document.getElementById("legalInfoBtn");
+
+  if (h3) h3.textContent = t.legalPanelTitle;
+  if (p) p.textContent = t.legalPanelText;
+  if (btn) {
+    btn.textContent = t.openLegalPages;
+    btn.onclick = () => {
+      openLegalHubModal();
+    };
+  }
+}
+
   const signInBtnTop = document.getElementById("signInBtnTop");
   const guestBtnTop = document.getElementById("guestBtnTop");
   const contactBtnTop = document.getElementById("contactBtnTop");
@@ -2096,6 +2308,8 @@ function applyLanguage(language) {
   const loadingTitle = document.getElementById("loadingTitle");
   const loadingText = document.getElementById("loadingText");
   const loadingSubtext = document.querySelector(".loadingSubtext");
+  const legalBtnTop = document.getElementById("legalBtnTop");
+if (legalBtnTop) legalBtnTop.textContent = t.legalTopBtn;
 
   if (loadingTitle) loadingTitle.innerText = t.loading;
   if (loadingText) loadingText.innerText = "";
@@ -4894,39 +5108,72 @@ function showPausedModal(isAutoPause = false) {
       return themed;
     }
 
-    function renderQuestion() {
+function renderQuestion() {
+  const questionTextEl = document.getElementById("questionText");
+  const choicesEl = document.getElementById("choices");
+  const feedbackEl = document.getElementById("feedback");
+  const questionAreaEl = document.querySelector(".questionArea");
+  const chartWrapEl = document.getElementById("questionChartWrap");
+  const diagramWrapEl = document.getElementById("questionDiagramWrap");
+
   if (!state.questions.length) {
-    document.getElementById("questionText").innerText = tr("chooseDifficultyStart");
-    document.getElementById("choices").innerHTML = "";
-    document.getElementById("feedback").innerText = "";
+    questionTextEl.innerText = tr("chooseDifficultyStart");
+    choicesEl.innerHTML = "";
+    feedbackEl.innerText = "";
+    if (questionAreaEl) questionAreaEl.style.minHeight = "auto";
+    if (choicesEl) choicesEl.style.minHeight = "0";
+    renderDiagram(null);
     renderChart(null);
     updateStatus();
     return;
   }
 
   const q = state.questions[state.currentIndex];
-  document.getElementById("questionText").innerHTML = q.question;
+  console.log("GEOMETRY QUESTION DIAGRAM:", q.diagram);
+console.log("GEOMETRY QUESTION CHART:", q.chart);
+  questionTextEl.innerHTML = q.question;
 
-    if (state.isPaused) {
-    document.getElementById("feedback").innerText = tr("testPausedMessage");
+  if (state.isPaused) {
+    feedbackEl.innerText = tr("testPausedMessage");
   } else if (q.example) {
-    document.getElementById("feedback").innerHTML =
+    feedbackEl.innerHTML =
       `<strong>${tr("workedExample")}</strong><br><div class="explanationBox"><div><strong>${tr("answer")}:</strong> ${q.answer}</div><div style="margin-top:8px;">${q.explanation}</div></div>`;
   } else if (state.lockedReviewMode) {
-    document.getElementById("feedback").innerText = tr("reviewModeLocked");
+    feedbackEl.innerText = tr("reviewModeLocked");
   } else {
-    document.getElementById("feedback").innerText = "";
+    feedbackEl.innerText = "";
   }
+
+  const hasChart = !!(q.chart && q.chart.type && q.chart.data);
+  const hasDiagram = !!q.diagram;
+
+  if (questionAreaEl) {
+    questionAreaEl.style.minHeight = hasChart || hasDiagram ? "200px" : "auto";
+  }
+
+  if (choicesEl) {
+    choicesEl.style.minHeight = q.type === "fill" ? "0" : "180px";
+  }
+
+  if (!hasChart && chartWrapEl) {
+    chartWrapEl.style.display = "none";
+  }
+
+  if (!hasDiagram && diagramWrapEl) {
+    diagramWrapEl.style.display = "none";
+  }
+
   renderAnswerArea(q);
+  renderDiagram(q.diagram || null);
   renderChart(updateChartTheme(q.chart));
   updateStatus();
 }
 
-    function renderAnswerArea(q) {
+function renderAnswerArea(q) {
   const container = document.getElementById("choices");
   container.innerHTML = "";
 
-    if (q.example) {
+  if (q.example) {
     const box = document.createElement("div");
     box.className = "practiceItem";
     box.innerHTML = `
@@ -4938,6 +5185,8 @@ function showPausedModal(isAutoPause = false) {
   }
 
   if (q.type === "fill") {
+    container.style.display = "block";
+
     const input = document.createElement("input");
     input.id = "fillAnswer";
     input.type = "text";
@@ -4949,9 +5198,12 @@ function showPausedModal(isAutoPause = false) {
       q.userAnswer = e.target.value;
       await saveProgress();
     };
+
     container.appendChild(input);
     return;
   }
+
+  container.style.display = "grid";
 
   q.choices.forEach((choice) => {
     const btn = document.createElement("button");
@@ -4974,43 +5226,61 @@ function showPausedModal(isAutoPause = false) {
   });
 }
 
-    function renderChart(chartConfig) {
-      const wrap = document.getElementById("questionChartWrap");
+function renderDiagram(diagramMarkup) {
+  const wrap = document.getElementById("questionDiagramWrap");
+  if (!wrap) return;
 
-      if (state.currentChart) {
-        try {
-          state.currentChart.destroy();
-        } catch (e) {}
-        state.currentChart = null;
-      }
+  if (!diagramMarkup) {
+    wrap.innerHTML = "";
+    wrap.style.display = "none";
+    return;
+  }
 
-      wrap.innerHTML = '<canvas id="questionChart"></canvas>';
-      const canvas = document.getElementById("questionChart");
+  wrap.innerHTML = diagramMarkup;
+  wrap.style.display = "block";
+}
 
-      if (!chartConfig) {
-        wrap.style.display = "none";
-        return;
-      }
+function renderChart(chartConfig) {
+  const wrap = document.getElementById("questionChartWrap");
 
-      wrap.style.display = "block";
-
-      requestAnimationFrame(() => {
-        try {
-          state.currentChart = new Chart(canvas.getContext("2d"), {
-            ...chartConfig,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              animation: false,
-              ...(chartConfig.options || {})
-            }
-          });
-        } catch (e) {
-          wrap.style.display = "none";
-        }
-      });
+  if (state.currentChart) {
+    try {
+      state.currentChart.destroy();
+    } catch (error) {
+      console.warn("CHART DESTROY WARNING:", error);
     }
+    state.currentChart = null;
+  }
 
+  wrap.innerHTML = '<canvas id="questionChart"></canvas>';
+  const canvas = document.getElementById("questionChart");
+
+  if (!chartConfig || !chartConfig.type || !chartConfig.data) {
+    wrap.style.display = "none";
+    return;
+  }
+
+  wrap.style.display = "block";
+
+  requestAnimationFrame(() => {
+    try {
+      const finalConfig = {
+        ...chartConfig,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          ...(chartConfig.options || {})
+        }
+      };
+
+      state.currentChart = new Chart(canvas.getContext("2d"), finalConfig);
+    } catch (error) {
+      console.error("CHART RENDER ERROR:", error, chartConfig);
+      wrap.style.display = "none";
+    }
+  });
+}
     function goToEarliestIssue() {
       let targetIndex = state.questions.findIndex((q) => q.flagged);
       if (targetIndex === -1) {
@@ -5264,35 +5534,52 @@ async function saveCompletedPracticeToHistory() {
   const panel = document.getElementById("reviewPanel");
   panel.innerHTML = `
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
-    <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
+    <h2 class="sectionTitle" style="margin:0;">${tr("testResults")}</h2>
     <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
   </div>
 
   <div class="reviewTop">
-      <div class="reviewStat">
-        <div class="reviewStatLabel">${tr("score")}</div>
-        <div class="reviewStatValue">${score200} / 200</div>
-      </div>
-      <div class="reviewStat">
-        <div class="reviewStatLabel">${tr("correctCount")}</div>
-        <div class="reviewStatValue">${correct}</div>
-      </div>
-      <div class="reviewStat">
-        <div class="reviewStatLabel">${tr("wrongUnanswered")}</div>
-        <div class="reviewStatValue">${wrongOrUnanswered}</div>
-      </div>
-      <div class="reviewStat">
-        <div class="reviewStatLabel">${tr("weakestSkill")}</div>
-        <div class="reviewStatValue">${escapeHtml(translateSkillLabel(weakest))}</div>
-      </div>
+
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("score")}</div>
+      <div class="reviewStatValue">${score200} / 200</div>
     </div>
 
-    <div class="reviewItem">
-      <button id="practiceWeakestBtn" class="primaryBtn">${tr("practiceWeakestSkill")}</button>
-      <button id="reviewMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-      ${advance && passed ? `<button id="advanceBtn" class="secondaryBtn">${tr("nextLevel")}</button>` : ""}
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("correctCount")}</div>
+      <div class="reviewStatValue">${correct}</div>
     </div>
-  `;
+
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("wrongUnanswered")}</div>
+      <div class="reviewStatValue">${wrongOrUnanswered}</div>
+    </div>
+
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("weakestSkill")}</div>
+      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(weakest))}</div>
+    </div>
+
+  </div>
+
+  <div style="
+    margin-top:16px;
+    padding:12px;
+    border-radius:10px;
+    font-weight:700;
+    text-align:center;
+    background:${passed ? "#d1fae5" : "#fee2e2"};
+    color:${passed ? "#065f46" : "#991b1b"};
+  ">
+    ${passed ? tr("passedTest") : tr("didNotPass")}
+  </div>
+
+  <div class="reviewItem">
+    <button id="practiceWeakestBtn" class="primaryBtn">${tr("practiceWeakestSkill")}</button>
+    <button id="reviewMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+    ${advance && passed ? `<button id="advanceBtn" class="secondaryBtn">${tr("nextLevel")}</button>` : ""}
+  </div>
+`;
 
   state.questions.forEach((q, i) => {
     const user = String(q.userAnswer ?? "").trim();
@@ -5305,8 +5592,12 @@ async function saveCompletedPracticeToHistory() {
       <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
       <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
       <div style="margin-top:10px;">${tr("yourAnswer")}: ${user || tr("noAnswerDash")}</div>
-      <div>${tr("correct")}: ${correctAns}</div>
-      <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+      ${!isCorrect ? `<div style="margin-top:4px;"><strong>${tr("correct")}:</strong> ${correctAns}</div>` : ""}
+      <div style="margin-top:6px;">
+  <strong style="color:${isCorrect ? "#16a34a" : "#dc2626"};">
+    ${isCorrect ? "✓ " + tr("correct") : "✗ " + tr("incorrect")}
+  </strong>
+</div>
       ${!isCorrect ? `<div class="explanationBox">${q.explanation}</div>` : ""}
     `;
     panel.appendChild(div);
@@ -5640,6 +5931,13 @@ if (profileChangeEmailBtn) {
   };
 }
 
+const profileMainMenuBtn = document.getElementById("profileMainMenuBtn");
+if (profileMainMenuBtn) {
+  profileMainMenuBtn.onclick = () => {
+    goToMainMenu();
+  };
+}
+
 const profileAccountAccessHelpBtn = document.getElementById("profileAccountAccessHelpBtn");
 if (profileAccountAccessHelpBtn) {
   profileAccountAccessHelpBtn.onclick = () => {
@@ -5685,22 +5983,29 @@ if (practiceBtn) {
   };
 }
 
-        const deleteAccountBtn = document.getElementById("deleteAccountBtn");
-        if (deleteAccountBtn) {
-          deleteAccountBtn.onclick = () => {
-            openDeleteAccountModal();
-          };
-        }
+const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+if (deleteAccountBtn) {
+  deleteAccountBtn.onclick = () => {
+    openDeleteAccountModal();
+  };
+}
       } catch (error) {
         console.error("PROFILE PANEL ERROR:", error);
 
-        panel.innerHTML = `
-          <h2 class="sectionTitle">${tr("profile")}</h2>
-          <div class="reviewItem">${tr("failedLoadHistory")}</div>
-          <div class="reviewItem">
-            <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
-          </div>
-        `;
+panel.innerHTML = `
+  <h2 class="sectionTitle">${tr("profile")}</h2>
+  <div class="reviewItem">${tr("failedLoadHistory")}</div>
+  <div class="reviewItem">
+    <button id="profileBackBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+  </div>
+`;
+
+const profileBackBtn = document.getElementById("profileBackBtn");
+if (profileBackBtn) {
+  profileBackBtn.onclick = () => {
+    goToMainMenu();
+  };
+}
       }
     }
   );
@@ -5922,6 +6227,7 @@ async function handleEmailVerificationFromUrl() {
     };
         document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
     document.getElementById("contactBtnTop").onclick = () => openSupportContactModal();
+    document.getElementById("legalBtnTop").onclick = () => openLegalHubModal();
     document.getElementById("supportEmailBtn").onclick = () => openSupportContactModal();
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {

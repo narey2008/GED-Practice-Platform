@@ -9,12 +9,21 @@ function shuffle(arr) {
 module.exports = function generateBarGraph(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
   const labels = ["Mon", "Tue", "Wed", "Thu"];
+
   const values = [
-    rand(4, 10),
-    rand(5, 11),
-    rand(6, 12),
-    rand(3, 9)
+    rand(4, 8),
+    rand(5, 9),
+    rand(6, 10),
+    rand(3, 7)
   ];
+
+  let maxIndex = values.indexOf(Math.max(...values));
+
+  const used = new Set(values);
+  while ([...used].filter((v) => v === Math.max(...values)).length > 1) {
+    values[maxIndex] += 1;
+    maxIndex = values.indexOf(Math.max(...values));
+  }
 
   const maxValue = Math.max(...values);
   const correctDay = labels[values.indexOf(maxValue)];
@@ -49,6 +58,8 @@ module.exports = function generateBarGraph(options = {}) {
         scales: {
           y: {
             beginAtZero: true,
+            min: 0,
+            max: maxValue + 2,
             ticks: { stepSize: 1 }
           }
         }

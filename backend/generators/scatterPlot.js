@@ -24,9 +24,19 @@ function negative() {
 
 function none() {
   const points = [];
-  for (let i = 0; i < 7; i += 1) {
-    points.push({ x: rand(1, 10), y: rand(1, 10) });
+  const used = new Set();
+
+  while (points.length < 7) {
+    const x = rand(1, 10);
+    const y = rand(1, 10);
+    const key = `${x},${y}`;
+
+    if (!used.has(key)) {
+      used.add(key);
+      points.push({ x, y });
+    }
   }
+
   return { points, answer: "No correlation" };
 }
 
@@ -53,7 +63,9 @@ module.exports = function generateScatterPlot(options = {}) {
         datasets: [
           {
             data: selected.points,
+            parsing: false,
             pointRadius: 5,
+            pointHoverRadius: 5,
             backgroundColor: "#1f4f95"
           }
         ]
@@ -67,6 +79,7 @@ module.exports = function generateScatterPlot(options = {}) {
         },
         scales: {
           x: {
+            type: "linear",
             min: 0,
             max: 10,
             ticks: { stepSize: 1 }

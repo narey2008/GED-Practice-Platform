@@ -10,15 +10,33 @@ module.exports = function generateLineGraph(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
 
   const labels = ["Week 1", "Week 2", "Week 3", "Week 4"];
-  const values = [rand(4, 8), rand(6, 10), rand(5, 11), rand(7, 12)];
+
+  const start = rand(4, 7);
+  const step1 = rand(1, 3);
+  const step2 = rand(-1, 2);
+  const step3 = rand(1, 3);
+
+  const values = [
+    start,
+    start + step1,
+    start + step1 + step2,
+    start + step1 + step2 + step3
+  ];
+
   const increase = values[3] - values[0];
+
+  const choices = new Set([increase]);
+  while (choices.size < 4) {
+    choices.add(increase + rand(-3, 3));
+  }
+  choices.delete(null);
 
   return {
     skill: "Line Graph",
     difficulty,
     type: "multiple",
     question: "According to the line graph, how much did the value increase from Week 1 to Week 4?",
-    choices: shuffle([increase, increase + 1, increase - 1, increase + 3]),
+    choices: shuffle(Array.from(choices)),
     answer: increase,
     chart: {
       type: "line",
@@ -30,8 +48,9 @@ module.exports = function generateLineGraph(options = {}) {
             borderColor: "#153e75",
             backgroundColor: "#1f4f95",
             fill: false,
-            tension: 0.2,
-            pointRadius: 4
+            tension: 0,
+            pointRadius: 4,
+            pointHoverRadius: 4
           }
         ]
       },
@@ -45,6 +64,8 @@ module.exports = function generateLineGraph(options = {}) {
         scales: {
           y: {
             beginAtZero: true,
+            min: 0,
+            max: Math.max(...values) + 2,
             ticks: { stepSize: 1 }
           }
         }
