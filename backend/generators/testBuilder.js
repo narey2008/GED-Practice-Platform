@@ -134,19 +134,21 @@ const hotspotCapablePool = pool.filter((g) =>
   generatorCanProduceType(g, difficulty, "hotspot")
 );
 
+const isFullTest = count >= 40;
+
 const targetFillCount =
   fillCapablePool.length > 0
-    ? Math.max(2, Math.floor(count * 0.10))
+    ? (isFullTest ? 4 : 1)
     : 0;
 
 const targetDragDropCount =
   dragDropCapablePool.length > 0
-    ? Math.max(1, Math.floor(count * 0.06))
+    ? (isFullTest ? 2 : 1)
     : 0;
 
 const targetHotspotCount =
   hotspotCapablePool.length > 0
-    ? Math.max(1, Math.floor(count * 0.04))
+    ? (isFullTest ? 1 : 1)
     : 0;
 
 const questions = [];

@@ -173,6 +173,7 @@
     #fillAnswer {
       font-size: calc(15px * var(--font-scale));
     }
+    
 
     .questionIndicator,
     .menuPanel h3 {
@@ -555,6 +556,36 @@ select {
   font-weight: 700;
 }
 
+.hotspotWrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 14px;
+}
+
+.hotspotSvg {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+.hotspotTick {
+  cursor: pointer;
+}
+
+.hotspotTick:hover circle {
+  stroke: var(--primary);
+  stroke-width: 4;
+}
+
+.hotspotSelected circle {
+  fill: var(--primary);
+}
+
+.hotspotSelected text {
+  font-weight: 800;
+}
+
     #choices {
   display: grid;
   gap: 8px;
@@ -581,6 +612,57 @@ select {
       border-color: var(--primary);
       background: var(--choice-selected);
     }
+
+    .dragDropWrap {
+  display: grid;
+  gap: 10px;
+}
+
+.dragDropAnswer,
+.dragDropBank {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 120px; /* 🔥 bigger drop area */
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.dragDropLabel {
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.dragDropItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 60px; /* ensures space even when empty */
+}
+
+.dragChip {
+  background: var(--choice-bg);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: grab;
+  user-select: none;
+}
+
+.dragChip:hover {
+  border-color: var(--primary);
+  background: var(--choice-hover);
+}
+
+.dragDropEmpty {
+  color: var(--muted);
+  font-style: italic;
+}
 
     #fillAnswer {
   width: 100%;
@@ -744,6 +826,20 @@ select {
   font-size: 13px;
   font-weight: 700;
   margin-top: 10px;
+}
+
+.dragChip {
+  cursor: grab;
+}
+
+.dragChip:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+.dragOver {
+  outline: 3px dashed var(--primary);
+  background: rgba(21, 62, 117, 0.08);
 }
 
 .loadingOverlay {
@@ -1168,15 +1264,65 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
         .replace(/'/g, "&#39;");
     }
 
+    function normalizeComparableAnswer(value) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "";
+
+  const cleaned = raw.replace(/\s+/g, "");
+
+  if (/^-?\d+\/-?\d+$/.test(cleaned)) {
+    const [numStr, denStr] = cleaned.split("/");
+    const num = Number(numStr);
+    const den = Number(denStr);
+
+    if (Number.isFinite(num) && Number.isFinite(den) && den !== 0) {
+      return String(num / den);
+    }
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(cleaned)) {
+    const num = Number(cleaned);
+    if (Number.isFinite(num)) {
+      return String(num);
+    }
+  }
+
+  return cleaned;
+}
+
+function answersMatch(userAnswer, correctAnswer) {
+  const normalizeDragDropValue = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((x) => String(x).trim()).join(" | ");
+    }
+    return value;
+  };
+
+  const a = normalizeComparableAnswer(normalizeDragDropValue(userAnswer));
+  const b = normalizeComparableAnswer(normalizeDragDropValue(correctAnswer));
+
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+
+  const numA = Number(a);
+  const numB = Number(b);
+
+  if (Number.isFinite(numA) && Number.isFinite(numB)) {
+    return Math.abs(numA - numB) < 0.000001;
+  }
+
+  return a === b;
+}
+
     function renderHistoryDetails(questions) {
   if (!Array.isArray(questions) || !questions.length) {
     return `<div class="reviewItem" style="margin-top:10px;">${tr("noQuestionDataTest")}</div>`;
   }
 
   return questions.map((q, i) => {
-    const userAnswer = String(q.userAnswer ?? "").trim();
-    const correctAnswer = String(q.answer ?? "").trim();
-    const isCorrect = userAnswer === correctAnswer;
+const userAnswer = String(q.userAnswer ?? "").trim();
+const correctAnswer = String(q.answer ?? "").trim();
+const isCorrect = answersMatch(userAnswer, correctAnswer);
 
     return `
       <div class="reviewItem" style="margin-top:10px;">
@@ -1196,9 +1342,9 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
   }
 
   return questions.map((q, i) => {
-    const userAnswer = String(q.userAnswer ?? "").trim();
-    const correctAnswer = String(q.answer ?? "").trim();
-    const isCorrect = userAnswer === correctAnswer;
+const userAnswer = String(q.userAnswer ?? "").trim();
+const correctAnswer = String(q.answer ?? "").trim();
+const isCorrect = answersMatch(userAnswer, correctAnswer);
 
     return `
       <div class="reviewItem" style="margin-top:10px;">
@@ -1220,9 +1366,9 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
 
     questions.forEach((q) => {
       const skill = q.skill || "Mixed Practice";
-      const userAnswer = String(q.userAnswer ?? "").trim();
-      const correctAnswer = String(q.answer ?? "").trim();
-      const isCorrect = userAnswer === correctAnswer;
+const userAnswer = String(q.userAnswer ?? "").trim();
+const correctAnswer = String(q.answer ?? "").trim();
+const isCorrect = answersMatch(userAnswer, correctAnswer);
 
       if (!stats[skill]) {
         stats[skill] = { total: 0, correct: 0 };
@@ -5256,6 +5402,233 @@ function renderAnswerArea(q) {
     return;
   }
 
+  if (q.type === "dragdrop") {
+    container.style.display = "block";
+
+    const currentOrder = Array.isArray(q.userAnswer)
+      ? [...q.userAnswer]
+      : [];
+
+    const sourceItems = Array.isArray(q.choices) ? q.choices : [];
+    const remainingItems = sourceItems.filter((item) => !currentOrder.includes(item));
+
+    const wrap = document.createElement("div");
+    wrap.className = "dragDropWrap";
+
+    const answerBox = document.createElement("div");
+    answerBox.className = "dragDropAnswer";
+    answerBox.innerHTML = `
+      <div class="dragDropLabel">Your order</div>
+      <div class="dragDropItems" id="dragDropAnswerItems"></div>
+    `;
+
+    const bankBox = document.createElement("div");
+    bankBox.className = "dragDropBank";
+    bankBox.innerHTML = `
+      <div class="dragDropLabel">Available items</div>
+      <div class="dragDropItems" id="dragDropBankItems"></div>
+    `;
+
+    const actionRow = document.createElement("div");
+    actionRow.className = "menuActions";
+    actionRow.innerHTML = `
+      <button id="dragDropClearBtn" class="secondaryBtn">Clear Order</button>
+    `;
+
+    wrap.appendChild(answerBox);
+    wrap.appendChild(bankBox);
+    wrap.appendChild(actionRow);
+    container.appendChild(wrap);
+
+    const answerItemsEl = document.getElementById("dragDropAnswerItems");
+    const bankItemsEl = document.getElementById("dragDropBankItems");
+    const clearBtn = document.getElementById("dragDropClearBtn");
+
+    function setupDropZone(el, type) {
+  el.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    el.classList.add("dragOver");
+  });
+
+  el.addEventListener("dragleave", () => {
+    el.classList.remove("dragOver");
+  });
+
+  el.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    el.classList.remove("dragOver");
+
+    if (state.lockedReviewMode || state.isPaused) return;
+
+    const value = e.dataTransfer.getData("text/plain");
+    const origin = e.dataTransfer.getData("origin");
+
+    let current = Array.isArray(q.userAnswer) ? [...q.userAnswer] : [];
+
+    if (type === "answer") {
+      if (!current.includes(value)) {
+        current.push(value);
+      }
+    }
+
+    if (type === "bank") {
+      current = current.filter((v) => v !== value);
+    }
+
+    q.userAnswer = current;
+    renderAnswerArea(q);
+    await saveProgress();
+  });
+}
+
+setupDropZone(answerItemsEl, "answer");
+setupDropZone(bankItemsEl, "bank");
+
+ function buildChip(text, origin) {
+  const chip = document.createElement("div");
+  chip.className = "dragChip";
+  chip.textContent = text;
+  chip.draggable = true;
+
+  chip.dataset.value = text;
+  chip.dataset.origin = origin;
+
+  chip.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("text/plain", text);
+    e.dataTransfer.setData("origin", origin);
+  });
+
+  return chip;
+}
+
+if (!currentOrder.length) {
+  const empty = document.createElement("div");
+  empty.className = "dragDropEmpty";
+  empty.textContent = "Drag items here to build the order.";
+  answerItemsEl.appendChild(empty);
+} else {
+currentOrder.forEach((item) => {
+  const chip = buildChip(item, "answer");
+
+  chip.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+
+  chip.addEventListener("drop", async (e) => {
+    e.preventDefault();
+
+    if (state.lockedReviewMode || state.isPaused) return;
+
+    const draggedValue = e.dataTransfer.getData("text/plain");
+    if (!draggedValue || draggedValue === item) return;
+
+    let current = Array.isArray(q.userAnswer) ? [...q.userAnswer] : [];
+
+    current = current.filter((value) => value !== draggedValue);
+
+    const insertIndex = current.indexOf(item);
+    current.splice(insertIndex, 0, draggedValue);
+
+    q.userAnswer = current;
+    renderAnswerArea(q);
+    await saveProgress();
+  });
+
+  answerItemsEl.appendChild(chip);
+});
+}
+
+remainingItems.forEach((item) => {
+  const chip = buildChip(item, "bank");
+  bankItemsEl.appendChild(chip);
+});
+
+clearBtn.onclick = async () => {
+  if (state.lockedReviewMode || state.isPaused) return;
+  q.userAnswer = [];
+  renderAnswerArea(q);
+  await saveProgress();
+};
+
+chip.addEventListener("click", async () => {
+  if (state.lockedReviewMode || state.isPaused) return;
+
+  let current = Array.isArray(q.userAnswer) ? [...q.userAnswer] : [];
+
+  if (origin === "bank") {
+    current = current.filter((v) => v !== text);
+    current.push(text);
+  }
+
+  if (origin === "answer") {
+    current = current.filter((v) => v !== text);
+  }
+
+  q.userAnswer = current;
+  renderAnswerArea(q);
+  await saveProgress();
+});
+
+    return;
+  }
+
+  if (q.type === "hotspot") {
+  container.style.display = "block";
+
+  const hotspot = q.hotspot || {};
+  const min = Number(hotspot.min ?? -5);
+  const max = Number(hotspot.max ?? 5);
+  const selected = String(q.userAnswer ?? "");
+
+  const width = 360;
+  const height = 160;
+  const startX = 35;
+  const endX = 325;
+  const y = 80;
+  const count = max - min;
+
+  const ticks = [];
+
+  for (let value = min; value <= max; value += 1) {
+    const x = startX + ((value - min) / count) * (endX - startX);
+    const isSelected = selected === String(value);
+
+    ticks.push(`
+      <g class="hotspotTick ${isSelected ? "hotspotSelected" : ""}" data-value="${value}">
+        <line x1="${x}" y1="${y - 12}" x2="${x}" y2="${y + 12}" stroke="#153e75" stroke-width="3"/>
+        <circle cx="${x}" cy="${y}" r="12" fill="${isSelected ? "#153e75" : "transparent"}" stroke="#153e75" stroke-width="2"/>
+        <text x="${x}" y="${y + 42}" text-anchor="middle" class="diagramLabel">${value}</text>
+      </g>
+    `);
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "hotspotWrap";
+  wrap.innerHTML = `
+    <svg class="hotspotSvg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#153e75" stroke-width="4"/>
+      <polygon points="${endX},${y} ${endX - 10},${y - 7} ${endX - 10},${y + 7}" fill="#153e75"/>
+      ${ticks.join("")}
+    </svg>
+    <div class="muted" style="margin-top:8px;">
+      ${selected ? `Selected: ${escapeHtml(selected)}` : "Click a point on the number line."}
+    </div>
+  `;
+
+  container.appendChild(wrap);
+
+  wrap.querySelectorAll(".hotspotTick").forEach((tick) => {
+    tick.addEventListener("click", async () => {
+      if (state.lockedReviewMode || state.isPaused) return;
+      q.userAnswer = tick.getAttribute("data-value");
+      renderAnswerArea(q);
+      await saveProgress();
+    });
+  });
+
+  return;
+}
+
   container.style.display = "grid";
 
   q.choices.forEach((choice) => {
@@ -5505,9 +5878,9 @@ async function saveCompletedPracticeToHistory() {
       let correct = 0;
 
       state.questions.forEach((q) => {
-        if (String(q.userAnswer ?? "").trim() === String(q.answer).trim()) {
-          correct += 1;
-        }
+        if (answersMatch(q.userAnswer, q.answer)) {
+  correct += 1;
+       }
       });
 
       return Math.round((correct / state.questions.length) * 200);
@@ -5524,9 +5897,9 @@ async function saveCompletedPracticeToHistory() {
 
     stats[skill].total += 1;
 
-    if (String(q.userAnswer ?? "").trim() === String(q.answer).trim()) {
-      stats[skill].correct += 1;
-    }
+    if (answersMatch(q.userAnswer, q.answer)) {
+  stats[skill].correct += 1;
+}
   });
 
   let weakest = null;
@@ -5590,7 +5963,7 @@ async function showReview() {
   panel.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
       <h2 class="sectionTitle" style="margin:0;">${tr("testResults")}</h2>
-      <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
+      <button id="profileMainMenuBtn" class="secondaryBtn" onclick="goToMainMenu()">${tr("mainMenuBtn")}</button>
     </div>
 
     <div class="reviewTop">
@@ -5664,9 +6037,14 @@ async function showReview() {
   `;
 
   state.questions.forEach((q, i) => {
-    const user = String(q.userAnswer ?? "").trim();
-    const correctAns = String(q.answer).trim();
-    const isCorrect = user === correctAns;
+const user = Array.isArray(q.userAnswer)
+  ? q.userAnswer.join(" | ").trim()
+  : String(q.userAnswer ?? "").trim();
+
+const correctAns = Array.isArray(q.answer)
+  ? q.answer.join(" | ").trim()
+  : String(q.answer).trim();
+const isCorrect = answersMatch(user, correctAns);
 
     const div = document.createElement("div");
     div.className = "reviewItem";
@@ -5746,9 +6124,14 @@ async function showReview() {
       `;
 
       state.questions.forEach((q, i) => {
-        const user = String(q.userAnswer ?? "").trim();
-        const correctAns = String(q.answer).trim();
-        const isCorrect = user === correctAns;
+const user = Array.isArray(q.userAnswer)
+  ? q.userAnswer.join(" | ").trim()
+  : String(q.userAnswer ?? "").trim();
+
+const correctAns = Array.isArray(q.answer)
+  ? q.answer.join(" | ").trim()
+  : String(q.answer).trim();
+const isCorrect = answersMatch(user, correctAns);
 
         const div = document.createElement("div");
         div.className = "practiceItem";
