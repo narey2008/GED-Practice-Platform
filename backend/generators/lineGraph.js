@@ -9,7 +9,30 @@ function shuffle(arr) {
 module.exports = function generateLineGraph(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
 
-  const labels = ["Week 1", "Week 2", "Week 3", "Week 4"];
+  const scenarios = [
+    {
+      title: "Miles Walked",
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      unit: "miles"
+    },
+    {
+      title: "Books Read",
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      unit: "books"
+    },
+    {
+      title: "Plant Height",
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      unit: "centimeters"
+    },
+    {
+      title: "Savings Account Balance",
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      unit: "dollars"
+    }
+  ];
+
+  const selected = scenarios[rand(0, scenarios.length - 1)];
 
   const start = rand(4, 7);
   const step1 = rand(1, 3);
@@ -23,27 +46,30 @@ module.exports = function generateLineGraph(options = {}) {
     start + step1 + step2 + step3
   ];
 
-  const increase = values[3] - values[0];
+  const change = values[3] - values[0];
 
-  const choices = new Set([increase]);
+  const choices = new Set([change]);
   while (choices.size < 4) {
-    choices.add(increase + rand(-3, 3));
+    const wrong = change + rand(-3, 3);
+    if (wrong !== change) {
+      choices.add(wrong);
+    }
   }
-  choices.delete(null);
 
   return {
     skill: "Line Graph",
     difficulty,
     type: "multiple",
-    question: "According to the line graph, how much did the value increase from Week 1 to Week 4?",
+    question: `The line graph shows ${selected.title.toLowerCase()} over time. How much did the value change from ${selected.labels[0]} to ${selected.labels[3]}?`,
     choices: shuffle(Array.from(choices)),
-    answer: increase,
+    answer: change,
     chart: {
       type: "line",
       data: {
-        labels,
+        labels: selected.labels,
         datasets: [
           {
+            label: selected.title,
             data: values,
             borderColor: "#153e75",
             backgroundColor: "#1f4f95",
@@ -59,18 +85,26 @@ module.exports = function generateLineGraph(options = {}) {
         maintainAspectRatio: false,
         animation: false,
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          title: {
+            display: true,
+            text: selected.title
+          }
         },
         scales: {
           y: {
             beginAtZero: true,
             min: 0,
             max: Math.max(...values) + 2,
-            ticks: { stepSize: 1 }
+            ticks: { stepSize: 1 },
+            title: {
+              display: true,
+              text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1)
+            }
           }
         }
       }
     },
-    explanation: `Find the difference between Week 4 and Week 1. That is ${values[3]} - ${values[0]} = ${increase}.`
+    explanation: `Find the difference between ${selected.labels[3]} and ${selected.labels[0]}. That is ${values[3]} - ${values[0]} = ${change}.`
   };
 };

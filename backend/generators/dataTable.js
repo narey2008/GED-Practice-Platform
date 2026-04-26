@@ -1,3 +1,7 @@
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
@@ -5,36 +9,78 @@ function shuffle(arr) {
 module.exports = function generateDataTable(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
 
-  const rows = [
-    { item: "Pens", sold: 12 },
-    { item: "Pencils", sold: 18 },
-    { item: "Notebooks", sold: 9 },
-    { item: "Markers", sold: 15 }
+  const scenarios = [
+    {
+      intro: "The table shows the number of items sold at a school store in one day.",
+      headers: ["Item", "Sold"],
+      rows: [
+        { item: "Pens", sold: rand(10, 16) },
+        { item: "Pencils", sold: rand(12, 20) },
+        { item: "Notebooks", sold: rand(6, 12) },
+        { item: "Markers", sold: rand(8, 15) }
+      ],
+      question: "How many items were sold in all?"
+    },
+    {
+      intro: "The table shows the number of books read by students in one month.",
+      headers: ["Student", "Books"],
+      rows: [
+        { item: "Ava", sold: rand(2, 6) },
+        { item: "Liam", sold: rand(3, 7) },
+        { item: "Noah", sold: rand(1, 5) },
+        { item: "Emma", sold: rand(2, 6) }
+      ],
+      question: "How many books were read in all?"
+    },
+    {
+      intro: "The table shows the number of cans collected by four groups.",
+      headers: ["Group", "Cans"],
+      rows: [
+        { item: "Group A", sold: rand(15, 25) },
+        { item: "Group B", sold: rand(12, 22) },
+        { item: "Group C", sold: rand(10, 20) },
+        { item: "Group D", sold: rand(14, 24) }
+      ],
+      question: "How many cans were collected in all?"
+    }
   ];
 
-  const total = rows.reduce((sum, row) => sum + row.sold, 0);
+  const selected = scenarios[rand(0, scenarios.length - 1)];
+  const total = selected.rows.reduce((sum, row) => sum + row.sold, 0);
 
   const tableHtml = `
 <table style="border-collapse:collapse;margin-top:10px;background:#fff;">
   <tr>
-    <th style="border:1px solid #9aa7b8;padding:6px;background:#edf3fb;">Item</th>
-    <th style="border:1px solid #9aa7b8;padding:6px;background:#edf3fb;">Sold</th>
+    <th style="border:1px solid #9aa7b8;padding:6px;background:#edf3fb;">${selected.headers[0]}</th>
+    <th style="border:1px solid #9aa7b8;padding:6px;background:#edf3fb;">${selected.headers[1]}</th>
   </tr>
-  ${rows.map((r) => `
+  ${selected.rows
+    .map(
+      (r) => `
     <tr>
       <td style="border:1px solid #9aa7b8;padding:6px;">${r.item}</td>
       <td style="border:1px solid #9aa7b8;padding:6px;text-align:center;">${r.sold}</td>
     </tr>
-  `).join("")}
+  `
+    )
+    .join("")}
 </table>`;
+
+  const choices = new Set([total]);
+  while (choices.size < 4) {
+    const wrong = total + rand(-8, 10);
+    if (wrong > 0 && wrong !== total) {
+      choices.add(wrong);
+    }
+  }
 
   return {
     skill: "Data Table",
     difficulty,
     type: "multiple",
-    question: `The table shows the number of items sold in one day.${tableHtml}<div style="margin-top:10px;">How many items were sold in all?</div>`,
-    choices: shuffle([total, total + 4, total - 5, total + 9]),
+    question: `${selected.intro}${tableHtml}<div style="margin-top:10px;">${selected.question}</div>`,
+    choices: shuffle(Array.from(choices)),
     answer: total,
-    explanation: `Add all values in the Sold column: 12 + 18 + 9 + 15 = ${total}.`
+    explanation: `Add all values in the table: ${selected.rows.map((r) => r.sold).join(" + ")} = ${total}.`
   };
 };

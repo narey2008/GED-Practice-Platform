@@ -8,7 +8,31 @@ function shuffle(arr) {
 
 module.exports = function generateBarGraph(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
-  const labels = ["Mon", "Tue", "Wed", "Thu"];
+
+  const scenarios = [
+    {
+      title: "Library Visitors",
+      labels: ["Mon", "Tue", "Wed", "Thu"],
+      unit: "visitors"
+    },
+    {
+      title: "Bottles Recycled",
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+      unit: "bottles"
+    },
+    {
+      title: "School Fundraiser Tickets Sold",
+      labels: ["Class A", "Class B", "Class C", "Class D"],
+      unit: "tickets"
+    },
+    {
+      title: "Hours of Study",
+      labels: ["Mon", "Tue", "Wed", "Thu"],
+      unit: "hours"
+    }
+  ];
+
+  const selected = scenarios[rand(0, scenarios.length - 1)];
 
   const values = [
     rand(4, 8),
@@ -17,30 +41,28 @@ module.exports = function generateBarGraph(options = {}) {
     rand(3, 7)
   ];
 
-  let maxIndex = values.indexOf(Math.max(...values));
-
-  const used = new Set(values);
-  while ([...used].filter((v) => v === Math.max(...values)).length > 1) {
-    values[maxIndex] += 1;
-    maxIndex = values.indexOf(Math.max(...values));
+  while (new Set(values).size < values.length) {
+    const i = rand(0, values.length - 1);
+    values[i] += 1;
   }
 
   const maxValue = Math.max(...values);
-  const correctDay = labels[values.indexOf(maxValue)];
+  const correctLabel = selected.labels[values.indexOf(maxValue)];
 
   return {
     skill: "Bar Graph",
     difficulty,
     type: "multiple",
-    question: "According to the bar graph, which day has the highest value?",
-    choices: shuffle([...labels]),
-    answer: correctDay,
+    question: `The bar graph shows ${selected.title.toLowerCase()}. Which category has the greatest number of ${selected.unit}?`,
+    choices: shuffle([...selected.labels]),
+    answer: correctLabel,
     chart: {
       type: "bar",
       data: {
-        labels,
+        labels: selected.labels,
         datasets: [
           {
+            label: selected.title,
             data: values,
             backgroundColor: "#1f4f95",
             borderColor: "#153e75",
@@ -53,18 +75,26 @@ module.exports = function generateBarGraph(options = {}) {
         maintainAspectRatio: false,
         animation: false,
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          title: {
+            display: true,
+            text: selected.title
+          }
         },
         scales: {
           y: {
             beginAtZero: true,
             min: 0,
             max: maxValue + 2,
-            ticks: { stepSize: 1 }
+            ticks: { stepSize: 1 },
+            title: {
+              display: true,
+              text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1)
+            }
           }
         }
       }
     },
-    explanation: `Compare the heights of the bars. The tallest bar is for ${correctDay}, so ${correctDay} has the highest value.`
+    explanation: `Compare the heights of the bars. The tallest bar is ${correctLabel}, so ${correctLabel} has the greatest number of ${selected.unit}.`
   };
 };

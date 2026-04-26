@@ -11,7 +11,13 @@ function positive() {
   for (let x = 1; x <= 7; x += 1) {
     points.push({ x, y: x + rand(0, 2) });
   }
-  return { points, answer: "Positive correlation" };
+  return {
+    points,
+    answer: "Positive correlation",
+    title: "Hours Studied vs. Quiz Score",
+    xLabel: "Hours Studied",
+    yLabel: "Quiz Score"
+  };
 }
 
 function negative() {
@@ -19,7 +25,13 @@ function negative() {
   for (let x = 1; x <= 7; x += 1) {
     points.push({ x, y: 9 - x + rand(-1, 1) });
   }
-  return { points, answer: "Negative correlation" };
+  return {
+    points,
+    answer: "Negative correlation",
+    title: "Absences vs. Final Grade",
+    xLabel: "Absences",
+    yLabel: "Final Grade"
+  };
 }
 
 function none() {
@@ -37,19 +49,25 @@ function none() {
     }
   }
 
-  return { points, answer: "No correlation" };
+  return {
+    points,
+    answer: "No correlation",
+    title: "Shoe Size vs. Number of Books Read",
+    xLabel: "Shoe Size",
+    yLabel: "Books Read"
+  };
 }
 
 module.exports = function generateScatterPlot(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
   const builders = [positive, negative, none];
-  const selected = builders[Math.floor(Math.random() * builders.length)]();
+  const selected = builders[rand(0, builders.length - 1)]();
 
   return {
     skill: "Scatter Plot",
     difficulty,
     type: "multiple",
-    question: "Based on the scatter plot, what type of relationship is shown?",
+    question: `The scatter plot compares ${selected.xLabel.toLowerCase()} and ${selected.yLabel.toLowerCase()}. What type of relationship is shown?`,
     choices: shuffle([
       "Positive correlation",
       "Negative correlation",
@@ -62,6 +80,7 @@ module.exports = function generateScatterPlot(options = {}) {
       data: {
         datasets: [
           {
+            label: selected.title,
             data: selected.points,
             parsing: false,
             pointRadius: 5,
@@ -75,23 +94,35 @@ module.exports = function generateScatterPlot(options = {}) {
         maintainAspectRatio: false,
         animation: false,
         plugins: {
-          legend: { display: false }
+          legend: { display: false },
+          title: {
+            display: true,
+            text: selected.title
+          }
         },
         scales: {
           x: {
             type: "linear",
             min: 0,
             max: 10,
-            ticks: { stepSize: 1 }
+            ticks: { stepSize: 1 },
+            title: {
+              display: true,
+              text: selected.xLabel
+            }
           },
           y: {
             min: 0,
             max: 10,
-            ticks: { stepSize: 1 }
+            ticks: { stepSize: 1 },
+            title: {
+              display: true,
+              text: selected.yLabel
+            }
           }
         }
       }
     },
-    explanation: `Look at the overall direction of the points. If they rise from left to right, the relationship is positive. If they fall, it is negative. If there is no clear trend, it is no correlation.`
+    explanation: `Look at the overall direction of the points. If they rise from left to right, the relationship is positive. If they fall from left to right, it is negative. If there is no clear pattern, it is no correlation.`
   };
 };
