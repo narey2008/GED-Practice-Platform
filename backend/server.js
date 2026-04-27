@@ -92,6 +92,56 @@ function sanitizeUser(user) {
   };
 }
 
+function normalizeComparableAnswer(value) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "";
+
+  const cleaned = raw.replace(/\s+/g, "");
+
+  if (/^-?\d+\/-?\d+$/.test(cleaned)) {
+    const [numStr, denStr] = cleaned.split("/");
+    const num = Number(numStr);
+    const den = Number(denStr);
+
+    if (Number.isFinite(num) && Number.isFinite(den) && den !== 0) {
+      return String(num / den);
+    }
+  }
+
+  if (/^-?\d+(\.\d+)?$/.test(cleaned)) {
+    const num = Number(cleaned);
+    if (Number.isFinite(num)) {
+      return String(num);
+    }
+  }
+
+  return cleaned;
+}
+
+function answersMatch(userAnswer, correctAnswer) {
+  const normalizeDragDropValue = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((x) => String(x).trim()).join(" | ");
+    }
+    return value;
+  };
+
+  const a = normalizeComparableAnswer(normalizeDragDropValue(userAnswer));
+  const b = normalizeComparableAnswer(normalizeDragDropValue(correctAnswer));
+
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+
+  const numA = Number(a);
+  const numB = Number(b);
+
+  if (Number.isFinite(numA) && Number.isFinite(numB)) {
+    return Math.abs(numA - numB) < 0.000001;
+  }
+
+  return a === b;
+}
+
 const mailTransport =
   process.env.SMTP_HOST &&
   process.env.SMTP_PORT &&
@@ -1568,21 +1618,20 @@ app.get("/api/practice", (req, res) => {
     let correctCount = 0;
     const skillStats = {};
 
-    questions.forEach((q) => {
-      const isCorrect =
-        String(q.userAnswer ?? "").trim() === String(q.answer ?? "").trim();
+questions.forEach((q) => {
+  const isCorrect = answersMatch(q.userAnswer, q.answer);
 
-      if (isCorrect) correctCount++;
+  if (isCorrect) correctCount++;
 
-      const skill = q.skill || "Unknown";
+  const skill = q.skill || "Unknown";
 
-      if (!skillStats[skill]) {
-        skillStats[skill] = { correct: 0, total: 0 };
-      }
+  if (!skillStats[skill]) {
+    skillStats[skill] = { correct: 0, total: 0 };
+  }
 
-      skillStats[skill].total += 1;
-      if (isCorrect) skillStats[skill].correct += 1;
-    });
+  skillStats[skill].total += 1;
+  if (isCorrect) skillStats[skill].correct += 1;
+});
 
     const wrongOrUnansweredCount = totalQuestions - correctCount;
 
@@ -1599,7 +1648,7 @@ if (!user) {
     let lowestAccuracy = 1;
 
     Object.entries(skillStats).forEach(([skill, stats]) => {
-      const accuracy = stats.correct / stats.total;
+      const accuracy = stats.total ? stats.correct / stats.total : 1;
       if (accuracy < lowestAccuracy) {
         lowestAccuracy = accuracy;
         weakestSkill = skill;
@@ -1662,12 +1711,11 @@ app.post("/api/practice/complete", authMiddleware, async (req, res) => {
 
     let correctCount = 0;
 
-    questions.forEach((q) => {
-      const isCorrect =
-        String(q.userAnswer ?? "").trim() === String(q.answer ?? "").trim();
+questions.forEach((q) => {
+  const isCorrect = answersMatch(q.userAnswer, q.answer);
 
-      if (isCorrect) correctCount++;
-    });
+  if (isCorrect) correctCount++;
+});
 
     const wrongCount = totalQuestions - correctCount;
     const accuracyPercent = Math.round((correctCount / totalQuestions) * 100);
