@@ -58,6 +58,8 @@ module.exports = function generateLineGraph(options = {}) {
 
   return {
     skill: "Line Graph",
+    subskill: "Line Graph Change",
+topic: "Finding change over time from a line graph",
     difficulty,
     type: "multiple",
     question: `The line graph shows ${selected.title.toLowerCase()} over time. How much did the value change from ${selected.labels[0]} to ${selected.labels[3]}?`,

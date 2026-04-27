@@ -14,6 +14,8 @@ function increase(difficulty) {
 
   return {
     skill: "Percent Change",
+    subskill: "Percent Increase",
+topic: "Finding a new value after percent increase",
     difficulty,
     type: "multiple",
     question: `A value of ${original} is increased by ${change}%. What is the new value?`,
@@ -31,6 +33,8 @@ function decrease(difficulty) {
 
   return {
     skill: "Percent Change",
+    subskill: "Percent Decrease",
+topic: "Finding a new value after percent decrease",
     difficulty,
     type: "multiple",
     question: `A value of ${original} is decreased by ${change}%. What is the new value?`,

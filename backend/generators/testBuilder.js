@@ -38,8 +38,10 @@ function normalizeExplanation(text, fallbackAnswer) {
 function normalizeQuestion(q, index, difficulty) {
   return {
     id: index + 1,
-    skill: q.skill || "Mixed Practice",
-    type: q.type || "multiple",
+skill: q.skill || "Mixed Practice",
+subskill: q.subskill || q.skill || "Mixed Practice",
+topic: q.topic || q.subskill || q.skill || "Mixed Practice",
+type: q.type || "multiple",
     question: q.question || "Question unavailable.",
     choices: Array.isArray(q.choices) ? q.choices : [],
     answer: q.answer,
@@ -85,20 +87,18 @@ function generatorCanProduceType(generator, difficulty, desiredType) {
 }
 
 function drawQuestionFromPool(pool, difficulty, preferredType = null) {
-  const attempts = 20;
+  const attempts = preferredType ? 100 : 20;
 
-  if (preferredType) {
-    for (let i = 0; i < attempts; i += 1) {
-      const generator = pool[Math.floor(Math.random() * pool.length)];
-      const question = generator({ difficulty });
-      if (question && question.type === preferredType) {
-        return question;
-      }
+  for (let i = 0; i < attempts; i += 1) {
+    const generator = pool[Math.floor(Math.random() * pool.length)];
+    const question = generator({ difficulty });
+
+    if (!preferredType || question?.type === preferredType) {
+      return question;
     }
   }
 
-  const generator = pool[Math.floor(Math.random() * pool.length)];
-  return generator({ difficulty });
+  return pool[Math.floor(Math.random() * pool.length)]({ difficulty });
 }
 
 function buildTest(options = {}) {
@@ -137,16 +137,39 @@ function buildTest(options = {}) {
 
   const isFullTest = count >= 40;
 
-  const targetFillCount = fillCapablePool.length > 0 ? (isFullTest ? 4 : 1) : 0;
-  const targetDragDropCount = dragDropCapablePool.length > 0 ? (isFullTest ? 2 : 1) : 0;
-  const targetHotspotCount = hotspotCapablePool.length > 0 ? (isFullTest ? 1 : 1) : 0;
+const targetFillCount =
+  fillCapablePool.length > 0
+    ? (isFullTest ? 9 : Math.min(2, count))
+    : 0;
 
+const targetDragDropCount =
+  dragDropCapablePool.length > 0
+    ? (isFullTest ? 5 : Math.min(1, count))
+    : 0;
+
+const targetHotspotCount =
+  hotspotCapablePool.length > 0
+    ? (isFullTest ? 4 : Math.min(1, count))
+    : 0;
   const rawQuestions = [];
 
-  function addPreferredQuestion(sourcePool, preferredType) {
-    const question = drawQuestionFromPool(sourcePool, difficulty, preferredType);
-    rawQuestions.push(question);
+function addPreferredQuestion(sourcePool, preferredType) {
+  let question = null;
+  let safety = 0;
+
+  while (safety < 100) {
+    question = drawQuestionFromPool(sourcePool, difficulty, preferredType);
+
+    if (question && question.type === preferredType) {
+      rawQuestions.push(question);
+      return;
+    }
+
+    safety += 1;
   }
+
+  console.warn(`Could not generate preferred question type: ${preferredType}`);
+}
 
   for (let i = 0; i < targetFillCount; i += 1) {
     addPreferredQuestion(fillCapablePool, "fill");

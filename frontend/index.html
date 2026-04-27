@@ -1381,6 +1381,65 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
   }).join("");
 }
 
+function skillToPracticeCategory(skill) {
+  const map = {
+    // Percent
+    "Percent": "Fractions, Decimals, and Percents",
+    "Percent of a Number": "Fractions, Decimals, and Percents",
+    "Percent Discount": "Fractions, Decimals, and Percents",
+    "Percent Increase": "Ratios, Proportions, and Percent Change",
+    "Percent Decrease": "Ratios, Proportions, and Percent Change",
+    "Percent of a Total": "Fractions, Decimals, and Percents",
+
+    // Algebra / Equations
+    "Linear Equations": "Solving Equations and Inequalities",
+    "One-Step Equations": "Solving Equations and Inequalities",
+    "Variables on Both Sides": "Solving Equations and Inequalities",
+    "Equation Steps": "Solving Equations and Inequalities",
+
+    // Slope / Coordinate
+    "Slope": "Linear Equations and Slope",
+    "Slope From Graph": "Linear Equations and Slope",
+    "Slope From Points": "Linear Equations and Slope",
+
+    // Geometry
+    "Geometry": "Area, Perimeter, Surface Area, and Volume",
+    "Rectangle Area": "Area, Perimeter, Surface Area, and Volume",
+    "Rectangle Perimeter": "Area, Perimeter, Surface Area, and Volume",
+    "Triangle Area": "Area, Perimeter, Surface Area, and Volume",
+    "Area Word Problems": "Area, Perimeter, Surface Area, and Volume",
+    "Area Cost Problems": "Area, Perimeter, Surface Area, and Volume",
+
+    // Graphs / Data
+    "Bar Graph": "Data Tables and Graph Interpretation",
+    "Bar Graph Interpretation": "Data Tables and Graph Interpretation",
+    "Line Graph": "Data Tables and Graph Interpretation",
+    "Line Graph Change": "Data Tables and Graph Interpretation",
+    "Scatter Plot": "Data Tables and Graph Interpretation",
+    "Scatter Plot Correlation": "Data Tables and Graph Interpretation",
+    "Data Table": "Data Tables and Graph Interpretation",
+    "Data Table Totals": "Data Tables and Graph Interpretation",
+    "Graph Totals": "Data Tables and Graph Interpretation",
+
+    // Probability / Stats
+    "Probability": "Mean, Median, and Probability",
+    "Spinner Probability": "Mean, Median, and Probability",
+    "Marble Probability": "Mean, Median, and Probability",
+    "Number Cube Probability": "Mean, Median, and Probability",
+    "Average": "Mean, Median, and Probability",
+
+    // Number Line / Basics
+    "Number Line": "Lines, Angles, and Coordinate Plane",
+
+    // Fractions / Decimals
+    "Fractions": "Fractions, Decimals, and Percents",
+    "Decimals": "Fractions, Decimals, and Percents",
+    "Comparing Percents": "Fractions, Decimals, and Percents"
+  };
+
+  return map[skill] || "Solving Equations and Inequalities";
+}
+
     function getHistorySkillStats(history) {
   const stats = {};
 
@@ -1388,7 +1447,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
     const questions = Array.isArray(entry.questions) ? entry.questions : [];
 
     questions.forEach((q) => {
-      const skill = q.skill || "Mixed Practice";
+      const skill = q.subskill || q.skill || "Mixed Practice";
 const userAnswer = String(q.userAnswer ?? "").trim();
 const correctAnswer = String(q.answer ?? "").trim();
 const isCorrect = answersMatch(q.userAnswer, q.answer);
@@ -2333,7 +2392,7 @@ function translateSkillLabel(value) {
 }
 
 function getQuestionDisplaySkill(q) {
-  return translateSkillLabel(q?.skill || state.practiceMeta?.skill || "—");
+return weakest || "—";
 }
 
 function translateQuestionType(value) {
@@ -5982,20 +6041,23 @@ async function saveCompletedPracticeToHistory() {
       return Math.round((correct / state.questions.length) * 200);
     }
 
-    function weakestSkillText() {
+function weakestSkillText() {
   if (!state.questions.length) return "—";
 
   const stats = {};
 
   state.questions.forEach((q) => {
-    const skill = q.skill || "Mixed Practice";
-    if (!stats[skill]) stats[skill] = { total: 0, correct: 0 };
+    const skill = q.subskill || q.skill || "Mixed Practice";
+
+    if (!stats[skill]) {
+      stats[skill] = { total: 0, correct: 0 };
+    }
 
     stats[skill].total += 1;
 
     if (answersMatch(q.userAnswer, q.answer)) {
-  stats[skill].correct += 1;
-}
+      stats[skill].correct += 1;
+    }
   });
 
   let weakest = null;
@@ -6003,13 +6065,14 @@ async function saveCompletedPracticeToHistory() {
 
   Object.keys(stats).forEach((skill) => {
     const rate = stats[skill].correct / stats[skill].total;
+
     if (rate < lowest) {
       lowest = rate;
       weakest = skill;
     }
   });
 
-  return translateSkillLabel(weakest || "—");
+  return weakest || "—";
 }
 
     function passThreshold(score) {
@@ -6177,9 +6240,13 @@ state.questions.forEach((q, i) => {
     };
   }
 
-  document.getElementById("practiceWeakestBtn").onclick = async () => {
-    await startPractice(weakest, state.difficulty, true);
+const practiceWeakestBtn = document.getElementById("practiceWeakestBtn");
+if (practiceWeakestBtn) {
+  practiceWeakestBtn.onclick = async () => {
+    const category = skillToPracticeCategory(weakest);
+    await startPractice(category, state.difficulty, true);
   };
+}
 
   document.getElementById("reviewMenuBtn").onclick = () => {
     goToMainMenu();
@@ -6636,7 +6703,8 @@ if (profileResetPasswordBtn) {
 const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
 if (practiceBtn) {
   practiceBtn.onclick = async () => {
-    await startPractice(currentFocus, state.difficulty, true);
+    const category = skillToPracticeCategory(currentFocus);
+    await startPractice(category, state.difficulty, true);
   };
 }
 

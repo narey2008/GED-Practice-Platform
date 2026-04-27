@@ -9,6 +9,8 @@ module.exports = function generateHotspot(options = {}) {
 
   return {
     skill: "Number Line",
+    subskill: "Number Line",
+topic: "Locating integers on a number line",
     difficulty,
     type: "hotspot",
     question: `Click the point on the number line that represents ${answer}.`,

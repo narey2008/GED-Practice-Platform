@@ -76,6 +76,8 @@ module.exports = function generateDataTable(options = {}) {
 
   return {
     skill: "Data Table",
+    subskill: "Data Table Totals",
+topic: "Finding totals from a data table",
     difficulty,
     type: "multiple",
     question: `${selected.intro}${tableHtml}<div style="margin-top:10px;">${selected.question}</div>`,

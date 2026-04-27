@@ -51,6 +51,8 @@ module.exports = function generateBarGraph(options = {}) {
 
   return {
     skill: "Bar Graph",
+    subskill: "Bar Graph Interpretation",
+topic: "Finding greatest value in a bar graph",
     difficulty,
     type: "multiple",
     question: `The bar graph shows ${selected.title.toLowerCase()}. Which category has the greatest number of ${selected.unit}?`,

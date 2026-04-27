@@ -1623,7 +1623,7 @@ questions.forEach((q) => {
 
   if (isCorrect) correctCount++;
 
-  const skill = q.skill || "Unknown";
+  const skill = q.subskill || q.skill || "Unknown";
 
   if (!skillStats[skill]) {
     skillStats[skill] = { correct: 0, total: 0 };

@@ -29,6 +29,8 @@ function spinnerProbability(difficulty) {
 
   return {
     skill: "Probability",
+    subskill: "Spinner Probability",
+topic: "Probability with equally likely spinner sections",
     difficulty,
     type: "multiple",
     question: `A spinner is divided into 4 equal sections as shown. What is the probability of landing on ${selectedColor}?`,
@@ -106,6 +108,8 @@ function marblesProbability(difficulty) {
 
   return {
     skill: "Probability",
+    subskill: "Marble Probability",
+topic: "Probability with colored marbles",
     difficulty,
     type: "multiple",
     question: `A bag contains ${red} red marbles, ${blue} blue marbles, and ${green} green marbles. If 1 marble is chosen at random, what is the probability of picking a ${target.color} marble?`,
@@ -143,6 +147,8 @@ function diceProbability(difficulty) {
 
   return {
     skill: "Probability",
+    subskill: "Number Cube Probability",
+topic: "Probability with a fair number cube",
     difficulty,
     type: "multiple",
     question: `A fair number cube is rolled once. What is the probability of rolling ${target.label}?`,

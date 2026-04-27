@@ -13,6 +13,8 @@ function percentOfTotalMultiple() {
 
   return {
     skill: "Percent",
+    subskill: "Percent of a Total",
+topic: "Finding a percent of a total in a word problem",
     difficulty: "GED-Level",
     type: "multiple",
     question: `A store sold ${total} items in one day. ${percent}% of the items were sold in the morning. How many items were sold in the morning?`,
@@ -34,6 +36,8 @@ function percentOfTotalFill() {
 
   return {
     skill: "Percent",
+    subskill: "Percent of a Total",
+topic: "Finding a percent of a total in a word problem",
     difficulty: "GED-Level",
     type: "fill",
     question: `A store sold ${total} items in one day. ${percent}% of the items were sold in the morning. How many items were sold in the morning?`,
@@ -55,6 +59,8 @@ function graphPlusComputationMultiple() {
 
   return {
     skill: "Graphs + Computation",
+    subskill: "Graph Totals",
+topic: "Adding values from a graph",
     difficulty: "GED-Level",
     type: "multiple",
     question: `The bar graph shows the number of customers over four days. What is the total number of customers for all four days?`,
@@ -97,6 +103,8 @@ function graphPlusComputationFill() {
 
   return {
     skill: "Graphs + Computation",
+    subskill: "Graph Totals",
+topic: "Adding values from a graph",
     difficulty: "GED-Level",
     type: "fill",
     question: `The bar graph shows the number of customers over four days. What is the total number of customers for all four days?`,
@@ -130,6 +138,8 @@ function rectangleCostMultiple() {
 
   return {
     skill: "Geometry + Cost",
+    subskill: "Area Cost Problems",
+topic: "Using area to calculate total cost",
     difficulty: "GED-Level",
     type: "multiple",
     question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${costPerUnit} per square foot. What is the total cost to cover the floor?`,
@@ -154,6 +164,8 @@ function rectangleCostFill() {
 
   return {
     skill: "Geometry + Cost",
+    subskill: "Area Cost Problems",
+topic: "Using area to calculate total cost",
     difficulty: "GED-Level",
     type: "fill",
     question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${costPerUnit} per square foot. What is the total cost to cover the floor?`,
@@ -175,6 +187,8 @@ function averageFromTableMultiple() {
 
   return {
     skill: "Data + Average",
+    subskill: "Average",
+topic: "Finding the mean of a data set",
     difficulty: "GED-Level",
     type: "multiple",
     question: `A student scored ${values.join(", ")} on four tests. What was the average score?`,
@@ -202,6 +216,8 @@ function averageFromTableFill() {
 
   return {
     skill: "Data + Average",
+        subskill: "Average",
+topic: "Finding the mean of a data set",
     difficulty: "GED-Level",
     type: "fill",
     question: `A student scored ${values.join(", ")} on four tests. What was the average score?`,

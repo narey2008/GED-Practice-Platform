@@ -35,6 +35,8 @@ function slopeFromPoints(difficulty) {
 
   return {
     skill: "Slope",
+    subskill: "Slope From Points",
+topic: "Finding slope from two points",
     difficulty,
     type: "fill",
     question: `Find the slope of the line passing through (${x1}, ${y1}) and (${x2}, ${y2}).`,
@@ -118,6 +120,8 @@ function slopeFromGraph(difficulty) {
 
   return {
     skill: "Slope",
+    subskill: "Slope From Graph",
+topic: "Finding slope from a graph",
     difficulty,
     type: "multiple",
     question: "What is the slope of the line shown on the graph?",

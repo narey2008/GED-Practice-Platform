@@ -65,6 +65,8 @@ module.exports = function generateScatterPlot(options = {}) {
 
   return {
     skill: "Scatter Plot",
+    subskill: "Scatter Plot Correlation",
+topic: "Identifying correlation from a scatter plot",
     difficulty,
     type: "multiple",
     question: `The scatter plot compares ${selected.xLabel.toLowerCase()} and ${selected.yLabel.toLowerCase()}. What type of relationship is shown?`,

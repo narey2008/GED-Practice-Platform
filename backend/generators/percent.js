@@ -13,6 +13,8 @@ function percentOfNumberMultiple(difficulty) {
 
   return {
     skill: "Percent",
+    subskill: "Percent of a Number",
+topic: "Finding a percent of a whole",
     difficulty,
     type: "multiple",
     question: `What is ${percent}% of ${base}?`,
@@ -34,6 +36,8 @@ function percentOfNumberFill(difficulty) {
 
   return {
     skill: "Percent",
+    subskill: "Percent of a Number",
+topic: "Finding a percent of a whole",
     difficulty,
     type: "fill",
     question: `What is ${percent}% of ${base}?`,
@@ -50,6 +54,8 @@ function percentDiscountMultiple(difficulty) {
 
   return {
     skill: "Percent",
+    subskill: "Percent Discount",
+topic: "Finding sale price after discount",
     difficulty,
     type: "multiple",
     question: `A jacket costs $${price}. It is on sale for ${discount}% off. What is the sale price?`,
@@ -67,6 +73,8 @@ function percentDiscountFill(difficulty) {
 
   return {
     skill: "Percent",
+    subskill: "Percent Discount",
+topic: "Finding sale price after discount",
     difficulty,
     type: "fill",
     question: `A jacket costs $${price}. It is on sale for ${discount}% off. What is the sale price?`,

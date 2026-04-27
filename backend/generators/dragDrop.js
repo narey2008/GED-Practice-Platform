@@ -15,6 +15,8 @@ function fractionToDecimalOrdering() {
 
   return {
     skill: "Algebra",
+    subskill: "Fractions",
+topic: "Ordering fractions",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: "Drag the values into order from least to greatest.",
@@ -29,6 +31,8 @@ function decimalOrdering() {
 
   return {
     skill: "Algebra",
+    subskill: "Decimals",
+topic: "Ordering decimals",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: "Drag the decimals into order from least to greatest.",
@@ -43,6 +47,8 @@ function percentOrdering() {
 
   return {
     skill: "Percent",
+    subskill: "Comparing Percents",
+topic: "Ordering percents",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: "Drag the percents into order from least to greatest.",
@@ -67,6 +73,8 @@ function equationStepOrdering() {
 
   return {
     skill: "Linear Equations",
+    subskill: "Equation Steps",
+topic: "Ordering equation-solving steps",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `Drag the steps into the correct order to solve: ${a}x + ${b} = ${c}`,
@@ -91,6 +99,8 @@ function discountStepOrdering() {
 
   return {
     skill: "Percent",
+    subskill: "Percent Discount",
+topic: "Ordering discount steps",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `Drag the steps into the correct order to find the sale price of a $${price} item with a ${discount}% discount.`,
@@ -116,6 +126,8 @@ function areaCostStepOrdering() {
 
   return {
     skill: "Geometry",
+    subskill: "Area Word Problems",
+topic: "Using area to solve cost problems",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${cost} per square foot. Drag the steps into the correct order.`,

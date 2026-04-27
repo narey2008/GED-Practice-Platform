@@ -28,6 +28,8 @@ module.exports = function generateSlope(options = {}) {
 
   return {
     skill: "Slope",
+    subskill: "Slope From Graph",
+topic: "Finding slope from a graph",
     difficulty,
     type: "multiple",
     question: "What is the slope of the line shown in the graph?",

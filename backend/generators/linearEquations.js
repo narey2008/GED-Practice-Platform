@@ -14,6 +14,8 @@ function oneStepMultiple(difficulty) {
 
   return {
     skill: "Linear Equations",
+    subskill: "One-Step Equations",
+topic: "Solving one-step linear equations",
     difficulty,
     type: "multiple",
     question: `Solve for x: ${a}x + ${b} = ${c}`,
@@ -31,6 +33,8 @@ function oneStepFill(difficulty) {
 
   return {
     skill: "Linear Equations",
+    subskill: "One-Step Equations",
+topic: "Solving one-step linear equations",
     difficulty,
     type: "fill",
     question: `Solve for x: ${a}x + ${b} = ${c}`,
@@ -48,6 +52,8 @@ function variablesBothSidesMultiple(difficulty) {
 
   return {
     skill: "Linear Equations",
+    subskill: "Variables on Both Sides",
+topic: "Solving equations with variables on both sides",
     difficulty,
     type: "multiple",
     question: `Solve for x: ${a}x + ${b} = ${d}x + ${c}`,
@@ -66,6 +72,8 @@ function variablesBothSidesFill(difficulty) {
 
   return {
     skill: "Linear Equations",
+    subskill: "Variables on Both Sides",
+topic: "Solving equations with variables on both sides",
     difficulty,
     type: "fill",
     question: `Solve for x: ${a}x + ${b} = ${d}x + ${c}`,

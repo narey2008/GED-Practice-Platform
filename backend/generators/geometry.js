@@ -23,6 +23,8 @@ function rectangleAreaScenario(difficulty) {
 
   return {
     skill: "Geometry",
+    subskill: "Rectangle Area",
+topic: "Area of rectangles",
     difficulty,
     type: "multiple",
     formulaRequired: true,
@@ -71,6 +73,8 @@ function rectanglePerimeterScenario(difficulty) {
 
   return {
     skill: "Geometry",
+    subskill: "Rectangle Perimeter",
+topic: "Perimeter of rectangles",
     difficulty,
     type: "multiple",
     formulaRequired: true,
@@ -121,6 +125,8 @@ function triangleAreaScenario(difficulty) {
 
   return {
     skill: "Geometry",
+    subskill: "Triangle Area",
+topic: "Area of triangles",
     difficulty,
     type: "multiple",
     formulaRequired: true,
