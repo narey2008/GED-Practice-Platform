@@ -46,6 +46,7 @@ function normalizeQuestion(q, index, difficulty) {
     chart: q.chart || null,
     diagram: q.diagram || null,
     hotspot: q.hotspot || null,
+    formulaRequired: !!q.formulaRequired,
     explanation: normalizeExplanation(q.explanation, q.answer),
     difficulty: q.difficulty || difficulty
   };
@@ -53,17 +54,17 @@ function normalizeQuestion(q, index, difficulty) {
 
 function skillMatches(selectedSkill, questionSkill) {
   const map = {
-    "Fractions, Decimals, and Percents": ["Percent"],
-    "Ratios, Proportions, and Percent Change": ["Percent Change", "Percent"],
-    "Measurement and Unit Conversion": [],
-    "Area, Perimeter, Surface Area, and Volume": ["Geometry"],
-    "Lines, Angles, and Coordinate Plane": ["Slope", "Geometry"],
-    "Data Tables and Graph Interpretation": ["Bar Graph", "Line Graph", "Scatter Plot", "Data Table"],
-    "Mean, Median, and Probability": ["Probability"],
-    "Expressions and Order of Operations": ["Algebra"],
-    "Solving Equations and Inequalities": ["Linear Equations", "Algebra"],
-    "Linear Equations and Slope": ["Linear Equations", "Slope", "Algebra"]
-  };
+  "Fractions, Decimals, and Percents": ["Percent", "Algebra"],
+  "Ratios, Proportions, and Percent Change": ["Percent Change", "Percent"],
+  "Measurement and Unit Conversion": [],
+  "Area, Perimeter, Surface Area, and Volume": ["Geometry"],
+  "Lines, Angles, and Coordinate Plane": ["Slope", "Geometry", "Number Line"],
+  "Data Tables and Graph Interpretation": ["Bar Graph", "Line Graph", "Scatter Plot", "Data Table"],
+  "Mean, Median, and Probability": ["Probability"],
+  "Expressions and Order of Operations": ["Algebra"],
+  "Solving Equations and Inequalities": ["Linear Equations", "Algebra"],
+  "Linear Equations and Slope": ["Linear Equations", "Slope", "Algebra"]
+};
 
   const allowed = map[selectedSkill] || [];
   return allowed.includes(questionSkill);
@@ -123,79 +124,73 @@ function buildTest(options = {}) {
   }
 
   const fillCapablePool = pool.filter((g) =>
-  generatorCanProduceType(g, difficulty, "fill")
-);
+    generatorCanProduceType(g, difficulty, "fill")
+  );
 
-const dragDropCapablePool = pool.filter((g) =>
-  generatorCanProduceType(g, difficulty, "dragdrop")
-);
+  const dragDropCapablePool = pool.filter((g) =>
+    generatorCanProduceType(g, difficulty, "dragdrop")
+  );
 
-const hotspotCapablePool = pool.filter((g) =>
-  generatorCanProduceType(g, difficulty, "hotspot")
-);
+  const hotspotCapablePool = pool.filter((g) =>
+    generatorCanProduceType(g, difficulty, "hotspot")
+  );
 
-const isFullTest = count >= 40;
+  const isFullTest = count >= 40;
 
-const targetFillCount =
-  fillCapablePool.length > 0
-    ? (isFullTest ? 4 : 1)
-    : 0;
+  const targetFillCount = fillCapablePool.length > 0 ? (isFullTest ? 4 : 1) : 0;
+  const targetDragDropCount = dragDropCapablePool.length > 0 ? (isFullTest ? 2 : 1) : 0;
+  const targetHotspotCount = hotspotCapablePool.length > 0 ? (isFullTest ? 1 : 1) : 0;
 
-const targetDragDropCount =
-  dragDropCapablePool.length > 0
-    ? (isFullTest ? 2 : 1)
-    : 0;
+  const rawQuestions = [];
 
-const targetHotspotCount =
-  hotspotCapablePool.length > 0
-    ? (isFullTest ? 1 : 1)
-    : 0;
-
-const questions = [];
-let fillCount = 0;
-let dragDropCount = 0;
-let hotspotCount = 0;
-
-for (let i = 0; i < count; i += 1) {
-  const needsMoreHotspot = hotspotCount < targetHotspotCount;
-  const needsMoreDragDrop =
-    !needsMoreHotspot && dragDropCount < targetDragDropCount;
-  const needsMoreFill =
-    !needsMoreHotspot && !needsMoreDragDrop && fillCount < targetFillCount;
-
-  let sourcePool = pool;
-  let preferredType = null;
-
-  if (needsMoreHotspot && hotspotCapablePool.length) {
-    sourcePool = hotspotCapablePool;
-    preferredType = "hotspot";
-  } else if (needsMoreDragDrop && dragDropCapablePool.length) {
-    sourcePool = dragDropCapablePool;
-    preferredType = "dragdrop";
-  } else if (needsMoreFill && fillCapablePool.length) {
-    sourcePool = fillCapablePool;
-    preferredType = "fill";
+  function addPreferredQuestion(sourcePool, preferredType) {
+    const question = drawQuestionFromPool(sourcePool, difficulty, preferredType);
+    rawQuestions.push(question);
   }
 
-  const question = drawQuestionFromPool(sourcePool, difficulty, preferredType);
-  const normalized = normalizeQuestion(question, i, difficulty);
-
-  if (normalized.type === "hotspot") {
-    hotspotCount += 1;
+  for (let i = 0; i < targetFillCount; i += 1) {
+    addPreferredQuestion(fillCapablePool, "fill");
   }
 
-  if (normalized.type === "dragdrop") {
-    dragDropCount += 1;
+  for (let i = 0; i < targetDragDropCount; i += 1) {
+    addPreferredQuestion(dragDropCapablePool, "dragdrop");
   }
 
-  if (normalized.type === "fill") {
-    fillCount += 1;
+  for (let i = 0; i < targetHotspotCount; i += 1) {
+    addPreferredQuestion(hotspotCapablePool, "hotspot");
   }
 
-  questions.push(normalized);
+  while (rawQuestions.length < count) {
+    let question = drawQuestionFromPool(pool, difficulty);
+
+    let safety = 0;
+    while (
+      safety < 30 &&
+      ["fill", "dragdrop", "hotspot"].includes(question?.type)
+    ) {
+      question = drawQuestionFromPool(pool, difficulty);
+      safety += 1;
+    }
+
+    rawQuestions.push(question);
+  }
+
+  function shuffleQuestions(arr) {
+  const copy = [...arr];
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
 }
 
-return questions;
+const shuffledQuestions = shuffleQuestions(rawQuestions);
+
+return shuffledQuestions.map((question, index) =>
+  normalizeQuestion(question, index, difficulty)
+);
 }
 
 module.exports = buildTest;

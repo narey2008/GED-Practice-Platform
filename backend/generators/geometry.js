@@ -25,6 +25,7 @@ function rectangleAreaScenario(difficulty) {
     skill: "Geometry",
     difficulty,
     type: "multiple",
+    formulaRequired: true,
     question: `The ${selected.object} shown below is a rectangle. What is its area in square ${selected.unit}?`,
     choices: shuffle([
       answer,
@@ -72,6 +73,7 @@ function rectanglePerimeterScenario(difficulty) {
     skill: "Geometry",
     difficulty,
     type: "multiple",
+    formulaRequired: true,
     question: `The ${selected.object} shown below forms a rectangle. What is its perimeter in ${selected.unit}?`,
     choices: shuffle([
       answer,
@@ -121,6 +123,7 @@ function triangleAreaScenario(difficulty) {
     skill: "Geometry",
     difficulty,
     type: "multiple",
+    formulaRequired: true,
     question: `The ${selected.object} shown below is triangular. What is its area in square ${selected.unit}?`,
     choices: shuffle([
       answer,

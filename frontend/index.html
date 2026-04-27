@@ -1183,6 +1183,7 @@ body.loadingActive {
         </div>
 
         <div class="actionCluster">
+  <button id="formulaSheetBtn" class="secondaryBtn hidden">Formula Sheet</button>
   <button id="reportQuestionBtn" class="secondaryBtn">Report Question</button>
   <button id="flagBtn" class="secondaryBtn">🚩 Flag Question</button>
 </div>
@@ -1290,6 +1291,24 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
   return cleaned;
 }
 
+function isQuestionAnswered(q) {
+  if (!q) return false;
+
+  if (q.type === "dragdrop") {
+    return Array.isArray(q.userAnswer) && q.userAnswer.length > 0;
+  }
+
+  if (q.type === "hotspot") {
+    return String(q.userAnswer ?? "").trim() !== "";
+  }
+
+  if (q.type === "fill") {
+    return String(q.userAnswer ?? "").trim() !== "";
+  }
+
+  return q.userAnswer !== null && q.userAnswer !== undefined && String(q.userAnswer).trim() !== "";
+}
+
 function answersMatch(userAnswer, correctAnswer) {
   const normalizeDragDropValue = (value) => {
     if (Array.isArray(value)) {
@@ -1320,9 +1339,11 @@ function answersMatch(userAnswer, correctAnswer) {
   }
 
   return questions.map((q, i) => {
-const userAnswer = String(q.userAnswer ?? "").trim();
+const userAnswer = Array.isArray(q.userAnswer)
+  ? q.userAnswer.join(" → ")
+  : String(q.userAnswer ?? "").trim();
 const correctAnswer = String(q.answer ?? "").trim();
-const isCorrect = answersMatch(userAnswer, correctAnswer);
+const isCorrect = answersMatch(q.userAnswer, q.answer);
 
     return `
       <div class="reviewItem" style="margin-top:10px;">
@@ -1342,9 +1363,11 @@ const isCorrect = answersMatch(userAnswer, correctAnswer);
   }
 
   return questions.map((q, i) => {
-const userAnswer = String(q.userAnswer ?? "").trim();
+const userAnswer = Array.isArray(q.userAnswer)
+  ? q.userAnswer.join(" → ")
+  : String(q.userAnswer ?? "").trim();
 const correctAnswer = String(q.answer ?? "").trim();
-const isCorrect = answersMatch(userAnswer, correctAnswer);
+const isCorrect = answersMatch(q.userAnswer, q.answer);
 
     return `
       <div class="reviewItem" style="margin-top:10px;">
@@ -1368,7 +1391,7 @@ const isCorrect = answersMatch(userAnswer, correctAnswer);
       const skill = q.skill || "Mixed Practice";
 const userAnswer = String(q.userAnswer ?? "").trim();
 const correctAnswer = String(q.answer ?? "").trim();
-const isCorrect = answersMatch(userAnswer, correctAnswer);
+const isCorrect = answersMatch(q.userAnswer, q.answer);
 
       if (!stats[skill]) {
         stats[skill] = { total: 0, correct: 0 };
@@ -3358,6 +3381,35 @@ function showToast(title, text, duration = 6000) {
   );
 }
 
+function openFormulaSheetModal() {
+  showModal(
+    "Formula Sheet",
+    `
+      <div class="reviewItem">
+        <h3 style="margin-top:0;">Geometry</h3>
+        <div><strong>Rectangle Area:</strong> A = length × width</div>
+        <div><strong>Rectangle Perimeter:</strong> P = 2(length + width)</div>
+        <div><strong>Triangle Area:</strong> A = (base × height) ÷ 2</div>
+        <div><strong>Circle Area:</strong> A = πr²</div>
+        <div><strong>Circle Circumference:</strong> C = 2πr</div>
+      </div>
+
+      <div class="reviewItem">
+        <h3 style="margin-top:0;">Algebra</h3>
+        <div><strong>Slope:</strong> m = (y₂ - y₁) ÷ (x₂ - x₁)</div>
+        <div><strong>Slope-intercept form:</strong> y = mx + b</div>
+      </div>
+
+      <div class="reviewItem">
+        <h3 style="margin-top:0;">Measurement</h3>
+        <div><strong>Distance:</strong> distance = rate × time</div>
+        <div><strong>Percent:</strong> part = percent × whole</div>
+      </div>
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
 function openForgotPasswordModal() {
   showModal(
     tr("forgotPasswordTitle"),
@@ -4910,8 +4962,7 @@ function handleUserActivity() {
     label: tr("submitNow"),
     variant: "secondary",
     onClick: async () => {
-      state.lockedReviewMode = true;
-      await showReview();
+await openReviewBeforeSubmitModal();
     }
   });
 
@@ -5055,7 +5106,7 @@ function showPausedModal(isAutoPause = false) {
     if (index === state.currentIndex) btn.classList.add("current");
     if (q.flagged) btn.classList.add("flagged");
 
-    const unanswered = String(q.userAnswer ?? "").trim() === "";
+    const unanswered = !isQuestionAnswered(q);
     if (unanswered) {
       btn.classList.add("unanswered");
     } else {
@@ -5087,6 +5138,7 @@ function showPausedModal(isAutoPause = false) {
   const flagBtn = document.getElementById("flagBtn");
   const reportQuestionBtn = document.getElementById("reportQuestionBtn");
   const pauseBtn = document.getElementById("pauseBtn");
+  const formulaSheetBtn = document.getElementById("formulaSheetBtn");
 
   if (state.questions.length) {
     const pos = `${state.currentIndex + 1} / ${state.questions.length}`;
@@ -5094,6 +5146,10 @@ function showPausedModal(isAutoPause = false) {
     document.getElementById("questionPosition").innerText = pos;
 
     const current = state.questions[state.currentIndex];
+    if (formulaSheetBtn) {
+  formulaSheetBtn.classList.toggle("hidden", !current.formulaRequired);
+  formulaSheetBtn.disabled = state.isPaused;
+}
     const flagged = !!current.flagged;
 
         const currentLanguage = getSavedLanguage();
@@ -5721,39 +5777,79 @@ function renderChart(chartConfig) {
       }
     }
 
-    function confirmSubmit() {
-  const hasFlagged = state.questions.some((q) => q.flagged);
-  const hasUnanswered = state.questions.some((q) => String(q.userAnswer ?? "").trim() === "");
+function confirmSubmit() {
+  openReviewBeforeSubmitModal();
+}
 
-  const actions = [];
+async function openReviewBeforeSubmitModal() {
+  const unansweredIndexes = state.questions
+    .map((q, index) => (!isQuestionAnswered(q) ? index : -1))
+    .filter((index) => index !== -1);
 
-  if (hasFlagged || hasUnanswered) {
-    actions.push({
-      label: tr("reviewQuestions"),
-      variant: "secondary",
-      onClick: () => {
-        goToEarliestIssue();
-      }
-    });
-  }
-
-  actions.push(
-    { label: tr("cancel"), variant: "secondary" },
-    {
-      label: tr("submit"),
-      variant: "primary",
-      onClick: () => submitTest()
-    }
-  );
+  const flaggedIndexes = state.questions
+    .map((q, index) => (q.flagged ? index : -1))
+    .filter((index) => index !== -1);
 
   showModal(
-    tr("submitTestTitle"),
+    "Review Before Submit",
     `
-      <p>${tr("submitTestConfirm")}</p>
-      ${hasFlagged ? `<p>${tr("flaggedWarning")}</p>` : ""}
-      ${hasUnanswered ? `<p>${tr("unansweredWarning")}</p>` : ""}
+      <p><strong>Unanswered Questions:</strong> ${unansweredIndexes.length}</p>
+      <p><strong>Flagged Questions:</strong> ${flaggedIndexes.length}</p>
+      <p>You can review these questions before submitting, or submit anyway.</p>
     `,
-    actions
+    [
+      {
+        label: "Unanswered Questions",
+        variant: "secondary",
+        onClick: () => {
+          closeModal();
+          setTimeout(async () => {
+            if (unansweredIndexes.length) {
+              state.currentIndex = unansweredIndexes[0];
+              await setView("test");
+              renderQuestion();
+              updateStatus();
+              await saveProgress();
+            }
+          }, 0);
+        }
+      },
+      {
+        label: "Flagged Questions",
+        variant: "secondary",
+        onClick: () => {
+          closeModal();
+          setTimeout(async () => {
+            if (flaggedIndexes.length) {
+              state.currentIndex = flaggedIndexes[0];
+              await setView("test");
+              renderQuestion();
+              updateStatus();
+              await saveProgress();
+            }
+          }, 0);
+        }
+      },
+      {
+        label: "Cancel",
+        variant: "secondary",
+        onClick: () => {
+          closeModal();
+        }
+      },
+ {
+  label: "Submit Test",
+  variant: "primary",
+  keepOpen: true,
+  onClick: () => {
+    closeModal();
+
+    setTimeout(async () => {
+      await submitTest();
+    }, 0);
+  }
+}
+    ]
   );
 }
 
@@ -5952,7 +6048,7 @@ async function showReview() {
   const score200 = scaledScore();
   const weakest = weakestSkillText();
   const correct = state.questions.filter(
-    (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
+    (q) => answersMatch(q.userAnswer, q.answer)
   ).length;
   const wrongOrUnanswered = state.questions.length - correct;
   const advance = nextDifficulty(state.difficulty);
@@ -6036,32 +6132,40 @@ async function showReview() {
     </div>
   `;
 
-  state.questions.forEach((q, i) => {
-const user = Array.isArray(q.userAnswer)
-  ? q.userAnswer.join(" | ").trim()
-  : String(q.userAnswer ?? "").trim();
+state.questions.forEach((q, i) => {
+  const isAnswered = isQuestionAnswered(q);
+  const isCorrect = answersMatch(q.userAnswer, q.answer);
 
-const correctAns = Array.isArray(q.answer)
-  ? q.answer.join(" | ").trim()
-  : String(q.answer).trim();
-const isCorrect = answersMatch(user, correctAns);
+  let statusLabel = "";
+  if (!isAnswered) {
+    statusLabel = "⚠ Unanswered";
+  } else if (isCorrect) {
+    statusLabel = "✔ Correct";
+  } else {
+    statusLabel = "✖ Incorrect";
+  }
 
-    const div = document.createElement("div");
-    div.className = "reviewItem";
-    div.innerHTML = `
-      <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
-      <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
-      <div style="margin-top:10px;">${tr("yourAnswer")}: ${user || tr("noAnswerDash")}</div>
-      ${!isCorrect ? `<div style="margin-top:4px;"><strong>${tr("correct")}:</strong> ${correctAns}</div>` : ""}
-      <div style="margin-top:6px;">
-        <strong style="color:${isCorrect ? "#16a34a" : "#dc2626"};">
-          ${isCorrect ? "✓ " + tr("correct") : "✗ " + tr("incorrect")}
-        </strong>
-      </div>
-      ${!isCorrect ? `<div class="explanationBox">${q.explanation}</div>` : ""}
-    `;
-    panel.appendChild(div);
-  });
+  const userAnswerDisplay = Array.isArray(q.userAnswer)
+    ? q.userAnswer.join(" → ")
+    : String(q.userAnswer ?? "").trim();
+
+  const correctAnswerDisplay = Array.isArray(q.answer)
+    ? q.answer.join(" → ")
+    : String(q.answer ?? "").trim();
+
+  const div = document.createElement("div");
+  div.className = "reviewItem";
+  div.innerHTML = `
+    <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""} — ${statusLabel}</div>
+    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(isAnswered ? userAnswerDisplay : tr("noAnswerDash"))}</div>
+    <div>${tr("correct")}: ${escapeHtml(correctAnswerDisplay || tr("noAnswerDash"))}</div>
+    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+    ${q.explanation ? `<div class="explanationBox">${escapeHtml(q.explanation)}</div>` : ""}
+  `;
+
+  panel.appendChild(div);
+});
 
   await setView("review");
   await clearSavedProgress();
@@ -6098,9 +6202,9 @@ const isCorrect = answersMatch(user, correctAns);
       await saveCompletedPracticeToHistory();
 
       const total = state.questions.length;
-      const correct = state.questions.filter(
-        (q) => String(q.userAnswer ?? "").trim() === String(q.answer).trim()
-      ).length;
+      const correct = state.questions.filter((q) => {
+  return answersMatch(q.userAnswer, q.answer);
+}).length;
 
       const panel = document.getElementById("practicePanel");
       panel.innerHTML = `
@@ -6123,28 +6227,40 @@ const isCorrect = answersMatch(user, correctAns);
         </div>
       `;
 
-      state.questions.forEach((q, i) => {
-const user = Array.isArray(q.userAnswer)
-  ? q.userAnswer.join(" | ").trim()
-  : String(q.userAnswer ?? "").trim();
+ state.questions.forEach((q, i) => {
+  const isAnswered = isQuestionAnswered(q);
+  const isCorrect = answersMatch(q.userAnswer, q.answer);
 
-const correctAns = Array.isArray(q.answer)
-  ? q.answer.join(" | ").trim()
-  : String(q.answer).trim();
-const isCorrect = answersMatch(user, correctAns);
+  let statusLabel = "";
+  if (!isAnswered) {
+    statusLabel = "⚠ Unanswered";
+  } else if (isCorrect) {
+    statusLabel = "✔ Correct";
+  } else {
+    statusLabel = "✖ Incorrect";
+  }
 
-        const div = document.createElement("div");
-        div.className = "practiceItem";
-        div.innerHTML = `
-          <div><strong>Q${i + 1}</strong></div>
-          <div style="margin-top:8px; line-height:1.6;">${q.question}</div>
-          <div style="margin-top:10px;">${tr("yourAnswer")}: ${user || tr("noAnswerDash")}</div>
-          <div>${tr("correct")}: ${correctAns}</div>
-          <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
-          <div class="explanationBox">${q.explanation}</div>
-        `;
-        panel.appendChild(div);
-      });
+  const userAnswerDisplay = Array.isArray(q.userAnswer)
+    ? q.userAnswer.join(" → ")
+    : String(q.userAnswer ?? "").trim();
+
+  const correctAnswerDisplay = Array.isArray(q.answer)
+    ? q.answer.join(" → ")
+    : String(q.answer ?? "").trim();
+
+  const div = document.createElement("div");
+  div.className = "reviewItem";
+  div.innerHTML = `
+    <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""} — ${statusLabel}</div>
+    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(isAnswered ? userAnswerDisplay : tr("noAnswerDash"))}</div>
+    <div>${tr("correct")}: ${escapeHtml(correctAnswerDisplay || tr("noAnswerDash"))}</div>
+    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+    ${q.explanation ? `<div class="explanationBox">${escapeHtml(q.explanation)}</div>` : ""}
+  `;
+
+  panel.appendChild(div);
+});
 
       await setView("practice-results");
 
@@ -6793,6 +6909,12 @@ async function handleEmailVerificationFromUrl() {
 document.getElementById("reportQuestionBtn").onclick = async () => {
   await reportCurrentQuestion();
 };
+
+document.getElementById("formulaSheetBtn").onclick = () => {
+  if (state.isPaused) return;
+  openFormulaSheetModal();
+};
+
 document.getElementById("pauseBtn").onclick = async () => {
   if (state.mode !== "test") return;
 
