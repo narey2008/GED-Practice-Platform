@@ -5521,17 +5521,25 @@ function showPausedModal(isAutoPause = false) {
     document.getElementById("questionIndicator").innerText = `${tr("questionWord")} ${pos}`;
     document.getElementById("questionPosition").innerText = pos;
 
-    const current = state.questions[state.currentIndex];
-    const isTutorial = state.mode === "test-tutorial";
-    if (submitBtn) {
+const current = state.questions[state.currentIndex];
+const isTutorial = state.mode === "test-tutorial";
+
+if (isTutorial) {
+  document.getElementById("questionIndicator").innerText = `Tutorial Question ${pos}`;
+  document.getElementById("questionPosition").innerText = `Tutorial ${pos}`;
+}
+
+if (submitBtn) {
   submitBtn.classList.toggle("hidden", isTutorial || state.mode !== "test");
 }
+
 if (calculatorBtn) {
   const allowed = state.mode === "test" && !isTutorial;
   calculatorBtn.classList.toggle("hidden", !allowed);
   calculatorBtn.disabled = state.isPaused || state.lockedReviewMode;
 }
- if (formulaSheetBtn) {
+
+if (formulaSheetBtn) {
   formulaSheetBtn.classList.toggle("hidden", !current?.formulaRequired);
   formulaSheetBtn.disabled = state.isPaused;
 }
@@ -5699,6 +5707,7 @@ function startTutorialBeforeTest() {
 
   closeCalculator();
   setView("test");
+  updateStatus();
   renderQuestion();
   updateStatus();
 }
