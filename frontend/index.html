@@ -91,8 +91,8 @@
       --choice-selected: #334155;
       --feedback: #cbd5e1;
       --topbar-text: #ffffff;
-      --chart-text: #111827;
-      --chart-grid: #94a3b8;
+--chart-text: #e5e7eb;
+--chart-grid: rgba(229, 231, 235, 0.28);
       --review-card-bg: #111827;
       --review-text: #e5e7eb;
       --nav-bg: #111827;
@@ -501,7 +501,7 @@ select {
     }
 
     #questionText {
-  line-height: 1.45;
+  line-height: 1.5;
   margin-bottom: 14px;
   color: var(--text);
   min-height: 72px;
@@ -1025,25 +1025,177 @@ body.loadingActive {
   }
 }
 
-    @media (max-width: 1100px) {
-      .questionNavigator { display: none !important; }
-    }
+@media (max-width: 1100px) {
+  .questionNavigator {
+    display: none !important;
+  }
 
-    @media (max-width: 900px) {
-      .reviewTop, .practiceSummary { grid-template-columns: 1fr; }
-      .bottomBar, .testHeader, .menuActions { flex-direction: column; align-items: stretch; }
-      .topbar {
-        height: auto;
-        grid-template-columns: 1fr;
-        padding: 12px 16px;
-      }
-      .topbarCenter, .topbarRight { justify-content: flex-start; }
-      .testBody { min-height: auto; }
-      .questionArea { min-height: auto; }
-      .floatingLeft, .floatingRight { bottom: 12px; }
-      .floatingLeft { left: 12px; }
-      .floatingRight { right: 12px; }
-    }
+  .page {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    height: auto;
+    grid-template-columns: 1fr;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  @media (max-width: 900px) {
+  #submitTestBtn {
+    position: static;
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+  .topbarLeft,
+  .topbarCenter,
+  .topbarRight {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .topbarRight button,
+  .topbarCenter button {
+    flex: 1 1 auto;
+    min-width: 120px;
+  }
+
+  .page {
+    padding: 12px 10px 90px;
+  }
+
+  .menuWrap,
+  .reviewWrap,
+  .practiceWrap {
+    margin-top: 12px;
+    padding: 14px;
+  }
+
+  .reviewTop,
+  .practiceSummary {
+    grid-template-columns: 1fr;
+  }
+
+  .testHeader,
+  .bottomBar,
+  .menuActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navCluster,
+  .actionCluster {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+.navCluster button,
+.actionCluster button {
+  margin-bottom: 6px;
+}
+  .menuActions button {
+    flex: 1 1 auto;
+  }
+
+  .testBody {
+    min-height: auto;
+    padding: 12px;
+  }
+
+  .questionArea {
+    min-height: auto;
+  }
+
+  #questionText {
+    min-height: auto;
+    font-size: calc(18px * var(--font-scale));
+  }
+
+  #questionChartWrap {
+    height: 240px;
+    min-height: 240px;
+    max-height: 240px;
+  }
+
+  .choiceBtn {
+    padding: 13px 12px;
+  }
+
+  .floatingLeft,
+  .floatingRight {
+    bottom: 12px;
+  }
+
+  .floatingLeft {
+    left: 12px;
+  }
+
+  .floatingRight {
+    right: 12px;
+  }
+
+  #submitTestBtn {
+    padding: 12px 16px;
+  }
+
+  .modal {
+    max-height: 90vh;
+  }
+
+  .modalBody {
+    max-height: 62vh;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand {
+    font-size: calc(18px * var(--font-scale));
+  }
+
+  @media (max-width: 900px) {
+  #contactBtnTop,
+  #legalBtnTop {
+    display: none;
+  }
+}
+
+  button {
+    width: 100%;
+  }
+
+  .topbarRight,
+  .topbarCenter {
+    gap: 8px;
+  }
+
+  .reviewStat {
+    padding: 10px;
+  }
+
+  #questionChartWrap {
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
+    padding: 6px;
+  }
+
+  @media (max-width: 900px) {
+  #questionChartWrap {
+    height: 260px;
+    min-height: 260px;
+  }
+}
+
+  .dragDropAnswer,
+  .dragDropBank {
+    min-height: 110px;
+  }
+}
   </style>
 </head>
 <body class="theme-original">
@@ -1480,6 +1632,15 @@ function getAverageScore(history) {
   if (!scoredEntries.length) return "—";
   const total = scoredEntries.reduce((sum, entry) => sum + (Number(entry.score200) || 0), 0);
   return Math.round(total / scoredEntries.length);
+}
+
+function getChartTheme() {
+  const styles = getComputedStyle(document.body);
+
+  return {
+    text: styles.getPropertyValue("--chart-text").trim() || "#111827",
+    grid: styles.getPropertyValue("--chart-grid").trim() || "#c8d2df"
+  };
 }
 
 function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) {
@@ -5805,13 +5966,62 @@ function renderChart(chartConfig) {
 
   requestAnimationFrame(() => {
     try {
+      const theme = getChartTheme();
+     
+      Chart.defaults.color = theme.text;
+Chart.defaults.borderColor = theme.grid;
+
       const finalConfig = {
         ...chartConfig,
+        data: {
+          ...(chartConfig.data || {}),
+          datasets: (chartConfig.data.datasets || []).map((dataset) => ({
+            ...dataset,
+            borderColor: dataset.borderColor || theme.text,
+            backgroundColor: dataset.backgroundColor || "rgba(21, 62, 117, 0.35)",
+            pointBackgroundColor: dataset.pointBackgroundColor || theme.text,
+            pointBorderColor: dataset.pointBorderColor || theme.text
+          }))
+        },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
-          ...(chartConfig.options || {})
+          ...(chartConfig.options || {}),
+          plugins: {
+            ...(chartConfig.options?.plugins || {}),
+            legend: {
+              ...(chartConfig.options?.plugins?.legend || {}),
+              labels: {
+                ...(chartConfig.options?.plugins?.legend?.labels || {}),
+                color: theme.text
+              }
+            },
+            title: {
+              ...(chartConfig.options?.plugins?.title || {}),
+              color: theme.text
+            }
+          },
+          scales: Object.fromEntries(
+            Object.entries(chartConfig.options?.scales || {}).map(([axisName, axis]) => [
+              axisName,
+              {
+                ...axis,
+                ticks: {
+                  ...(axis.ticks || {}),
+                  color: theme.text
+                },
+                grid: {
+                  ...(axis.grid || {}),
+                  color: theme.grid
+                },
+                title: {
+                  ...(axis.title || {}),
+                  color: theme.text
+                }
+              }
+            ])
+          )
         }
       };
 
