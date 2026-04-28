@@ -1336,6 +1336,7 @@ body.loadingActive {
 
         <div class="actionCluster">
   <button id="formulaSheetBtn" class="secondaryBtn hidden">Formula Sheet</button>
+  <button id="calculatorBtn" class="secondaryBtn hidden">Calculator</button>
   <button id="reportQuestionBtn" class="secondaryBtn">Report Question</button>
   <button id="flagBtn" class="secondaryBtn">🚩 Flag Question</button>
 </div>
@@ -1357,6 +1358,18 @@ body.loadingActive {
       <div id="modalFooter" class="modalFooter"></div>
     </div>
   </div>
+
+  <div id="calculatorModal" class="modalBackdrop">
+  <div id="calculatorBox" class="modal" style="max-width:520px;">
+    <div id="calculatorHeader" class="modalHeader" style="cursor:move; display:flex; justify-content:space-between; align-items:center;">
+      <span>Calculator</span>
+      <button id="closeCalculatorBtn" class="secondaryBtn" style="padding:6px 10px;">✕</button>
+    </div>
+    <div class="modalBody">
+      <div id="desmosCalculator" style="width:100%; height:420px; min-height:420px;"></div>
+    </div>
+  </div>
+</div>
 
     <div id="loadingOverlay" class="loadingOverlay" aria-live="polite" aria-busy="true">
     <div class="loadingCard">
@@ -1393,6 +1406,10 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
   timerId: null,
   timeRemaining: TEST_TIME_SECONDS,
   practiceMeta: null,
+  tutorialQuestions: [],
+tutorialIndex: 0,
+inTutorial: false,
+hasSeenFirstTestTutorial: localStorage.getItem("ged_seen_first_test_tutorial") === "true",
   overtimeUsed: false,
   timeoutMode: false,
   lockedReviewMode: false,
@@ -1531,6 +1548,144 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
       </div>
     `;
   }).join("");
+}
+
+let desmosCalculator = null;
+
+function openCalculator() {
+  const modal = document.getElementById("calculatorModal");
+  const container = document.getElementById("desmosCalculator");
+
+  if (!modal || !container) return;
+
+  modal.style.display = "flex";
+
+  container.innerHTML = `
+    <div style="display:grid;gap:10px;">
+      <input
+        id="gedCalcInput"
+        type="text"
+        placeholder="Example: (12 + 8) / 4"
+        style="font-size:18px;padding:12px;border:1px solid var(--border);border-radius:8px;"
+      />
+
+      <div id="gedCalcResult" class="explanationBox" style="min-height:48px;">
+        Result will appear here.
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+        ${["7","8","9","/","4","5","6","*","1","2","3","-","0",".","(",")","+","^","sqrt","Clear"].map((key) => `
+          <button class="secondaryBtn gedCalcKey" data-key="${key}">${key}</button>
+        `).join("")}
+      </div>
+
+      <button id="gedCalcEquals" class="primaryBtn">Calculate</button>
+    </div>
+  `;
+
+  wireGedCalculator();
+}
+
+function safeEvaluateExpression(expression) {
+  const cleaned = String(expression || "")
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/\^/g, "**")
+    .replace(/sqrt/gi, "Math.sqrt");
+
+  if (!/^[0-9+\-*/().\s*Mathsqrt]+$/.test(cleaned)) {
+    throw new Error("Invalid expression.");
+  }
+
+  const result = Function(`"use strict"; return (${cleaned});`)();
+
+  if (!Number.isFinite(result)) {
+    throw new Error("Invalid result.");
+  }
+
+  return result;
+}
+
+function wireGedCalculator() {
+  const input = document.getElementById("gedCalcInput");
+  const result = document.getElementById("gedCalcResult");
+  const equals = document.getElementById("gedCalcEquals");
+  const keys = document.querySelectorAll(".gedCalcKey");
+
+  if (!input || !result || !equals) return;
+
+  keys.forEach((btn) => {
+    btn.onclick = () => {
+      const key = btn.dataset.key;
+
+      if (key === "Clear") {
+        input.value = "";
+        result.textContent = "Result will appear here.";
+        return;
+      }
+
+      if (key === "sqrt") {
+        input.value += "sqrt(";
+        input.focus();
+        return;
+      }
+
+      input.value += key;
+      input.focus();
+    };
+  });
+
+  equals.onclick = () => {
+    try {
+      const value = safeEvaluateExpression(input.value);
+      result.textContent = `Result: ${Number(value.toFixed(10))}`;
+    } catch (error) {
+      result.textContent = "Invalid calculation.";
+    }
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      equals.click();
+    }
+  });
+}
+
+function closeCalculator() {
+  const modal = document.getElementById("calculatorModal");
+  if (modal) modal.style.display = "none";
+}
+
+function makeCalculatorDraggable() {
+  const box = document.getElementById("calculatorBox");
+  const header = document.getElementById("calculatorHeader");
+  if (!box || !header) return;
+
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  header.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    const rect = box.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    box.style.position = "fixed";
+    box.style.margin = "0";
+    box.style.left = `${rect.left}px`;
+    box.style.top = `${rect.top}px`;
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    box.style.left = `${e.clientX - offsetX}px`;
+    box.style.top = `${e.clientY - offsetY}px`;
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
 }
 
 function skillToPracticeCategory(skill) {
@@ -5359,6 +5514,7 @@ function showPausedModal(isAutoPause = false) {
   const reportQuestionBtn = document.getElementById("reportQuestionBtn");
   const pauseBtn = document.getElementById("pauseBtn");
   const formulaSheetBtn = document.getElementById("formulaSheetBtn");
+  const calculatorBtn = document.getElementById("calculatorBtn");
 
   if (state.questions.length) {
     const pos = `${state.currentIndex + 1} / ${state.questions.length}`;
@@ -5366,8 +5522,17 @@ function showPausedModal(isAutoPause = false) {
     document.getElementById("questionPosition").innerText = pos;
 
     const current = state.questions[state.currentIndex];
-    if (formulaSheetBtn) {
-  formulaSheetBtn.classList.toggle("hidden", !current.formulaRequired);
+    const isTutorial = state.mode === "test-tutorial";
+    if (submitBtn) {
+  submitBtn.classList.toggle("hidden", isTutorial || state.mode !== "test");
+}
+if (calculatorBtn) {
+  const allowed = state.mode === "test" && !isTutorial;
+  calculatorBtn.classList.toggle("hidden", !allowed);
+  calculatorBtn.disabled = state.isPaused || state.lockedReviewMode;
+}
+ if (formulaSheetBtn) {
+  formulaSheetBtn.classList.toggle("hidden", !current?.formulaRequired);
   formulaSheetBtn.disabled = state.isPaused;
 }
     const flagged = !!current.flagged;
@@ -5465,14 +5630,130 @@ function showPausedModal(isAutoPause = false) {
   updateAuthUI();
 }
 
-   async function startTest() {
+function buildTutorialQuestions() {
+  return [
+    {
+      id: "tutorial-1",
+      skill: "Tutorial",
+      type: "multiple",
+      question: `
+        <strong>Tutorial Question 1:</strong><br>
+        Select the correct answer below. This practice question does not count toward your score.<br><br>
+        What is 6 + 4?
+      `,
+      choices: [8, 9, 10, 12],
+      answer: 10,
+      calculatorAllowed: false,
+      formulaRequired: false,
+      explanation: "6 + 4 = 10."
+    },
+    {
+      id: "tutorial-2",
+      skill: "Tutorial",
+      type: "fill",
+      question: `
+        <strong>Tutorial Question 2:</strong><br>
+        Type your answer into the box. This practice question does not count toward your score.<br><br>
+        What is 15 - 7?
+      `,
+      choices: [],
+      answer: "8",
+      calculatorAllowed: false,
+      formulaRequired: false,
+      explanation: "15 - 7 = 8."
+    },
+    {
+      id: "tutorial-3",
+      skill: "Tutorial",
+      type: "multiple",
+      question: `
+        <strong>Tutorial Question 3:</strong><br>
+        Use this final practice question to get comfortable before the real test begins.<br><br>
+        A rectangle has a length of 5 and a width of 3. What is its area?
+      `,
+      choices: [8, 10, 15, 20],
+      answer: 15,
+      calculatorAllowed: false,
+      formulaRequired: true,
+      explanation: "Area = length × width, so 5 × 3 = 15."
+    }
+  ];
+}
+
+function shouldShowTestTutorial() {
+  return state.auth.guestMode || !state.hasSeenFirstTestTutorial;
+}
+
+function startTutorialBeforeTest() {
+  state.inTutorial = true;
+  state.mode = "test-tutorial";
+  state.tutorialQuestions = buildTutorialQuestions();
+  state.tutorialIndex = 0;
+  state.questions = state.tutorialQuestions;
+  state.currentIndex = 0;
+  state.timeRemaining = TEST_TIME_SECONDS;
+  state.lockedReviewMode = false;
+  state.timeoutMode = false;
+  state.isPaused = false;
+  state.navigatorVisible = false;
+
+  closeCalculator();
+  setView("test");
+  renderQuestion();
+  updateStatus();
+}
+
+function openBeginRealTestModal() {
+  showModal(
+    "Begin Real Test",
+    `
+      <p>You finished the tutorial questions.</p>
+      <p>Your score has not started yet.</p>
+      <p>The real GED-style math test will now begin with 46 scored questions.</p>
+<p>The calculator will be available during the scored test.</p>
+    `,
+    [
+      {
+        label: "Begin Test",
+        variant: "primary",
+        keepOpen: true,
+        onClick: () => {
+          closeModal();
+
+          setTimeout(async () => {
+            await beginRealTestAfterTutorial();
+          }, 0);
+        }
+      }
+    ]
+  );
+}
+
+async function beginRealTestAfterTutorial() {
+  state.inTutorial = false;
+  state.mode = "test";
+  state.questions = [];
+  state.currentIndex = 0;
+  state.tutorialQuestions = [];
+  state.tutorialIndex = 0;
+
+  if (!state.auth.guestMode) {
+    localStorage.setItem("ged_seen_first_test_tutorial", "true");
+    state.hasSeenFirstTestTutorial = true;
+  }
+
+  await startTest(state.difficulty, false);
+}
+
+   async function startTest(difficulty, showTutorial = true) {
   await withLoading(
     tr("startingTest"),
     tr("generatingTest"),
         async () => {
       hideToast();
       stopTimer();
-      state.difficulty = document.getElementById("difficultySelect").value;
+      state.difficulty =
+  difficulty || document.getElementById("difficultySelect")?.value || state.difficulty || "GED-Level";
       state.mode = "test";
       state.questions = [];
       state.currentIndex = 0;
@@ -5488,6 +5769,10 @@ function showPausedModal(isAutoPause = false) {
 
       await setView("test");
       document.getElementById("questionText").innerText = tr("generatingTestText");
+      if (showTutorial && shouldShowTestTutorial()) {
+  startTutorialBeforeTest();
+  return;
+}
       document.getElementById("choices").innerHTML = "";
       document.getElementById("feedback").innerText = "";
       renderChart(null);
@@ -5826,25 +6111,6 @@ clearBtn.onclick = async () => {
   await saveProgress();
 };
 
-chip.addEventListener("click", async () => {
-  if (state.lockedReviewMode || state.isPaused) return;
-
-  let current = Array.isArray(q.userAnswer) ? [...q.userAnswer] : [];
-
-  if (origin === "bank") {
-    current = current.filter((v) => v !== text);
-    current.push(text);
-  }
-
-  if (origin === "answer") {
-    current = current.filter((v) => v !== text);
-  }
-
-  q.userAnswer = current;
-  renderAnswerArea(q);
-  await saveProgress();
-});
-
     return;
   }
 
@@ -6149,6 +6415,18 @@ async function openReviewBeforeSubmitModal() {
     async function nextQuestion() {
   if (!state.questions.length) return;
   if (state.isPaused) return;
+  if (state.mode === "test-tutorial") {
+  const isLastTutorialQuestion = state.currentIndex === state.questions.length - 1;
+
+  if (isLastTutorialQuestion) {
+    openBeginRealTestModal();
+    return;
+  }
+
+  state.currentIndex += 1;
+  renderQuestion();
+  return;
+}
 
   const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
@@ -6172,18 +6450,27 @@ async function openReviewBeforeSubmitModal() {
     return;
   }
 
-  state.currentIndex += 1;
-  renderQuestion();
-  await saveProgress();
+state.currentIndex += 1;
+renderQuestion();
+updateStatus();
+await saveProgress();
 }
 
     async function prevQuestion() {
   if (!state.questions.length) return;
-  if (state.timeoutMode || state.lockedReviewMode || state.isPaused) return;
+  if (state.mode === "test-tutorial") {
   if (state.currentIndex > 0) {
     state.currentIndex -= 1;
     renderQuestion();
-    await saveProgress();
+  }
+  return;
+}
+  if (state.timeoutMode || state.lockedReviewMode || state.isPaused) return;
+  if (state.currentIndex > 0) {
+state.currentIndex -= 1;
+renderQuestion();
+updateStatus();
+await saveProgress();
   }
 }
 
@@ -6851,6 +7138,32 @@ if (profileScoringToggleBtn) {
   };
 }
 
+function openBeginRealTestModal() {
+  showModal(
+    "Begin Real Test",
+    `
+      <p>You finished the tutorial questions.</p>
+      <p>Your score has not started yet.</p>
+      <p>The real GED-style math test will now begin with 46 scored questions.</p>
+      <p><strong>Part 1:</strong> Questions 1–5 do not allow calculator use.</p>
+      <p><strong>Part 2:</strong> Questions 6–46 allow calculator use.</p>
+    `,
+    [
+      {
+        label: "Begin Test",
+        variant: "primary",
+        keepOpen: true,
+        onClick: () => {
+          closeModal();
+          setTimeout(async () => {
+            await beginRealTestAfterTutorial();
+          }, 0);
+        }
+      }
+    ]
+  );
+}
+
 const profileEnable2faBtn = document.getElementById("profileEnable2faBtn");
 if (profileEnable2faBtn) {
   profileEnable2faBtn.onclick = () => {
@@ -7192,6 +7505,16 @@ document.getElementById("formulaSheetBtn").onclick = () => {
   if (state.isPaused) return;
   openFormulaSheetModal();
 };
+document.getElementById("calculatorBtn").onclick = () => {
+  if (state.isPaused || state.lockedReviewMode) return;
+  openCalculator();
+};
+
+document.getElementById("closeCalculatorBtn").onclick = () => {
+  closeCalculator();
+};
+
+makeCalculatorDraggable();
 
 document.getElementById("pauseBtn").onclick = async () => {
   if (state.mode !== "test") return;

@@ -49,6 +49,7 @@ type: q.type || "multiple",
     diagram: q.diagram || null,
     hotspot: q.hotspot || null,
     formulaRequired: !!q.formulaRequired,
+    calculatorAllowed: true,
     explanation: normalizeExplanation(q.explanation, q.answer),
     difficulty: q.difficulty || difficulty
   };
