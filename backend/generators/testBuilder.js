@@ -38,10 +38,10 @@ function normalizeExplanation(text, fallbackAnswer) {
 function normalizeQuestion(q, index, difficulty) {
   return {
     id: index + 1,
-skill: q.skill || "Mixed Practice",
-subskill: q.subskill || q.skill || "Mixed Practice",
-topic: q.topic || q.subskill || q.skill || "Mixed Practice",
-type: q.type || "multiple",
+    skill: q.skill || "Mixed Practice",
+    subskill: q.subskill || q.skill || "Mixed Practice",
+    topic: q.topic || q.subskill || q.skill || "Mixed Practice",
+    type: q.type || "multiple",
     question: q.question || "Question unavailable.",
     choices: Array.isArray(q.choices) ? q.choices : [],
     answer: q.answer,
@@ -57,17 +57,17 @@ type: q.type || "multiple",
 
 function skillMatches(selectedSkill, questionSkill) {
   const map = {
-  "Fractions, Decimals, and Percents": ["Percent", "Algebra"],
-  "Ratios, Proportions, and Percent Change": ["Percent Change", "Percent"],
-  "Measurement and Unit Conversion": [],
-  "Area, Perimeter, Surface Area, and Volume": ["Geometry"],
-  "Lines, Angles, and Coordinate Plane": ["Slope", "Geometry", "Number Line"],
-  "Data Tables and Graph Interpretation": ["Bar Graph", "Line Graph", "Scatter Plot", "Data Table"],
-  "Mean, Median, and Probability": ["Probability"],
-  "Expressions and Order of Operations": ["Algebra"],
-  "Solving Equations and Inequalities": ["Linear Equations", "Algebra"],
-  "Linear Equations and Slope": ["Linear Equations", "Slope", "Algebra"]
-};
+    "Fractions, Decimals, and Percents": ["Percent", "Algebra"],
+    "Ratios, Proportions, and Percent Change": ["Percent Change", "Percent"],
+    "Measurement and Unit Conversion": [],
+    "Area, Perimeter, Surface Area, and Volume": ["Geometry"],
+    "Lines, Angles, and Coordinate Plane": ["Slope", "Geometry", "Number Line"],
+    "Data Tables and Graph Interpretation": ["Bar Graph", "Line Graph", "Scatter Plot", "Data Table"],
+    "Mean, Median, and Probability": ["Probability"],
+    "Expressions and Order of Operations": ["Algebra"],
+    "Solving Equations and Inequalities": ["Linear Equations", "Algebra"],
+    "Linear Equations and Slope": ["Slope"]
+  };
 
   const allowed = map[selectedSkill] || [];
   return allowed.includes(questionSkill);
@@ -77,9 +77,7 @@ function generatorCanProduceType(generator, difficulty, desiredType) {
   try {
     for (let i = 0; i < 6; i += 1) {
       const sample = generator({ difficulty });
-      if (sample && sample.type === desiredType) {
-        return true;
-      }
+      if (sample && sample.type === desiredType) return true;
     }
   } catch (e) {
     return false;
@@ -102,6 +100,37 @@ function drawQuestionFromPool(pool, difficulty, preferredType = null) {
   return pool[Math.floor(Math.random() * pool.length)]({ difficulty });
 }
 
+function isAlgebraSkill(skill) {
+  return ["Algebra", "Linear Equations", "Slope"].includes(skill);
+}
+
+function shuffleQuestions(arr) {
+  const copy = [...arr];
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
+}
+
+function getQuestionSignature(question) {
+  return JSON.stringify({
+    skill: question.skill || "",
+    subskill: question.subskill || "",
+    type: question.type || "",
+    question: String(question.question || "").replace(/\s+/g, " ").trim(),
+    answer: question.answer,
+    choices: Array.isArray(question.choices)
+      ? [...question.choices].map(String).sort()
+      : [],
+    chart: question.chart ? JSON.stringify(question.chart.data || {}) : "",
+    diagram: question.diagram ? String(question.diagram).replace(/\s+/g, " ").trim() : "",
+    hotspot: question.hotspot ? JSON.stringify(question.hotspot) : ""
+  });
+}
+
 function buildTest(options = {}) {
   const requestedCount = Number(options.count);
   const count = Number.isFinite(requestedCount) && requestedCount > 1 ? requestedCount : 46;
@@ -120,6 +149,7 @@ function buildTest(options = {}) {
     : generators;
 
   const pool = eligible.length ? eligible : [];
+
   if (!pool.length) {
     throw new Error(`No generators matched selected skill: ${skill}`);
   }
@@ -138,39 +168,75 @@ function buildTest(options = {}) {
 
   const isFullTest = count >= 40;
 
-const targetFillCount =
-  fillCapablePool.length > 0
-    ? (isFullTest ? 9 : Math.min(2, count))
-    : 0;
+  const targetFillCount =
+    fillCapablePool.length > 0 ? (isFullTest ? 9 : Math.min(2, count)) : 0;
 
-const targetDragDropCount =
-  dragDropCapablePool.length > 0
-    ? (isFullTest ? 5 : Math.min(1, count))
-    : 0;
+  const targetDragDropCount =
+    dragDropCapablePool.length > 0 ? (isFullTest ? 5 : Math.min(1, count)) : 0;
 
-const targetHotspotCount =
-  hotspotCapablePool.length > 0
-    ? (isFullTest ? 4 : Math.min(1, count))
-    : 0;
+  const targetHotspotCount =
+    hotspotCapablePool.length > 0 ? (isFullTest ? 4 : Math.min(1, count)) : 0;
+
   const rawQuestions = [];
+  const seenQuestionSignatures = new Set();
 
-function addPreferredQuestion(sourcePool, preferredType) {
-  let question = null;
-  let safety = 0;
+  let algebraCount = 0;
+  let quantitativeCount = 0;
 
-  while (safety < 100) {
-    question = drawQuestionFromPool(sourcePool, difficulty, preferredType);
+  const shouldBalanceSkills = !skill;
+  const targetAlgebra = shouldBalanceSkills ? Math.round(count * 0.55) : count;
+  const targetQuantitative = shouldBalanceSkills ? count - targetAlgebra : count;
 
-    if (question && question.type === preferredType) {
-      rawQuestions.push(question);
-      return;
+  function canAcceptQuestion(question) {
+    const isAlgebra = isAlgebraSkill(question.skill);
+
+    if (shouldBalanceSkills && isAlgebra && algebraCount >= targetAlgebra) {
+      return false;
     }
 
-    safety += 1;
+    if (shouldBalanceSkills && !isAlgebra && quantitativeCount >= targetQuantitative) {
+      return false;
+    }
+
+    return true;
   }
 
-  console.warn(`Could not generate preferred question type: ${preferredType}`);
+function addQuestion(question) {
+  const signature = getQuestionSignature(question);
+
+  if (seenQuestionSignatures.has(signature)) {
+    return false;
+  }
+
+  seenQuestionSignatures.add(signature);
+  rawQuestions.push(question);
+
+  if (isAlgebraSkill(question.skill)) {
+    algebraCount += 1;
+  } else {
+    quantitativeCount += 1;
+  }
+
+  return true;
 }
+
+  function addPreferredQuestion(sourcePool, preferredType) {
+    let safety = 0;
+
+    while (safety < 100) {
+      const question = drawQuestionFromPool(sourcePool, difficulty, preferredType);
+
+      if (question && question.type === preferredType && canAcceptQuestion(question)) {
+if (addQuestion(question)) {
+  return;
+}
+      }
+
+      safety += 1;
+    }
+
+    console.warn(`Could not generate preferred question type: ${preferredType}`);
+  }
 
   for (let i = 0; i < targetFillCount; i += 1) {
     addPreferredQuestion(fillCapablePool, "fill");
@@ -184,7 +250,12 @@ function addPreferredQuestion(sourcePool, preferredType) {
     addPreferredQuestion(hotspotCapablePool, "hotspot");
   }
 
-  while (rawQuestions.length < count) {
+  let mainLoopSafety = 0;
+  const mainLoopLimit = count * 200;
+
+  while (rawQuestions.length < count && mainLoopSafety < mainLoopLimit) {
+    mainLoopSafety += 1;
+
     let question = drawQuestionFromPool(pool, difficulty);
 
     let safety = 0;
@@ -196,25 +267,35 @@ function addPreferredQuestion(sourcePool, preferredType) {
       safety += 1;
     }
 
-    rawQuestions.push(question);
+    if (!question) continue;
+    if (!canAcceptQuestion(question)) continue;
+
+    addQuestion(question);
   }
 
-  function shuffleQuestions(arr) {
-  const copy = [...arr];
+let fallbackSafety = 0;
 
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+while (rawQuestions.length < count && fallbackSafety < count * 100) {
+  fallbackSafety += 1;
+
+  const question = drawQuestionFromPool(pool, difficulty);
+  if (question) {
+    addQuestion(question);
   }
-
-  return copy;
 }
 
-const shuffledQuestions = shuffleQuestions(rawQuestions);
+while (rawQuestions.length < count) {
+  const question = drawQuestionFromPool(pool, difficulty);
+  if (question) {
+    rawQuestions.push(question);
+  }
+}
 
-return shuffledQuestions.map((question, index) =>
-  normalizeQuestion(question, index, difficulty)
-);
+  const shuffledQuestions = shuffleQuestions(rawQuestions);
+
+  return shuffledQuestions.map((question, index) =>
+    normalizeQuestion(question, index, difficulty)
+  );
 }
 
 module.exports = buildTest;
