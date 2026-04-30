@@ -10,51 +10,72 @@ function orderAnswer(items) {
   return items.join(" | ");
 }
 
-function fractionToDecimalOrdering() {
-  const correct = ["1/4", "1/2", "3/4"];
+function fractionOrdering() {
+  const sets = [
+    ["1/4", "1/2", "3/4"],
+    ["1/5", "2/5", "4/5"],
+    ["1/3", "2/3", "5/6"],
+    ["1/8", "3/8", "7/8"]
+  ];
+
+  const correct = sets[rand(0, sets.length - 1)];
 
   return {
     skill: "Algebra",
     subskill: "Fractions",
-topic: "Ordering fractions",
+    topic: "Ordering fractions",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: "Drag the values into order from least to greatest.",
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: "Convert or compare the fractions: 1/4 = 0.25, 1/2 = 0.5, and 3/4 = 0.75."
+    explanation: `Compare the fraction values from least to greatest: ${correct.join(", ")}.`
   };
 }
 
 function decimalOrdering() {
-  const correct = ["0.08", "0.6", "0.75"];
+  const sets = [
+    ["0.08", "0.6", "0.75"],
+    ["0.12", "0.4", "0.92"],
+    ["0.05", "0.25", "0.7"],
+    ["0.3", "0.55", "0.9"]
+  ];
+
+  const correct = sets[rand(0, sets.length - 1)];
 
   return {
     skill: "Algebra",
     subskill: "Decimals",
-topic: "Ordering decimals",
+    topic: "Ordering decimals",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: "Drag the decimals into order from least to greatest.",
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: "Compare place values. 0.08 is smallest, then 0.6, then 0.75."
+    explanation: `Compare place values. The correct order is ${correct.join(", ")}.`
   };
 }
 
 function percentOrdering() {
-  const correct = ["15%", "40%", "65%"];
+  const sets = [
+    ["15%", "40%", "65%"],
+    ["10%", "25%", "75%"],
+    ["20%", "35%", "80%"],
+    ["5%", "50%", "90%"]
+  ];
+
+  const correct = sets[rand(0, sets.length - 1)];
 
   return {
     skill: "Percent",
     subskill: "Comparing Percents",
-topic: "Ordering percents",
+    topic: "Ordering percents",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: "Drag the percents into order from least to greatest.",
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: "Compare the percent values directly: 15%, 40%, 65%."
+    explanation: `Compare the percent values directly. The correct order is ${correct.join(", ")}.`
   };
 }
 
@@ -74,7 +95,7 @@ function equationStepOrdering() {
   return {
     skill: "Linear Equations",
     subskill: "Equation Steps",
-topic: "Ordering equation-solving steps",
+    topic: "Ordering equation-solving steps",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `Drag the steps into the correct order to solve: ${a}x + ${b} = ${c}`,
@@ -85,7 +106,7 @@ topic: "Ordering equation-solving steps",
 }
 
 function discountStepOrdering() {
-  const price = rand(40, 120);
+  const price = rand(4, 14) * 10;
   const discount = [10, 15, 20, 25, 30][rand(0, 4)];
   const discountAmount = Number((price * (discount / 100)).toFixed(2));
   const salePrice = Number((price - discountAmount).toFixed(2));
@@ -100,7 +121,7 @@ function discountStepOrdering() {
   return {
     skill: "Percent",
     subskill: "Percent Discount",
-topic: "Ordering discount steps",
+    topic: "Ordering discount steps",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `Drag the steps into the correct order to find the sale price of a $${price} item with a ${discount}% discount.`,
@@ -127,7 +148,7 @@ function areaCostStepOrdering() {
   return {
     skill: "Geometry",
     subskill: "Area Word Problems",
-topic: "Using area to solve cost problems",
+    topic: "Using area to solve cost problems",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${cost} per square foot. Drag the steps into the correct order.`,
@@ -139,7 +160,7 @@ topic: "Using area to solve cost problems",
 
 module.exports = function generateDragDrop(options = {}) {
   const bank = [
-    fractionToDecimalOrdering,
+    fractionOrdering,
     decimalOrdering,
     percentOrdering,
     equationStepOrdering,
