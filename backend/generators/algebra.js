@@ -2,177 +2,117 @@ function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function ranges(difficulty) {
-  if (difficulty === "Easy") {
-    return { coord: 4, rise: 4, slope: 3 };
-  }
-  if (difficulty === "Medium") {
-    return { coord: 6, rise: 6, slope: 4 };
-  }
-  return { coord: 8, rise: 8, slope: 5 };
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function slopeFromPoints(difficulty) {
-  const r = ranges(difficulty);
+function orderOfOperationsMultiple(difficulty) {
+  const a = rand(2, difficulty === "Easy" ? 6 : 9);
+  const b = rand(2, difficulty === "Easy" ? 6 : 9);
+  const c = rand(2, difficulty === "Easy" ? 5 : 8);
 
-  let x1 = rand(-r.coord, r.coord - 2);
-  let y1 = rand(-r.coord, r.coord);
-  let run = rand(1, difficulty === "Easy" ? 3 : 5);
-  let rise = rand(-r.rise, r.rise);
+  const answer = a + b * c;
 
-  while (rise === 0) {
-    rise = rand(-r.rise, r.rise);
+  const choices = new Set([
+    answer,
+    (a + b) * c,
+    a * b + c,
+    answer + rand(2, 8)
+  ]);
+
+  while (choices.size < 4) {
+    choices.add(answer + rand(-10, 10));
   }
 
-  const x2 = x1 + run;
-  const y2 = y1 + rise;
-  const slope = rise / run;
-
-  const xMin = Math.min(x1, x2) - 2;
-  const xMax = Math.max(x1, x2) + 2;
-  const yMin = Math.min(y1, y2) - 2;
-  const yMax = Math.max(y1, y2) + 2;
-
   return {
-    skill: "Slope",
-    subskill: "Slope From Points",
-topic: "Finding slope from two points",
+    skill: "Algebra",
+    subskill: "Expressions and Order of Operations",
+    topic: "Evaluating expressions using order of operations",
     difficulty,
-    type: "fill",
-    question: `Find the slope of the line passing through (${x1}, ${y1}) and (${x2}, ${y2}).`,
-    answer: String(slope),
-    chart: {
-      type: "line",
-      data: {
-        datasets: [
-          {
-            data: [
-              { x: x1, y: y1 },
-              { x: x2, y: y2 }
-            ],
-            parsing: false,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointHoverRadius: 4,
-            fill: false,
-            tension: 0,
-            borderColor: "#153e75",
-            pointBackgroundColor: "#153e75",
-            pointBorderColor: "#153e75"
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          x: {
-            type: "linear",
-            min: xMin,
-            max: xMax,
-            ticks: { stepSize: 1 }
-          },
-          y: {
-            min: yMin,
-            max: yMax,
-            ticks: { stepSize: 1 }
-          }
-        }
-      }
-    },
-    explanation: `Use the slope formula: (y2 - y1) / (x2 - x1). Here that is (${y2} - ${y1}) / (${x2} - ${x1}) = ${rise}/${run} = ${slope}.`
+    type: "multiple",
+    question: `Evaluate the expression: ${a} + ${b} × ${c}`,
+    choices: shuffle(Array.from(choices)),
+    answer,
+    explanation: `Use order of operations. Multiply first: ${b} × ${c} = ${b * c}. Then add ${a}: ${a} + ${b * c} = ${answer}.`
   };
 }
 
-function slopeFromGraph(difficulty) {
-  const r = ranges(difficulty);
+function orderOfOperationsFill(difficulty) {
+  const a = rand(2, difficulty === "Easy" ? 6 : 9);
+  const b = rand(2, difficulty === "Easy" ? 6 : 9);
+  const c = rand(2, difficulty === "Easy" ? 5 : 8);
 
-  let m = rand(-r.slope, r.slope);
-  while (m === 0) {
-    m = rand(-r.slope, r.slope);
-  }
+  const answer = a * (b + c);
 
-  const anchorX = rand(-3, 3);
-  const anchorY = rand(-3, 3);
+  return {
+    skill: "Algebra",
+    subskill: "Expressions and Order of Operations",
+    topic: "Evaluating expressions with parentheses",
+    difficulty,
+    type: "fill",
+    question: `Evaluate the expression: ${a}(${b} + ${c})`,
+    answer: String(answer),
+    explanation: `Evaluate inside the parentheses first: ${b} + ${c} = ${b + c}. Then multiply: ${a} × ${b + c} = ${answer}.`
+  };
+}
 
-  const points = [
-    { x: anchorX - 1, y: anchorY - m },
-    { x: anchorX, y: anchorY },
-    { x: anchorX + 1, y: anchorY + m }
-  ];
+function expressionSubstitutionMultiple(difficulty) {
+  const x = rand(2, difficulty === "Easy" ? 6 : 10);
+  const a = rand(2, difficulty === "Easy" ? 5 : 8);
+  const b = rand(1, difficulty === "Easy" ? 8 : 12);
+  const answer = a * x + b;
 
-  const xMin = anchorX - 4;
-  const xMax = anchorX + 4;
-  const yMin = Math.min(...points.map((p) => p.y)) - 2;
-  const yMax = Math.max(...points.map((p) => p.y)) + 2;
+  const choices = new Set([
+    answer,
+    a + x + b,
+    a * (x + b),
+    answer + rand(2, 8)
+  ]);
 
-  const choices = new Set([m]);
   while (choices.size < 4) {
-    const wrong = rand(-r.slope - 1, r.slope + 1);
-    if (wrong !== 0) {
-      choices.add(wrong);
-    }
+    choices.add(answer + rand(-10, 10));
   }
 
   return {
-    skill: "Slope",
-    subskill: "Slope From Graph",
-topic: "Finding slope from a graph",
+    skill: "Algebra",
+    subskill: "Expression Substitution",
+    topic: "Evaluating expressions with a given value",
     difficulty,
     type: "multiple",
-    question: "What is the slope of the line shown on the graph?",
-    choices: Array.from(choices).sort(() => Math.random() - 0.5),
-    answer: m,
-    chart: {
-      type: "line",
-      data: {
-        datasets: [
-          {
-            data: points,
-            parsing: false,
-            borderWidth: 3,
-            pointRadius: 4,
-            pointHoverRadius: 4,
-            fill: false,
-            tension: 0,
-            borderColor: "#153e75",
-            pointBackgroundColor: "#153e75",
-            pointBorderColor: "#153e75"
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          x: {
-            type: "linear",
-            min: xMin,
-            max: xMax,
-            ticks: { stepSize: 1 }
-          },
-          y: {
-            min: yMin,
-            max: yMax,
-            ticks: { stepSize: 1 }
-          }
-        }
-      }
-    },
-    explanation: `The slope is rise over run. Reading the graph, the line changes by ${m} vertically for every 1 unit horizontally, so the slope is ${m}.`
+    question: `If x = ${x}, what is the value of ${a}x + ${b}?`,
+    choices: shuffle(Array.from(choices)),
+    answer,
+    explanation: `Substitute ${x} for x: ${a}(${x}) + ${b} = ${a * x} + ${b} = ${answer}.`
+  };
+}
+
+function expressionSubstitutionFill(difficulty) {
+  const x = rand(2, difficulty === "Easy" ? 6 : 10);
+  const a = rand(2, difficulty === "Easy" ? 5 : 8);
+  const b = rand(1, difficulty === "Easy" ? 8 : 12);
+  const answer = a * x - b;
+
+  return {
+    skill: "Algebra",
+    subskill: "Expression Substitution",
+    topic: "Evaluating expressions with a given value",
+    difficulty,
+    type: "fill",
+    question: `If x = ${x}, what is the value of ${a}x - ${b}?`,
+    answer: String(answer),
+    explanation: `Substitute ${x} for x: ${a}(${x}) - ${b} = ${a * x} - ${b} = ${answer}.`
   };
 }
 
 module.exports = function generateAlgebra(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
-  const bank = [slopeFromPoints, slopeFromGraph];
-  return bank[Math.floor(Math.random() * bank.length)](difficulty);
+
+  const bank = [
+    orderOfOperationsMultiple,
+    orderOfOperationsFill,
+    expressionSubstitutionMultiple,
+    expressionSubstitutionFill
+  ];
+
+  return bank[rand(0, bank.length - 1)](difficulty);
 };

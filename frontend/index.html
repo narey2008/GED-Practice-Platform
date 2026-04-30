@@ -5692,6 +5692,37 @@ function shouldShowTestTutorial() {
   return state.auth.guestMode || !state.hasSeenFirstTestTutorial;
 }
 
+function openTutorialIntroModal() {
+ showModal(
+  "Quick Tutorial",
+  `
+    <p>Before the scored test begins, you will answer 3 quick tutorial questions.</p>
+    <p>These questions are only for practice and will not affect your score.</p>
+    <p>The calculator will stay hidden during the tutorial.</p>
+  `,
+  [
+    {
+      label: "Start Tutorial",
+      variant: "primary",
+      onClick: () => {
+        closeModal();
+      }
+    },
+    {
+      label: "Skip Tutorial",
+      variant: "secondary",
+      onClick: () => {
+        closeModal();
+
+        setTimeout(async () => {
+          await beginRealTestAfterTutorial();
+        }, 0);
+      }
+    }
+  ]
+);
+}
+
 function startTutorialBeforeTest() {
   state.inTutorial = true;
   state.mode = "test-tutorial";
@@ -5706,20 +5737,20 @@ function startTutorialBeforeTest() {
   state.navigatorVisible = false;
 
   closeCalculator();
-  setView("test");
-  updateStatus();
-  renderQuestion();
-  updateStatus();
+setView("test");
+renderQuestion();
+updateStatus();
+openTutorialIntroModal();
 }
 
 function openBeginRealTestModal() {
   showModal(
-    "Begin Real Test",
+    "Begin Scored Test",
     `
       <p>You finished the tutorial questions.</p>
       <p>Your score has not started yet.</p>
       <p>The real GED-style math test will now begin with 46 scored questions.</p>
-<p>The calculator will be available during the scored test.</p>
+      <p>The calculator will be available during the scored test.</p>
     `,
     [
       {
@@ -7507,7 +7538,8 @@ async function handleEmailVerificationFromUrl() {
   await toggleFlag();
 };
 document.getElementById("reportQuestionBtn").onclick = async () => {
-  await reportCurrentQuestion();
+  if (!state.questions.length || state.lockedReviewMode || state.timeoutMode) return;
+  await openQuestionReportModal();
 };
 
 document.getElementById("formulaSheetBtn").onclick = () => {
