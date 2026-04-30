@@ -8,29 +8,35 @@ function shuffle(arr) {
 
 function positive() {
   const points = [];
-  for (let x = 1; x <= 7; x += 1) {
-    points.push({ x, y: x + rand(0, 2) });
+
+  for (let x = 1; x <= 8; x += 1) {
+    points.push({ x, y: Math.min(10, x + rand(0, 2)) });
   }
+
   return {
     points,
     answer: "Positive correlation",
     title: "Hours Studied vs. Quiz Score",
     xLabel: "Hours Studied",
-    yLabel: "Quiz Score"
+    yLabel: "Quiz Score",
+    explanation: "The points generally rise from left to right, so the relationship is positive."
   };
 }
 
 function negative() {
   const points = [];
-  for (let x = 1; x <= 7; x += 1) {
-    points.push({ x, y: 9 - x + rand(-1, 1) });
+
+  for (let x = 1; x <= 8; x += 1) {
+    points.push({ x, y: Math.max(1, 10 - x + rand(-1, 1)) });
   }
+
   return {
     points,
     answer: "Negative correlation",
     title: "Absences vs. Final Grade",
     xLabel: "Absences",
-    yLabel: "Final Grade"
+    yLabel: "Final Grade",
+    explanation: "The points generally fall from left to right, so the relationship is negative."
   };
 }
 
@@ -38,7 +44,7 @@ function none() {
   const points = [];
   const used = new Set();
 
-  while (points.length < 7) {
+  while (points.length < 8) {
     const x = rand(1, 10);
     const y = rand(1, 10);
     const key = `${x},${y}`;
@@ -54,7 +60,8 @@ function none() {
     answer: "No correlation",
     title: "Shoe Size vs. Number of Books Read",
     xLabel: "Shoe Size",
-    yLabel: "Books Read"
+    yLabel: "Books Read",
+    explanation: "The points do not show a clear upward or downward pattern, so there is no correlation."
   };
 }
 
@@ -66,10 +73,10 @@ module.exports = function generateScatterPlot(options = {}) {
   return {
     skill: "Scatter Plot",
     subskill: "Scatter Plot Correlation",
-topic: "Identifying correlation from a scatter plot",
+    topic: "Identifying correlation from a scatter plot",
     difficulty,
     type: "multiple",
-    question: `The scatter plot compares ${selected.xLabel.toLowerCase()} and ${selected.yLabel.toLowerCase()}. What type of relationship is shown?`,
+    question: `Use the scatter plot to answer the question. What type of relationship is shown between ${selected.xLabel.toLowerCase()} and ${selected.yLabel.toLowerCase()}?`,
     choices: shuffle([
       "Positive correlation",
       "Negative correlation",
@@ -125,6 +132,6 @@ topic: "Identifying correlation from a scatter plot",
         }
       }
     },
-    explanation: `Look at the overall direction of the points. If they rise from left to right, the relationship is positive. If they fall from left to right, it is negative. If there is no clear pattern, it is no correlation.`
+    explanation: selected.explanation
   };
 };
