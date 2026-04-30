@@ -1255,18 +1255,84 @@ body.loadingActive {
           <p>Choose a skill and difficulty, then begin a focused practice set.</p>
 
           <label for="practiceSkillSelect">Skill</label>
-          <select id="practiceSkillSelect">
-            <option value="Fractions, Decimals, and Percents">Fractions, Decimals, and Percents</option>
-            <option value="Ratios, Proportions, and Percent Change">Ratios, Proportions, and Percent Change</option>
-            <option value="Measurement and Unit Conversion">Measurement and Unit Conversion</option>
-            <option value="Area, Perimeter, Surface Area, and Volume">Area, Perimeter, Surface Area, and Volume</option>
-            <option value="Lines, Angles, and Coordinate Plane">Lines, Angles, and Coordinate Plane</option>
-            <option value="Data Tables and Graph Interpretation">Data Tables and Graph Interpretation</option>
-            <option value="Mean, Median, and Probability">Mean, Median, and Probability</option>
-            <option value="Expressions and Order of Operations">Expressions and Order of Operations</option>
-            <option value="Solving Equations and Inequalities">Solving Equations and Inequalities</option>
-            <option value="Linear Equations and Slope">Linear Equations and Slope</option>
-          </select>
+<select id="practiceSkillSelect">
+  <optgroup label="Fractions, Decimals, and Percents">
+    <option value="Fractions, Decimals, and Percents">Mixed: Fractions, Decimals, and Percents</option>
+    <option value="Fractions">Ordering Fractions</option>
+    <option value="Decimals">Ordering Decimals</option>
+    <option value="Comparing Percents">Comparing Percents</option>
+    <option value="Percent of a Number">Percent of a Number</option>
+    <option value="Percent Discount">Percent Discount</option>
+    <option value="Percent of a Total">Percent of a Total</option>
+  </optgroup>
+
+  <optgroup label="Ratios, Proportions, and Percent Change">
+    <option value="Ratios, Proportions, and Percent Change">Mixed: Ratios, Proportions, and Percent Change</option>
+    <option value="Percent Increase">Percent Increase</option>
+    <option value="Percent Decrease">Percent Decrease</option>
+    <option value="Finding Percent Increase">Finding Percent Increase</option>
+  </optgroup>
+
+  <optgroup label="Geometry and Measurement">
+    <option value="Area, Perimeter, Surface Area, and Volume">Mixed: Area, Perimeter, and Volume</option>
+    <option value="Rectangle Area">Rectangle Area</option>
+    <option value="Rectangle Perimeter">Rectangle Perimeter</option>
+    <option value="Triangle Area">Triangle Area</option>
+    <option value="Area Cost Problems">Area Cost Problems</option>
+    <option value="Area Word Problems">Area Word Problems</option>
+  </optgroup>
+
+  <optgroup label="Lines, Angles, and Coordinate Plane">
+    <option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
+    <option value="Integer Number Line">Integer Number Line</option>
+    <option value="Opposites on a Number Line">Opposites on a Number Line</option>
+    <option value="Temperature Number Line">Temperature Number Line</option>
+    <option value="Slope From Graph">Slope From Graph</option>
+  </optgroup>
+
+  <optgroup label="Data Tables and Graph Interpretation">
+    <option value="Data Tables and Graph Interpretation">Mixed: Data Tables and Graph Interpretation</option>
+    <option value="Bar Graph Greatest Value">Bar Graph: Greatest Value</option>
+    <option value="Bar Graph Least Value">Bar Graph: Least Value</option>
+    <option value="Bar Graph Difference">Bar Graph: Difference</option>
+    <option value="Bar Graph Total">Bar Graph: Total</option>
+    <option value="Line Graph Change">Line Graph: Change</option>
+    <option value="Line Graph Greatest Value">Line Graph: Greatest Value</option>
+    <option value="Line Graph Least Value">Line Graph: Least Value</option>
+    <option value="Line Graph Difference">Line Graph: Difference</option>
+    <option value="Data Table Totals">Data Table: Totals</option>
+    <option value="Data Table Greatest Value">Data Table: Greatest Value</option>
+    <option value="Data Table Least Value">Data Table: Least Value</option>
+    <option value="Data Table Difference">Data Table: Difference</option>
+    <option value="Scatter Plot Correlation">Scatter Plot Correlation</option>
+    <option value="Graph Totals">Graph Totals</option>
+    <option value="Graph Difference">Graph Difference</option>
+  </optgroup>
+
+  <optgroup label="Mean, Median, and Probability">
+    <option value="Mean, Median, and Probability">Mixed: Mean, Median, and Probability</option>
+    <option value="Average">Average / Mean</option>
+    <option value="Spinner Probability">Spinner Probability</option>
+    <option value="Marble Probability">Marble Probability</option>
+    <option value="Number Cube Probability">Number Cube Probability</option>
+  </optgroup>
+
+  <optgroup label="Expressions and Equations">
+    <option value="Expressions and Order of Operations">Expressions and Order of Operations</option>
+    <option value="Expression Substitution">Expression Substitution</option>
+    <option value="Expression Word Problems">Expression Word Problems</option>
+    <option value="Solving Equations and Inequalities">Mixed: Solving Equations and Inequalities</option>
+    <option value="One-Step Equations">One-Step Equations</option>
+    <option value="Variables on Both Sides">Variables on Both Sides</option>
+    <option value="Equation Word Problems">Equation Word Problems</option>
+    <option value="Equation Steps">Equation Steps</option>
+  </optgroup>
+
+  <optgroup label="Linear Equations and Slope">
+    <option value="Linear Equations and Slope">Mixed: Linear Equations and Slope</option>
+    <option value="Slope From Graph">Slope From Graph</option>
+  </optgroup>
+</select>
 
           <label for="practiceDifficultySelect" style="margin-top:12px;">Difficulty</label>
           <select id="practiceDifficultySelect">
@@ -1690,6 +1756,31 @@ function makeCalculatorDraggable() {
 
 function skillToPracticeCategory(skill) {
   const map = {
+    "Expression Substitution": "Expression Substitution",
+"Expression Word Problems": "Expression Word Problems",
+"Equation Word Problems": "Equation Word Problems",
+"Finding Percent Increase": "Finding Percent Increase",
+
+"Bar Graph Greatest Value": "Bar Graph Greatest Value",
+"Bar Graph Least Value": "Bar Graph Least Value",
+"Bar Graph Difference": "Bar Graph Difference",
+"Bar Graph Total": "Bar Graph Total",
+
+"Line Graph Greatest Value": "Line Graph Greatest Value",
+"Line Graph Least Value": "Line Graph Least Value",
+"Line Graph Difference": "Line Graph Difference",
+
+"Data Table Greatest Value": "Data Table Greatest Value",
+"Data Table Least Value": "Data Table Least Value",
+"Data Table Difference": "Data Table Difference",
+
+"Integer Number Line": "Integer Number Line",
+"Opposites on a Number Line": "Opposites on a Number Line",
+"Temperature Number Line": "Temperature Number Line",
+"Area Cost Problems": "Area Cost Problems",
+"Area Word Problems": "Area Word Problems",
+"Graph Difference": "Graph Difference",
+
     // Percent
     "Percent": "Fractions, Decimals, and Percents",
     "Percent of a Number": "Fractions, Decimals, and Percents",
@@ -2796,22 +2887,94 @@ function applyLanguage(language) {
     if (difficultyLabel) difficultyLabel.textContent = t.difficulty;
     if (btn) btn.textContent = t.startPractice;
 
-    if (practiceSkillSelect) {
-      const currentSkill = practiceSkillSelect.value;
-      practiceSkillSelect.innerHTML = `
-        <option value="Fractions, Decimals, and Percents">${t.skillFractions}</option>
-        <option value="Ratios, Proportions, and Percent Change">${t.skillRatios}</option>
-        <option value="Measurement and Unit Conversion">${t.skillMeasurement}</option>
-        <option value="Area, Perimeter, Surface Area, and Volume">${t.skillAreaVolume}</option>
-        <option value="Lines, Angles, and Coordinate Plane">${t.skillLinesAngles}</option>
-        <option value="Data Tables and Graph Interpretation">${t.skillDataTables}</option>
-        <option value="Mean, Median, and Probability">${t.skillMeanMedian}</option>
-        <option value="Expressions and Order of Operations">${t.skillExpressions}</option>
-        <option value="Solving Equations and Inequalities">${t.skillEquations}</option>
-        <option value="Linear Equations and Slope">${t.skillLinearSlope}</option>
-      `;
-      practiceSkillSelect.value = currentSkill;
-    }
+if (practiceSkillSelect) {
+  const currentSkill = practiceSkillSelect.value;
+
+  practiceSkillSelect.innerHTML = `
+    <optgroup label="Fractions, Decimals, and Percents">
+      <option value="Fractions, Decimals, and Percents">Mixed: Fractions, Decimals, and Percents</option>
+      <option value="Fractions">Ordering Fractions</option>
+      <option value="Decimals">Ordering Decimals</option>
+      <option value="Comparing Percents">Comparing Percents</option>
+      <option value="Percent of a Number">Percent of a Number</option>
+      <option value="Percent Discount">Percent Discount</option>
+      <option value="Percent of a Total">Percent of a Total</option>
+    </optgroup>
+
+    <optgroup label="Ratios, Proportions, and Percent Change">
+      <option value="Ratios, Proportions, and Percent Change">Mixed: Ratios, Proportions, and Percent Change</option>
+      <option value="Percent Increase">Percent Increase</option>
+      <option value="Percent Decrease">Percent Decrease</option>
+      <option value="Finding Percent Increase">Finding Percent Increase</option>
+    </optgroup>
+
+    <optgroup label="Geometry and Measurement">
+      <option value="Area, Perimeter, Surface Area, and Volume">Mixed: Area, Perimeter, and Volume</option>
+      <option value="Rectangle Area">Rectangle Area</option>
+      <option value="Rectangle Perimeter">Rectangle Perimeter</option>
+      <option value="Triangle Area">Triangle Area</option>
+      <option value="Area Cost Problems">Area Cost Problems</option>
+      <option value="Area Word Problems">Area Word Problems</option>
+    </optgroup>
+
+    <optgroup label="Lines, Angles, and Coordinate Plane">
+      <option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
+      <option value="Integer Number Line">Integer Number Line</option>
+      <option value="Opposites on a Number Line">Opposites on a Number Line</option>
+      <option value="Temperature Number Line">Temperature Number Line</option>
+      <option value="Slope From Graph">Slope From Graph</option>
+    </optgroup>
+
+    <optgroup label="Data Tables and Graph Interpretation">
+      <option value="Data Tables and Graph Interpretation">Mixed: Data Tables and Graph Interpretation</option>
+      <option value="Bar Graph Greatest Value">Bar Graph: Greatest Value</option>
+      <option value="Bar Graph Least Value">Bar Graph: Least Value</option>
+      <option value="Bar Graph Difference">Bar Graph: Difference</option>
+      <option value="Bar Graph Total">Bar Graph: Total</option>
+      <option value="Line Graph Change">Line Graph: Change</option>
+      <option value="Line Graph Greatest Value">Line Graph: Greatest Value</option>
+      <option value="Line Graph Least Value">Line Graph: Least Value</option>
+      <option value="Line Graph Difference">Line Graph: Difference</option>
+      <option value="Data Table Totals">Data Table: Totals</option>
+      <option value="Data Table Greatest Value">Data Table: Greatest Value</option>
+      <option value="Data Table Least Value">Data Table: Least Value</option>
+      <option value="Data Table Difference">Data Table: Difference</option>
+      <option value="Scatter Plot Correlation">Scatter Plot Correlation</option>
+      <option value="Graph Totals">Graph Totals</option>
+      <option value="Graph Difference">Graph Difference</option>
+    </optgroup>
+
+    <optgroup label="Mean, Median, and Probability">
+      <option value="Mean, Median, and Probability">Mixed: Mean, Median, and Probability</option>
+      <option value="Average">Average / Mean</option>
+      <option value="Spinner Probability">Spinner Probability</option>
+      <option value="Marble Probability">Marble Probability</option>
+      <option value="Number Cube Probability">Number Cube Probability</option>
+    </optgroup>
+
+    <optgroup label="Expressions and Equations">
+      <option value="Expressions and Order of Operations">Expressions and Order of Operations</option>
+      <option value="Expression Substitution">Expression Substitution</option>
+      <option value="Expression Word Problems">Expression Word Problems</option>
+      <option value="Solving Equations and Inequalities">Mixed: Solving Equations and Inequalities</option>
+      <option value="One-Step Equations">One-Step Equations</option>
+      <option value="Variables on Both Sides">Variables on Both Sides</option>
+      <option value="Equation Word Problems">Equation Word Problems</option>
+      <option value="Equation Steps">Equation Steps</option>
+    </optgroup>
+
+    <optgroup label="Linear Equations and Slope">
+      <option value="Linear Equations and Slope">Mixed: Linear Equations and Slope</option>
+      <option value="Slope From Graph">Slope From Graph</option>
+    </optgroup>
+  `;
+
+  if ([...practiceSkillSelect.options].some((opt) => opt.value === currentSkill)) {
+    practiceSkillSelect.value = currentSkill;
+  } else {
+    practiceSkillSelect.value = "Fractions, Decimals, and Percents";
+  }
+}
 
     if (practiceDifficultySelect) {
       const currentPracticeDifficulty = practiceDifficultySelect.value;
