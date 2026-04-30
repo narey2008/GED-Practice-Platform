@@ -2834,29 +2834,17 @@ function applyLanguage(language) {
     if (btn) btn.textContent = t.resume;
   }
 
-  const supportPanel = document.getElementById("supportPanel");
-  if (supportPanel) {
-    const h3 = supportPanel.querySelector("h3");
-    const p = supportPanel.querySelector("p");
-    const btn = document.getElementById("supportEmailBtn");
-    if (h3) h3.textContent = t.supportTitle;
-    if (p) p.textContent = t.supportText;
-    if (btn) btn.textContent = t.contactSupport;
-  }
+const supportPanel = document.getElementById("supportPanel");
+if (supportPanel) {
+  const h3 = supportPanel.querySelector("h3");
+  const p = supportPanel.querySelector("p");
+  const supportEmailBtn = document.getElementById("supportEmailBtn");
 
-  const legalPanel = document.getElementById("legalPanel");
-if (legalPanel) {
-  const h3 = legalPanel.querySelector("h3");
-  const p = legalPanel.querySelector("p");
-  const btn = document.getElementById("legalInfoBtn");
+  if (h3) h3.textContent = t.supportTitle;
+  if (p) p.textContent = t.supportText;
 
-  if (h3) h3.textContent = t.legalPanelTitle;
-  if (p) p.textContent = t.legalPanelText;
-  if (btn) {
-    btn.textContent = t.openLegalPages;
-    btn.onclick = () => {
-      openLegalHubModal();
-    };
+  if (supportEmailBtn) {
+    supportEmailBtn.textContent = t.contactSupport;
   }
 }
 
@@ -3211,103 +3199,154 @@ function buildSupportGmailLink(options = {}) {
   return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailData.to)}&su=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
 }
 
+function supportLabel(key, fallback) {
+  try {
+    const value = tr(key);
+    if (value && value !== key) return value;
+  } catch (error) {
+    // fall back below
+  }
+
+  return fallback;
+}
+
 function openSupportContactModal(prefill = {}) {
   const accountUser = state.auth.user || null;
+
   const signedInLabel = accountUser
     ? `${accountUser.displayName || accountUser.email} (${accountUser.email})`
     : state.auth.guestMode
-    ? tr("guestMode")
-    : tr("notSignedIn");
-
-  const inferredPageFeature =
-    prefill.pageFeature ||
-    (prefill.isQuestionReport ? "Question Report" : "Main Menu");
+    ? "Guest"
+    : "Not signed in";
 
   const defaultType = prefill.type || "bug";
   const defaultSubject = prefill.subject || "";
   const defaultDetails = prefill.details || "";
-  const defaultPageFeature = inferredPageFeature;
+  const defaultPageFeature =
+    prefill.pageFeature ||
+    (prefill.isQuestionReport ? "Question Report" : "Main Menu");
+
   const defaultContactEmail = prefill.contactEmail || accountUser?.email || "";
   const defaultDeviceBrowser = prefill.deviceBrowser || navigator.userAgent;
 
   showModal(
-    tr("supportContactTitle"),
+    "Support / Contact",
     `
-      <label>${tr("supportTypeLabel")}</label>
-      <div id="supportTypeFieldWrap"></div>
+      <p class="muted">
+        Use this form to report bugs, request additions, suggest changes, or contact support.
+      </p>
 
-      <label for="supportSubject" style="margin-top:12px;">${tr("supportSubjectLabel")}</label>
-      <input id="supportSubject" type="text" placeholder="${tr("supportSubjectPlaceholder")}" value="${escapeHtml(defaultSubject)}" />
-      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
+      <label for="supportTypeSelect">Request Type</label>
+      <select id="supportTypeSelect">
+        <option value="bug" ${defaultType === "bug" ? "selected" : ""}>Bug Report</option>
+        <option value="addition" ${defaultType === "addition" ? "selected" : ""}>Addition Request</option>
+        <option value="change_remove" ${defaultType === "change_remove" ? "selected" : ""}>Change / Remove Request</option>
+        <option value="other" ${defaultType === "other" ? "selected" : ""}>Other</option>
+      </select>
 
-      <label for="supportDetails" style="margin-top:12px;">${tr("detailsLabel")}</label>
-      <textarea id="supportDetails" rows="6" style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);" placeholder="${tr("detailsPlaceholder")}">${escapeHtml(defaultDetails)}</textarea>
-      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
+      <label for="supportSubject" style="margin-top:12px;">Subject</label>
+      <input
+        id="supportSubject"
+        type="text"
+        placeholder="Briefly describe the issue or request"
+        value="${escapeHtml(defaultSubject)}"
+      />
 
-      <label style="margin-top:12px;">${tr("pageFeatureLabel")}</label>
-      <div id="supportPageFeatureFieldWrap"></div>
-      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
+      <label for="supportDetails" style="margin-top:12px;">Details</label>
+      <textarea
+        id="supportDetails"
+        rows="7"
+        style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);"
+        placeholder="Describe what happened, what should be changed, or what you would like added."
+      >${escapeHtml(defaultDetails)}</textarea>
 
-      <label for="supportContactEmail" style="margin-top:12px;">${tr("contactEmailLabel")}</label>
-      <input id="supportContactEmail" type="email" placeholder="${tr("contactEmailPlaceholder")}" value="${escapeHtml(defaultContactEmail)}" />
+      <label for="supportPageFeature" style="margin-top:12px;">Page / Feature</label>
+      <input
+        id="supportPageFeature"
+        type="text"
+        value="${escapeHtml(defaultPageFeature)}"
+      />
+      <div class="muted" style="margin-top:6px;">Do not change this if it was auto-filled correctly.</div>
 
-      <label for="supportDeviceBrowser" style="margin-top:12px;">${tr("deviceBrowserLabel")}</label>
-      <input id="supportDeviceBrowser" type="text" value="${escapeHtml(defaultDeviceBrowser)}" />
-      <div class="muted" style="margin-top:6px;">${tr("autoFilledHint")}</div>
+      <label for="supportContactEmail" style="margin-top:12px;">Contact Email</label>
+      <input
+        id="supportContactEmail"
+        type="email"
+        placeholder="Email where support can contact you"
+        value="${escapeHtml(defaultContactEmail)}"
+      />
+
+      <label for="supportDeviceBrowser" style="margin-top:12px;">Device / Browser</label>
+      <input
+        id="supportDeviceBrowser"
+        type="text"
+        value="${escapeHtml(defaultDeviceBrowser)}"
+      />
+      <div class="muted" style="margin-top:6px;">Do not change this if it was auto-filled correctly.</div>
 
       <label for="supportScreenshot" style="margin-top:12px;">Attach Screenshot</label>
       <input id="supportScreenshot" type="file" accept="image/*" />
       <div id="supportScreenshotPreview" style="margin-top:10px;"></div>
 
       <div style="margin-top:12px;" class="muted">
-        <strong>${tr("userStatusLabel")}</strong> ${escapeHtml(signedInLabel)}
+        <strong>User Status:</strong> ${escapeHtml(signedInLabel)}
       </div>
 
       <div id="supportContactError" class="authError hidden"></div>
     `,
     [
+{
+  label: "Cancel",
+  variant: "secondary",
+  keepOpen: true,
+  onClick: async () => {
+    closeModal();
+    await resumeAfterSupportTicketIfNeeded();
+  }
+},
       {
-        label: tr("cancel"),
-        variant: "secondary",
-        onClick: async () => {
-          await resumeAfterSupportTicketIfNeeded();
-        }
-      },
-      {
-        label: tr("submitSupportRequest"),
+        label: "Submit Support Request",
         variant: "primary",
         keepOpen: true,
         onClick: async () => {
           const errorEl = document.getElementById("supportContactError");
-          errorEl.classList.add("hidden");
-          errorEl.textContent = "";
 
-          const type = getSupportTypeValue();
-          const subject = document.getElementById("supportSubject").value.trim();
-          const details = document.getElementById("supportDetails").value.trim();
-          const pageFeature = getSupportPageFeatureValue();
-          const contactEmail = document.getElementById("supportContactEmail").value.trim().toLowerCase();
-          const deviceBrowser = document.getElementById("supportDeviceBrowser").value.trim();
-          const screenshotFile = document.getElementById("supportScreenshot").files[0] || null;
+          if (errorEl) {
+            errorEl.classList.add("hidden");
+            errorEl.textContent = "";
+          }
 
-          if (!type) {
-            errorEl.textContent = tr("supportTypeLabel");
-            errorEl.classList.remove("hidden");
+          const type = document.getElementById("supportTypeSelect")?.value || "other";
+          const subject = document.getElementById("supportSubject")?.value.trim() || "";
+          const details = document.getElementById("supportDetails")?.value.trim() || "";
+          const pageFeature = document.getElementById("supportPageFeature")?.value.trim() || "";
+          const contactEmail = document.getElementById("supportContactEmail")?.value.trim().toLowerCase() || "";
+          const deviceBrowser = document.getElementById("supportDeviceBrowser")?.value.trim() || "";
+          const screenshotFile = document.getElementById("supportScreenshot")?.files?.[0] || null;
+
+          if (!subject) {
+            if (errorEl) {
+              errorEl.textContent = "Subject is required.";
+              errorEl.classList.remove("hidden");
+            }
             return;
           }
 
-          if (!pageFeature) {
-            errorEl.textContent = tr("pageFeatureLabel");
-            errorEl.classList.remove("hidden");
+          if (!details) {
+            if (errorEl) {
+              errorEl.textContent = "Details are required.";
+              errorEl.classList.remove("hidden");
+            }
             return;
           }
 
           try {
             await withLoading(
-              tr("supportSubmitting"),
-              "",
+              "Submitting Support Request...",
+              "Please do not refresh.",
               async () => {
                 const formData = new FormData();
+
                 formData.append("type", type);
                 formData.append("subject", subject);
                 formData.append("details", details);
@@ -3336,195 +3375,36 @@ function openSupportContactModal(prefill = {}) {
                   data = await res.json();
                 } else {
                   const text = await res.text();
-                  throw new Error(`Support ticket returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                  throw new Error(
+                    `Support ticket returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`
+                  );
                 }
 
                 if (!res.ok) {
-                  throw new Error(data.error || tr("supportContactTitle"));
+                  throw new Error(data.error || "Failed to submit support request.");
                 }
 
                 closeModal();
                 await resumeAfterSupportTicketIfNeeded();
+
                 showToast(
-                  tr("supportTicketSent"),
-                  tr("supportTicketSentBody")
+                  "Support Request Sent",
+                  data.message || "Your support request was submitted successfully."
                 );
               }
             );
           } catch (error) {
-            errorEl.textContent = error.message || tr("supportContactTitle");
-            errorEl.classList.remove("hidden");
+            console.error("SUPPORT CONTACT ERROR:", error);
+
+            if (errorEl) {
+              errorEl.textContent = error.message || "Failed to submit support request.";
+              errorEl.classList.remove("hidden");
+            }
           }
         }
       }
     ]
   );
-
-  const typeOptions = [
-    { value: "bug", label: tr("bug") },
-    { value: "addition", label: tr("additionRequest") },
-    { value: "change_remove", label: tr("changeRemoveRequest") },
-    { value: "other", label: tr("other") }
-  ];
-
-  const pageFeatureOptions = [
-    "Main Menu",
-    "Full Test",
-    "Practice Mode",
-    "Profile",
-    "Login",
-    "Question Report",
-    "Other"
-  ];
-
-  function renderSupportTypeField(selectedValue) {
-    const wrap = document.getElementById("supportTypeFieldWrap");
-    if (!wrap) return;
-
-    if (selectedValue === "__other_input__") {
-      wrap.innerHTML = `
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input
-            id="supportTypeOtherInput"
-            type="text"
-            placeholder="${tr("otherDetailsPlaceholder")}"
-            style="width:100%;"
-          />
-          <button
-            id="supportTypeBackBtn"
-            type="button"
-            class="secondaryBtn"
-            style="white-space:nowrap;"
-          >
-            Back to options
-          </button>
-        </div>
-      `;
-
-      const input = document.getElementById("supportTypeOtherInput");
-      const backBtn = document.getElementById("supportTypeBackBtn");
-
-      if (input) input.focus();
-      if (backBtn) {
-        backBtn.onclick = () => {
-          renderSupportTypeField("bug");
-        };
-      }
-
-      return;
-    }
-
-    wrap.innerHTML = `
-      <select id="supportTypeSelect">
-        ${typeOptions
-          .map(
-            (opt) =>
-              `<option value="${opt.value}" ${opt.value === selectedValue ? "selected" : ""}>${opt.label}</option>`
-          )
-          .join("")}
-      </select>
-    `;
-
-    const select = document.getElementById("supportTypeSelect");
-    if (select) {
-      select.onchange = () => {
-        if (select.value === "other") {
-          renderSupportTypeField("__other_input__");
-        }
-      };
-    }
-  }
-
-  function renderSupportPageFeatureField(selectedValue) {
-    const wrap = document.getElementById("supportPageFeatureFieldWrap");
-    if (!wrap) return;
-
-    if (selectedValue === "__other_input__") {
-      wrap.innerHTML = `
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input
-            id="supportPageFeatureOtherInput"
-            type="text"
-            placeholder="${tr("otherDetailsPlaceholder")}"
-            style="width:100%;"
-          />
-          <button
-            id="supportPageFeatureBackBtn"
-            type="button"
-            class="secondaryBtn"
-            style="white-space:nowrap;"
-          >
-            Back to options
-          </button>
-        </div>
-      `;
-
-      const input = document.getElementById("supportPageFeatureOtherInput");
-      const backBtn = document.getElementById("supportPageFeatureBackBtn");
-
-      if (input) input.focus();
-      if (backBtn) {
-        backBtn.onclick = () => {
-          renderSupportPageFeatureField("Main Menu");
-        };
-      }
-
-      return;
-    }
-
-    wrap.innerHTML = `
-      <select id="supportPageFeatureSelect">
-        ${pageFeatureOptions
-          .map(
-            (opt) =>
-              `<option value="${opt}" ${opt === selectedValue ? "selected" : ""}>${opt}</option>`
-          )
-          .join("")}
-      </select>
-    `;
-
-    const select = document.getElementById("supportPageFeatureSelect");
-    if (select) {
-      select.onchange = () => {
-        if (select.value === "Other") {
-          renderSupportPageFeatureField("__other_input__");
-        }
-      };
-    }
-  }
-
-  function getSupportTypeValue() {
-    const typeSelect = document.getElementById("supportTypeSelect");
-    const typeOtherInput = document.getElementById("supportTypeOtherInput");
-
-    if (typeOtherInput) {
-      return typeOtherInput.value.trim();
-    }
-
-    if (typeSelect) {
-      return typeSelect.value;
-    }
-
-    return "";
-  }
-
-  function getSupportPageFeatureValue() {
-    const featureSelect = document.getElementById("supportPageFeatureSelect");
-    const featureOtherInput = document.getElementById("supportPageFeatureOtherInput");
-
-    if (featureOtherInput) {
-      return featureOtherInput.value.trim();
-    }
-
-    if (featureSelect) {
-      return featureSelect.value;
-    }
-
-    return "";
-  }
-
-  renderSupportTypeField(defaultType);
-  renderSupportPageFeatureField(defaultPageFeature);
 
   const supportScreenshotInput = document.getElementById("supportScreenshot");
   const supportScreenshotPreview = document.getElementById("supportScreenshotPreview");
@@ -3538,23 +3418,23 @@ function openSupportContactModal(prefill = {}) {
         return;
       }
 
-      showLoading(tr("uploadPreviewLoading"), "");
-
       const reader = new FileReader();
-      reader.onload = (e) => {
+
+      reader.onload = (event) => {
         supportScreenshotPreview.innerHTML = `
           <div class="muted" style="margin-bottom:8px;">Screenshot Preview</div>
           <img
-            src="${e.target.result}"
+            src="${event.target.result}"
             alt="Screenshot Preview"
             style="max-width:100%; max-height:220px; border:1px solid var(--border); border-radius:10px;"
           />
         `;
-        hideLoading();
       };
 
       reader.onerror = () => {
-        hideLoading();
+        supportScreenshotPreview.innerHTML = `
+          <div class="authError">Could not preview this screenshot.</div>
+        `;
       };
 
       reader.readAsDataURL(file);
@@ -3596,18 +3476,231 @@ ${String(q.answer ?? "").trim() || "—"}`;
 }
 
 async function reportCurrentQuestion() {
-  if (!state.questions.length) return;
+  console.log("REPORT QUESTION CLICKED");
 
-  await pauseForSupportTicket();
+  const q = state.questions[state.currentIndex];
 
-  openSupportContactModal({
-    type: "bug",
-    subject: tr("questionReportSubject"),
-    details: buildCurrentQuestionReportDetails(),
-    pageFeature: "Question Report",
-    isQuestionReport: true,
-    resumeAfterClose: true
-  });
+  if (!q) {
+    showModal(
+      "Report Question",
+      `<p>No active question was found to report.</p>`,
+      [{ label: "Close", variant: "primary" }]
+    );
+    return;
+  }
+
+  const userAnswer = Array.isArray(q.userAnswer)
+    ? q.userAnswer.join(" → ")
+    : String(q.userAnswer ?? "").trim();
+
+  const choicesText = Array.isArray(q.choices) && q.choices.length
+    ? q.choices.map((choice, index) => `${index + 1}. ${choice}`).join("\n")
+    : "No choices / not multiple choice";
+
+  const questionDetails = [
+    `Mode: ${
+  state.mode === "test"
+    ? "Full Test"
+    : state.mode === "practice"
+    ? "Practice Mode"
+    : state.mode === "practice-example"
+    ? "Practice Example"
+    : state.mode || "Unknown"
+}`,
+    `Difficulty: ${state.practiceMeta?.difficulty || state.difficulty || "Unknown"}`,
+    `Skill: ${q.skill || "Unknown"}`,
+    `Subskill: ${q.subskill || "Unknown"}`,
+    `Question Number: ${state.currentIndex + 1} / ${state.questions.length}`,
+    `Question Type: ${q.type || "Unknown"}`,
+    `Flagged: ${q.flagged ? "Yes" : "No"}`,
+    "",
+    "Question Text:",
+    String(q.question || "").replace(/<[^>]*>/g, " ").trim() || "Unavailable",
+    "",
+    "Choices:",
+    choicesText,
+    "",
+    "User Answer:",
+    userAnswer || "No answer yet",
+    "",
+    "Correct Answer:",
+    String(q.answer ?? "Unknown"),
+    "",
+    `Has Chart: ${q.chart ? "Yes" : "No"}`,
+    `Has Diagram: ${q.diagram ? "Yes" : "No"}`,
+    `Has Hotspot: ${q.hotspot ? "Yes" : "No"}`
+  ].join("\n");
+
+  const wasPausedBeforeReport = !!state.isPaused;
+
+  if (state.mode === "test" && !state.lockedReviewMode && !state.timeoutMode) {
+    state.isPaused = true;
+    state.autoPaused = false;
+    state.supportTicketPauseActive = true;
+    stopTimer();
+    updateStatus();
+
+    saveProgress().catch((error) => {
+      console.error("REPORT QUESTION SAVE PROGRESS ERROR:", error);
+    });
+  }
+
+  showModal(
+    "Report Question",
+    `
+      <p class="muted">
+        Use this form to report an incorrect answer, confusing wording, graph problem, rendering problem, or anything else wrong with this question.
+      </p>
+
+      <label for="questionReportIssueType">Issue Type</label>
+      <select id="questionReportIssueType">
+        <option value="Incorrect Answer">Incorrect Answer</option>
+        <option value="Bad Wording">Bad Wording</option>
+        <option value="Graph Problem">Graph Problem</option>
+        <option value="Rendering Problem">Rendering Problem</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="questionReportUserDetails" style="margin-top:12px;">Details</label>
+      <textarea
+        id="questionReportUserDetails"
+        rows="5"
+        style="width:100%;padding:11px;border:1px solid var(--border);border-radius:9px;color:var(--text);background:var(--card);"
+        placeholder="Describe what looks wrong with this question."
+      ></textarea>
+
+      <div class="explanationBox" style="white-space:pre-wrap; margin-top:12px;">
+        <strong>Question Info</strong>
+${escapeHtml(questionDetails)}
+      </div>
+
+      <div id="questionReportError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: "Cancel",
+        variant: "secondary",
+        keepOpen: true,
+        onClick: async () => {
+          closeModal();
+
+          if (state.supportTicketPauseActive && !wasPausedBeforeReport) {
+            state.supportTicketPauseActive = false;
+            state.isPaused = false;
+            state.autoPaused = false;
+            resetIdleTracking();
+            updateStatus();
+
+            try {
+              await saveProgress();
+            } catch (error) {
+              console.error("REPORT QUESTION CANCEL SAVE ERROR:", error);
+            }
+
+            if (!state.timeoutMode && !state.lockedReviewMode && state.mode === "test") {
+              startTimer();
+            }
+          }
+        }
+      },
+      {
+        label: "Submit Report",
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("questionReportError");
+          const issueType = document.getElementById("questionReportIssueType")?.value || "Other";
+          const userDetails = document.getElementById("questionReportUserDetails")?.value.trim() || "";
+
+          if (errorEl) {
+            errorEl.classList.add("hidden");
+            errorEl.textContent = "";
+          }
+
+          const fullDetails = [
+            `Issue Type: ${issueType}`,
+            "",
+            "User Details:",
+            userDetails || "No extra details provided.",
+            "",
+            "Question Info:",
+            questionDetails
+          ].join("\n");
+
+          try {
+            await withLoading(
+              "Submitting Question Report...",
+              "Please do not refresh.",
+              async () => {
+                const formData = new FormData();
+                formData.append("type", "bug");
+                formData.append("subject", "Question Report");
+                formData.append("details", fullDetails);
+                formData.append("pageFeature", "Question Report");
+                formData.append(
+                  "userStatus",
+                  state.auth.user
+                    ? `${state.auth.user.displayName || state.auth.user.email} (${state.auth.user.email})`
+                    : state.auth.guestMode
+                    ? "Guest"
+                    : "Not signed in"
+                );
+                formData.append("deviceBrowser", navigator.userAgent);
+                formData.append("contactEmail", state.auth.user?.email || "");
+                formData.append("displayName", state.auth.user?.displayName || "");
+
+                const res = await fetch(`${API_BASE}/api/support/ticket`, {
+                  method: "POST",
+                  headers: {
+                    ...getAuthHeaders()
+                  },
+                  body: formData
+                });
+
+                const data = await res.json().catch(() => null);
+
+                if (!res.ok) {
+                  throw new Error(data?.error || "Failed to submit question report.");
+                }
+
+                closeModal();
+
+                if (state.supportTicketPauseActive && !wasPausedBeforeReport) {
+                  state.supportTicketPauseActive = false;
+                  state.isPaused = false;
+                  state.autoPaused = false;
+                  resetIdleTracking();
+                  updateStatus();
+
+                  try {
+                    await saveProgress();
+                  } catch (error) {
+                    console.error("REPORT QUESTION SUBMIT SAVE ERROR:", error);
+                  }
+
+                  if (!state.timeoutMode && !state.lockedReviewMode && state.mode === "test") {
+                    startTimer();
+                  }
+                }
+
+                showToast(
+                  "Question Report Sent",
+                  data?.message || "Your question report was submitted successfully."
+                );
+              }
+            );
+          } catch (error) {
+            console.error("QUESTION REPORT SUBMIT ERROR:", error);
+
+            if (errorEl) {
+              errorEl.textContent = error.message || "Failed to submit question report.";
+              errorEl.classList.remove("hidden");
+            }
+          }
+        }
+      }
+    ]
+  );
 }
 
 function hideToast() {
@@ -7514,9 +7607,20 @@ async function handleEmailVerificationFromUrl() {
       await loadSavedProgress();
     };
         document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
-    document.getElementById("contactBtnTop").onclick = () => openSupportContactModal();
-    document.getElementById("legalBtnTop").onclick = () => openLegalHubModal();
-    document.getElementById("supportEmailBtn").onclick = () => openSupportContactModal();
+const contactBtnTop = document.getElementById("contactBtnTop");
+if (contactBtnTop) {
+  contactBtnTop.onclick = () => openSupportContactModal();
+}
+
+const legalBtnTop = document.getElementById("legalBtnTop");
+if (legalBtnTop) {
+  legalBtnTop.onclick = () => openLegalHubModal();
+}
+
+const supportEmailBtn = document.getElementById("supportEmailBtn");
+if (supportEmailBtn) {
+  supportEmailBtn.onclick = () => openSupportContactModal();
+}
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {
         await openProfilePanel();
@@ -7537,10 +7641,12 @@ async function handleEmailVerificationFromUrl() {
     document.getElementById("flagBtn").onclick = async () => {
   await toggleFlag();
 };
-document.getElementById("reportQuestionBtn").onclick = async () => {
-  if (!state.questions.length || state.lockedReviewMode || state.timeoutMode) return;
-  await openQuestionReportModal();
-};
+const reportQuestionBtn = document.getElementById("reportQuestionBtn");
+if (reportQuestionBtn) {
+  reportQuestionBtn.onclick = async () => {
+    await reportCurrentQuestion();
+  };
+}
 
 document.getElementById("formulaSheetBtn").onclick = () => {
   if (state.isPaused) return;
