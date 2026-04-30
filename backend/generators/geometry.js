@@ -24,7 +24,7 @@ function rectangleAreaScenario(difficulty) {
   return {
     skill: "Geometry",
     subskill: "Rectangle Area",
-topic: "Area of rectangles",
+    topic: "Area of rectangles",
     difficulty,
     type: "multiple",
     formulaRequired: true,
@@ -74,7 +74,7 @@ function rectanglePerimeterScenario(difficulty) {
   return {
     skill: "Geometry",
     subskill: "Rectangle Perimeter",
-topic: "Perimeter of rectangles",
+    topic: "Perimeter of rectangles",
     difficulty,
     type: "multiple",
     formulaRequired: true,
@@ -126,7 +126,7 @@ function triangleAreaScenario(difficulty) {
   return {
     skill: "Geometry",
     subskill: "Triangle Area",
-topic: "Area of triangles",
+    topic: "Area of triangles",
     difficulty,
     type: "multiple",
     formulaRequired: true,
@@ -170,5 +170,6 @@ module.exports = function generateGeometry(options = {}) {
     rectanglePerimeterScenario,
     triangleAreaScenario
   ];
+
   return bank[rand(0, bank.length - 1)](difficulty);
 };

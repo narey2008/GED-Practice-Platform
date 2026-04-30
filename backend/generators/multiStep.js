@@ -6,158 +6,142 @@ function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function percentOfTotalMultiple() {
-  const total = rand(80, 200);
+function uniqueNumberChoices(answer, wrongs) {
+  const choices = new Set([answer]);
+
+  wrongs.forEach((w) => {
+    if (Number.isFinite(w) && w >= 0 && w !== answer && choices.size < 4) {
+      choices.add(w);
+    }
+  });
+
+  while (choices.size < 4) {
+    const wrong = answer + rand(-10, 12);
+    if (wrong >= 0 && wrong !== answer) {
+      choices.add(wrong);
+    }
+  }
+
+  return shuffle(Array.from(choices));
+}
+
+function percentOfTotal() {
+  const total = rand(8, 20) * 10;
   const percent = [10, 20, 25, 30, 40, 50][rand(0, 5)];
   const answer = Math.round((percent / 100) * total);
 
   return {
     skill: "Percent",
     subskill: "Percent of a Total",
-topic: "Finding a percent of a total in a word problem",
+    topic: "Finding a percent of a total in a word problem",
     difficulty: "GED-Level",
     type: "multiple",
-    question: `A store sold ${total} items in one day. ${percent}% of the items were sold in the morning. How many items were sold in the morning?`,
-    choices: shuffle([
-      answer,
+    question:
+      "A store sold " +
+      total +
+      " items in one day. " +
+      percent +
+      "% of the items were sold in the morning. How many items were sold in the morning?",
+    choices: uniqueNumberChoices(answer, [
       answer + rand(5, 15),
-      answer - rand(5, 15),
+      Math.max(1, answer - rand(5, 15)),
+      total - answer,
       Math.round(total / percent)
     ]),
     answer,
-    explanation: `${percent}% of ${total} = (${percent}/100) × ${total} = ${answer}.`
+    explanation:
+      percent +
+      "% of " +
+      total +
+      " = (" +
+      percent +
+      "/100) × " +
+      total +
+      " = " +
+      answer +
+      "."
   };
 }
 
-function percentOfTotalFill() {
-  const total = rand(80, 200);
-  const percent = [10, 20, 25, 30, 40, 50][rand(0, 5)];
-  const answer = Math.round((percent / 100) * total);
-
-  return {
-    skill: "Percent",
-    subskill: "Percent of a Total",
-topic: "Finding a percent of a total in a word problem",
-    difficulty: "GED-Level",
-    type: "fill",
-    question: `A store sold ${total} items in one day. ${percent}% of the items were sold in the morning. How many items were sold in the morning?`,
-    answer: String(answer),
-    explanation: `${percent}% of ${total} = (${percent}/100) × ${total} = ${answer}.`
-  };
-}
-
-function graphPlusComputationMultiple() {
+function graphPlusComputation() {
   const labels = ["Mon", "Tue", "Wed", "Thu"];
-  const values = [
-    rand(5, 10),
-    rand(6, 11),
-    rand(4, 9),
-    rand(7, 12)
-  ];
+  const values = [rand(5, 10), rand(6, 12), rand(4, 10), rand(7, 13)];
 
   const total = values.reduce((a, b) => a + b, 0);
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+  const difference = maxValue - minValue;
+  const askTotal = rand(0, 1) === 1;
+  const answer = askTotal ? total : difference;
 
   return {
     skill: "Graphs + Computation",
-    subskill: "Graph Totals",
-topic: "Adding values from a graph",
+    subskill: askTotal ? "Graph Totals" : "Graph Difference",
+    topic: askTotal ? "Adding values from a graph" : "Finding differences from a graph",
     difficulty: "GED-Level",
     type: "multiple",
-    question: `The bar graph shows the number of customers over four days. What is the total number of customers for all four days?`,
-    choices: shuffle([
+    question: askTotal
+      ? "Use the bar graph to answer the question. What is the total number of customers for all four days?"
+      : "Use the bar graph to answer the question. What is the difference between the greatest and least number of customers?",
+    choices: uniqueNumberChoices(answer, [
       total,
-      total + rand(5, 10),
-      total - rand(5, 10),
-      Math.max(...values)
-    ]),
-    answer: total,
-    chart: {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          data: values,
-          backgroundColor: "#1f4f95"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
-      }
-    },
-    explanation: `Add all values: ${values.join(" + ")} = ${total}.`
-  };
-}
-
-function graphPlusComputationFill() {
-  const labels = ["Mon", "Tue", "Wed", "Thu"];
-  const values = [
-    rand(5, 10),
-    rand(6, 11),
-    rand(4, 9),
-    rand(7, 12)
-  ];
-
-  const total = values.reduce((a, b) => a + b, 0);
-
-  return {
-    skill: "Graphs + Computation",
-    subskill: "Graph Totals",
-topic: "Adding values from a graph",
-    difficulty: "GED-Level",
-    type: "fill",
-    question: `The bar graph shows the number of customers over four days. What is the total number of customers for all four days?`,
-    answer: String(total),
-    chart: {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{
-          data: values,
-          backgroundColor: "#1f4f95"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
-      }
-    },
-    explanation: `Add all values: ${values.join(" + ")} = ${total}.`
-  };
-}
-
-function rectangleCostMultiple() {
-  const length = rand(8, 15);
-  const width = rand(5, 10);
-  const costPerUnit = rand(2, 6);
-
-  const area = length * width;
-  const answer = area * costPerUnit;
-
-  return {
-    skill: "Geometry + Cost",
-    subskill: "Area Cost Problems",
-topic: "Using area to calculate total cost",
-    difficulty: "GED-Level",
-    type: "multiple",
-    question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${costPerUnit} per square foot. What is the total cost to cover the floor?`,
-    choices: shuffle([
-      answer,
-      area,
-      answer + rand(20, 50),
-      area + costPerUnit
+      difference,
+      maxValue,
+      minValue,
+      answer + rand(3, 8)
     ]),
     answer,
-    explanation: `Area = ${length} × ${width} = ${area}. Then multiply by cost: ${area} × ${costPerUnit} = ${answer}.`
+    chart: {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Customers",
+            data: values,
+            backgroundColor: "#1f4f95",
+            borderColor: "#153e75",
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: "Customers by Day"
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            min: 0,
+            max: Math.max(...values) + 3,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    },
+    explanation: askTotal
+      ? "Add all values: " + values.join(" + ") + " = " + total + "."
+      : "Subtract the least value from the greatest value: " +
+        maxValue +
+        " - " +
+        minValue +
+        " = " +
+        difference +
+        "."
   };
 }
 
-function rectangleCostFill() {
-  const length = rand(8, 15);
-  const width = rand(5, 10);
-  const costPerUnit = rand(2, 6);
+function rectangleCost() {
+  const length = rand(8, 16);
+  const width = rand(5, 12);
+  const costPerUnit = rand(2, 7);
 
   const area = length * width;
   const answer = area * costPerUnit;
@@ -165,77 +149,81 @@ function rectangleCostFill() {
   return {
     skill: "Geometry + Cost",
     subskill: "Area Cost Problems",
-topic: "Using area to calculate total cost",
+    topic: "Using area to calculate total cost",
     difficulty: "GED-Level",
-    type: "fill",
-    question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${costPerUnit} per square foot. What is the total cost to cover the floor?`,
-    answer: String(answer),
-    explanation: `Area = ${length} × ${width} = ${area}. Then multiply by cost: ${area} × ${costPerUnit} = ${answer}.`
+    type: "multiple",
+    question:
+      "A rectangular floor is " +
+      length +
+      " ft by " +
+      width +
+      " ft. Tile costs $" +
+      costPerUnit +
+      " per square foot. What is the total cost to cover the floor?",
+    choices: uniqueNumberChoices(answer, [
+      area,
+      answer + rand(20, 50),
+      area + costPerUnit,
+      2 * (length + width) * costPerUnit
+    ]),
+    answer,
+    explanation:
+      "Area = " +
+      length +
+      " × " +
+      width +
+      " = " +
+      area +
+      ". Then multiply by cost: " +
+      area +
+      " × " +
+      costPerUnit +
+      " = " +
+      answer +
+      "."
   };
 }
 
-function averageFromTableMultiple() {
-  const values = [
-    rand(60, 80),
-    rand(65, 85),
-    rand(70, 90),
-    rand(75, 95)
-  ];
-
+function averageFromTable() {
+  const values = [rand(60, 80), rand(65, 85), rand(70, 90), rand(75, 95)];
   const sum = values.reduce((a, b) => a + b, 0);
   const avg = Math.round(sum / values.length);
 
   return {
     skill: "Data + Average",
     subskill: "Average",
-topic: "Finding the mean of a data set",
+    topic: "Finding the mean of a data set",
     difficulty: "GED-Level",
     type: "multiple",
-    question: `A student scored ${values.join(", ")} on four tests. What was the average score?`,
-    choices: shuffle([
-      avg,
+    question:
+      "A student scored " +
+      values.join(", ") +
+      " on four tests. What was the average score?",
+    choices: uniqueNumberChoices(avg, [
       avg + rand(2, 5),
-      avg - rand(2, 5),
-      sum
+      Math.max(1, avg - rand(2, 5)),
+      sum,
+      Math.round(sum / 2)
     ]),
     answer: avg,
-    explanation: `Add all scores and divide by 4: ${sum} ÷ 4 = ${avg}.`
+    explanation: "Add all scores and divide by 4: " + sum + " ÷ 4 = " + avg + "."
   };
 }
 
-function averageFromTableFill() {
-  const values = [
-    rand(60, 80),
-    rand(65, 85),
-    rand(70, 90),
-    rand(75, 95)
+module.exports = function generateMultiStep(options = {}) {
+  const difficulty = options.difficulty || "GED-Level";
+
+  const bank = [
+    percentOfTotal,
+    graphPlusComputation,
+    rectangleCost,
+    averageFromTable
   ];
 
-  const sum = values.reduce((a, b) => a + b, 0);
-  const avg = Math.round(sum / values.length);
+  const question = bank[rand(0, bank.length - 1)]();
 
   return {
-    skill: "Data + Average",
-        subskill: "Average",
-topic: "Finding the mean of a data set",
-    difficulty: "GED-Level",
-    type: "fill",
-    question: `A student scored ${values.join(", ")} on four tests. What was the average score?`,
-    answer: String(avg),
-    explanation: `Add all scores and divide by 4: ${sum} ÷ 4 = ${avg}.`
+    ...question,
+    difficulty: question.difficulty || difficulty
   };
-}
-
-module.exports = function generateMultiStep() {
-  const bank = [
-    percentOfTotalMultiple,
-    percentOfTotalFill,
-    graphPlusComputationMultiple,
-    graphPlusComputationFill,
-    rectangleCostMultiple,
-    rectangleCostFill,
-    averageFromTableMultiple,
-    averageFromTableFill
-  ];
-  return bank[rand(0, bank.length - 1)]();
 };
