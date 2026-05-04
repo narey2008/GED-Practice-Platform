@@ -198,6 +198,44 @@
 
     .hidden { display: none !important; }
 
+    .highlighterTools {
+  position: fixed;
+  top: 66px;
+  left: 18px;
+  z-index: 55;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.highlighterTools button {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 13px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.14);
+}
+
+.highlighterBtnActive {
+  background: #facc15 !important;
+  color: #10233f !important;
+  border-color: #eab308 !important;
+}
+
+.questionHighlight {
+  background: #fff176;
+  color: #10233f;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+#questionText.highlighterMode {
+  cursor: text;
+  outline: 2px dashed #facc15;
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
     .topbar {
       height: 58px;
       background: var(--topbar);
@@ -1200,9 +1238,9 @@ body.loadingActive {
 </head>
 <body class="theme-original">
   <div class="topbar">
-    <div class="topbarLeft">
-      <div class="brand">GED Practice Platform</div>
-    </div>
+<div class="topbarLeft">
+  <div class="brand">GED Practice Platform</div>
+</div>
     <div class="topbarCenter">
   <div id="timerTop" class="hidden"></div>
   <button id="pauseBtn" class="secondaryBtn hidden">⏸ Pause Test</button>
@@ -1216,6 +1254,11 @@ body.loadingActive {
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
+  </div>
+
+  <div id="highlighterTools" class="highlighterTools hidden">
+    <button id="highlighterBtn" class="secondaryBtn">🖍 Highlighter</button>
+    <button id="clearHighlightsBtn" class="secondaryBtn">Clear Highlights</button>
   </div>
 
   <div id="questionNavigator" class="questionNavigator hidden">
@@ -1483,8 +1526,9 @@ hasSeenFirstTestTutorial: localStorage.getItem("ged_seen_first_test_tutorial") =
   isPaused: false,
   idleSeconds: 0,
   autoPaused: false,
-  supportTicketPauseActive: false,
-  auth: {
+supportTicketPauseActive: false,
+highlighterEnabled: false,
+auth: {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
     user: null,
     guestMode: localStorage.getItem(GUEST_MODE_KEY) === "true"
@@ -1715,6 +1759,97 @@ function wireGedCalculator() {
       equals.click();
     }
   });
+}
+
+function getCurrentQuestion() {
+  return state.questions[state.currentIndex] || null;
+}
+
+function setHighlighterEnabled(enabled) {
+  state.highlighterEnabled = !!enabled;
+
+  const highlighterBtn = document.getElementById("highlighterBtn");
+  const questionTextEl = document.getElementById("questionText");
+
+  if (highlighterBtn) {
+    highlighterBtn.classList.toggle("highlighterBtnActive", state.highlighterEnabled);
+    highlighterBtn.innerText = state.highlighterEnabled
+      ? "🖍 Highlighter On"
+      : "🖍 Highlighter";
+  }
+
+  if (questionTextEl) {
+    questionTextEl.classList.toggle("highlighterMode", state.highlighterEnabled);
+  }
+}
+
+function saveCurrentQuestionHighlightHtml() {
+  const q = getCurrentQuestion();
+  const questionTextEl = document.getElementById("questionText");
+
+  if (!q || !questionTextEl) return;
+
+  q.highlightedQuestionHtml = questionTextEl.innerHTML;
+}
+
+async function applyQuestionHighlightFromSelection() {
+  if (!state.highlighterEnabled || state.isPaused || state.lockedReviewMode) return;
+
+  const q = getCurrentQuestion();
+  const questionTextEl = document.getElementById("questionText");
+  const selection = window.getSelection();
+
+  if (!q || !questionTextEl || !selection || selection.rangeCount === 0) return;
+
+  const selectedText = selection.toString();
+
+  if (!selectedText || !selectedText.trim()) return;
+
+  const range = selection.getRangeAt(0);
+
+  if (
+    !questionTextEl.contains(range.commonAncestorContainer) &&
+    range.commonAncestorContainer !== questionTextEl
+  ) {
+    return;
+  }
+
+  try {
+    const highlightSpan = document.createElement("span");
+    highlightSpan.className = "questionHighlight";
+
+    const selectedContent = range.extractContents();
+    highlightSpan.appendChild(selectedContent);
+    range.insertNode(highlightSpan);
+
+    selection.removeAllRanges();
+    saveCurrentQuestionHighlightHtml();
+
+    try {
+      await saveProgress();
+    } catch (error) {
+      console.error("Failed to save question highlight", error);
+    }
+  } catch (error) {
+    console.error("Failed to apply highlight", error);
+    showToast("Highlighter", "Try selecting a smaller section of text.");
+  }
+}
+
+async function clearCurrentQuestionHighlights() {
+  const q = getCurrentQuestion();
+  const questionTextEl = document.getElementById("questionText");
+
+  if (!q || !questionTextEl) return;
+
+  q.highlightedQuestionHtml = "";
+  questionTextEl.innerHTML = q.question || "";
+
+  try {
+    await saveProgress();
+  } catch (error) {
+    console.error("Failed to save cleared highlights", error);
+  }
 }
 
 function closeCalculator() {
@@ -3205,6 +3340,14 @@ if (legalBtnTop) legalBtnTop.textContent = t.legalTopBtn;
       } else if (view === "profile") {
         state.mode = "profile";
         document.getElementById("profilePanel").classList.remove("hidden");
+        if (view !== "test") {
+  setHighlighterEnabled(false);
+
+  const highlighterTools = document.getElementById("highlighterTools");
+  if (highlighterTools) {
+    highlighterTools.classList.add("hidden");
+  }
+}
       }
 
       updateTopbarMode();
@@ -5771,6 +5914,9 @@ function showPausedModal(isAutoPause = false) {
   const pauseBtn = document.getElementById("pauseBtn");
   const formulaSheetBtn = document.getElementById("formulaSheetBtn");
   const calculatorBtn = document.getElementById("calculatorBtn");
+  const highlighterTools = document.getElementById("highlighterTools");
+const highlighterBtn = document.getElementById("highlighterBtn");
+const clearHighlightsBtn = document.getElementById("clearHighlightsBtn");
 
   if (state.questions.length) {
     const pos = `${state.currentIndex + 1} / ${state.questions.length}`;
@@ -5798,6 +5944,28 @@ if (calculatorBtn) {
 if (formulaSheetBtn) {
   formulaSheetBtn.classList.toggle("hidden", !current?.formulaRequired);
   formulaSheetBtn.disabled = state.isPaused;
+}
+
+if (highlighterTools) {
+  const showHighlighter =
+    state.mode === "test" ||
+    state.mode === "practice" ||
+    state.mode === "practice-example" ||
+    state.mode === "test-tutorial";
+
+  highlighterTools.classList.toggle("hidden", !showHighlighter);
+}
+
+if (highlighterBtn) {
+  highlighterBtn.disabled = state.isPaused || state.lockedReviewMode || state.timeoutMode;
+  highlighterBtn.classList.toggle("highlighterBtnActive", !!state.highlighterEnabled);
+  highlighterBtn.innerText = state.highlighterEnabled
+    ? "🖍 Highlighter On"
+    : "🖍 Highlighter";
+}
+
+if (clearHighlightsBtn) {
+  clearHighlightsBtn.disabled = state.isPaused || state.lockedReviewMode || state.timeoutMode;
 }
     const flagged = !!current.flagged;
 
@@ -5889,6 +6057,9 @@ if (formulaSheetBtn) {
     submitBtn.innerText = tr("submitTest");
     submitBtn.classList.add("hidden");
     updateQuestionNavigator();
+    if (!state.questions.length && highlighterTools) {
+  highlighterTools.classList.add("hidden");
+}
   }
 
   updateAuthUI();
@@ -6187,7 +6358,8 @@ function renderQuestion() {
   const q = state.questions[state.currentIndex];
   console.log("GEOMETRY QUESTION DIAGRAM:", q.diagram);
 console.log("GEOMETRY QUESTION CHART:", q.chart);
-  questionTextEl.innerHTML = q.question;
+  questionTextEl.innerHTML = q.highlightedQuestionHtml || q.question || "";
+questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
 
   if (state.isPaused) {
     feedbackEl.innerText = tr("testPausedMessage");
@@ -7825,6 +7997,37 @@ document.getElementById("closeCalculatorBtn").onclick = () => {
 };
 
 makeCalculatorDraggable();
+
+const highlighterBtn = document.getElementById("highlighterBtn");
+if (highlighterBtn) {
+  highlighterBtn.onclick = () => {
+    console.log("HIGHLIGHTER CLICKED");
+    setHighlighterEnabled(!state.highlighterEnabled);
+    updateStatus();
+  };
+}
+
+const clearHighlightsBtn = document.getElementById("clearHighlightsBtn");
+if (clearHighlightsBtn) {
+  clearHighlightsBtn.onclick = async () => {
+    console.log("CLEAR HIGHLIGHTS CLICKED");
+    await clearCurrentQuestionHighlights();
+    updateStatus();
+  };
+}
+
+const questionTextForHighlighter = document.getElementById("questionText");
+if (questionTextForHighlighter) {
+  questionTextForHighlighter.addEventListener("mouseup", async () => {
+    await applyQuestionHighlightFromSelection();
+  });
+
+  questionTextForHighlighter.addEventListener("touchend", () => {
+    setTimeout(async () => {
+      await applyQuestionHighlightFromSelection();
+    }, 150);
+  });
+}
 
 document.getElementById("pauseBtn").onclick = async () => {
   if (state.mode !== "test") return;
