@@ -1852,6 +1852,15 @@ async function clearCurrentQuestionHighlights() {
   }
 }
 
+function hideHighlighterTools() {
+  setHighlighterEnabled(false);
+
+  const highlighterTools = document.getElementById("highlighterTools");
+  if (highlighterTools) {
+    highlighterTools.classList.add("hidden");
+  }
+}
+
 function closeCalculator() {
   const modal = document.getElementById("calculatorModal");
   if (modal) modal.style.display = "none";
@@ -3349,7 +3358,9 @@ if (legalBtnTop) legalBtnTop.textContent = t.legalTopBtn;
   }
 }
       }
-
+if (view !== "test") {
+  hideHighlighterTools();
+}
       updateTopbarMode();
       await updateResumeVisibility();
     }
@@ -7069,14 +7080,8 @@ function weakestSkillText() {
   );
 }
 
-setHighlighterEnabled(false);
-
-const highlighterTools = document.getElementById("highlighterTools");
-if (highlighterTools) {
-  highlighterTools.classList.add("hidden");
-}
-
 async function showReview() {
+  hideHighlighterTools();
   stopTimer();
 
   const scoringEnabled = state.auth.user?.scoringEnabled !== false;
@@ -7234,6 +7239,7 @@ if (practiceWeakestBtn) {
 }
 
    async function showPracticeResults() {
+    hideHighlighterTools();
   await withLoading(
     tr("submittingPracticeLoading"),
     tr("practiceResultsPreparing"),
