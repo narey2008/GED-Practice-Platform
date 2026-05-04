@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -45,16 +47,20 @@ function buildTableHtml(headers, rows) {
 
 module.exports = function generateDataTable(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
+
+  const low = difficulty === "Easy" ? 2 : 8;
+  const high = difficulty === "Easy" ? p.graphMax : p.graphMax + 8;
 
   const scenarios = [
     {
       intro: "The table shows the number of items sold at a school store in one day.",
       headers: ["Item", "Sold"],
       rows: [
-        { item: "Pens", value: rand(10, 16) },
-        { item: "Pencils", value: rand(12, 20) },
-        { item: "Notebooks", value: rand(6, 12) },
-        { item: "Markers", value: rand(8, 15) }
+        { item: "Pens", value: rand(low, high) },
+        { item: "Pencils", value: rand(low, high) },
+        { item: "Notebooks", value: rand(low, high) },
+        { item: "Markers", value: rand(low, high) }
       ],
       unit: "items"
     },
@@ -62,10 +68,10 @@ module.exports = function generateDataTable(options = {}) {
       intro: "The table shows the number of books read by students in one month.",
       headers: ["Student", "Books"],
       rows: [
-        { item: "Ava", value: rand(2, 6) },
-        { item: "Liam", value: rand(3, 7) },
-        { item: "Noah", value: rand(1, 5) },
-        { item: "Emma", value: rand(2, 6) }
+        { item: "Ava", value: rand(low, high) },
+        { item: "Liam", value: rand(low, high) },
+        { item: "Noah", value: rand(low, high) },
+        { item: "Emma", value: rand(low, high) }
       ],
       unit: "books"
     },
@@ -73,10 +79,10 @@ module.exports = function generateDataTable(options = {}) {
       intro: "The table shows the number of cans collected by four groups.",
       headers: ["Group", "Cans"],
       rows: [
-        { item: "Group A", value: rand(15, 25) },
-        { item: "Group B", value: rand(12, 22) },
-        { item: "Group C", value: rand(10, 20) },
-        { item: "Group D", value: rand(14, 24) }
+        { item: "Group A", value: rand(low, high) },
+        { item: "Group B", value: rand(low, high) },
+        { item: "Group C", value: rand(low, high) },
+        { item: "Group D", value: rand(low, high) }
       ],
       unit: "cans"
     }
@@ -91,7 +97,13 @@ module.exports = function generateDataTable(options = {}) {
   const minRow = selected.rows[values.indexOf(minValue)];
   const difference = maxValue - minValue;
 
-  const questionTypes = ["total", "greatest", "least", "difference"];
+  const questionTypes =
+    difficulty === "Easy"
+      ? ["greatest", "least"]
+      : difficulty === "Medium"
+      ? ["total", "greatest", "least"]
+      : ["total", "greatest", "least", "difference"];
+
   const selectedType = questionTypes[rand(0, questionTypes.length - 1)];
 
   let question;

@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -6,11 +8,13 @@ function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function positive() {
+function positive(difficulty) {
   const points = [];
+  const pointCount = difficulty === "Easy" ? 6 : difficulty === "Medium" ? 8 : 10;
+  const noise = difficulty === "Easy" ? 1 : difficulty === "Medium" ? 2 : 3;
 
-  for (let x = 1; x <= 8; x += 1) {
-    points.push({ x, y: Math.min(10, x + rand(0, 2)) });
+  for (let x = 1; x <= pointCount; x += 1) {
+    points.push({ x, y: Math.min(10, x + rand(0, noise)) });
   }
 
   return {
@@ -23,11 +27,13 @@ function positive() {
   };
 }
 
-function negative() {
+function negative(difficulty) {
   const points = [];
+  const pointCount = difficulty === "Easy" ? 6 : difficulty === "Medium" ? 8 : 10;
+  const noise = difficulty === "Easy" ? 1 : difficulty === "Medium" ? 2 : 3;
 
-  for (let x = 1; x <= 8; x += 1) {
-    points.push({ x, y: Math.max(1, 10 - x + rand(-1, 1)) });
+  for (let x = 1; x <= pointCount; x += 1) {
+    points.push({ x, y: Math.max(1, 11 - x + rand(-noise, noise)) });
   }
 
   return {
@@ -40,11 +46,12 @@ function negative() {
   };
 }
 
-function none() {
+function none(difficulty) {
   const points = [];
   const used = new Set();
+  const pointCount = difficulty === "Easy" ? 6 : difficulty === "Medium" ? 8 : 10;
 
-  while (points.length < 8) {
+  while (points.length < pointCount) {
     const x = rand(1, 10);
     const y = rand(1, 10);
     const key = `${x},${y}`;
@@ -67,8 +74,14 @@ function none() {
 
 module.exports = function generateScatterPlot(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
-  const builders = [positive, negative, none];
-  const selected = builders[rand(0, builders.length - 1)]();
+  getDifficultyProfile(difficulty);
+
+  const builders =
+    difficulty === "Easy"
+      ? [positive, negative]
+      : [positive, negative, none];
+
+  const selected = builders[rand(0, builders.length - 1)](difficulty);
 
   return {
     skill: "Scatter Plot",

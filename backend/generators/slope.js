@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -27,18 +29,25 @@ function formatSlope(rise, run) {
 
 module.exports = function generateSlope(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
 
-  const run = difficulty === "Easy" ? 1 : rand(1, 3);
-  let rise = rand(-4, 4);
+  const run =
+    difficulty === "Easy"
+      ? 1
+      : difficulty === "Medium"
+      ? rand(1, 2)
+      : rand(1, 4);
+
+  let rise = rand(-p.smallMax, p.smallMax);
 
   while (rise === 0) {
-    rise = rand(-4, 4);
+    rise = rand(-p.smallMax, p.smallMax);
   }
 
   const slopeAnswer = formatSlope(rise, run);
 
   const x1 = rand(-4, 0);
-  const y1 = rand(-4, 4);
+  const y1 = rand(-p.smallMax, p.smallMax);
   const x2 = x1 + run;
   const y2 = y1 + rise;
 
@@ -55,8 +64,13 @@ module.exports = function generateSlope(options = {}) {
   const choices = new Set([slopeAnswer]);
 
   while (choices.size < 4) {
-    const wrongRise = rand(-5, 5);
-    const wrongRun = difficulty === "Easy" ? 1 : rand(1, 3);
+    const wrongRise = rand(-p.smallMax, p.smallMax);
+    const wrongRun =
+      difficulty === "Easy"
+        ? 1
+        : difficulty === "Medium"
+        ? rand(1, 2)
+        : rand(1, 4);
 
     if (wrongRise !== 0) {
       choices.add(formatSlope(wrongRise, wrongRun));

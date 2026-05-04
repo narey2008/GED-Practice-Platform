@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -25,6 +27,7 @@ function uniqueNumberChoices(answer, wrongs) {
 
 module.exports = function generateLineGraph(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
 
   const scenarios = [
     {
@@ -51,16 +54,16 @@ module.exports = function generateLineGraph(options = {}) {
 
   const selected = scenarios[rand(0, scenarios.length - 1)];
 
-  const start = rand(4, 9);
-  const step1 = rand(1, 4);
-  const step2 = rand(-2, 3);
-  const step3 = rand(1, 4);
+  const start = rand(4, p.graphMax);
+  const step1 = rand(1, difficulty === "Easy" ? 3 : 5);
+  const step2 = difficulty === "Easy" ? rand(0, 2) : rand(-3, 4);
+  const step3 = rand(1, difficulty === "Easy" ? 3 : 5);
 
   const values = [
     start,
-    start + step1,
-    start + step1 + step2,
-    start + step1 + step2 + step3
+    Math.max(0, start + step1),
+    Math.max(0, start + step1 + step2),
+    Math.max(0, start + step1 + step2 + step3)
   ];
 
   const change = values[3] - values[0];
@@ -69,7 +72,13 @@ module.exports = function generateLineGraph(options = {}) {
   const maxIndex = values.indexOf(maxValue);
   const minIndex = values.indexOf(minValue);
 
-  const questionTypes = ["change", "highest", "lowest", "difference"];
+  const questionTypes =
+    difficulty === "Easy"
+      ? ["highest", "lowest"]
+      : difficulty === "Medium"
+      ? ["change", "highest", "lowest"]
+      : ["change", "highest", "lowest", "difference"];
+
   const selectedType = questionTypes[rand(0, questionTypes.length - 1)];
 
   let question;
@@ -161,7 +170,7 @@ module.exports = function generateLineGraph(options = {}) {
             beginAtZero: true,
             min: 0,
             max: maxValue + 3,
-            ticks: { stepSize: 1 },
+            ticks: { stepSize: difficulty === "Easy" ? 1 : 2 },
             title: {
               display: true,
               text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1)

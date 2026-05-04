@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -23,10 +25,10 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
-function oneStepMultiple(difficulty) {
-  const x = rand(2, difficulty === "Easy" ? 9 : 12);
-  const a = rand(2, difficulty === "Easy" ? 6 : 9);
-  const b = rand(1, 12);
+function oneStepMultiple(difficulty, p) {
+  const x = rand(2, p.smallMax);
+  const a = rand(2, difficulty === "Easy" ? 6 : p.smallMax);
+  const b = rand(1, p.mediumMax);
   const c = a * x + b;
 
   return {
@@ -42,10 +44,10 @@ function oneStepMultiple(difficulty) {
   };
 }
 
-function oneStepFill(difficulty) {
-  const x = rand(2, difficulty === "Easy" ? 9 : 12);
-  const a = rand(2, difficulty === "Easy" ? 6 : 9);
-  const b = rand(1, 12);
+function oneStepFill(difficulty, p) {
+  const x = rand(2, p.smallMax);
+  const a = rand(2, difficulty === "Easy" ? 6 : p.smallMax);
+  const b = rand(1, p.mediumMax);
   const c = a * x + b;
 
   return {
@@ -60,11 +62,11 @@ function oneStepFill(difficulty) {
   };
 }
 
-function variablesBothSidesMultiple(difficulty) {
-  const x = rand(2, 10);
-  const a = rand(3, difficulty === "Easy" ? 6 : 8);
+function variablesBothSidesMultiple(difficulty, p) {
+  const x = rand(2, p.smallMax);
+  const a = rand(3, p.smallMax);
   const d = rand(1, a - 1);
-  const b = rand(1, 9);
+  const b = rand(1, p.mediumMax);
   const c = a * x + b - d * x;
 
   return {
@@ -80,11 +82,11 @@ function variablesBothSidesMultiple(difficulty) {
   };
 }
 
-function variablesBothSidesFill(difficulty) {
-  const x = rand(2, 10);
-  const a = rand(3, difficulty === "Easy" ? 6 : 8);
+function variablesBothSidesFill(difficulty, p) {
+  const x = rand(2, p.smallMax);
+  const a = rand(3, p.smallMax);
   const d = rand(1, a - 1);
-  const b = rand(1, 9);
+  const b = rand(1, p.mediumMax);
   const c = a * x + b - d * x;
 
   return {
@@ -99,10 +101,10 @@ function variablesBothSidesFill(difficulty) {
   };
 }
 
-function equationWordProblemMultiple(difficulty) {
-  const x = rand(3, difficulty === "Easy" ? 9 : 14);
-  const rate = rand(2, difficulty === "Easy" ? 6 : 9);
-  const fee = rand(3, difficulty === "Easy" ? 10 : 15);
+function equationWordProblemMultiple(difficulty, p) {
+  const x = rand(3, p.smallMax);
+  const rate = rand(2, p.smallMax);
+  const fee = rand(3, p.mediumMax);
   const total = rate * x + fee;
 
   return {
@@ -120,17 +122,34 @@ function equationWordProblemMultiple(difficulty) {
 
 module.exports = function generateLinearEquations(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
+
+  const easyBank = [
+    oneStepMultiple,
+    oneStepFill
+  ];
+
+  const mediumBank = [
+    oneStepMultiple,
+    oneStepFill,
+    variablesBothSidesMultiple,
+    equationWordProblemMultiple
+  ];
+
+  const gedBank = [
+    oneStepMultiple,
+    oneStepFill,
+    variablesBothSidesMultiple,
+    variablesBothSidesFill,
+    equationWordProblemMultiple
+  ];
 
   const bank =
     difficulty === "Easy"
-      ? [oneStepMultiple, oneStepFill, equationWordProblemMultiple]
-      : [
-          oneStepMultiple,
-          oneStepFill,
-          variablesBothSidesMultiple,
-          variablesBothSidesFill,
-          equationWordProblemMultiple
-        ];
+      ? easyBank
+      : difficulty === "Medium"
+      ? mediumBank
+      : gedBank;
 
-  return bank[rand(0, bank.length - 1)](difficulty);
+  return bank[rand(0, bank.length - 1)](difficulty, p);
 };

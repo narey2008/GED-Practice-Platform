@@ -199,14 +199,14 @@
     .hidden { display: none !important; }
 
     .highlighterTools {
-  position: fixed;
-  top: 66px;
-  left: 18px;
-  z-index: 55;
+  max-width: 1080px;
+  margin: 10px auto 0;
+  padding: 0 18px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .highlighterTools button {
@@ -7067,6 +7067,13 @@ function weakestSkillText() {
       await showReview();
     }
   );
+}
+
+setHighlighterEnabled(false);
+
+const highlighterTools = document.getElementById("highlighterTools");
+if (highlighterTools) {
+  highlighterTools.classList.add("hidden");
 }
 
 async function showReview() {

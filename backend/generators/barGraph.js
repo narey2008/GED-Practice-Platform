@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -25,6 +27,7 @@ function uniqueNumberChoices(answer, wrongs) {
 
 module.exports = function generateBarGraph(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
 
   const scenarios = [
     {
@@ -52,10 +55,10 @@ module.exports = function generateBarGraph(options = {}) {
   const selected = scenarios[rand(0, scenarios.length - 1)];
 
   const values = [
-    rand(4, 10),
-    rand(5, 12),
-    rand(6, 14),
-    rand(3, 11)
+    rand(4, p.graphMax),
+    rand(5, p.graphMax + 2),
+    rand(6, p.graphMax + 4),
+    rand(3, p.graphMax + 1)
   ];
 
   while (new Set(values).size < values.length) {
@@ -70,12 +73,12 @@ module.exports = function generateBarGraph(options = {}) {
   const total = values.reduce((sum, value) => sum + value, 0);
   const difference = maxValue - minValue;
 
-  const questionTypes = [
-    "greatest",
-    "least",
-    "difference",
-    "total"
-  ];
+  const questionTypes =
+    difficulty === "Easy"
+      ? ["greatest", "least"]
+      : difficulty === "Medium"
+      ? ["greatest", "least", "difference"]
+      : ["greatest", "least", "difference", "total"];
 
   const selectedType = questionTypes[rand(0, questionTypes.length - 1)];
 
@@ -165,7 +168,7 @@ module.exports = function generateBarGraph(options = {}) {
             beginAtZero: true,
             min: 0,
             max: maxValue + 3,
-            ticks: { stepSize: 1 },
+            ticks: { stepSize: difficulty === "Easy" ? 1 : 2 },
             title: {
               display: true,
               text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1)

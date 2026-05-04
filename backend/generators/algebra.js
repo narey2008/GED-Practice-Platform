@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -23,10 +25,10 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
-function orderOfOperationsMultiple(difficulty) {
-  const a = rand(2, difficulty === "Easy" ? 6 : 9);
-  const b = rand(2, difficulty === "Easy" ? 6 : 9);
-  const c = rand(2, difficulty === "Easy" ? 5 : 8);
+function orderOfOperationsMultiple(difficulty, p) {
+  const a = rand(p.smallMin, p.smallMax);
+  const b = rand(p.smallMin, p.smallMax);
+  const c = rand(2, difficulty === "Easy" ? 5 : p.smallMax);
 
   const answer = a + b * c;
 
@@ -48,10 +50,10 @@ function orderOfOperationsMultiple(difficulty) {
   };
 }
 
-function orderOfOperationsFill(difficulty) {
-  const a = rand(2, difficulty === "Easy" ? 6 : 9);
-  const b = rand(2, difficulty === "Easy" ? 6 : 9);
-  const c = rand(2, difficulty === "Easy" ? 5 : 8);
+function orderOfOperationsFill(difficulty, p) {
+  const a = rand(p.smallMin, p.smallMax);
+  const b = rand(p.smallMin, p.smallMax);
+  const c = rand(2, difficulty === "Easy" ? 5 : p.smallMax);
 
   const answer = a * (b + c);
 
@@ -67,10 +69,10 @@ function orderOfOperationsFill(difficulty) {
   };
 }
 
-function expressionSubstitutionMultiple(difficulty) {
-  const x = rand(2, difficulty === "Easy" ? 6 : 10);
-  const a = rand(2, difficulty === "Easy" ? 5 : 8);
-  const b = rand(1, difficulty === "Easy" ? 8 : 12);
+function expressionSubstitutionMultiple(difficulty, p) {
+  const x = rand(p.smallMin, p.smallMax);
+  const a = rand(2, p.smallMax);
+  const b = rand(1, p.mediumMax);
   const answer = a * x + b;
 
   return {
@@ -91,10 +93,10 @@ function expressionSubstitutionMultiple(difficulty) {
   };
 }
 
-function expressionSubstitutionFill(difficulty) {
-  const x = rand(2, difficulty === "Easy" ? 6 : 10);
-  const a = rand(2, difficulty === "Easy" ? 5 : 8);
-  const b = rand(1, difficulty === "Easy" ? 8 : 12);
+function expressionSubstitutionFill(difficulty, p) {
+  const x = rand(p.smallMin, p.smallMax);
+  const a = rand(2, p.smallMax);
+  const b = rand(1, p.mediumMax);
   const answer = a * x - b;
 
   return {
@@ -109,11 +111,16 @@ function expressionSubstitutionFill(difficulty) {
   };
 }
 
-function simpleWordExpressionMultiple(difficulty) {
-  const cost = rand(3, difficulty === "Easy" ? 8 : 12);
-  const fee = rand(2, difficulty === "Easy" ? 6 : 10);
-  const tickets = rand(2, difficulty === "Easy" ? 6 : 9);
+function simpleWordExpressionMultiple(difficulty, p) {
+  const cost = rand(3, p.smallMax);
+  const fee = rand(2, p.mediumMax);
+  const tickets = rand(2, difficulty === "Easy" ? 6 : p.smallMax);
   const answer = cost * tickets + fee;
+
+  const question =
+    difficulty === "Easy"
+      ? `A ticket costs $${cost}. There is a fee of $${fee}. What is the total cost for ${tickets} tickets?`
+      : `A ticket costs $${cost}. There is a one-time service fee of $${fee}. What is the total cost for ${tickets} tickets?`;
 
   return {
     skill: "Algebra",
@@ -121,7 +128,7 @@ function simpleWordExpressionMultiple(difficulty) {
     topic: "Evaluating expressions from real-world situations",
     difficulty,
     type: "multiple",
-    question: `A ticket costs $${cost}. There is a one-time service fee of $${fee}. What is the total cost for ${tickets} tickets?`,
+    question,
     choices: uniqueNumberChoices(answer, [
       cost + fee + tickets,
       cost * tickets,
@@ -135,8 +142,16 @@ function simpleWordExpressionMultiple(difficulty) {
 
 module.exports = function generateAlgebra(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
 
-  const bank = [
+  const easyBank = [
+    orderOfOperationsMultiple,
+    orderOfOperationsFill,
+    expressionSubstitutionMultiple,
+    expressionSubstitutionFill
+  ];
+
+  const mediumBank = [
     orderOfOperationsMultiple,
     orderOfOperationsFill,
     expressionSubstitutionMultiple,
@@ -144,5 +159,20 @@ module.exports = function generateAlgebra(options = {}) {
     simpleWordExpressionMultiple
   ];
 
-  return bank[rand(0, bank.length - 1)](difficulty);
+  const gedBank = [
+    orderOfOperationsMultiple,
+    orderOfOperationsFill,
+    expressionSubstitutionMultiple,
+    expressionSubstitutionFill,
+    simpleWordExpressionMultiple
+  ];
+
+  const bank =
+    difficulty === "Easy"
+      ? easyBank
+      : difficulty === "Medium"
+      ? mediumBank
+      : gedBank;
+
+  return bank[rand(0, bank.length - 1)](difficulty, p);
 };
