@@ -13,83 +13,172 @@ const multiStep = require("./multiStep");
 const dragDrop = require("./dragDrop");
 const hotspot = require("./hotspot");
 
+const BROAD_PRACTICE_CATEGORIES = new Set([
+  "Fractions, Decimals, and Percents",
+  "Ratios, Proportions, and Percent Change",
+  "Area, Perimeter, Surface Area, and Volume",
+  "Lines, Angles, and Coordinate Plane",
+  "Data Tables and Graph Interpretation",
+  "Mean, Median, and Probability",
+  "Solving Equations and Inequalities",
+  "Linear Equations and Slope"
+]);
+
+function normalizePracticeTag(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function tagListIncludes(list, selectedSkill) {
+  const selected = normalizePracticeTag(selectedSkill);
+  return (list || []).some((tag) => normalizePracticeTag(tag) === selected);
+}
+
+function isBroadPracticeCategory(selectedSkill) {
+  return BROAD_PRACTICE_CATEGORIES.has(selectedSkill);
+}
+
 const generatorCatalog = [
   {
     name: "algebra",
     fn: algebra,
     skills: ["Algebra"],
     types: ["multiple", "fill"],
-    categoryTags: ["Expressions and Order of Operations", "Solving Equations and Inequalities"]
+    categoryTags: ["Expressions and Order of Operations", "Solving Equations and Inequalities"],
+    subskillTags: [
+      "Expressions and Order of Operations",
+      "Expression Substitution",
+      "Expression Word Problems"
+    ]
   },
   {
     name: "barGraph",
     fn: barGraph,
     skills: ["Bar Graph"],
     types: ["multiple"],
-    categoryTags: ["Data Tables and Graph Interpretation"]
+    categoryTags: ["Data Tables and Graph Interpretation"],
+    subskillTags: [
+      "Bar Graph",
+      "Bar Graph Greatest Value",
+      "Bar Graph Least Value",
+      "Bar Graph Difference",
+      "Bar Graph Total",
+      "Bar Graph Interpretation"
+    ]
   },
   {
     name: "dataTable",
     fn: dataTable,
     skills: ["Data Table"],
     types: ["multiple"],
-    categoryTags: ["Data Tables and Graph Interpretation"]
+    categoryTags: ["Data Tables and Graph Interpretation"],
+    subskillTags: [
+      "Data Table",
+      "Data Table Totals",
+      "Data Table Greatest Value",
+      "Data Table Least Value",
+      "Data Table Difference"
+    ]
   },
   {
     name: "geometry",
     fn: geometry,
     skills: ["Geometry"],
     types: ["multiple"],
-    categoryTags: ["Area, Perimeter, Surface Area, and Volume", "Lines, Angles, and Coordinate Plane"]
+    categoryTags: ["Area, Perimeter, Surface Area, and Volume", "Lines, Angles, and Coordinate Plane"],
+    subskillTags: [
+      "Geometry",
+      "Rectangle Area",
+      "Rectangle Perimeter",
+      "Triangle Area"
+    ]
   },
   {
     name: "linearEquations",
     fn: linearEquations,
     skills: ["Linear Equations"],
     types: ["multiple", "fill"],
-    categoryTags: ["Solving Equations and Inequalities"]
+    categoryTags: ["Solving Equations and Inequalities"],
+    subskillTags: [
+      "Linear Equations",
+      "One-Step Equations",
+      "Variables on Both Sides",
+      "Equation Word Problems"
+    ]
   },
   {
     name: "lineGraph",
     fn: lineGraph,
     skills: ["Line Graph"],
     types: ["multiple"],
-    categoryTags: ["Data Tables and Graph Interpretation"]
+    categoryTags: ["Data Tables and Graph Interpretation"],
+    subskillTags: [
+      "Line Graph",
+      "Line Graph Change",
+      "Line Graph Greatest Value",
+      "Line Graph Least Value",
+      "Line Graph Difference"
+    ]
   },
   {
     name: "percent",
     fn: percent,
     skills: ["Percent"],
     types: ["multiple", "fill"],
-    categoryTags: ["Fractions, Decimals, and Percents", "Ratios, Proportions, and Percent Change"]
+    categoryTags: ["Fractions, Decimals, and Percents", "Ratios, Proportions, and Percent Change"],
+    subskillTags: [
+      "Percent",
+      "Percent of a Number",
+      "Percent Discount",
+      "Percent of a Total"
+    ]
   },
   {
     name: "percentChange",
     fn: percentChange,
     skills: ["Percent Change"],
     types: ["multiple"],
-    categoryTags: ["Ratios, Proportions, and Percent Change"]
+    categoryTags: ["Ratios, Proportions, and Percent Change"],
+    subskillTags: [
+      "Percent Change",
+      "Percent Increase",
+      "Percent Decrease",
+      "Finding Percent Increase"
+    ]
   },
   {
     name: "probability",
     fn: probability,
     skills: ["Probability"],
     types: ["multiple"],
-    categoryTags: ["Mean, Median, and Probability"]
+    categoryTags: ["Mean, Median, and Probability"],
+    subskillTags: [
+      "Probability",
+      "Spinner Probability",
+      "Marble Probability",
+      "Number Cube Probability"
+    ]
   },
   {
     name: "scatterPlot",
     fn: scatterPlot,
     skills: ["Scatter Plot"],
     types: ["multiple"],
-    categoryTags: ["Data Tables and Graph Interpretation"]
+    categoryTags: ["Data Tables and Graph Interpretation"],
+    subskillTags: [
+      "Scatter Plot",
+      "Scatter Plot Correlation"
+    ]
   },
   {
     name: "slope",
     fn: slope,
     skills: ["Slope"],
     types: ["multiple"],
-    categoryTags: ["Linear Equations and Slope", "Lines, Angles, and Coordinate Plane"]
+    categoryTags: ["Linear Equations and Slope", "Lines, Angles, and Coordinate Plane"],
+    subskillTags: [
+      "Slope",
+      "Slope From Graph"
+    ]
   },
   {
     name: "multiStep",
@@ -102,6 +191,13 @@ const generatorCatalog = [
       "Data Tables and Graph Interpretation",
       "Area, Perimeter, Surface Area, and Volume",
       "Mean, Median, and Probability"
+    ],
+    subskillTags: [
+      "Percent of a Total",
+      "Graph Totals",
+      "Graph Difference",
+      "Area Cost Problems",
+      "Average"
     ]
   },
   {
@@ -114,6 +210,14 @@ const generatorCatalog = [
       "Ratios, Proportions, and Percent Change",
       "Solving Equations and Inequalities",
       "Area, Perimeter, Surface Area, and Volume"
+    ],
+    subskillTags: [
+      "Fractions",
+      "Decimals",
+      "Comparing Percents",
+      "Equation Steps",
+      "Percent Discount",
+      "Area Word Problems"
     ]
   },
   {
@@ -121,7 +225,13 @@ const generatorCatalog = [
     fn: hotspot,
     skills: ["Number Line"],
     types: ["hotspot"],
-    categoryTags: ["Lines, Angles, and Coordinate Plane"]
+    categoryTags: ["Lines, Angles, and Coordinate Plane"],
+    subskillTags: [
+      "Number Line",
+      "Integer Number Line",
+      "Opposites on a Number Line",
+      "Temperature Number Line"
+    ]
   }
 ].filter((entry) => typeof entry.fn === "function");
 
@@ -183,14 +293,33 @@ function getQuestionSignature(question) {
 
 function entryMatchesSkill(entry, selectedSkill) {
   if (!selectedSkill) return true;
-  return entry.categoryTags.includes(selectedSkill);
+
+  return (
+    tagListIncludes(entry.categoryTags, selectedSkill) ||
+    tagListIncludes(entry.skills, selectedSkill) ||
+    tagListIncludes(entry.subskillTags, selectedSkill)
+  );
+}
+
+function questionMatchesSelectedSkill(question, selectedSkill) {
+  if (!selectedSkill) return true;
+
+  if (isBroadPracticeCategory(selectedSkill)) {
+    return true;
+  }
+
+  return (
+    normalizePracticeTag(question.skill) === normalizePracticeTag(selectedSkill) ||
+    normalizePracticeTag(question.subskill) === normalizePracticeTag(selectedSkill) ||
+    normalizePracticeTag(question.topic) === normalizePracticeTag(selectedSkill)
+  );
 }
 
 function pickRandomEntry(entries) {
   return entries[Math.floor(Math.random() * entries.length)];
 }
 
-function generateFromEntries(entries, difficulty, desiredType = null) {
+function generateFromEntries(entries, difficulty, desiredType = null, selectedSkill = "") {
   if (!entries.length) return null;
 
   const filtered = desiredType
@@ -199,7 +328,7 @@ function generateFromEntries(entries, difficulty, desiredType = null) {
 
   const usable = filtered.length ? filtered : entries;
 
-  for (let i = 0; i < 40; i += 1) {
+  for (let i = 0; i < 80; i += 1) {
     const entry = pickRandomEntry(usable);
 
     try {
@@ -207,6 +336,8 @@ function generateFromEntries(entries, difficulty, desiredType = null) {
       if (!q) continue;
 
       if (desiredType && q.type !== desiredType) continue;
+
+      if (!questionMatchesSelectedSkill(q, selectedSkill)) continue;
 
       return q;
     } catch (error) {
@@ -297,7 +428,7 @@ function buildTest(options = {}) {
     while (added < amount && attempts < maxAttempts) {
       attempts += 1;
 
-      const question = generateFromEntries(pool, difficulty, type);
+      const question = generateFromEntries(pool, difficulty, type, skill);
 
       if (!question) continue;
       if (!canAcceptQuestion(question)) continue;
@@ -322,7 +453,7 @@ function buildTest(options = {}) {
   while (rawQuestions.length < count && attempts < maxAttempts) {
     attempts += 1;
 
-    let question = generateFromEntries(pool, difficulty);
+    let question = generateFromEntries(pool, difficulty, null, skill);
 
     if (!question) continue;
 
@@ -331,7 +462,7 @@ function buildTest(options = {}) {
       typeSafety < 20 &&
       ["fill", "dragdrop", "hotspot"].includes(question.type)
     ) {
-      question = generateFromEntries(pool, difficulty);
+      question = generateFromEntries(pool, difficulty, null, skill);
       typeSafety += 1;
     }
 
@@ -346,7 +477,7 @@ function buildTest(options = {}) {
   while (rawQuestions.length < count && fallbackAttempts < count * 40) {
     fallbackAttempts += 1;
 
-    const question = generateFromEntries(pool, difficulty);
+    const question = generateFromEntries(pool, difficulty, null, skill);
 
     if (question) {
       addQuestion(question);
@@ -354,7 +485,9 @@ function buildTest(options = {}) {
   }
 
   while (rawQuestions.length < count) {
-    const question = generateFromEntries(pool, difficulty);
+    const question =
+  generateFromEntries(pool, difficulty, null, skill) ||
+  generateFromEntries(pool, difficulty);
 
     if (!question) {
       throw new Error(`Unable to generate enough questions for selected skill: ${skill || "Mixed Test"}`);
