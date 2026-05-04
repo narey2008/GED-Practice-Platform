@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -11,7 +13,7 @@ function uniqueNumberChoices(answer, wrongs) {
 
   wrongs.forEach((w) => {
     if (Number.isFinite(w) && w >= 0 && w !== answer && choices.size < 4) {
-      choices.add(w);
+      choices.add(Number(w.toFixed ? w.toFixed(2) : w));
     }
   });
 
@@ -23,13 +25,14 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
-function increase(difficulty) {
-  const original = rand(5, difficulty === "Easy" ? 12 : 20) * 10;
-  const changes = difficulty === "Easy" ? [10, 20, 25] : [10, 15, 20, 25, 30, 35];
-  const change = changes[rand(0, changes.length - 1)];
+function increase(difficulty, p) {
+  const original = rand(Math.ceil(p.largeMin / 10), Math.ceil(p.largeMax / 10)) * 10;
+  const change = p.percentChanges[rand(0, p.percentChanges.length - 1)];
 
   const amount = Number((original * (change / 100)).toFixed(2));
   const answer = Number((original + amount).toFixed(2));
+
+  const easyQuestion = `A value of ${original} is increased by ${change}%. What is the new value?`;
 
   const scenarios = [
     `A store sold ${original} items last week. This week, sales increased by ${change}%. How many items were sold this week?`,
@@ -43,7 +46,7 @@ function increase(difficulty) {
     topic: "Finding a new value after percent increase",
     difficulty,
     type: "multiple",
-    question: scenarios[rand(0, scenarios.length - 1)],
+    question: difficulty === "Easy" ? easyQuestion : scenarios[rand(0, scenarios.length - 1)],
     choices: uniqueNumberChoices(answer, [
       amount,
       Number((original - amount).toFixed(2)),
@@ -55,13 +58,14 @@ function increase(difficulty) {
   };
 }
 
-function decrease(difficulty) {
-  const original = rand(5, difficulty === "Easy" ? 12 : 20) * 10;
-  const changes = difficulty === "Easy" ? [10, 20, 25] : [10, 15, 20, 25, 30, 35];
-  const change = changes[rand(0, changes.length - 1)];
+function decrease(difficulty, p) {
+  const original = rand(Math.ceil(p.largeMin / 10), Math.ceil(p.largeMax / 10)) * 10;
+  const change = p.percentChanges[rand(0, p.percentChanges.length - 1)];
 
   const amount = Number((original * (change / 100)).toFixed(2));
   const answer = Number((original - amount).toFixed(2));
+
+  const easyQuestion = `A value of ${original} is decreased by ${change}%. What is the new value?`;
 
   const scenarios = [
     `A store had ${original} items in stock. The number of items decreased by ${change}%. How many items are left?`,
@@ -75,7 +79,7 @@ function decrease(difficulty) {
     topic: "Finding a new value after percent decrease",
     difficulty,
     type: "multiple",
-    question: scenarios[rand(0, scenarios.length - 1)],
+    question: difficulty === "Easy" ? easyQuestion : scenarios[rand(0, scenarios.length - 1)],
     choices: uniqueNumberChoices(answer, [
       amount,
       Number((original + amount).toFixed(2)),
@@ -87,10 +91,11 @@ function decrease(difficulty) {
   };
 }
 
-function findPercentIncrease(difficulty) {
-  const original = rand(5, difficulty === "Easy" ? 12 : 18) * 10;
-  const percent = [10, 20, 25, 30, 40, 50][rand(0, 5)];
-  const newValue = Number((original + original * (percent / 100)).toFixed(2));
+function findPercentIncrease(difficulty, p) {
+  const original = rand(Math.ceil(p.largeMin / 10), Math.ceil(p.largeMax / 10)) * 10;
+  const percent = p.percentChanges[rand(0, p.percentChanges.length - 1)];
+  const increaseAmount = Number((original * (percent / 100)).toFixed(2));
+  const newValue = Number((original + increaseAmount).toFixed(2));
 
   return {
     skill: "Percent Change",
@@ -98,21 +103,28 @@ function findPercentIncrease(difficulty) {
     topic: "Finding the percent increase between two values",
     difficulty,
     type: "multiple",
-    question: `A value increased from ${original} to ${newValue}. What was the percent increase?`,
-    choices: shuffle([percent, percent + 5, Math.max(1, percent - 5), 100 - percent]),
+    question:
+      difficulty === "Medium"
+        ? `${original} increased to ${newValue}. What was the percent increase?`
+        : `A value increased from ${original} to ${newValue}. What was the percent increase?`,
+    choices: shuffle([
+      percent,
+      percent + 5,
+      Math.max(1, percent - 5),
+      Math.max(1, 100 - percent)
+    ]),
     answer: percent,
-    explanation: `The increase is ${newValue} - ${original} = ${newValue - original}. Divide by the original value: ${(newValue - original)} ÷ ${original} = ${percent / 100}, or ${percent}%.`
+    explanation: `The increase is ${newValue} - ${original} = ${increaseAmount}. Divide by the original value: ${increaseAmount} ÷ ${original} = ${percent / 100}, or ${percent}%.`
   };
 }
 
 module.exports = function generatePercentChange(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
 
-  const bank = [
-    increase,
-    decrease,
-    findPercentIncrease
-  ];
+  const bank = p.allowHardPercentReverse
+    ? [increase, decrease, findPercentIncrease]
+    : [increase, decrease];
 
-  return bank[rand(0, bank.length - 1)](difficulty);
+  return bank[rand(0, bank.length - 1)](difficulty, p);
 };

@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -6,7 +8,24 @@ function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function rectangleAreaScenario(difficulty) {
+function uniqueNumberChoices(answer, wrongs) {
+  const choices = new Set([answer]);
+
+  wrongs.forEach((w) => {
+    if (Number.isFinite(w) && w > 0 && w !== answer && choices.size < 4) {
+      choices.add(w);
+    }
+  });
+
+  while (choices.size < 4) {
+    const wrong = answer + rand(-18, 24);
+    if (wrong > 0 && wrong !== answer) choices.add(wrong);
+  }
+
+  return shuffle(Array.from(choices));
+}
+
+function rectangleAreaScenario(difficulty, p) {
   const scenarios = [
     { object: "garden", unit: "feet" },
     { object: "patio", unit: "feet" },
@@ -15,10 +34,8 @@ function rectangleAreaScenario(difficulty) {
   ];
 
   const selected = scenarios[rand(0, scenarios.length - 1)];
-  const limit = difficulty === "Easy" ? 10 : difficulty === "Medium" ? 14 : 18;
-
-  const length = rand(4, limit);
-  const width = rand(3, limit);
+  const length = rand(p.mediumMin, p.lengthMax);
+  const width = rand(p.smallMin, Math.min(p.widthMax, length));
   const answer = length * width;
 
   return {
@@ -28,12 +45,15 @@ function rectangleAreaScenario(difficulty) {
     difficulty,
     type: "multiple",
     formulaRequired: true,
-    question: `The ${selected.object} shown below is a rectangle. What is its area in square ${selected.unit}?`,
-    choices: shuffle([
-      answer,
+    question:
+      difficulty === "Easy"
+        ? `The ${selected.object} shown below is a rectangle. What is its area in square ${selected.unit}?`
+        : `A rectangular ${selected.object} is shown below. What is its area in square ${selected.unit}?`,
+    choices: uniqueNumberChoices(answer, [
       2 * (length + width),
       length + width,
-      answer + rand(4, 12)
+      answer + length,
+      Math.max(1, answer - width)
     ]),
     answer,
     diagram: `
@@ -58,7 +78,7 @@ function rectangleAreaScenario(difficulty) {
   };
 }
 
-function rectanglePerimeterScenario(difficulty) {
+function rectanglePerimeterScenario(difficulty, p) {
   const scenarios = [
     { object: "garden fence", unit: "feet" },
     { object: "picture frame", unit: "inches" },
@@ -67,8 +87,8 @@ function rectanglePerimeterScenario(difficulty) {
   ];
 
   const selected = scenarios[rand(0, scenarios.length - 1)];
-  const length = rand(5, difficulty === "Easy" ? 12 : 18);
-  const width = rand(3, difficulty === "Easy" ? 8 : 12);
+  const length = rand(p.mediumMin, p.lengthMax);
+  const width = rand(p.smallMin, Math.min(p.widthMax, length));
   const answer = 2 * (length + width);
 
   return {
@@ -78,12 +98,15 @@ function rectanglePerimeterScenario(difficulty) {
     difficulty,
     type: "multiple",
     formulaRequired: true,
-    question: `The ${selected.object} shown below forms a rectangle. What is its perimeter in ${selected.unit}?`,
-    choices: shuffle([
-      answer,
+    question:
+      difficulty === "Easy"
+        ? `The ${selected.object} shown below forms a rectangle. What is its perimeter in ${selected.unit}?`
+        : `A rectangular ${selected.object} is shown below. What is its perimeter in ${selected.unit}?`,
+    choices: uniqueNumberChoices(answer, [
       length * width,
       length + width,
-      answer + rand(2, 8)
+      answer + length,
+      Math.max(1, answer - width)
     ]),
     answer,
     diagram: `
@@ -108,7 +131,7 @@ function rectanglePerimeterScenario(difficulty) {
   };
 }
 
-function triangleAreaScenario(difficulty) {
+function triangleAreaScenario(difficulty, p) {
   const scenarios = [
     { object: "triangular sign", unit: "inches" },
     { object: "shade sail", unit: "feet" },
@@ -117,10 +140,13 @@ function triangleAreaScenario(difficulty) {
   ];
 
   const selected = scenarios[rand(0, scenarios.length - 1)];
-  const limit = difficulty === "Easy" ? 12 : difficulty === "Medium" ? 16 : 20;
+  let base = rand(p.mediumMin, p.triangleMax);
+  let height = rand(p.smallMin, p.triangleMax);
 
-  const base = rand(4, limit);
-  const height = rand(4, limit);
+  if ((base * height) % 2 !== 0) {
+    base += 1;
+  }
+
   const answer = (base * height) / 2;
 
   return {
@@ -130,12 +156,15 @@ function triangleAreaScenario(difficulty) {
     difficulty,
     type: "multiple",
     formulaRequired: true,
-    question: `The ${selected.object} shown below is triangular. What is its area in square ${selected.unit}?`,
-    choices: shuffle([
-      answer,
+    question:
+      difficulty === "Easy"
+        ? `The ${selected.object} shown below is triangular. What is its area in square ${selected.unit}?`
+        : `A ${selected.object} is shown below. What is its area in square ${selected.unit}?`,
+    choices: uniqueNumberChoices(answer, [
       base * height,
       base + height,
-      answer + rand(2, 10)
+      answer + base,
+      Math.max(1, answer - Math.floor(height / 2))
     ]),
     answer,
     diagram: `
@@ -165,11 +194,13 @@ function triangleAreaScenario(difficulty) {
 
 module.exports = function generateGeometry(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
+
   const bank = [
     rectangleAreaScenario,
     rectanglePerimeterScenario,
     triangleAreaScenario
   ];
 
-  return bank[rand(0, bank.length - 1)](difficulty);
+  return bank[rand(0, bank.length - 1)](difficulty, p);
 };

@@ -1,3 +1,5 @@
+const { getDifficultyProfile } = require("./difficultyProfile");
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -24,19 +26,19 @@ function simplifyFraction(numerator, denominator) {
   return `${numerator / g}/${denominator / g}`;
 }
 
-function uniqueChoices(correct, possibleWrongChoices) {
+function uniqueChoices(correct, wrongs) {
   const choices = new Set([String(correct)]);
 
-  possibleWrongChoices.forEach((choice) => {
-    if (choices.size < 4) {
+  wrongs.forEach((choice) => {
+    if (choices.size < 4 && String(choice) !== String(correct)) {
       choices.add(String(choice));
     }
   });
 
-  const fallback = ["1/2", "1/3", "1/4", "2/3", "3/4", "1/6", "5/6"];
+  const fallback = ["1/2", "1/3", "1/4", "2/3", "3/4", "1/6", "5/6", "3/8", "2/5", "3/5"];
 
   fallback.forEach((choice) => {
-    if (choices.size < 4) {
+    if (choices.size < 4 && String(choice) !== String(correct)) {
       choices.add(choice);
     }
   });
@@ -44,54 +46,97 @@ function uniqueChoices(correct, possibleWrongChoices) {
   return shuffle(Array.from(choices));
 }
 
-function spinnerProbability(difficulty) {
-  const colors = ["Red", "Blue", "Green", "Yellow"];
-  const selectedColor = colors[rand(0, colors.length - 1)];
-  const answer = "1/4";
+function buildSpinnerSections(difficulty, p) {
+  if (difficulty === "Easy") {
+    return ["Red", "Blue", "Green", "Yellow"];
+  }
+
+  if (difficulty === "Medium") {
+    return ["Red", "Blue", "Green", "Yellow", "Red"];
+  }
+
+  return ["Red", "Blue", "Green", "Yellow", "Red", "Blue"];
+}
+
+function buildSpinnerDiagram(labels) {
+  const cx = 180;
+  const cy = 128;
+  const r = 58;
+  const labelR = 35;
+  const n = labels.length;
+
+  const lines = [];
+  const labelText = [];
+
+  for (let i = 0; i < n; i += 1) {
+    const boundaryAngle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    const x = cx + r * Math.cos(boundaryAngle);
+    const y = cy + r * Math.sin(boundaryAngle);
+
+    lines.push(
+      `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="#153e75" stroke-width="2"/>`
+    );
+
+    const midAngle = -Math.PI / 2 + (2 * Math.PI * (i + 0.5)) / n;
+    const lx = cx + labelR * Math.cos(midAngle);
+    const ly = cy + labelR * Math.sin(midAngle);
+
+    labelText.push(
+      `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" text-anchor="middle" dominant-baseline="middle" class="diagramLabel" style="font-size:12px;">${labels[i]}</text>`
+    );
+  }
+
+  return `
+    <svg viewBox="0 0 360 240" xmlns="http://www.w3.org/2000/svg">
+      <text x="180" y="26" text-anchor="middle" class="diagramLabel">Spinner</text>
+
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#f8fbff" stroke="#153e75" stroke-width="4"/>
+      ${lines.join("")}
+      ${labelText.join("")}
+
+      <line x1="${cx}" y1="58" x2="${cx}" y2="88" stroke="#153e75" stroke-width="4"/>
+      <polygon points="${cx},92 ${cx - 8},78 ${cx + 8},78" fill="#153e75"/>
+    </svg>
+  `;
+}
+
+function spinnerProbability(difficulty, p) {
+  const labels = buildSpinnerSections(difficulty, p);
+  const uniqueColors = Array.from(new Set(labels));
+  const selectedColor = uniqueColors[rand(0, uniqueColors.length - 1)];
+  const favorable = labels.filter((label) => label === selectedColor).length;
+  const total = labels.length;
+  const answer = simplifyFraction(favorable, total);
 
   return {
     skill: "Probability",
     subskill: "Spinner Probability",
-    topic: "Probability with equally likely spinner sections",
+    topic: "Probability with spinner sections",
     difficulty,
     type: "multiple",
-    question: `The spinner is divided into 4 equal sections. What is the probability of landing on ${selectedColor}?`,
-    choices: uniqueChoices(answer, ["1/2", "1/3", "3/4"]),
+    question: `The spinner is divided into ${total} equal sections. What is the probability of landing on ${selectedColor}?`,
+    choices: uniqueChoices(answer, [
+      simplifyFraction(1, total),
+      simplifyFraction(Math.min(total, favorable + 1), total),
+      simplifyFraction(Math.max(1, total - favorable), total),
+      "1/2"
+    ]),
     answer,
-    diagram: `
-      <svg viewBox="0 0 360 240" xmlns="http://www.w3.org/2000/svg">
-        <text x="180" y="28" text-anchor="middle" class="diagramLabel">Spinner</text>
-
-        <circle cx="180" cy="125" r="72" fill="#f8fbff" stroke="#153e75" stroke-width="4"/>
-
-        <line x1="180" y1="125" x2="180" y2="53" stroke="#153e75" stroke-width="3"/>
-        <line x1="180" y1="125" x2="252" y2="125" stroke="#153e75" stroke-width="3"/>
-        <line x1="180" y1="125" x2="180" y2="197" stroke="#153e75" stroke-width="3"/>
-        <line x1="180" y1="125" x2="108" y2="125" stroke="#153e75" stroke-width="3"/>
-
-        <text x="180" y="88" text-anchor="middle" class="diagramLabel">Red</text>
-        <text x="220" y="130" text-anchor="middle" class="diagramLabel">Blue</text>
-        <text x="180" y="168" text-anchor="middle" class="diagramLabel">Green</text>
-        <text x="138" y="130" text-anchor="middle" class="diagramLabel">Yellow</text>
-
-        <line x1="180" y1="47" x2="180" y2="18" stroke="#153e75" stroke-width="4"/>
-        <polygon points="180,50 171,35 189,35" fill="#153e75"/>
-      </svg>
-    `,
-    explanation: `There are 4 equal sections and 1 section labeled ${selectedColor}. The probability is 1 out of 4, or 1/4.`
+    diagram: buildSpinnerDiagram(labels),
+    explanation: `There are ${total} equal sections and ${favorable} section(s) labeled ${selectedColor}. The probability is ${favorable}/${total}, which simplifies to ${answer}.`
   };
 }
 
-function marblesProbability(difficulty) {
-  const red = rand(2, difficulty === "Easy" ? 5 : 7);
-  const blue = rand(2, difficulty === "Easy" ? 5 : 7);
-  const green = rand(1, difficulty === "Easy" ? 4 : 5);
+function marblesProbability(difficulty, p) {
+  const red = rand(1, p.marbleMax);
+  const blue = rand(1, p.marbleMax);
+  const green = difficulty === "Easy" ? rand(1, Math.max(2, Math.floor(p.marbleMax / 2))) : rand(1, p.marbleMax);
   const total = red + blue + green;
 
   const targets = [
-    { color: "red", label: "red", count: red },
-    { color: "blue", label: "blue", count: blue },
-    { color: "green", label: "green", count: green }
+    { label: "red", count: red, stroke: "#ef4444" },
+    { label: "blue", count: blue, stroke: "#3b82f6" },
+    { label: "green", count: green, stroke: "#22c55e" }
   ];
 
   const target = targets[rand(0, targets.length - 1)];
@@ -118,7 +163,7 @@ function marblesProbability(difficulty) {
 
   const startX = 95;
   const startY = 88;
-  const spacing = 22;
+  const spacing = 20;
   const perRow = 5;
 
   const circles = marbles.map((m, i) => {
@@ -127,7 +172,7 @@ function marblesProbability(difficulty) {
     const x = startX + col * spacing;
     const y = startY + row * spacing;
 
-    return `<circle cx="${x}" cy="${y}" r="8" fill="none" stroke="${m.stroke}" stroke-width="3"/>`;
+    return `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="${m.stroke}" stroke-width="3"/>`;
   }).join("");
 
   return {
@@ -161,39 +206,35 @@ function marblesProbability(difficulty) {
   };
 }
 
-function diceProbability(difficulty) {
-  const targets = [
-    {
-      label: "an even number",
-      favorable: 3,
-      outcomes: "2, 4, 6"
-    },
-    {
-      label: "a number greater than 4",
-      favorable: 2,
-      outcomes: "5, 6"
-    },
-    {
-      label: "a number less than 3",
-      favorable: 2,
-      outcomes: "1, 2"
-    },
-    {
-      label: "a number greater than 1",
-      favorable: 5,
-      outcomes: "2, 3, 4, 5, 6"
-    }
+function diceProbability(difficulty, p) {
+  const easyTargets = [
+    { label: "a 2", favorable: 1, outcomes: "2" },
+    { label: "a 5", favorable: 1, outcomes: "5" },
+    { label: "an even number", favorable: 3, outcomes: "2, 4, 6" }
   ];
 
-  const target = targets[rand(0, targets.length - 1)];
+  const mediumTargets = [
+    { label: "an even number", favorable: 3, outcomes: "2, 4, 6" },
+    { label: "a number greater than 4", favorable: 2, outcomes: "5, 6" },
+    { label: "a number less than 3", favorable: 2, outcomes: "1, 2" }
+  ];
+
+  const gedTargets = [
+    { label: "an even number or a 5", favorable: 4, outcomes: "2, 4, 5, 6" },
+    { label: "a number greater than 1", favorable: 5, outcomes: "2, 3, 4, 5, 6" },
+    { label: "an odd number less than 6", favorable: 3, outcomes: "1, 3, 5" },
+    { label: "a number less than 3 or greater than 5", favorable: 3, outcomes: "1, 2, 6" }
+  ];
+
+  const pool =
+    difficulty === "Easy"
+      ? easyTargets
+      : difficulty === "Medium"
+      ? mediumTargets
+      : gedTargets;
+
+  const target = pool[rand(0, pool.length - 1)];
   const answer = simplifyFraction(target.favorable, 6);
-
-  const wrongChoices = [
-    simplifyFraction(Math.max(1, target.favorable - 1), 6),
-    simplifyFraction(Math.min(6, target.favorable + 1), 6),
-    simplifyFraction(6 - target.favorable, 6),
-    "1/6"
-  ];
 
   return {
     skill: "Probability",
@@ -202,7 +243,12 @@ function diceProbability(difficulty) {
     difficulty,
     type: "multiple",
     question: `A fair number cube has faces numbered 1 through 6. If the cube is rolled once, what is the probability of rolling ${target.label}?`,
-    choices: uniqueChoices(answer, wrongChoices),
+    choices: uniqueChoices(answer, [
+      simplifyFraction(Math.max(1, target.favorable - 1), 6),
+      simplifyFraction(Math.min(6, target.favorable + 1), 6),
+      simplifyFraction(6 - target.favorable, 6),
+      "1/6"
+    ]),
     answer,
     diagram: `
       <svg viewBox="0 0 380 220" xmlns="http://www.w3.org/2000/svg">
@@ -239,6 +285,7 @@ function diceProbability(difficulty) {
 
 module.exports = function generateProbability(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
+  const p = getDifficultyProfile(difficulty);
 
   const bank = [
     spinnerProbability,
@@ -246,5 +293,5 @@ module.exports = function generateProbability(options = {}) {
     diceProbability
   ];
 
-  return bank[rand(0, bank.length - 1)](difficulty);
+  return bank[rand(0, bank.length - 1)](difficulty, p);
 };
