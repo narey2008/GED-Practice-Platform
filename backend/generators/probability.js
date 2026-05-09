@@ -128,9 +128,10 @@ function spinnerProbability(difficulty, p) {
 }
 
 function marblesProbability(difficulty, p) {
-  const red = rand(1, p.marbleMax);
-  const blue = rand(1, p.marbleMax);
-  const green = difficulty === "Easy" ? rand(1, Math.max(2, Math.floor(p.marbleMax / 2))) : rand(1, p.marbleMax);
+  const marbleMax = Number(marbleMax || p.smallMax || 6);
+  const red = rand(1, marbleMax);
+  const blue = rand(1, marbleMax);
+  const green = difficulty === "Easy" ? rand(1, Math.max(2, Math.floor(marbleMax / 2))) : rand(1, marbleMax);
   const total = red + blue + green;
 
   const targets = [

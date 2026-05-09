@@ -9244,8 +9244,6 @@ function renderQuestion() {
   }
 
   const q = state.questions[state.currentIndex];
-  console.log("GEOMETRY QUESTION DIAGRAM:", q.diagram);
-console.log("GEOMETRY QUESTION CHART:", q.chart);
   questionTextEl.innerHTML = q.highlightedQuestionHtml || q.question || "";
 questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
 
@@ -9313,8 +9311,8 @@ questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
   }
 
   renderAnswerArea(q);
-  renderDiagram(q.diagram || null);
   renderChart(updateChartTheme(q.chart));
+  renderDiagram(q.diagram || null);
   updateStatus();
 }
 
