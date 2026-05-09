@@ -288,6 +288,55 @@
   margin-top: 12px;
 }
 
+.learningTutorIntro {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  line-height: 1.65;
+}
+
+.learningProgressPill {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--button-text);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+.learningRevealStep {
+  display: none;
+}
+
+.learningRevealStep.visible {
+  display: block;
+}
+
+.learningRevealActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.learningFeedbackGood {
+  border-left-color: #0f8a36 !important;
+}
+
+.learningFeedbackTry {
+  border-left-color: #d97706 !important;
+}
+
+.learningFeedbackWrong {
+  border-left-color: #b42318 !important;
+}
+
     .topbar {
       height: 58px;
       background: var(--topbar);
@@ -2023,35 +2072,69 @@ function buildLearningBreakdown(q, stepNumber = 1) {
   const cleanQuestion = stripHtml(q.question || "This problem");
   const answer = String(q.answer ?? "—");
   const explanation = String(q.explanation || "").trim();
+  const skill = q.subskill || q.skill || "this skill";
+  const totalExamples = state.questions.filter((item) => item.learningPhase === "example").length || 3;
 
   return `
-    <div class="learningMiniLabel">Learning Example ${stepNumber}</div>
+    <div class="learningProgressPill">Guided Example ${stepNumber} of ${totalExamples}</div>
+
+    <div class="learningTutorIntro">
+      <strong>Let’s walk through this together.</strong><br>
+      Don’t worry about getting it perfect right away. For this example, I’ll guide you through how to think about the problem before you try one on your own.
+    </div>
 
     <div class="learningStepBox">
       <strong>Problem</strong><br>
       ${escapeHtml(cleanQuestion)}
     </div>
 
-    <div class="learningStepBox">
-      <strong>Step 1: Identify what the question is asking.</strong><br>
-      The question is asking you to work with <strong>${escapeHtml(q.subskill || q.skill || "this skill")}</strong>.
+    <div class="learningStepBox learningRevealStep visible" data-learning-step="1">
+      <strong>Step 1: Understand the goal.</strong><br>
+      This question is testing <strong>${escapeHtml(skill)}</strong>. First, ask yourself: “What is the problem asking me to find?”
     </div>
 
-    <div class="learningStepBox">
-      <strong>Step 2: Pick the correct strategy.</strong><br>
-      Look for the important numbers, labels, graph values, formula, or relationship in the problem. Then decide whether you need to add, subtract, multiply, divide, compare, or use a formula.
+    <div class="learningStepBox learningRevealStep" data-learning-step="2">
+      <strong>Step 2: Find the useful information.</strong><br>
+      Look for the numbers, labels, graph values, formula, or relationship that matter. Ignore extra wording and focus on what helps you solve it.
     </div>
 
-    <div class="learningStepBox">
-      <strong>Step 3: Work through the problem.</strong><br>
-      ${escapeHtml(explanation || "Work carefully from the information given and simplify your result.")}
+    <div class="learningStepBox learningRevealStep" data-learning-step="3">
+      <strong>Step 3: Choose the strategy.</strong><br>
+      Decide whether you need to add, subtract, multiply, divide, compare values, use a formula, or solve for a missing value.
     </div>
 
-    <div class="learningStepBox">
-      <strong>Answer</strong><br>
-      ${escapeHtml(answer)}
+    <div class="learningStepBox learningRevealStep" data-learning-step="4">
+      <strong>Step 4: Work it out.</strong><br>
+      ${escapeHtml(explanation || "Work carefully from the information given, then simplify your result.")}
+    </div>
+
+    <div class="learningStepBox learningRevealStep" data-learning-step="5">
+      <strong>Final answer</strong><br>
+      The answer is <strong>${escapeHtml(answer)}</strong>.
+    </div>
+
+    <div class="learningRevealActions">
+      <button id="showTutorStepBtn" class="secondaryBtn" type="button">Show Next Step</button>
     </div>
   `;
+}
+
+function wireLearningStepReveal() {
+  const btn = document.getElementById("showTutorStepBtn");
+  if (!btn) return;
+
+  btn.onclick = () => {
+    const steps = Array.from(document.querySelectorAll(".learningRevealStep"));
+    const nextHidden = steps.find((step) => !step.classList.contains("visible"));
+
+    if (nextHidden) {
+      nextHidden.classList.add("visible");
+    }
+
+    const stillHidden = steps.some((step) => !step.classList.contains("visible"));
+    btn.textContent = stillHidden ? "Show Next Step" : "All Steps Shown";
+    btn.disabled = !stillHidden;
+  };
 }
 
 function appendLearningShortcut(container, label, onClick) {
@@ -6517,7 +6600,10 @@ async function startLearningMode(skill, difficulty, fromPractice = false) {
         learningPhase: index < 3 ? "example" : "practice",
         example: index < 3,
         learningChecked: false,
-        learningCorrect: false
+        learningCorrect: false,
+        learningAttempts: 0,
+        learningFeedbackState: "",
+        learningLastAnswer: ""
       }));
 
       state.currentIndex = 0;
@@ -6568,10 +6654,42 @@ async function gradeLearningQuestion() {
     return;
   }
 
+  q.learningAttempts = (q.learningAttempts || 0) + 1;
+  q.learningLastAnswer = Array.isArray(q.userAnswer)
+    ? q.userAnswer.join(" | ")
+    : String(q.userAnswer ?? "");
+
+  const isCorrect = answersMatch(q.userAnswer, q.answer);
+
+  if (isCorrect) {
+    q.learningChecked = true;
+    q.learningCorrect = true;
+    q.learningFeedbackState = "correct";
+    renderQuestion();
+    updateStatus();
+    return;
+  }
+
+  if (q.learningAttempts === 1) {
+    q.learningChecked = false;
+    q.learningCorrect = false;
+    q.learningFeedbackState = "try-again";
+
+    if (q.type === "fill") {
+      q.userAnswer = "";
+    }
+
+    renderQuestion();
+    updateStatus();
+    return;
+  }
+
   q.learningChecked = true;
-  q.learningCorrect = answersMatch(q.userAnswer, q.answer);
+  q.learningCorrect = false;
+  q.learningFeedbackState = "review";
 
   renderQuestion();
+  updateStatus();
 }
 
     async function startPractice(skill, difficulty, examplesOnly = false) {
@@ -6677,6 +6795,7 @@ questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
     feedbackEl.innerText = tr("testPausedMessage");
   } else if (state.mode === "learning" && q.learningPhase === "example") {
     feedbackEl.innerHTML = buildLearningBreakdown(q, state.currentIndex + 1);
+    setTimeout(wireLearningStepReveal, 0);
   } else if (q.example) {
     feedbackEl.innerHTML =
       `<strong>${tr("workedExample")}</strong><br>
@@ -6684,13 +6803,29 @@ questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
         <div><strong>${tr("answer")}:</strong> ${q.answer}</div>
         <div style="margin-top:8px;">${q.explanation}</div>
       </div>`;
+  } else if (state.mode === "learning" && q.learningPhase === "practice" && q.learningFeedbackState === "try-again") {
+    feedbackEl.innerHTML = `
+      <div class="explanationBox learningFeedbackTry">
+        <strong>Almost — try one more time.</strong>
+        <div style="margin-top:8px;">
+          Your first answer was <strong>${escapeHtml(q.learningLastAnswer || "—")}</strong>. Take another look at the question and try again.
+        </div>
+        <div style="margin-top:8px;">
+          Hint: focus on the key numbers, labels, or formula in the problem before choosing your answer.
+        </div>
+      </div>
+    `;
   } else if (state.mode === "learning" && q.learningPhase === "practice" && q.learningChecked) {
     feedbackEl.innerHTML = `
-      <div class="explanationBox">
+      <div class="explanationBox ${q.learningCorrect ? "learningFeedbackGood" : "learningFeedbackWrong"}">
         <strong class="${q.learningCorrect ? "correct" : "incorrect"}">
-          ${q.learningCorrect ? "Correct!" : "Not quite."}
+          ${q.learningCorrect ? "Nice work — you got it!" : "Good effort — let’s learn from this one."}
         </strong>
-        <div style="margin-top:8px;"><strong>Correct Answer:</strong> ${escapeHtml(q.answer)}</div>
+        <div style="margin-top:8px;">
+          ${q.learningCorrect
+            ? "That means your strategy worked. Keep that same thinking for the next question."
+            : `The correct answer is <strong>${escapeHtml(q.answer)}</strong>.`}
+        </div>
         <div style="margin-top:8px;">${escapeHtml(q.explanation || "")}</div>
       </div>
     `;
@@ -7270,7 +7405,7 @@ async function openReviewBeforeSubmitModal() {
     const q = state.questions[state.currentIndex];
 
     if (q?.learningPhase === "practice" && !q.learningChecked) {
-      showToast("Learning Mode", "Submit your answer before moving on.");
+      showToast("Learning Mode", "Try the problem first, then submit your answer. I’ll give feedback before you move on.");
       return;
     }
 
