@@ -1004,6 +1004,133 @@ select {
       margin-bottom: 18px;
     }
 
+    .profileHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profileHero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--panel);
+  margin-bottom: 14px;
+}
+
+.profileAvatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: var(--button-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(24px * var(--font-scale));
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.profileHeroTitle {
+  font-size: calc(22px * var(--font-scale));
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.profileHeroSubtext {
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.profileBadgeRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.profileBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.profileActionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.profileActionCard {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.profileActionCard h3 {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: calc(17px * var(--font-scale));
+}
+
+.profileActionCard p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: calc(14px * var(--font-scale));
+}
+
+.profileDangerZone {
+  border-color: rgba(180, 35, 24, 0.35);
+}
+
+.profileDangerZone h3 {
+  color: #b42318;
+}
+
+.profileHistoryTabs {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--panel);
+  margin-bottom: 14px;
+}
+
+.profileHistoryTabs .menuActions {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .profileHero,
+  .profileActionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .profileAvatar {
+    width: 52px;
+    height: 52px;
+  }
+}
+
     .modalBackdrop {
       position: fixed;
       inset: 0;
@@ -8171,82 +8298,152 @@ async function openProfilePanel(defaultTab = "tests") {
         const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
 
 panel.innerHTML = `
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+  <div class="profileHeader">
     <h2 class="sectionTitle" style="margin:0;">${tr("profile")}</h2>
     <button id="profileMainMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
   </div>
 
-  <<div class="reviewTop">
-  <div class="reviewStat">
-    <div class="reviewStatLabel">${tr("testsTaken")}</div>
-    <div class="reviewStatValue">${testHistory.length}</div>
+  <div class="profileHero">
+    <div class="profileAvatar" aria-hidden="true">
+      ${escapeHtml((state.auth.user?.displayName || state.auth.user?.email || "U").slice(0, 1).toUpperCase())}
+    </div>
+
+    <div>
+      <div class="profileHeroTitle">
+        ${escapeHtml(state.auth.user?.displayName || tr("profile"))}
+      </div>
+
+      <div class="profileHeroSubtext">
+        ${escapeHtml(state.auth.user?.email || "")}
+      </div>
+
+      <div class="profileBadgeRow">
+        <span class="profileBadge">
+          ${state.auth.user?.emailVerified === true ? "Email Verified" : "Email Not Verified"}
+        </span>
+
+        <span class="profileBadge">
+          ${
+            (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
+              ? tr("twoFactorEnabledLabel")
+              : "2FA Not Enabled"
+          }
+        </span>
+
+        <span class="profileBadge">
+          ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
+        </span>
+      </div>
+    </div>
   </div>
 
-  ${
-    state.auth.user?.scoringEnabled === false
-      ? ""
-      : `
-        <div class="reviewStat">
-          <div class="reviewStatLabel">${tr("bestScore")}</div>
-          <div class="reviewStatValue">${bestScore}</div>
-        </div>
-        <div class="reviewStat">
-          <div class="reviewStatLabel">${tr("averageScore")}</div>
-          <div class="reviewStatValue">${averageScore}</div>
-        </div>
-      `
-  }
+  <div class="reviewTop">
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("testsTaken")}</div>
+      <div class="reviewStatValue">${testHistory.length}</div>
+    </div>
 
-  <div class="reviewStat">
-    <div class="reviewStatLabel">${tr("practiceSessions")}</div>
-    <div class="reviewStatValue">${practiceHistory.length}</div>
-  </div>
-</div>
-
-          <div class="reviewTop">
-            <div class="reviewStat">
-              <div class="reviewStatLabel">${tr("currentFocus")}</div>
-              <div class="reviewStatValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
-            </div>
-            <div class="reviewStat">
-              <div class="reviewStatLabel">${tr("nextFocus")}</div>
-              <div class="reviewStatValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
-            </div>
-            <div class="reviewStat" style="grid-column: span 2;">
-              <div class="reviewStatLabel">${tr("progressNote")}</div>
-              <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
-            </div>
-          </div>
-
-<div class="reviewItem">
-  <div class="menuActions">
-    ${currentFocus !== "—" ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>` : ""}
-    <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
-    <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
-    <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
     ${
-      (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
-        ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
-        : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
+      state.auth.user?.scoringEnabled === false
+        ? ""
+        : `
+          <div class="reviewStat">
+            <div class="reviewStatLabel">${tr("bestScore")}</div>
+            <div class="reviewStatValue">${bestScore}</div>
+          </div>
+          <div class="reviewStat">
+            <div class="reviewStatLabel">${tr("averageScore")}</div>
+            <div class="reviewStatValue">${averageScore}</div>
+          </div>
+        `
     }
-    <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
-    <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
-    <button id="profileScoringToggleBtn" class="secondaryBtn">
-  ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
-</button>
-  </div>
-</div>
 
-<div class="reviewItem">
-  <div class="menuActions">
-    <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
-    <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("practiceSessions")}</div>
+      <div class="reviewStatValue">${practiceHistory.length}</div>
+    </div>
   </div>
-</div>
 
-<div id="testHistorySection" class="hidden"></div>
-<div id="practiceHistorySection" class="hidden"></div>
-        `;
+  <div class="reviewTop">
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("currentFocus")}</div>
+      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
+    </div>
+
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("nextFocus")}</div>
+      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
+    </div>
+
+    <div class="reviewStat" style="grid-column: span 2;">
+      <div class="reviewStatLabel">${tr("progressNote")}</div>
+      <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
+    </div>
+  </div>
+
+  <div class="profileActionGrid">
+    <div class="profileActionCard">
+      <h3>Practice Focus</h3>
+      <p>Jump directly into your weakest skill or continue reviewing your progress.</p>
+
+      <div class="menuActions">
+        ${
+          currentFocus !== "—"
+            ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>`
+            : ""
+        }
+      </div>
+    </div>
+
+    <div class="profileActionCard">
+      <h3>Account Settings</h3>
+      <p>Manage your username, email, password, security, and scoring preference.</p>
+
+      <div class="menuActions">
+        <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
+        <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
+        <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+        <button id="profileScoringToggleBtn" class="secondaryBtn">
+          ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
+        </button>
+      </div>
+    </div>
+
+    <div class="profileActionCard">
+      <h3>Security & Access</h3>
+      <p>Use these options if you need account-access help or need to enable account protection.</p>
+
+      <div class="menuActions">
+        <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
+
+        ${
+          (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
+            ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
+            : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
+        }
+      </div>
+    </div>
+
+    <div class="profileActionCard profileDangerZone">
+      <h3>Danger Zone</h3>
+      <p>Deleting your account permanently removes your saved account data.</p>
+
+      <div class="menuActions">
+        <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="profileHistoryTabs">
+    <div class="menuActions">
+      <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
+      <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
+    </div>
+  </div>
+
+  <div id="testHistorySection" class="hidden"></div>
+  <div id="practiceHistorySection" class="hidden"></div>
+`;
 
         const testSection = document.getElementById("testHistorySection");
         const practiceSection = document.getElementById("practiceHistorySection");
