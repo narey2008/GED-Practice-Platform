@@ -854,10 +854,122 @@
   content: "💬";
 }
 
+#startTestPanel,
+#startPracticePanel,
+#learningModePanel {
+  border-width: 2px;
+}
+
+#startTestPanel {
+  background:
+    linear-gradient(135deg, rgba(21, 62, 117, 0.08), transparent 42%),
+    var(--panel);
+}
+
+#startPracticePanel {
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 42%),
+    var(--panel);
+}
+
+#learningModePanel {
+  background:
+    linear-gradient(135deg, rgba(124, 58, 237, 0.08), transparent 42%),
+    var(--panel);
+}
+
+#startTestPanel::after {
+  border-left-color: #153e75;
+  opacity: 0.34;
+}
+
+#startPracticePanel::after {
+  border-left-color: #0f766e;
+  opacity: 0.34;
+}
+
+#learningModePanel::after {
+  border-left-color: #7c3aed;
+  opacity: 0.34;
+}
+
+#startTestPanel .menuPanelBadge {
+  border-color: rgba(21, 62, 117, 0.3);
+}
+
+#startPracticePanel .menuPanelBadge {
+  color: #0f766e;
+  border-color: rgba(15, 118, 110, 0.3);
+}
+
+#learningModePanel .menuPanelBadge {
+  color: #6d28d9;
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
 .menuPanel p {
   margin: 0 0 12px;
   color: var(--muted);
   line-height: 1.55;
+}
+
+.menuPanelBadgeRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+
+.menuPanelBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  color: var(--primary);
+  font-weight: 900;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.menuPanelHint {
+  margin-top: -4px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: calc(13px * var(--font-scale));
+}
+
+.supportChipRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+}
+
+.supportChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.supportMiniNote {
+  border-left: 4px solid var(--primary);
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  line-height: 1.55;
+  font-size: calc(13px * var(--font-scale));
+  margin-bottom: 12px;
 }
 
     .menuActions {
@@ -1868,8 +1980,15 @@ body.loadingActive {
         </div>
 
         <div id="startTestPanel" class="menuPanel">
-          <h3>Start a New Test</h3>
-          <p>Choose your difficulty level and begin.</p>
+<h3>Start a New Test</h3>
+
+<div class="menuPanelBadgeRow">
+  <span id="startTestBadge" class="menuPanelBadge">Best for: realistic full test practice</span>
+</div>
+
+<p id="startTestHelperText">
+  Choose a difficulty and take a timed 46-question GED-style math test.
+</p>
           <label for="difficultySelect">Difficulty</label>
           <select id="difficultySelect">
             <option>Easy</option>
@@ -1882,8 +2001,15 @@ body.loadingActive {
         </div>
 
                 <div id="startPracticePanel" class="menuPanel">
-          <h3>Start a Practice Test</h3>
-          <p>Choose a skill and difficulty, then begin a focused practice set.</p>
+<h3>Start a Practice Test</h3>
+
+<div class="menuPanelBadgeRow">
+  <span id="startPracticeBadge" class="menuPanelBadge">Best for: improving weak skills</span>
+</div>
+
+<p id="startPracticeHelperText">
+  Pick a specific skill and difficulty to get focused practice questions.
+</p>
 
           <label for="practiceSkillSelect">Skill</label>
 <select id="practiceSkillSelect">
@@ -1986,10 +2112,15 @@ body.loadingActive {
         </div>
 
         <div id="learningModePanel" class="menuPanel">
-  <h3>Learning Mode</h3>
-  <p>
-    Learn a skill step by step first, then answer a few questions with immediate feedback after each one.
-  </p>
+<h3>Learning Mode</h3>
+
+<div class="menuPanelBadgeRow">
+  <span id="learningModeBadge" class="menuPanelBadge">Best for: learning before testing</span>
+</div>
+
+<p id="learningModeHelperText">
+  Learn a skill step by step first, then answer practice questions with immediate feedback.
+</p>
 
   <label for="learningSkillSelect">Skill</label>
   <select id="learningSkillSelect"></select>
@@ -2006,16 +2137,30 @@ body.loadingActive {
   </div>
 </div>
 
-        <div id="supportPanel" class="menuPanel">
-          <h3>Support / Contact</h3>
-          <p>
-            Use this for bug reports, additions you would like added, or things that should be changed or removed.
-          </p>
-          <div class="menuActions">
-            <button id="supportEmailBtn" class="secondaryBtn">Contact Support</button>
-          </div>
-        </div>
-      </div>
+<div id="supportPanel" class="menuPanel">
+  <h3>Support / Contact</h3>
+
+  <p>
+    Use this for bug reports, additions you would like added, or things that should be changed or removed.
+  </p>
+
+  <div class="supportChipRow" aria-label="Support request types">
+    <span class="supportChip">🐞 Bug reports</span>
+    <span class="supportChip">➕ Additions</span>
+    <span class="supportChip">✏️ Changes</span>
+    <span class="supportChip">🧹 Removals</span>
+    <span class="supportChip">❓ Question issues</span>
+    <span class="supportChip">🔐 Account help</span>
+  </div>
+
+  <div class="supportMiniNote">
+    Your feedback helps improve the platform. Send anything that feels confusing, broken, missing, or worth improving.
+  </div>
+
+  <div class="menuActions">
+    <button id="supportEmailBtn" class="secondaryBtn">Contact Support</button>
+  </div>
+</div>
     </div>
 
     <div id="legalPanel" class="mainMenuFooter">
@@ -3021,6 +3166,12 @@ menuPathTestText: isSpanish
 
     startNewTest: isSpanish ? "Comenzar un Nuevo Examen" : "Start a New Test",
     chooseDifficulty: isSpanish ? "Elige tu nivel de dificultad y comienza." : "Choose your difficulty level and begin.",
+    startTestBadge: isSpanish
+  ? "Ideal para: práctica realista de examen completo"
+  : "Best for: realistic full test practice",
+startTestHelperText: isSpanish
+  ? "Elige una dificultad y toma un examen de matemáticas estilo GED de 46 preguntas con tiempo."
+  : "Choose a difficulty and take a timed 46-question GED-style math test.",
     difficulty: isSpanish ? "Dificultad" : "Difficulty",
     startTest: isSpanish ? "Comenzar Examen" : "Start Test",
 
@@ -3126,6 +3277,18 @@ twoFactorCodeSentBody: isSpanish
       : "Choose a skill and difficulty, then begin a focused practice set.",
     skill: isSpanish ? "Habilidad" : "Skill",
     startPractice: isSpanish ? "Comenzar Práctica" : "Start Practice",
+    startPracticeBadge: isSpanish
+  ? "Ideal para: mejorar habilidades débiles"
+  : "Best for: improving weak skills",
+startPracticeHelperText: isSpanish
+  ? "Elige una habilidad específica y dificultad para recibir preguntas de práctica enfocadas."
+  : "Pick a specific skill and difficulty to get focused practice questions.",
+learningModeBadge: isSpanish
+  ? "Ideal para: aprender antes del examen"
+  : "Best for: learning before testing",
+learningModeHelperText: isSpanish
+  ? "Aprende una habilidad paso a paso y luego responde preguntas con retroalimentación inmediata."
+  : "Learn a skill step by step first, then answer practice questions with immediate feedback.",
 
     resumeTitle: isSpanish ? "Reanudar Examen Incompleto" : "Resume Unfinished Test",
     resumeText: isSpanish ? "Continúa desde tu progreso guardado en tu cuenta." : "Continue from your saved account progress.",
@@ -3948,52 +4111,98 @@ syncLearningSkillDropdown();
 
 const supportPanel = document.getElementById("supportPanel");
 if (supportPanel) {
-  const h3 = supportPanel.querySelector("h3");
-  const p = supportPanel.querySelector("p");
-  const supportEmailBtn = document.getElementById("supportEmailBtn");
+  const supportTitleEl = supportPanel.querySelector("h3");
+  const supportTextEl = supportPanel.querySelector("p");
+  const supportEmailButtonEl = document.getElementById("supportEmailBtn");
 
-  if (h3) h3.textContent = t.supportTitle;
-  if (p) p.textContent = t.supportText;
+  if (supportTitleEl) supportTitleEl.textContent = t.supportTitle;
+  if (supportTextEl) supportTextEl.textContent = t.supportText;
 
-  if (supportEmailBtn) {
-    supportEmailBtn.textContent = t.contactSupport;
+  if (supportEmailButtonEl) {
+    supportEmailButtonEl.textContent = t.contactSupport;
   }
 }
 
-  const signInBtnTop = document.getElementById("signInBtnTop");
-  const guestBtnTop = document.getElementById("guestBtnTop");
-  const contactBtnTop = document.getElementById("contactBtnTop");
-  const logoutBtnTop = document.getElementById("logoutBtnTop");
-  const globalMenuBtn = document.getElementById("globalMenuBtn");
-  const prevBtn = document.getElementById("prevBtn");
-  const reportQuestionBtn = document.getElementById("reportQuestionBtn");
-  const submitTestBtn = document.getElementById("submitTestBtn");
+const languageSignInBtnTop = document.getElementById("signInBtnTop");
+const languageGuestBtnTop = document.getElementById("guestBtnTop");
+const languageContactBtnTop = document.getElementById("contactBtnTop");
+const languageLogoutBtnTop = document.getElementById("logoutBtnTop");
+const languageGlobalMenuBtn = document.getElementById("globalMenuBtn");
+const languagePrevBtn = document.getElementById("prevBtn");
+const languageReportQuestionBtn = document.getElementById("reportQuestionBtn");
+const languageSubmitTestBtn = document.getElementById("submitTestBtn");
 
-  if (signInBtnTop) signInBtnTop.textContent = t.signIn;
-  if (guestBtnTop) guestBtnTop.textContent = t.continueGuest;
-  if (contactBtnTop) contactBtnTop.textContent = t.contactUs;
-  if (logoutBtnTop) logoutBtnTop.textContent = t.logOut;
-  if (globalMenuBtn) globalMenuBtn.textContent = t.mainMenuBtn;
-  if (prevBtn) prevBtn.textContent = t.previous;
-  if (reportQuestionBtn) reportQuestionBtn.textContent = t.reportQuestion;
-if (submitTestBtn) {
-  submitTestBtn.classList.toggle("hidden", isTutorial || !["test", "practice"].includes(state.mode));
-  }
+if (languageSignInBtnTop) languageSignInBtnTop.textContent = t.signIn;
+if (languageGuestBtnTop) languageGuestBtnTop.textContent = t.continueGuest;
+if (languageContactBtnTop) languageContactBtnTop.textContent = t.contactUs;
+if (languageLogoutBtnTop) languageLogoutBtnTop.textContent = t.logOut;
+if (languageGlobalMenuBtn) languageGlobalMenuBtn.textContent = t.mainMenuBtn;
+if (languagePrevBtn) languagePrevBtn.textContent = t.previous;
+if (languageReportQuestionBtn) languageReportQuestionBtn.textContent = t.reportQuestion;
 
-  const loadingTitle = document.getElementById("loadingTitle");
-  const loadingText = document.getElementById("loadingText");
-  const loadingSubtext = document.querySelector(".loadingSubtext");
-  const legalBtnTop = document.getElementById("legalBtnTop");
-const legalInfoBtn = document.getElementById("legalInfoBtn");
+if (languageSubmitTestBtn) {
+  languageSubmitTestBtn.classList.toggle(
+    "hidden",
+    isTutorial || !["test", "practice"].includes(state.mode)
+  );
+}
 
-if (legalBtnTop) legalBtnTop.textContent = t.legalTopBtn;
-if (legalInfoBtn) legalInfoBtn.textContent = t.legalTopBtn || "Legal / About";
+const languageLoadingTitle = document.getElementById("loadingTitle");
+const languageLoadingText = document.getElementById("loadingText");
+const languageLoadingSubtext = document.querySelector(".loadingSubtext");
+const languageLegalBtnTop = document.getElementById("legalBtnTop");
+const languageLegalInfoBtn = document.getElementById("legalInfoBtn");
 
-  if (loadingTitle) loadingTitle.innerText = t.loading;
-  if (loadingText) loadingText.innerText = "";
-  if (loadingSubtext) loadingSubtext.innerText = t.doNotRefresh;
+const languageStartTestBadge = document.getElementById("startTestBadge");
+const languageStartTestHelperText = document.getElementById("startTestHelperText");
+const languageStartPracticeBadge = document.getElementById("startPracticeBadge");
+const languageStartPracticeHelperText = document.getElementById("startPracticeHelperText");
+const languageLearningModeBadge = document.getElementById("learningModeBadge");
+const languageLearningModeHelperText = document.getElementById("learningModeHelperText");
 
-  updateStatus();
+if (languageLegalBtnTop) {
+  languageLegalBtnTop.textContent = t.legalTopBtn;
+}
+
+if (languageLegalInfoBtn) {
+  languageLegalInfoBtn.textContent = t.legalTopBtn || "Legal / About";
+}
+
+if (languageStartTestBadge) {
+  languageStartTestBadge.textContent =
+    t.startTestBadge || "Best for: realistic full test practice";
+}
+
+if (languageStartTestHelperText) {
+  languageStartTestHelperText.textContent =
+    t.startTestHelperText || "Choose a difficulty and take a timed 46-question GED-style math test.";
+}
+
+if (languageStartPracticeBadge) {
+  languageStartPracticeBadge.textContent =
+    t.startPracticeBadge || "Best for: improving weak skills";
+}
+
+if (languageStartPracticeHelperText) {
+  languageStartPracticeHelperText.textContent =
+    t.startPracticeHelperText || "Pick a specific skill and difficulty to get focused practice questions.";
+}
+
+if (languageLearningModeBadge) {
+  languageLearningModeBadge.textContent =
+    t.learningModeBadge || "Best for: learning before testing";
+}
+
+if (languageLearningModeHelperText) {
+  languageLearningModeHelperText.textContent =
+    t.learningModeHelperText || "Learn a skill step by step first, then answer practice questions with immediate feedback.";
+}
+
+if (languageLoadingTitle) languageLoadingTitle.innerText = t.loading;
+if (languageLoadingText) languageLoadingText.innerText = "";
+if (languageLoadingSubtext) languageLoadingSubtext.innerText = t.doNotRefresh;
+
+updateStatus();
 }
 
 function scrollToMainMenuPanel(panelId) {
