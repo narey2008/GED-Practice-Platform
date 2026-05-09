@@ -672,6 +672,30 @@
       align-items: center;
     }
 
+    .mainMenuFooter {
+  max-width: 760px;
+  margin: 16px auto 0;
+  padding: 14px 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+#mainMenu.hidden + #legalPanel {
+  display: none !important;
+}
+
+.mainMenuFooterText {
+  font-size: calc(13px * var(--font-scale));
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.legalFooterBtn {
+  width: auto;
+  padding: 8px 12px;
+  font-size: calc(13px * var(--font-scale));
+}
+
     label {
   display: block;
   font-weight: 700;
@@ -1763,14 +1787,12 @@ body.loadingActive {
       </div>
     </div>
 
-    <div id="legalPanel" class="menuPanel">
-  <h3>Legal / About</h3>
-  <p>
-    Review the platform terms, privacy information, frequently asked questions, and about page.
-  </p>
-  <div class="menuActions">
-    <button id="legalInfoBtn" class="secondaryBtn">Open Legal Pages</button>
+    <div id="legalPanel" class="mainMenuFooter">
+  <div class="mainMenuFooterText">
+    GED Practice Platform is built for focused GED math practice, progress tracking, and realistic test preparation.
   </div>
+
+  <button id="legalInfoBtn" class="secondaryBtn legalFooterBtn">Legal / About</button>
 </div>
 
     <div id="testView" class="testCard hidden">
@@ -3688,7 +3710,10 @@ if (submitTestBtn) {
   const loadingText = document.getElementById("loadingText");
   const loadingSubtext = document.querySelector(".loadingSubtext");
   const legalBtnTop = document.getElementById("legalBtnTop");
+const legalInfoBtn = document.getElementById("legalInfoBtn");
+
 if (legalBtnTop) legalBtnTop.textContent = t.legalTopBtn;
+if (legalInfoBtn) legalInfoBtn.textContent = t.legalTopBtn || "Legal / About";
 
   if (loadingTitle) loadingTitle.innerText = t.loading;
   if (loadingText) loadingText.innerText = "";
@@ -8954,6 +8979,11 @@ if (contactBtnTop) {
 const legalBtnTop = document.getElementById("legalBtnTop");
 if (legalBtnTop) {
   legalBtnTop.onclick = () => openLegalHubModal();
+}
+
+const legalInfoFooterBtn = document.getElementById("legalInfoBtn");
+if (legalInfoFooterBtn) {
+  legalInfoFooterBtn.onclick = () => openLegalHubModal();
 }
 
 const supportEmailBtn = document.getElementById("supportEmailBtn");
