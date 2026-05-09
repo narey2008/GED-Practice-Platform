@@ -9,6 +9,8 @@
     (function () {
       const savedLanguage = localStorage.getItem("ged_practice_language_pref") || "English";
       document.documentElement.setAttribute("data-language", savedLanguage);
+      let exampleEntrySource = null; 
+// "practice" OR "menu"
     })();
   </script>
   <style>
@@ -198,6 +200,8 @@
 
     .hidden { display: none !important; }
 
+    
+
     .highlighterTools {
   max-width: 1080px;
   margin: 10px auto 0;
@@ -234,6 +238,54 @@
   outline: 2px dashed #facc15;
   outline-offset: 6px;
   border-radius: 8px;
+}
+
+.learningLinkBtn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  padding: 0;
+  margin-top: 10px;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+  width: auto;
+}
+
+.learningLinkBtn:hover {
+  background: transparent;
+  transform: none;
+}
+
+.learningStepBox {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border-left: 4px solid var(--primary);
+  color: var(--text);
+  line-height: 1.65;
+}
+
+.learningMiniLabel {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.learningGradeActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
     .topbar {
@@ -1397,6 +1449,27 @@ body.loadingActive {
           </div>
         </div>
 
+        <div id="learningModePanel" class="menuPanel">
+  <h3>Learning Mode</h3>
+  <p>
+    Learn a skill step by step first, then answer a few questions with immediate feedback after each one.
+  </p>
+
+  <label for="learningSkillSelect">Skill</label>
+  <select id="learningSkillSelect"></select>
+
+  <label for="learningDifficultySelect" style="margin-top:12px;">Difficulty</label>
+  <select id="learningDifficultySelect">
+    <option>Easy</option>
+    <option>Medium</option>
+    <option selected>GED-Level</option>
+  </select>
+
+  <div class="menuActions" style="margin-top:12px;">
+    <button id="startLearningBtn" class="primaryBtn">Start Learning</button>
+  </div>
+</div>
+
         <div id="supportPanel" class="menuPanel">
           <h3>Support / Contact</h3>
           <p>
@@ -1515,6 +1588,7 @@ const GUEST_MODE_KEY = "ged_practice_guest_mode";
   timerId: null,
   timeRemaining: TEST_TIME_SECONDS,
   practiceMeta: null,
+learningMeta: null,
   tutorialQuestions: [],
 tutorialIndex: 0,
 inTutorial: false,
@@ -1896,6 +1970,125 @@ function makeCalculatorDraggable() {
   document.addEventListener("mouseup", () => {
     isDragging = false;
   });
+}
+
+function syncLearningSkillDropdown() {
+  const practiceSkillSelect = document.getElementById("practiceSkillSelect");
+  const learningSkillSelect = document.getElementById("learningSkillSelect");
+
+  if (!practiceSkillSelect || !learningSkillSelect) return;
+
+  const currentLearningValue = learningSkillSelect.value;
+  const currentPracticeValue = practiceSkillSelect.value;
+
+  learningSkillSelect.innerHTML = practiceSkillSelect.innerHTML;
+
+  if ([...learningSkillSelect.options].some((opt) => opt.value === currentLearningValue)) {
+    learningSkillSelect.value = currentLearningValue;
+  } else if ([...learningSkillSelect.options].some((opt) => opt.value === currentPracticeValue)) {
+    learningSkillSelect.value = currentPracticeValue;
+  }
+}
+
+function getCurrentLearningSkill() {
+  const q = state.questions[state.currentIndex];
+
+  return (
+    q?.subskill ||
+    q?.skill ||
+    state.practiceMeta?.skill ||
+    document.getElementById("learningSkillSelect")?.value ||
+    document.getElementById("practiceSkillSelect")?.value ||
+    "Solving Equations and Inequalities"
+  );
+}
+
+function getCurrentLearningDifficulty() {
+  return (
+    state.practiceMeta?.difficulty ||
+    state.difficulty ||
+    document.getElementById("learningDifficultySelect")?.value ||
+    document.getElementById("practiceDifficultySelect")?.value ||
+    "GED-Level"
+  );
+}
+
+function stripHtml(value) {
+  const div = document.createElement("div");
+  div.innerHTML = String(value || "");
+  return div.textContent || div.innerText || "";
+}
+
+function buildLearningBreakdown(q, stepNumber = 1) {
+  const cleanQuestion = stripHtml(q.question || "This problem");
+  const answer = String(q.answer ?? "—");
+  const explanation = String(q.explanation || "").trim();
+
+  return `
+    <div class="learningMiniLabel">Learning Example ${stepNumber}</div>
+
+    <div class="learningStepBox">
+      <strong>Problem</strong><br>
+      ${escapeHtml(cleanQuestion)}
+    </div>
+
+    <div class="learningStepBox">
+      <strong>Step 1: Identify what the question is asking.</strong><br>
+      The question is asking you to work with <strong>${escapeHtml(q.subskill || q.skill || "this skill")}</strong>.
+    </div>
+
+    <div class="learningStepBox">
+      <strong>Step 2: Pick the correct strategy.</strong><br>
+      Look for the important numbers, labels, graph values, formula, or relationship in the problem. Then decide whether you need to add, subtract, multiply, divide, compare, or use a formula.
+    </div>
+
+    <div class="learningStepBox">
+      <strong>Step 3: Work through the problem.</strong><br>
+      ${escapeHtml(explanation || "Work carefully from the information given and simplify your result.")}
+    </div>
+
+    <div class="learningStepBox">
+      <strong>Answer</strong><br>
+      ${escapeHtml(answer)}
+    </div>
+  `;
+}
+
+function appendLearningShortcut(container, label, onClick) {
+  const wrap = document.createElement("div");
+  wrap.style.marginTop = "10px";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "learningLinkBtn";
+  btn.textContent = label;
+  btn.onclick = onClick;
+
+  wrap.appendChild(btn);
+  container.appendChild(wrap);
+}
+function appendLearningPracticeControls(container, q) {
+  if (state.mode === "practice") {
+    appendLearningShortcut(container, "Need an example?", async () => {
+      await startPracticeExampleOnly(getCurrentLearningSkill(), getCurrentLearningDifficulty());
+    });
+  }
+
+  if (state.mode === "learning" && q.learningPhase === "practice") {
+    const actions = document.createElement("div");
+    actions.className = "learningGradeActions";
+
+    const gradeBtn = document.createElement("button");
+    gradeBtn.className = "primaryBtn";
+    gradeBtn.textContent = q.learningChecked ? "Answer Submitted" : "Submit Answer";
+    gradeBtn.disabled = !!q.learningChecked || state.isPaused || state.lockedReviewMode;
+    gradeBtn.onclick = async () => {
+      await gradeLearningQuestion();
+    };
+
+    actions.appendChild(gradeBtn);
+    container.appendChild(actions);
+  }
 }
 
 function skillToPracticeCategory(skill) {
@@ -3112,6 +3305,7 @@ if (practiceSkillSelect) {
       <option value="Slope From Graph">Slope From Graph</option>
     </optgroup>
   `;
+syncLearningSkillDropdown();
 
   if ([...practiceSkillSelect.options].some((opt) => opt.value === currentSkill)) {
     practiceSkillSelect.value = currentSkill;
@@ -3171,9 +3365,8 @@ if (supportPanel) {
   if (globalMenuBtn) globalMenuBtn.textContent = t.mainMenuBtn;
   if (prevBtn) prevBtn.textContent = t.previous;
   if (reportQuestionBtn) reportQuestionBtn.textContent = t.reportQuestion;
-  if (submitTestBtn) {
-    submitTestBtn.textContent =
-      state.mode === "practice" ? t.submitPractice : t.submitTest;
+if (submitTestBtn) {
+  submitTestBtn.classList.toggle("hidden", isTutorial || !["test", "practice"].includes(state.mode));
   }
 
   const loadingTitle = document.getElementById("loadingTitle");
@@ -5947,7 +6140,7 @@ if (submitBtn) {
 }
 
 if (calculatorBtn) {
-  const allowed = state.mode === "test" && !isTutorial;
+  const allowed = !isTutorial && state.mode !== "learning" && !!current?.calculatorAllowed;
   calculatorBtn.classList.toggle("hidden", !allowed);
   calculatorBtn.disabled = state.isPaused || state.lockedReviewMode;
 }
@@ -6002,6 +6195,19 @@ if (clearHighlightsBtn) {
       pauseBtn.disabled = true;
       nextBtn.innerText = "Submit Test";
       submitBtn.classList.add("hidden");
+    } else if (state.mode === "learning") {
+      prevBtn.disabled = state.currentIndex === 0;
+      nextBtn.disabled = state.isPaused;
+      flagBtn.disabled = true;
+      reportQuestionBtn.disabled = false;
+      pauseBtn.disabled = true;
+      submitBtn.classList.add("hidden");
+
+      if (isLastQuestion) {
+        nextBtn.innerText = "Finish Lesson";
+      } else {
+        nextBtn.innerText = tr("next");
+      }
     } else if (state.mode === "practice-example") {
             prevBtn.disabled = state.currentIndex === 0;
       nextBtn.disabled = false;
@@ -6276,6 +6482,98 @@ async function beginRealTestAfterTutorial() {
     }
   );
 }
+
+async function startLearningMode(skill, difficulty, fromPractice = false) {
+  await withLoading(
+    "Starting Learning Mode...",
+    "Building examples and practice questions.",
+    async () => {
+      hideToast();
+      stopTimer();
+
+      const selectedSkill = skill || document.getElementById("learningSkillSelect")?.value || "Solving Equations and Inequalities";
+      const selectedDifficulty = difficulty || document.getElementById("learningDifficultySelect")?.value || "GED-Level";
+
+      const res = await fetch(
+        `${API_BASE}/api/practice?count=8&difficulty=${encodeURIComponent(selectedDifficulty)}&skill=${encodeURIComponent(selectedSkill)}`
+      );
+
+      if (!res.ok) {
+        throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      const generated = Array.isArray(data.questions) ? data.questions : [];
+
+      if (!generated.length) {
+        throw new Error("Learning Mode could not generate questions for this skill.");
+      }
+
+      state.mode = "learning";
+      state.questions = generated.map((q, index) => ({
+        ...q,
+        userAnswer: null,
+        flagged: false,
+        learningPhase: index < 3 ? "example" : "practice",
+        example: index < 3,
+        learningChecked: false,
+        learningCorrect: false
+      }));
+
+      state.currentIndex = 0;
+      state.practiceMeta = { skill: selectedSkill, difficulty: selectedDifficulty };
+      state.learningMeta = {
+        skill: selectedSkill,
+        difficulty: selectedDifficulty,
+        fromPractice: !!fromPractice
+      };
+
+      state.overtimeUsed = false;
+      state.timeoutMode = false;
+      state.lockedReviewMode = false;
+      state.navigatorVisible = false;
+      state.isPaused = false;
+      state.idleSeconds = 0;
+      state.autoPaused = false;
+
+      await setView("test");
+      renderQuestion();
+      updateStatus();
+    }
+  );
+}
+
+async function startPracticeExampleOnly(skill, difficulty) {
+  await withLoading(
+    "Loading Example First...",
+    "Preparing a guided example.",
+    async () => {
+      await startPractice(skill, difficulty, true);
+
+      state.learningMeta = {
+        skill,
+        difficulty,
+        goToLearningAfterExample: false
+      };
+    }
+  );
+}
+
+async function gradeLearningQuestion() {
+  const q = state.questions[state.currentIndex];
+  if (!q || state.mode !== "learning" || q.learningPhase !== "practice") return;
+
+  if (!isQuestionAnswered(q)) {
+    showToast("Learning Mode", "Choose or enter an answer first.");
+    return;
+  }
+
+  q.learningChecked = true;
+  q.learningCorrect = answersMatch(q.userAnswer, q.answer);
+
+  renderQuestion();
+}
+
     async function startPractice(skill, difficulty, examplesOnly = false) {
   await withLoading(
     examplesOnly ? tr("loadingExamples") : tr("startingPractice"),
@@ -6303,6 +6601,9 @@ async function beginRealTestAfterTutorial() {
       }));
       state.currentIndex = 0;
       state.practiceMeta = { skill, difficulty };
+      if (!examplesOnly) {
+        state.learningMeta = null;
+      }
       state.overtimeUsed = false;
       state.timeoutMode = false;
       state.lockedReviewMode = false;
@@ -6374,9 +6675,25 @@ questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
 
   if (state.isPaused) {
     feedbackEl.innerText = tr("testPausedMessage");
+  } else if (state.mode === "learning" && q.learningPhase === "example") {
+    feedbackEl.innerHTML = buildLearningBreakdown(q, state.currentIndex + 1);
   } else if (q.example) {
     feedbackEl.innerHTML =
-      `<strong>${tr("workedExample")}</strong><br><div class="explanationBox"><div><strong>${tr("answer")}:</strong> ${q.answer}</div><div style="margin-top:8px;">${q.explanation}</div></div>`;
+      `<strong>${tr("workedExample")}</strong><br>
+      <div class="explanationBox">
+        <div><strong>${tr("answer")}:</strong> ${q.answer}</div>
+        <div style="margin-top:8px;">${q.explanation}</div>
+      </div>`;
+  } else if (state.mode === "learning" && q.learningPhase === "practice" && q.learningChecked) {
+    feedbackEl.innerHTML = `
+      <div class="explanationBox">
+        <strong class="${q.learningCorrect ? "correct" : "incorrect"}">
+          ${q.learningCorrect ? "Correct!" : "Not quite."}
+        </strong>
+        <div style="margin-top:8px;"><strong>Correct Answer:</strong> ${escapeHtml(q.answer)}</div>
+        <div style="margin-top:8px;">${escapeHtml(q.explanation || "")}</div>
+      </div>
+    `;
   } else if (state.lockedReviewMode) {
     feedbackEl.innerText = tr("reviewModeLocked");
   } else {
@@ -6416,10 +6733,31 @@ function renderAnswerArea(q) {
     const box = document.createElement("div");
     box.className = "practiceItem";
     box.innerHTML = `
-      <div><strong>${tr("guidedExampleText")}</strong></div>
-      <div class="muted" style="margin-top:8px;">${tr("guidedExampleSubtext")}</div>
+      <div><strong>${state.mode === "learning" ? "Study the explanation above." : tr("guidedExampleText")}</strong></div>
+      <div class="muted" style="margin-top:8px;">
+        ${state.mode === "learning"
+          ? "When you understand the example, click Next to continue."
+          : tr("guidedExampleSubtext")}
+      </div>
     `;
     container.appendChild(box);
+
+    if (state.mode === "practice-example") {
+      appendLearningShortcut(container, "Still don’t understand?", async () => {
+        const skill = getCurrentLearningSkill();
+        const difficulty = getCurrentLearningDifficulty();
+
+        state.learningMeta = {
+          skill,
+          difficulty,
+          goToLearningAfterExample: false,
+          requestedFromExample: true
+        };
+
+        await startLearningMode(skill, difficulty, true);
+      });
+    }
+
     return;
   }
 
@@ -6439,6 +6777,7 @@ function renderAnswerArea(q) {
     };
 
     container.appendChild(input);
+    appendLearningPracticeControls(container, q);
     return;
   }
 
@@ -6590,6 +6929,8 @@ clearBtn.onclick = async () => {
   await saveProgress();
 };
 
+appendLearningPracticeControls(container, q);
+
     return;
   }
 
@@ -6647,6 +6988,8 @@ clearBtn.onclick = async () => {
     });
   });
 
+  appendLearningPracticeControls(container, q);
+
   return;
 }
 
@@ -6671,6 +7014,8 @@ clearBtn.onclick = async () => {
 
     container.appendChild(btn);
   });
+
+  appendLearningPracticeControls(container, q);
 }
 
 function renderDiagram(diagramMarkup) {
@@ -6910,7 +7255,33 @@ async function openReviewBeforeSubmitModal() {
   const isLastQuestion = state.currentIndex === state.questions.length - 1;
 
   if (state.mode === "practice-example" && isLastQuestion) {
+    if (state.learningMeta?.goToLearningAfterExample) {
+      const skill = state.learningMeta.skill || state.practiceMeta?.skill;
+      const difficulty = state.learningMeta.difficulty || state.practiceMeta?.difficulty || "GED-Level";
+      await startLearningMode(skill, difficulty, true);
+      return;
+    }
+
     await startPractice(state.practiceMeta.skill, state.practiceMeta.difficulty, false);
+    return;
+  }
+
+  if (state.mode === "learning") {
+    const q = state.questions[state.currentIndex];
+
+    if (q?.learningPhase === "practice" && !q.learningChecked) {
+      showToast("Learning Mode", "Submit your answer before moving on.");
+      return;
+    }
+
+    if (isLastQuestion) {
+      await showLearningComplete();
+      return;
+    }
+
+    state.currentIndex += 1;
+    renderQuestion();
+    updateStatus();
     return;
   }
 
@@ -7236,6 +7607,73 @@ if (practiceWeakestBtn) {
       await startTest();
     };
   }
+}
+
+async function showLearningComplete() {
+  hideHighlighterTools?.();
+  renderChart(null);
+  renderDiagram?.(null);
+
+  const completedSkill = state.learningMeta?.skill || state.practiceMeta?.skill || "Learning Mode";
+  const completedDifficulty = state.learningMeta?.difficulty || state.practiceMeta?.difficulty || "GED-Level";
+
+  const practiceQuestions = state.questions.filter((q) => q.learningPhase === "practice");
+  const correct = practiceQuestions.filter((q) => q.learningCorrect).length;
+  const total = practiceQuestions.length;
+
+  state.mode = "learning-complete";
+  state.questions = [];
+  state.currentIndex = 0;
+  state.lockedReviewMode = false;
+  state.isPaused = false;
+  state.timeoutMode = false;
+
+  await setView("practice-results");
+
+  const panel = document.getElementById("practicePanel");
+  if (!panel) return;
+
+  panel.innerHTML = `
+    <h2 class="sectionTitle">Learning Complete</h2>
+
+    <div class="practiceSummary">
+      <div class="reviewStat">
+        <div class="reviewStatLabel">Skill</div>
+        <div class="reviewStatValue">${escapeHtml(completedSkill)}</div>
+      </div>
+
+      <div class="reviewStat">
+        <div class="reviewStatLabel">Practice Correct</div>
+        <div class="reviewStatValue">${correct} / ${total}</div>
+      </div>
+    </div>
+
+    <div class="reviewItem">
+      <p class="muted">
+        You worked through guided examples, practiced the skill on your own, and got instant feedback along the way. Keep building from here — every lesson gets you closer to being GED-ready.
+      </p>
+
+      <div class="menuActions">
+        <button id="learningAgainBtn" class="primaryBtn">Learn This Again</button>
+        <button id="learningPracticeBtn" class="secondaryBtn">Start Practice</button>
+        <button id="learningMenuBtn" class="secondaryBtn">Main Menu</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("learningAgainBtn").onclick = async () => {
+    await startLearningMode(completedSkill, completedDifficulty, false);
+  };
+
+  document.getElementById("learningPracticeBtn").onclick = async () => {
+    await startPractice(completedSkill, completedDifficulty, false);
+  };
+
+  document.getElementById("learningMenuBtn").onclick = () => {
+    goToMainMenu();
+  };
+
+  updateStatus();
 }
 
    async function showPracticeResults() {
@@ -7869,6 +8307,7 @@ async function handleEmailVerificationFromUrl() {
   state.timerId = null;
   state.timeRemaining = TEST_TIME_SECONDS;
   state.practiceMeta = null;
+  state.learningMeta = null;
   state.overtimeUsed = false;
   state.timeoutMode = false;
   state.lockedReviewMode = false;
@@ -8042,6 +8481,15 @@ if (questionTextForHighlighter) {
   });
 }
 
+const startLearningBtn = document.getElementById("startLearningBtn");
+if (startLearningBtn) {
+  startLearningBtn.addEventListener("click", async () => {
+    const skill = document.getElementById("learningSkillSelect")?.value || document.getElementById("practiceSkillSelect")?.value;
+    const difficulty = document.getElementById("learningDifficultySelect")?.value || document.getElementById("practiceDifficultySelect")?.value || "GED-Level";
+    await startLearningMode(skill, difficulty, false);
+  });
+}
+
 document.getElementById("pauseBtn").onclick = async () => {
   if (state.mode !== "test") return;
 
@@ -8086,6 +8534,7 @@ window.addEventListener("unhandledrejection", () => {
       updateStatus();
       await setView("menu");
       applyLanguage(getSavedLanguage());
+      syncLearningSkillDropdown();
 
       const url = new URL(window.location.href);
       const resetToken = url.searchParams.get("resetToken");
