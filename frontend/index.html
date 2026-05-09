@@ -1423,6 +1423,10 @@ select {
       margin-bottom: 18px;
     }
 
+    #profilePanel {
+  position: relative;
+}
+
     .profileHeader {
   display: flex;
   justify-content: space-between;
@@ -1536,6 +1540,331 @@ select {
 
 .profileHistoryTabs .menuActions {
   margin-top: 0;
+}
+
+.profileAccountNav {
+  position: absolute;
+  left: 18px;
+  width: 230px;
+  z-index: 5;
+  padding: 10px 16px 16px 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.profileAccountNavTitle {
+  font-size: calc(25px * var(--font-scale));
+  line-height: 1.05;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: -0.03em;
+  margin: 0 0 18px;
+}
+
+.profileAccountNavList {
+  display: grid;
+  gap: 5px;
+}
+
+.profileAccountNavItem {
+  position: relative;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 6px;
+  border-radius: 10px;
+  text-align: left;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: calc(11px * var(--font-scale));
+  box-shadow: none;
+}
+
+.profileAccountNavItem:hover {
+  background: transparent;
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.profileAccountNavItem.active {
+  background: transparent;
+  color: var(--primary);
+  border: none;
+  box-shadow: none;
+}
+
+.profileAccountNavItem.active::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  width: 4px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.profileAccountNavIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(15px * var(--font-scale));
+}
+
+.profileAccountNavItem.active .profileAccountNavIcon,
+.profileAccountNavItem:hover .profileAccountNavIcon {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+}
+
+.profileAccountNav ~ .profileContentSection {
+  margin-left: 252px;
+}
+
+.profileSectionAnchor {
+  scroll-margin-top: 82px;
+}
+
+.profileSectionHighlight {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(21, 62, 117, 0.16), 0 12px 28px rgba(8, 24, 46, 0.16) !important;
+}
+
+.profileContentSection {
+  margin-left: 252px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 8px 22px rgba(8, 24, 46, 0.12);
+  overflow: hidden;
+}
+
+.profileContentSectionHeader {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, rgba(21, 62, 117, 0.08), transparent 48%),
+    var(--panel-2);
+}
+
+.profileContentSectionTitle {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-weight: 900;
+  font-size: calc(22px * var(--font-scale));
+  letter-spacing: -0.02em;
+}
+
+.profileContentSectionText {
+  color: var(--muted);
+  line-height: 1.55;
+  font-weight: 700;
+  font-size: calc(13px * var(--font-scale));
+}
+
+.profileContentSectionBody {
+  padding: 18px 20px;
+}
+
+.profileContentSection .reviewTop,
+.profileContentSection .profileActionGrid,
+.profileContentSection .profileHistoryTabs,
+.profileContentSection #goalsSection,
+.profileContentSection #testHistorySection,
+.profileContentSection #practiceHistorySection {
+  margin-left: 0 !important;
+}
+
+.profileContentSection .reviewTop {
+  margin-bottom: 0;
+}
+
+.profileContentSection .profileActionGrid {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+
+.profileContentSection .profileActionCard {
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+.profileContentSection .profileHistoryTabs {
+  margin-bottom: 14px;
+}
+
+.profileContentSection .reviewStat {
+  box-shadow: none;
+}
+
+.profileContentSection #goalsSection:not(.hidden),
+.profileContentSection #testHistorySection:not(.hidden),
+.profileContentSection #practiceHistorySection:not(.hidden) {
+  display: block;
+}
+
+.profileContentSectionDivider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+.profileGoalsFocusActions {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .profileContentSection {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 900px) {
+.profileAccountNav {
+    position: relative;
+    left: auto;
+    width: 100%;
+    padding: 14px;
+    margin: 0 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--panel);
+  }
+
+  .profileAccountNavTitle {
+    font-size: calc(24px * var(--font-scale));
+    margin-bottom: 14px;
+  }
+
+  .profileAccountNavList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profileAccountNavItem {
+    grid-template-columns: 26px 1fr;
+    padding: 10px;
+  }
+
+  .profileAccountNavItem.active::before {
+    display: none;
+  }
+
+  .profileAccountNav ~ .profileContentSection {
+  margin-left: 0;
+}
+}
+
+@media (max-width: 520px) {
+  .profileAccountNavList {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profileGoalCard {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--panel);
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.profileGoalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.profileGoalTitle {
+  font-size: calc(20px * var(--font-scale));
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.profileGoalDetail {
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.profileGoalBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  color: var(--primary);
+  font-weight: 900;
+  font-size: calc(12px * var(--font-scale));
+  white-space: nowrap;
+}
+
+.profileGoalGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.profileGoalMiniStat {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--panel-2);
+}
+
+.profileGoalMiniLabel {
+  color: var(--muted);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: calc(11px * var(--font-scale));
+  margin-bottom: 6px;
+}
+
+.profileGoalMiniValue {
+  color: var(--text);
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.profileGoalEmpty {
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--panel-2);
+  color: var(--text);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .profileGoalGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1853,6 +2182,49 @@ body.loadingActive {
 .goalLauncherBtn:hover {
   background: var(--panel-2);
   border-color: var(--primary);
+}
+
+.goalLauncherContent {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  min-width: 210px;
+}
+
+.goalLauncherMain {
+  font-weight: 900;
+  color: var(--primary);
+  line-height: 1.2;
+}
+
+.goalLauncherMeta {
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.goalLauncherMiniTrack {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.goalLauncherMiniFill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+.goalLauncherBtn.goalLauncherHasGoal {
+  width: 260px;
+  border-radius: 16px;
+  padding: 10px 12px;
 }
 
 .goalDetailSelectScrollable {
@@ -4602,12 +4974,14 @@ function saveGoal(goal) {
   goalDockDismissed = false;
   localStorage.setItem(GED_GOAL_KEY, JSON.stringify(goal));
   renderGoalDock();
+  refreshProfileGoalsSection();
 }
 
 function clearGoal() {
   goalDockDismissed = false;
   localStorage.removeItem(GED_GOAL_KEY);
   renderGoalDock();
+  refreshProfileGoalsSection();
 }
 
 function getGoalActivity() {
@@ -4945,16 +5319,9 @@ function getGoalDetailByKey(type, detailKey) {
 
 function renderGoalDock() {
   const dock = document.getElementById("goalDock");
-  const badge = document.getElementById("goalDockBadge");
-  const text = document.getElementById("goalDockText");
-  const subtext = document.getElementById("goalDockSubtext");
-  const fill = document.getElementById("goalProgressFill");
-  const editBtn = document.getElementById("editGoalBtn");
-  const markBtn = document.getElementById("markGoalDoneBtn");
   const launcherBtn = document.getElementById("goalLauncherBtn");
-  const viewProgressBtn = document.getElementById("viewGoalProgressBtn");
 
-if (!dock || !badge || !text || !subtext || !fill || !editBtn || !markBtn || !launcherBtn || !viewProgressBtn) return;
+  if (!dock || !launcherBtn) return;
 
   const shouldShow =
     state.mode === "menu" ||
@@ -4962,64 +5329,50 @@ if (!dock || !badge || !text || !subtext || !fill || !editBtn || !markBtn || !la
     state.mode === "review" ||
     state.mode === "practice-results";
 
-const goal = getSavedGoal();
-const showGoalLauncher = goalDockDismissed && shouldShow;
+  // Keep the larger goal card hidden by default.
+  // Goal setup/editing is now handled by the top-right launcher button.
+  dock.classList.add("hidden");
 
-dock.classList.toggle("hidden", !shouldShow || showGoalLauncher);
-launcherBtn.classList.toggle("hidden", !showGoalLauncher);
+  launcherBtn.classList.toggle("hidden", !shouldShow);
 
-if (goal) {
-  launcherBtn.textContent = "🎯 Goals";
-} else {
-  launcherBtn.textContent = "🎯 Set Goal";
-}
+  const goal = getSavedGoal();
 
   if (!goal) {
-    badge.textContent = "Not set";
-    text.textContent = "Set a goal to stay focused while you practice.";
-    subtext.innerHTML = "Goal ideas can be based on your activity, weak skills, or test readiness.";
-    fill.style.width = "0%";
-    editBtn.textContent = "Set Goal";
-    markBtn.classList.add("hidden");
-    viewProgressBtn.classList.add("hidden");
+    launcherBtn.classList.remove("goalLauncherHasGoal");
+    launcherBtn.textContent = "🎯 Set Goal";
+    launcherBtn.title = "Set your GED goal";
+    launcherBtn.setAttribute("aria-label", "Set your GED goal");
     return;
   }
 
   const progress = getGoalProgress(goal);
   const deadlineInfo = getGoalDeadlineInfo(goal);
-  const isExpired = deadlineInfo?.expired && progress < 100;
   const isComplete = progress >= 100;
+  const isExpired = deadlineInfo?.expired && !isComplete;
+
+  let statusLabel = `${progress}% complete`;
 
   if (isComplete) {
-    badge.textContent = "Complete";
+    statusLabel = "Complete";
   } else if (isExpired) {
-    badge.textContent = "Expired";
-  } else {
-    badge.textContent = `${progress}% complete`;
+    statusLabel = "Expired";
   }
 
-  text.textContent = goal.title || "My GED Goal";
+  const goalTitle = goal.title || "My GED Goal";
 
-  const deadlineHtml = deadlineInfo
-    ? `<div class="goalDeadlineLine ${isExpired ? "goalExpired" : ""}">${escapeHtml(deadlineInfo.label)}</div>`
-    : "";
+  launcherBtn.classList.add("goalLauncherHasGoal");
+  launcherBtn.title = `${goalTitle} — ${statusLabel}`;
+  launcherBtn.setAttribute("aria-label", `${goalTitle}. ${statusLabel}. Open goal settings.`);
 
-  subtext.innerHTML = `
-    <div>${escapeHtml(goal.detailText || goal.text || getGoalTypeLabel(goal.type))}</div>
-    ${deadlineHtml}
+  launcherBtn.innerHTML = `
+    <span class="goalLauncherContent">
+      <span class="goalLauncherMain">🎯 Goal Progress</span>
+      <span class="goalLauncherMeta">${escapeHtml(goalTitle)} · ${escapeHtml(statusLabel)}</span>
+      <span class="goalLauncherMiniTrack" aria-hidden="true">
+        <span class="goalLauncherMiniFill" style="width:${progress}%"></span>
+      </span>
+    </span>
   `;
-
-  fill.style.width = `${progress}%`;
-  editBtn.textContent = "Edit Goal";
-  viewProgressBtn.classList.remove("hidden");
-
-  const autoTracked = canAutoTrackGoal(goal);
-
-if (isExpired || isComplete || autoTracked) {
-  markBtn.classList.add("hidden");
-} else {
-  markBtn.classList.remove("hidden");
-}
 }
 
 function openGoalModal() {
@@ -5379,33 +5732,20 @@ function openGoalProgressModal(activityLabel = "activity") {
 
         ${
           complete
-            ? `<p>You finished this goal. Great work — set a new goal to keep your momentum going.</p>`
+            ? `<p>You finished this goal. Great work — use the goal card or Profile Goals section when you are ready to set your next goal.</p>`
             : `<p>Keep going. Small progress after each session adds up fast.</p>`
         }
       </div>
     `,
     [
       {
-        label: "Edit Goal",
-        variant: "secondary",
-        keepOpen: true,
-        onClick: () => openGoalModal()
-      },
- {
-  label: complete ? "Set New Goal" : "Close",
-  variant: "primary",
-  onClick: () => {
-    if (complete) {
-      clearGoal();
-      goalDockDismissed = true;
-      renderGoalDock();
-      return;
-    }
-
-    goalDockDismissed = true;
-    renderGoalDock();
-  }
-}
+        label: "Close",
+        variant: "primary",
+        onClick: () => {
+          goalDockDismissed = true;
+          renderGoalDock();
+        }
+      }
     ]
   );
 }
@@ -5442,12 +5782,7 @@ function wireGoalControls() {
 
 if (goalLauncherBtn) {
   goalLauncherBtn.onclick = () => {
-    goalDockDismissed = false;
-    renderGoalDock();
-
-    if (!getSavedGoal()) {
-      openGoalModal();
-    }
+    openGoalModal();
   };
 }
 
@@ -10113,7 +10448,257 @@ async function showLearningComplete() {
   );
 }
 
-async function openProfilePanel(defaultTab = "tests") {
+function renderProfileGoalsSection() {
+  const goal = getSavedGoal();
+
+  if (!goal) {
+    return `
+      <div class="profileGoalEmpty">
+        <h3 style="margin:0 0 8px; color:var(--primary);">🎯 Goals</h3>
+        <p style="margin:0 0 12px;">
+          You do not have an active GED goal yet. Set one to track progress toward practice, learning, score, skill, or pass-ready targets.
+        </p>
+
+        <div class="menuActions">
+          <button id="profileGoalSetBtn" class="primaryBtn">Set Goal</button>
+          <button id="profileGoalIdeasBtn" class="secondaryBtn">Goal Ideas</button>
+        </div>
+      </div>
+    `;
+  }
+
+  const progress = getGoalProgress(goal);
+  const deadlineInfo = getGoalDeadlineInfo(goal);
+  const isComplete = progress >= 100;
+  const isExpired = deadlineInfo?.expired && !isComplete;
+  const currentCount = Number(goal.currentCount || 0);
+  const targetCount = Number(goal.targetCount || 1);
+
+  let statusLabel = `${progress}% complete`;
+
+  if (isComplete) {
+    statusLabel = "Complete";
+  } else if (isExpired) {
+    statusLabel = "Expired";
+  }
+
+  const deadlineLabel = deadlineInfo
+    ? deadlineInfo.label
+    : "No target date";
+
+  const autoTrackLabel = canAutoTrackGoal(goal)
+    ? "Automatic"
+    : "Manual";
+
+  return `
+    <div class="profileGoalCard">
+      <div class="profileGoalHeader">
+        <div>
+          <div class="profileGoalTitle">${escapeHtml(goal.title || "My GED Goal")}</div>
+          <div class="profileGoalDetail">
+            ${escapeHtml(goal.detailText || goal.text || getGoalTypeLabel(goal.type))}
+          </div>
+        </div>
+
+        <span class="profileGoalBadge">${escapeHtml(statusLabel)}</span>
+      </div>
+
+      <div class="goalProgressTrack" aria-label="Goal progress">
+        <div class="goalProgressFill" style="width:${progress}%"></div>
+      </div>
+
+      <div class="profileGoalGrid">
+        <div class="profileGoalMiniStat">
+          <div class="profileGoalMiniLabel">Goal Type</div>
+          <div class="profileGoalMiniValue">${escapeHtml(getGoalTypeLabel(goal.type))}</div>
+        </div>
+
+        <div class="profileGoalMiniStat">
+          <div class="profileGoalMiniLabel">Progress</div>
+          <div class="profileGoalMiniValue">${currentCount} / ${targetCount}</div>
+        </div>
+
+        <div class="profileGoalMiniStat">
+          <div class="profileGoalMiniLabel">Target Date</div>
+          <div class="profileGoalMiniValue">${escapeHtml(deadlineLabel)}</div>
+        </div>
+
+        <div class="profileGoalMiniStat">
+          <div class="profileGoalMiniLabel">Tracking</div>
+          <div class="profileGoalMiniValue">${escapeHtml(autoTrackLabel)}</div>
+        </div>
+      </div>
+
+      <div class="menuActions">
+        <button id="profileGoalEditBtn" class="secondaryBtn">Edit Goal</button>
+        <button id="profileGoalIdeasBtn" class="secondaryBtn">Goal Ideas</button>
+        <button id="profileGoalShowDockBtn" class="secondaryBtn">Open Goal Settings</button>
+        <button id="profileGoalProgressBtn" class="secondaryBtn">View Progress</button>
+        <button id="profileGoalClearBtn" class="dangerBtn">Clear Goal</button>
+      </div>
+    </div>
+  `;
+}
+
+function setActiveProfileNavItem(targetId) {
+  document.querySelectorAll(".profileAccountNavItem").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.profileScrollTarget === targetId);
+  });
+}
+
+function highlightProfileSection(section) {
+  if (!section) return;
+
+  section.classList.add("profileSectionHighlight");
+
+  setTimeout(() => {
+    section.classList.remove("profileSectionHighlight");
+  }, 900);
+}
+
+function wireProfileAccountNav() {
+  const navButtons = Array.from(document.querySelectorAll(".profileAccountNavItem"));
+
+  if (!navButtons.length) return;
+
+  const sectionIds = navButtons
+    .map((btn) => btn.dataset.profileScrollTarget)
+    .filter(Boolean);
+
+  let navScrollLock = false;
+  let navScrollLockTimer = null;
+
+  const getSectionTopDistance = (section) => {
+    const rect = section.getBoundingClientRect();
+    return Math.abs(rect.top - 96);
+  };
+
+  const updateActiveFromScroll = () => {
+    if (navScrollLock) return;
+
+    let activeId = sectionIds[0];
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    sectionIds.forEach((id) => {
+      const section = document.getElementById(id);
+      if (!section) return;
+
+      const rect = section.getBoundingClientRect();
+
+      if (rect.bottom < 96) return;
+
+      const distance = getSectionTopDistance(section);
+
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        activeId = id;
+      }
+    });
+
+    setActiveProfileNavItem(activeId);
+  };
+
+  navButtons.forEach((btn) => {
+    btn.onclick = () => {
+      const targetId = btn.dataset.profileScrollTarget;
+      const section = document.getElementById(targetId);
+
+      if (!section) return;
+
+      navScrollLock = true;
+      setActiveProfileNavItem(targetId);
+      highlightProfileSection(section);
+
+      section.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+      clearTimeout(navScrollLockTimer);
+      navScrollLockTimer = setTimeout(() => {
+        navScrollLock = false;
+        setActiveProfileNavItem(targetId);
+      }, 750);
+    };
+  });
+
+  if (window.profileNavScrollHandler) {
+    window.removeEventListener("scroll", window.profileNavScrollHandler);
+  }
+
+  window.profileNavScrollHandler = updateActiveFromScroll;
+  window.addEventListener("scroll", updateActiveFromScroll, { passive: true });
+
+  updateActiveFromScroll();
+}
+
+function refreshProfileGoalsSection() {
+  const goalsSection = document.getElementById("goalsSection");
+  if (!goalsSection) return;
+
+  goalsSection.innerHTML = renderProfileGoalsSection();
+  wireProfileGoalsSectionControls();
+}
+
+function wireProfileGoalsSectionControls() {
+  const setBtn = document.getElementById("profileGoalSetBtn");
+  const editBtn = document.getElementById("profileGoalEditBtn");
+  const ideasBtn = document.getElementById("profileGoalIdeasBtn");
+  const showDockBtn = document.getElementById("profileGoalShowDockBtn");
+  const progressBtn = document.getElementById("profileGoalProgressBtn");
+  const clearBtn = document.getElementById("profileGoalClearBtn");
+
+  if (setBtn) {
+    setBtn.onclick = () => openGoalModal();
+  }
+
+  if (editBtn) {
+    editBtn.onclick = () => openGoalModal();
+  }
+
+  if (ideasBtn) {
+    ideasBtn.onclick = () => openGoalIdeasModal();
+  }
+
+if (showDockBtn) {
+  showDockBtn.onclick = () => {
+    openGoalModal();
+  };
+}
+
+  if (progressBtn) {
+    progressBtn.onclick = () => {
+      openGoalProgressModal("Current goal progress");
+    };
+  }
+
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      showModal(
+        "Clear Goal",
+        `
+          <p>This will remove your current local goal and reset the goal card.</p>
+          <p><strong>This will not delete your test history or practice history.</strong></p>
+        `,
+        [
+          {
+            label: "Cancel",
+            variant: "secondary"
+          },
+          {
+            label: "Clear Goal",
+            variant: "danger",
+            onClick: () => {
+              clearGoal();
+            }
+          }
+        ]
+      );
+    };
+  }
+}
+
+async function openProfilePanel(defaultTab = "goals") {
   if (!state.auth.user || !state.auth.token) return;
 
   await withLoading(
@@ -10208,10 +10793,55 @@ panel.innerHTML = `
           ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
         </span>
       </div>
+</div>
+</div>
+
+<div class="profileAccountNav">
+  <div class="profileAccountNavTitle">Account<br>Management</div>
+
+  <div class="profileAccountNavList" aria-label="Profile sections">
+    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileGoalsFocusSection">
+      <span class="profileAccountNavIcon">🎯</span>
+      <span>Goals & Focus</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileProgressSection">
+      <span class="profileAccountNavIcon">📊</span>
+      <span>Progress Overview</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSettingsSection">
+      <span class="profileAccountNavIcon">🔐</span>
+      <span>Account Settings</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileSecuritySection">
+      <span class="profileAccountNavIcon">🛡️</span>
+      <span>Security & Access</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileHistorySection">
+      <span class="profileAccountNavIcon">📚</span>
+      <span>History</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileDangerSection">
+      <span class="profileAccountNavIcon">⚠️</span>
+      <span>Danger Zone</span>
+    </button>
+  </div>
+</div>
+
+<section id="profileProgressSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <h3 class="profileContentSectionTitle">Progress Overview</h3>
+    <div class="profileContentSectionText">
+      A quick summary of your full-test and practice activity.
     </div>
   </div>
 
-  <div class="reviewTop">
+  <div class="profileContentSectionBody">
+    <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("testsTaken")}</div>
       <div class="reviewStatValue">${testHistory.length}</div>
@@ -10236,9 +10866,20 @@ panel.innerHTML = `
       <div class="reviewStatLabel">${tr("practiceSessions")}</div>
       <div class="reviewStatValue">${practiceHistory.length}</div>
     </div>
+    </div>
+  </div>
+</section>
+
+<section id="profileGoalsFocusSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <h3 class="profileContentSectionTitle">Goals & Focus</h3>
+    <div class="profileContentSectionText">
+      Your current target, weakest areas, and recommended next action.
+    </div>
   </div>
 
-  <div class="reviewTop">
+  <div class="profileContentSectionBody">
+    <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("currentFocus")}</div>
       <div class="reviewStatValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
@@ -10253,11 +10894,11 @@ panel.innerHTML = `
       <div class="reviewStatLabel">${tr("progressNote")}</div>
       <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
     </div>
-  </div>
+    </div>
 
-  <div class="profileActionGrid">
-    <div class="profileActionCard">
-      <h3>Practice Focus</h3>
+    <div class="profileGoalsFocusActions">
+      <div class="profileActionCard">
+        <h3>Practice Focus</h3>
       <p>Jump directly into your weakest skill or continue reviewing your progress.</p>
 
       <div class="menuActions">
@@ -10269,6 +10910,20 @@ panel.innerHTML = `
       </div>
     </div>
 
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="profileAccountSettingsSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <h3 class="profileContentSectionTitle">Account Settings</h3>
+    <div class="profileContentSectionText">
+      Manage username, email, password, and scoring preferences.
+    </div>
+  </div>
+
+  <div class="profileContentSectionBody">
     <div class="profileActionCard">
       <h3>Account Settings</h3>
       <p>Manage your username, email, password, security, and scoring preference.</p>
@@ -10283,6 +10938,19 @@ panel.innerHTML = `
       </div>
     </div>
 
+    </div>
+  </div>
+</section>
+
+<section id="profileSecuritySection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <h3 class="profileContentSectionTitle">Security & Access</h3>
+    <div class="profileContentSectionText">
+      Account recovery, access help, and protection settings.
+    </div>
+  </div>
+
+  <div class="profileContentSectionBody">
     <div class="profileActionCard">
       <h3>Security & Access</h3>
       <p>Use these options if you need account-access help or need to enable account protection.</p>
@@ -10298,6 +10966,19 @@ panel.innerHTML = `
       </div>
     </div>
 
+    </div>
+  </div>
+</section>
+
+<section id="profileDangerSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <h3 class="profileContentSectionTitle" style="color:#b42318;">Danger Zone</h3>
+    <div class="profileContentSectionText">
+      Permanent account actions live here.
+    </div>
+  </div>
+
+  <div class="profileContentSectionBody">
     <div class="profileActionCard profileDangerZone">
       <h3>Danger Zone</h3>
       <p>Deleting your account permanently removes your saved account data.</p>
@@ -10307,20 +10988,40 @@ panel.innerHTML = `
       </div>
     </div>
   </div>
+</section>
 
-  <div class="profileHistoryTabs">
+<section id="profileHistorySection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <h3 class="profileContentSectionTitle">History</h3>
+    <div class="profileContentSectionText">
+      Review submitted full tests and completed practice sessions.
+    </div>
+  </div>
+
+  <div class="profileContentSectionBody">
+    <div class="profileHistoryTabs">
     <div class="menuActions">
+      <button id="goalsTabBtn" class="secondaryBtn">Goals</button>
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
       <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
     </div>
   </div>
 
-  <div id="testHistorySection" class="hidden"></div>
-  <div id="practiceHistorySection" class="hidden"></div>
+    <div id="goalsSection" class="hidden"></div>
+    <div id="testHistorySection" class="hidden"></div>
+    <div id="practiceHistorySection" class="hidden"></div>
+  </div>
+</section>
 `;
 
+        const goalsSection = document.getElementById("goalsSection");
         const testSection = document.getElementById("testHistorySection");
         const practiceSection = document.getElementById("practiceHistorySection");
+
+        if (goalsSection) {
+          goalsSection.innerHTML = renderProfileGoalsSection();
+          wireProfileGoalsSectionControls();
+        }
 
         if (!testHistory.length) {
           testSection.innerHTML = `
@@ -10391,9 +11092,14 @@ panel.innerHTML = `
         }
 
         function showTab(tabName) {
+          goalsSection.classList.toggle("hidden", tabName !== "goals");
           testSection.classList.toggle("hidden", tabName !== "tests");
           practiceSection.classList.toggle("hidden", tabName !== "practice");
         }
+
+        document.getElementById("goalsTabBtn").onclick = () => {
+          showTab("goals");
+        };
 
         document.getElementById("testHistoryTabBtn").onclick = () => {
           showTab("tests");
@@ -10404,6 +11110,7 @@ panel.innerHTML = `
         };
 
         showTab(defaultTab);
+        wireProfileAccountNav();
 
         panel.querySelectorAll(".testHistoryToggleBtn").forEach((btn) => {
           btn.onclick = () => {
