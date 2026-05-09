@@ -1785,6 +1785,208 @@ body.loadingActive {
       content: "Please do not refresh";
     }
 
+    .goalDock {
+  position: absolute;
+  top: 76px;
+  right: 18px;
+  z-index: 30;
+  width: 300px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(8, 24, 46, 0.22);
+  padding: 14px;
+}
+
+.goalDockTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.goalDockTitleMain {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.goalDockCloseBtn {
+  width: 28px !important;
+  height: 28px;
+  padding: 0 !important;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-weight: 900;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.goalDockCloseBtn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--card);
+}
+
+.goalLauncherBtn {
+  position: absolute;
+  top: 76px;
+  right: 18px;
+  z-index: 30;
+  width: auto;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 26px rgba(8, 24, 46, 0.2);
+  font-weight: 900;
+}
+
+.goalLauncherBtn:hover {
+  background: var(--panel-2);
+  border-color: var(--primary);
+}
+
+.goalDetailSelectScrollable {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.goalDockBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.goalDockText {
+  color: var(--text);
+  line-height: 1.45;
+  font-size: calc(13px * var(--font-scale));
+  margin-bottom: 10px;
+}
+
+.goalDockSubtext {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: calc(12px * var(--font-scale));
+  margin-bottom: 12px;
+}
+
+.goalDeadlineLine {
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale));
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+.goalDeadlineLine.goalExpired {
+  color: #b42318;
+}
+
+.goalAutoPreview {
+  border-left: 4px solid var(--primary);
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  line-height: 1.55;
+  font-size: calc(13px * var(--font-scale));
+}
+
+.goalProgressTrack {
+  height: 9px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.goalProgressFill {
+  height: 100%;
+  width: 0%;
+  background: var(--primary);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.goalDockActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.goalDockActions button {
+  width: auto;
+  padding: 7px 10px;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.goalIdeaGrid {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.goalIdeaBtn {
+  text-align: left;
+  width: 100%;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.goalIdeaBtn:hover {
+  border-color: var(--primary);
+}
+
+.goalFormGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.goalFormRow {
+  display: grid;
+  gap: 7px;
+}
+
+@media (max-width: 520px) {
+  .goalDock,
+  .goalLauncherBtn {
+    position: static;
+    width: auto;
+    max-width: none;
+    margin: 12px 10px 0;
+  }
+
+  .goalDock {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .goalDockActions button {
+    width: 100%;
+  }
+}
+
 .toastCloseBtn:hover {
   background: var(--panel-2);
 }
@@ -2007,6 +2209,37 @@ body.loadingActive {
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
   </div>
+
+  <div id="goalDock" class="goalDock hidden">
+  <div class="goalDockTitle">
+  <span class="goalDockTitleMain">🎯 My GED Goal</span>
+  <span id="goalDockBadge" class="goalDockBadge">Not set</span>
+  <button id="closeGoalDockBtn" class="goalDockCloseBtn" type="button" title="Hide goal card" aria-label="Hide goal card">×</button>
+</div>
+
+  <div id="goalDockText" class="goalDockText">
+    Set a goal to stay focused while you practice.
+  </div>
+
+  <div id="goalDockSubtext" class="goalDockSubtext">
+    Goal ideas can be based on your activity, weak skills, or test readiness.
+  </div>
+
+  <div class="goalProgressTrack" aria-label="Goal progress">
+    <div id="goalProgressFill" class="goalProgressFill"></div>
+  </div>
+
+  <div class="goalDockActions">
+    <button id="editGoalBtn" class="secondaryBtn">Set Goal</button>
+    <button id="goalIdeasBtn" class="secondaryBtn">Ideas</button>
+    <button id="viewGoalProgressBtn" class="secondaryBtn hidden">View Progress</button>
+    <button id="markGoalDoneBtn" class="primaryBtn hidden">Mark Progress</button>
+  </div>
+</div>
+
+<button id="goalLauncherBtn" class="goalLauncherBtn hidden" type="button">
+  🎯 Goals
+</button>
 
   <div id="highlighterTools" class="highlighterTools hidden">
     <button id="highlighterBtn" class="secondaryBtn">🖍 Highlighter</button>
@@ -2368,6 +2601,9 @@ const LANGUAGE_KEY = "ged_practice_language_pref";
 const FONT_SIZE_KEY = "ged_practice_font_size_pref";
 const AUTH_TOKEN_KEY = "ged_practice_auth_token";
 const GUEST_MODE_KEY = "ged_practice_guest_mode";
+const GED_GOAL_KEY = "ged_practice_active_goal";
+const GED_GOAL_ACTIVITY_KEY = "ged_practice_goal_activity";
+let goalDockDismissed = false;
     const API_BASE =
       window.location.hostname === "localhost"
         ? "http://localhost:3000"
@@ -4354,6 +4590,874 @@ function handleMenuPillActivation(event) {
 document.addEventListener("click", handleMenuPillActivation);
 document.addEventListener("keydown", handleMenuPillActivation);
 
+function getSavedGoal() {
+  try {
+    return JSON.parse(localStorage.getItem(GED_GOAL_KEY) || "null");
+  } catch (error) {
+    return null;
+  }
+}
+
+function saveGoal(goal) {
+  goalDockDismissed = false;
+  localStorage.setItem(GED_GOAL_KEY, JSON.stringify(goal));
+  renderGoalDock();
+}
+
+function clearGoal() {
+  goalDockDismissed = false;
+  localStorage.removeItem(GED_GOAL_KEY);
+  renderGoalDock();
+}
+
+function getGoalActivity() {
+  try {
+    return JSON.parse(localStorage.getItem(GED_GOAL_ACTIVITY_KEY) || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveGoalActivity(activity) {
+  localStorage.setItem(GED_GOAL_ACTIVITY_KEY, JSON.stringify(activity || {}));
+}
+
+function getGoalProgress(goal) {
+  if (!goal) return 0;
+
+  const target = Number(goal.targetCount || 1);
+  const current = Number(goal.currentCount || 0);
+
+  if (!target || target <= 0) return 0;
+
+  return Math.max(0, Math.min(100, Math.round((current / target) * 100)));
+}
+
+function getGoalTypeLabel(type) {
+  const labels = {
+    passReady: "Pass-ready goal",
+    score: "Score goal",
+    practice: "Practice goal",
+    learning: "Learning goal",
+    skill: "Skill goal"
+  };
+
+  return labels[type] || "Goal";
+}
+
+function getGoalSuggestionList() {
+  const activity = getGoalActivity();
+  const weakSkill =
+    activity.lastWeakSkill ||
+    state?.practiceMeta?.skill ||
+    document.getElementById("practiceSkillSelect")?.value ||
+    "Percent Change";
+
+  return [
+    {
+      type: "passReady",
+      detailKey: "weekly-pass-ready-plan",
+      title: "Become GED Math ready",
+      deadlineDate: getDateAfterDays(7)
+    },
+    {
+      type: "practice",
+      detailKey: "weak-skill-practice",
+      title: `Strengthen ${weakSkill}`,
+      deadlineDate: getDateAfterDays(7)
+    },
+    {
+      type: "learning",
+      detailKey: "three-learning-lessons",
+      title: "Build confidence first",
+      deadlineDate: getDateAfterDays(10)
+    },
+    {
+      type: "score",
+      detailKey: "reach-145",
+      title: "Reach passing range",
+      deadlineDate: getDateAfterDays(30)
+    }
+  ];
+}
+
+function getTodayISODate() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today.toISOString().slice(0, 10);
+}
+
+function getDateAfterDays(days) {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + Number(days || 0));
+  return date.toISOString().slice(0, 10);
+}
+
+function getGoalDeadlineInfo(goal) {
+  if (!goal || !goal.deadlineDate) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(`${goal.deadlineDate}T00:00:00`);
+  dueDate.setHours(0, 0, 0, 0);
+
+  if (Number.isNaN(dueDate.getTime())) return null;
+
+  const diffDays = Math.round((dueDate - today) / 86400000);
+
+  if (diffDays > 1) {
+    return {
+      days: diffDays,
+      expired: false,
+      label: `${diffDays} days remaining`
+    };
+  }
+
+  if (diffDays === 1) {
+    return {
+      days: diffDays,
+      expired: false,
+      label: "1 day remaining"
+    };
+  }
+
+  if (diffDays === 0) {
+    return {
+      days: diffDays,
+      expired: false,
+      label: "Due today"
+    };
+  }
+
+  if (diffDays === -1) {
+    return {
+      days: diffDays,
+      expired: true,
+      label: "Expired yesterday"
+    };
+  }
+
+  return {
+    days: diffDays,
+    expired: true,
+    label: `Expired ${Math.abs(diffDays)} days ago`
+  };
+}
+
+function makeGoalKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function makeSkillGoalOption(skill) {
+  return {
+    key: `skill-${makeGoalKey(skill)}`,
+    label: skill,
+    text: `Complete focused practice or Learning Mode sessions in ${skill}.`,
+    targetCount: 3,
+    skill
+  };
+}
+
+function getSkillGoalOptions() {
+  return [
+    "Fractions, Decimals, and Percents",
+    "Fractions",
+    "Decimals",
+    "Comparing Percents",
+    "Percent of a Number",
+    "Percent Discount",
+    "Percent of a Total",
+
+    "Ratios, Proportions, and Percent Change",
+    "Percent Increase",
+    "Percent Decrease",
+    "Finding Percent Increase",
+    "Percent Change",
+
+    "Area, Perimeter, Surface Area, and Volume",
+    "Rectangle Area",
+    "Rectangle Perimeter",
+    "Triangle Area",
+    "Area Cost Problems",
+    "Area Word Problems",
+    "Surface Area",
+    "Volume",
+
+    "Lines, Angles, and Coordinate Plane",
+    "Integer Number Line",
+    "Opposites on a Number Line",
+    "Temperature Number Line",
+    "Slope From Graph",
+
+    "Data Tables and Graph Interpretation",
+    "Bar Graph Greatest Value",
+    "Bar Graph Least Value",
+    "Bar Graph Difference",
+    "Bar Graph Total",
+    "Line Graph Change",
+    "Line Graph Greatest Value",
+    "Line Graph Least Value",
+    "Line Graph Difference",
+    "Data Table Totals",
+    "Data Table Greatest Value",
+    "Data Table Least Value",
+    "Data Table Difference",
+    "Scatter Plot Correlation",
+    "Graph Totals",
+    "Graph Difference",
+
+    "Mean, Median, and Probability",
+    "Average",
+    "Spinner Probability",
+    "Marble Probability",
+    "Number Cube Probability",
+
+    "Expressions and Order of Operations",
+    "Expression Substitution",
+    "Expression Word Problems",
+    "Solving Equations and Inequalities",
+    "One-Step Equations",
+    "Variables on Both Sides",
+    "Equation Word Problems",
+    "Equation Steps",
+
+    "Linear Equations and Slope"
+  ].map(makeSkillGoalOption);
+}
+
+function getGoalDetailOptions(type) {
+  const activity = getGoalActivity();
+  const weakSkill =
+    activity.lastWeakSkill ||
+    state?.practiceMeta?.skill ||
+    document.getElementById("practiceSkillSelect")?.value ||
+    "Percent Change";
+
+  const options = {
+    passReady: [
+      {
+        key: "weekly-pass-ready-plan",
+        label: "Weekly pass-ready plan",
+        text: "Complete 2 Learning Mode lessons, 3 focused practice sessions, and 1 full GED-Level test.",
+        targetCount: 6
+      },
+      {
+        key: "exam-date-plan",
+        label: "Prepare by my target date",
+        text: "Follow a steady GED Math prep plan until your selected target date.",
+        targetCount: 10
+      }
+    ],
+    score: [
+      {
+        key: "reach-145",
+        label: "Reach 145+ on a full test",
+        text: "Take GED-Level full tests until you score at least 145.",
+        targetCount: 1
+      },
+      {
+        key: "reach-155",
+        label: "Reach 155+ for extra confidence",
+        text: "Keep practicing until you score at least 155 on a GED-Level full test.",
+        targetCount: 1
+      },
+      {
+        key: "improve-score",
+        label: "Improve my test score",
+        text: "Complete full tests and focused practice until your score improves.",
+        targetCount: 3
+      }
+    ],
+    practice: [
+      {
+        key: "three-practice-sessions",
+        label: "Complete 3 practice sessions",
+        text: "Complete 3 focused practice sessions this week.",
+        targetCount: 3
+      },
+      {
+        key: "five-practice-sessions",
+        label: "Complete 5 practice sessions",
+        text: "Complete 5 focused practice sessions before your deadline.",
+        targetCount: 5
+      },
+      {
+        key: "weak-skill-practice",
+        label: `Practice my weak skill: ${weakSkill}`,
+        text: `Complete focused practice sessions in ${weakSkill}.`,
+        targetCount: 3
+      }
+    ],
+    learning: [
+      {
+        key: "three-learning-lessons",
+        label: "Complete 3 Learning Mode lessons",
+        text: "Complete 3 guided Learning Mode lessons before your deadline.",
+        targetCount: 3
+      },
+      {
+        key: "learn-before-testing",
+        label: "Learn before taking another test",
+        text: "Complete guided examples and practice before starting your next full test.",
+        targetCount: 3
+      }
+    ],
+    skill: getSkillGoalOptions(
+      {
+        key: "percent-change-skill",
+        label: "Improve Percent Change",
+        text: "Practice Percent Change until it feels more comfortable.",
+        targetCount: 3
+    },
+      {
+        key: "algebra-skill",
+        label: "Improve Algebra",
+        text: "Complete focused Algebra practice sessions.",
+        targetCount: 4
+      },
+      {
+        key: "geometry-skill",
+        label: "Improve Geometry",
+        text: "Complete focused Geometry and Measurement practice sessions.",
+        targetCount: 4
+      },
+      {
+        key: "data-graphs-skill",
+        label: "Improve Data & Graphs",
+        text: "Practice graph, table, and data interpretation questions.",
+        targetCount: 4
+      }
+    )
+  };
+
+  return options[type] || options.practice;
+}
+
+function getGoalDetailByKey(type, detailKey) {
+  const options = getGoalDetailOptions(type);
+  return options.find((option) => option.key === detailKey) || options[0];
+}
+
+function renderGoalDock() {
+  const dock = document.getElementById("goalDock");
+  const badge = document.getElementById("goalDockBadge");
+  const text = document.getElementById("goalDockText");
+  const subtext = document.getElementById("goalDockSubtext");
+  const fill = document.getElementById("goalProgressFill");
+  const editBtn = document.getElementById("editGoalBtn");
+  const markBtn = document.getElementById("markGoalDoneBtn");
+  const launcherBtn = document.getElementById("goalLauncherBtn");
+  const viewProgressBtn = document.getElementById("viewGoalProgressBtn");
+
+if (!dock || !badge || !text || !subtext || !fill || !editBtn || !markBtn || !launcherBtn || !viewProgressBtn) return;
+
+  const shouldShow =
+    state.mode === "menu" ||
+    state.mode === "profile" ||
+    state.mode === "review" ||
+    state.mode === "practice-results";
+
+const goal = getSavedGoal();
+const showGoalLauncher = goalDockDismissed && shouldShow;
+
+dock.classList.toggle("hidden", !shouldShow || showGoalLauncher);
+launcherBtn.classList.toggle("hidden", !showGoalLauncher);
+
+if (goal) {
+  launcherBtn.textContent = "🎯 Goals";
+} else {
+  launcherBtn.textContent = "🎯 Set Goal";
+}
+
+  if (!goal) {
+    badge.textContent = "Not set";
+    text.textContent = "Set a goal to stay focused while you practice.";
+    subtext.innerHTML = "Goal ideas can be based on your activity, weak skills, or test readiness.";
+    fill.style.width = "0%";
+    editBtn.textContent = "Set Goal";
+    markBtn.classList.add("hidden");
+    viewProgressBtn.classList.add("hidden");
+    return;
+  }
+
+  const progress = getGoalProgress(goal);
+  const deadlineInfo = getGoalDeadlineInfo(goal);
+  const isExpired = deadlineInfo?.expired && progress < 100;
+  const isComplete = progress >= 100;
+
+  if (isComplete) {
+    badge.textContent = "Complete";
+  } else if (isExpired) {
+    badge.textContent = "Expired";
+  } else {
+    badge.textContent = `${progress}% complete`;
+  }
+
+  text.textContent = goal.title || "My GED Goal";
+
+  const deadlineHtml = deadlineInfo
+    ? `<div class="goalDeadlineLine ${isExpired ? "goalExpired" : ""}">${escapeHtml(deadlineInfo.label)}</div>`
+    : "";
+
+  subtext.innerHTML = `
+    <div>${escapeHtml(goal.detailText || goal.text || getGoalTypeLabel(goal.type))}</div>
+    ${deadlineHtml}
+  `;
+
+  fill.style.width = `${progress}%`;
+  editBtn.textContent = "Edit Goal";
+  viewProgressBtn.classList.remove("hidden");
+
+  const autoTracked = canAutoTrackGoal(goal);
+
+if (isExpired || isComplete || autoTracked) {
+  markBtn.classList.add("hidden");
+} else {
+  markBtn.classList.remove("hidden");
+}
+}
+
+function openGoalModal() {
+  const savedGoal = getSavedGoal();
+
+  const goal = savedGoal || {
+    type: "practice",
+    detailKey: "three-practice-sessions",
+    title: "",
+    deadlineDate: "",
+    currentCount: 0
+  };
+
+  const selectedDetail = getGoalDetailByKey(goal.type, goal.detailKey);
+  const todayISO = getTodayISODate();
+
+  showModal(
+    "My GED Goal",
+    `
+      <div class="goalFormGrid">
+        <div class="goalFormRow">
+          <label for="goalTitleInput">Goal Title</label>
+          <input
+            id="goalTitleInput"
+            value="${escapeHtml(goal.title || "")}"
+            placeholder="Example: Pass GED Math by June 30"
+          />
+        </div>
+
+        <div class="goalFormRow">
+          <label for="goalTypeSelect">Goal Type</label>
+          <select id="goalTypeSelect">
+            <option value="passReady" ${goal.type === "passReady" ? "selected" : ""}>Pass-ready plan</option>
+            <option value="score" ${goal.type === "score" ? "selected" : ""}>Score goal</option>
+            <option value="practice" ${goal.type === "practice" ? "selected" : ""}>Practice goal</option>
+            <option value="learning" ${goal.type === "learning" ? "selected" : ""}>Learning goal</option>
+            <option value="skill" ${goal.type === "skill" ? "selected" : ""}>Skill goal</option>
+          </select>
+        </div>
+
+        <div class="goalFormRow">
+          <label for="goalDetailSelect">Goal Details</label>
+          <select id="goalDetailSelect" class="goalDetailSelect"></select>
+        </div>
+
+        <div id="goalAutoPreview" class="goalAutoPreview"></div>
+
+        <div class="goalFormRow">
+          <label for="goalDeadlineInput">Target Date</label>
+          <input
+            id="goalDeadlineInput"
+            type="date"
+            min="${todayISO}"
+            value="${escapeHtml(goal.deadlineDate || "")}"
+          />
+        </div>
+
+        <p class="muted">
+          Goal details are selected from a dropdown so progress can be tracked automatically later.
+          The target date uses a calendar and will show days remaining or expired status.
+        </p>
+      </div>
+    `,
+    [
+      {
+        label: "Close",
+        variant: "secondary"
+      },
+      {
+        label: "Clear Goal",
+        variant: "secondary",
+        onClick: () => {
+          clearGoal();
+        }
+      },
+      {
+        label: "Goal Ideas",
+        variant: "secondary",
+        keepOpen: true,
+        onClick: () => {
+          openGoalIdeasModal();
+        }
+      },
+{
+  label: "Save Goal",
+  variant: "primary",
+  onClick: () => {
+    const type = document.getElementById("goalTypeSelect")?.value || "practice";
+    const detailKey = document.getElementById("goalDetailSelect")?.value || "";
+    const goalDetail = getGoalDetailByKey(type, detailKey);
+    const titleInput = document.getElementById("goalTitleInput")?.value.trim();
+    const deadlineDate = document.getElementById("goalDeadlineInput")?.value || "";
+
+saveGoal({
+  type,
+  detailKey: goalDetail.key,
+  title: titleInput || goalDetail.label,
+  detailText: goalDetail.text,
+  goalSkill: goalDetail.skill || "",
+  targetCount: Number(goalDetail.targetCount || 1),
+  currentCount: Number(goal.currentCount || 0),
+  deadlineDate,
+  createdAt: goal.createdAt || new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
+  }
+}
+    ]
+  );
+
+  setTimeout(() => {
+    const typeSelect = document.getElementById("goalTypeSelect");
+    const detailSelect = document.getElementById("goalDetailSelect");
+    const preview = document.getElementById("goalAutoPreview");
+    const deadlineInput = document.getElementById("goalDeadlineInput");
+
+    if (!typeSelect || !detailSelect || !preview) return;
+
+    const renderDetailOptions = (preferredKey = "") => {
+      const type = typeSelect.value || "practice";
+      const options = getGoalDetailOptions(type);
+            if (type === "skill") {
+        detailSelect.setAttribute("size", "5");
+        detailSelect.classList.add("goalDetailSelectScrollable");
+      } else {
+        detailSelect.removeAttribute("size");
+        detailSelect.classList.remove("goalDetailSelectScrollable");
+      }
+
+      detailSelect.innerHTML = options
+        .map((option) => {
+          const selected =
+            option.key === preferredKey ||
+            (!preferredKey && option.key === selectedDetail.key);
+
+          return `
+            <option value="${escapeHtml(option.key)}" ${selected ? "selected" : ""}>
+              ${escapeHtml(option.label)}
+            </option>
+          `;
+        })
+        .join("");
+
+      updateGoalPreview();
+    };
+
+    const updateGoalPreview = () => {
+      const type = typeSelect.value || "practice";
+      const detail = getGoalDetailByKey(type, detailSelect.value);
+      const deadlineValue = deadlineInput?.value || "";
+      const deadlineInfo = deadlineValue
+        ? getGoalDeadlineInfo({ deadlineDate: deadlineValue })
+        : null;
+
+      preview.innerHTML = `
+        <strong>${escapeHtml(detail.label)}</strong><br>
+        <span>${escapeHtml(detail.text)}</span><br>
+        <span class="muted">Target: ${Number(detail.targetCount || 1)} progress point${Number(detail.targetCount || 1) === 1 ? "" : "s"}</span>
+        ${
+          deadlineInfo
+            ? `<br><span class="muted">Date status: ${escapeHtml(deadlineInfo.label)}</span>`
+            : `<br><span class="muted">No target date selected yet.</span>`
+        }
+      `;
+    };
+
+    typeSelect.addEventListener("change", () => {
+      renderDetailOptions("");
+    });
+
+    detailSelect.addEventListener("change", updateGoalPreview);
+
+    if (deadlineInput) {
+      deadlineInput.addEventListener("change", updateGoalPreview);
+    }
+
+    renderDetailOptions(goal.detailKey || selectedDetail.key);
+  }, 0);
+}
+
+function openGoalIdeasModal() {
+  const ideas = getGoalSuggestionList();
+
+  showModal(
+    "Goal Ideas",
+    `
+      <p class="muted">
+        Pick one of these to quickly create a goal. These are based on common GED prep paths and your recent activity when available.
+      </p>
+
+      <div class="goalIdeaGrid">
+        ${ideas
+          .map(
+            (idea, index) => `
+              <button class="goalIdeaBtn" type="button" data-goal-idea-index="${index}">
+                <strong>${escapeHtml(idea.title)}</strong><br>
+                <span class="muted">${escapeHtml(getGoalDetailByKey(idea.type, idea.detailKey).text)}</span>
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    `,
+    [{ label: "Close", variant: "secondary" }]
+  );
+
+  setTimeout(() => {
+    document.querySelectorAll("[data-goal-idea-index]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.dataset.goalIdeaIndex);
+        const idea = ideas[index];
+        if (!idea) return;
+
+const ideaDetail = getGoalDetailByKey(idea.type, idea.detailKey);
+
+saveGoal({
+  type: idea.type,
+  detailKey: ideaDetail.key,
+  title: idea.title || ideaDetail.label,
+  detailText: ideaDetail.text,
+goalSkill: ideaDetail.skill || "",
+targetCount: Number(ideaDetail.targetCount || 1),
+  currentCount: 0,
+  deadlineDate: idea.deadlineDate || "",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+});
+
+        closeModal();
+      });
+    });
+  }, 0);
+}
+
+function normalizeGoalMatchValue(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function goalIsExpired(goal) {
+  const deadlineInfo = getGoalDeadlineInfo(goal);
+  return !!deadlineInfo?.expired && getGoalProgress(goal) < 100;
+}
+
+function goalIsComplete(goal) {
+  return getGoalProgress(goal) >= 100;
+}
+
+function canAutoTrackGoal(goal) {
+  if (!goal) return false;
+
+  return ["passReady", "score", "practice", "learning", "skill"].includes(goal.type);
+}
+
+function getScoreTargetForGoal(goal) {
+  if (goal?.detailKey === "reach-155") return 155;
+  return 145;
+}
+
+function activityMatchesSkillGoal(goal, activity) {
+  const goalSkill = normalizeGoalMatchValue(goal.goalSkill || "");
+  const activitySkill = normalizeGoalMatchValue(activity.skill || "");
+
+  if (!goalSkill || !activitySkill) return false;
+
+  return activitySkill === goalSkill || activitySkill.includes(goalSkill) || goalSkill.includes(activitySkill);
+}
+
+function shouldGoalTrackActivity(goal, activity) {
+  if (!goal || !activity) return false;
+  if (goalIsExpired(goal) || goalIsComplete(goal)) return false;
+
+  if (goal.type === "passReady") {
+    return ["learning", "practice", "test"].includes(activity.type);
+  }
+
+  if (goal.type === "practice") {
+    return activity.type === "practice";
+  }
+
+  if (goal.type === "learning") {
+    return activity.type === "learning";
+  }
+
+  if (goal.type === "score") {
+    return activity.type === "test" && Number(activity.score200 || 0) >= getScoreTargetForGoal(goal);
+  }
+
+  if (goal.type === "skill") {
+    return ["practice", "learning"].includes(activity.type) && activityMatchesSkillGoal(goal, activity);
+  }
+
+  return false;
+}
+
+function markGoalProgress(amount = 1, activityType = "manual") {
+  const goal = getSavedGoal();
+  if (!goal) return false;
+
+  if (goalIsExpired(goal) || goalIsComplete(goal)) {
+    renderGoalDock();
+    return false;
+  }
+
+  const nextGoal = {
+    ...goal,
+    currentCount: Math.min(
+      Number(goal.targetCount || 1),
+      Number(goal.currentCount || 0) + amount
+    ),
+    lastActivityType: activityType,
+    updatedAt: new Date().toISOString()
+  };
+
+  saveGoal(nextGoal);
+  return true;
+}
+
+function trackGoalActivity(activity) {
+  const goal = getSavedGoal();
+  if (!goal) return;
+
+  if (!shouldGoalTrackActivity(goal, activity)) {
+    renderGoalDock();
+    return;
+  }
+
+  const tracked = markGoalProgress(1, activity.type || "activity");
+
+  if (tracked) {
+    openGoalProgressModal(activity.label || "This activity");
+  }
+}
+
+function openGoalProgressModal(activityLabel = "activity") {
+  const goal = getSavedGoal();
+  if (!goal) return;
+
+  const progress = getGoalProgress(goal);
+  const complete = progress >= 100;
+
+  showModal(
+    complete ? "Goal Complete 🎉" : "Goal Progress Updated",
+    `
+      <div style="line-height:1.65;">
+        <p><strong>${escapeHtml(goal.title || "My GED Goal")}</strong></p>
+        <p>${escapeHtml(activityLabel)} counted toward your goal.</p>
+
+        <div class="goalProgressTrack">
+          <div class="goalProgressFill" style="width:${progress}%"></div>
+        </div>
+
+        <p><strong>${progress}% complete</strong></p>
+
+        ${
+          complete
+            ? `<p>You finished this goal. Great work — set a new goal to keep your momentum going.</p>`
+            : `<p>Keep going. Small progress after each session adds up fast.</p>`
+        }
+      </div>
+    `,
+    [
+      {
+        label: "Edit Goal",
+        variant: "secondary",
+        keepOpen: true,
+        onClick: () => openGoalModal()
+      },
+ {
+  label: complete ? "Set New Goal" : "Close",
+  variant: "primary",
+  onClick: () => {
+    if (complete) {
+      clearGoal();
+      goalDockDismissed = true;
+      renderGoalDock();
+      return;
+    }
+
+    goalDockDismissed = true;
+    renderGoalDock();
+  }
+}
+    ]
+  );
+}
+
+function wireGoalControls() {
+  const editGoalBtn = document.getElementById("editGoalBtn");
+  const goalIdeasBtn = document.getElementById("goalIdeasBtn");
+  const markGoalDoneBtn = document.getElementById("markGoalDoneBtn");
+  const closeGoalDockBtn = document.getElementById("closeGoalDockBtn");
+  const goalLauncherBtn = document.getElementById("goalLauncherBtn");
+  const viewGoalProgressBtn = document.getElementById("viewGoalProgressBtn");
+
+  if (editGoalBtn) {
+    editGoalBtn.onclick = () => openGoalModal();
+  }
+
+  if (goalIdeasBtn) {
+    goalIdeasBtn.onclick = () => openGoalIdeasModal();
+  }
+
+  if (markGoalDoneBtn) {
+    markGoalDoneBtn.onclick = () => {
+      markGoalProgress(1, "manual");
+      openGoalProgressModal("Manual progress");
+    };
+  }
+
+  if (closeGoalDockBtn) {
+    closeGoalDockBtn.onclick = () => {
+      goalDockDismissed = true;
+      renderGoalDock();
+    };
+  }
+
+if (goalLauncherBtn) {
+  goalLauncherBtn.onclick = () => {
+    goalDockDismissed = false;
+    renderGoalDock();
+
+    if (!getSavedGoal()) {
+      openGoalModal();
+    }
+  };
+}
+
+  if (viewGoalProgressBtn) {
+    viewGoalProgressBtn.onclick = () => {
+      openGoalProgressModal("Current goal progress");
+    };
+  }
+}
+
     function formatTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
@@ -4549,8 +5653,9 @@ async function setView(view) {
     document.body.scrollTop = 0;
   });
 
-  updateTopbarMode();
-  await updateResumeVisibility();
+updateTopbarMode();
+renderGoalDock();
+await updateResumeVisibility();
 }
 
 function showModal(title, bodyHtml, actions = []) {
@@ -8583,6 +9688,13 @@ async function showReview() {
   const wrongOrUnanswered = state.questions.length - correct;
   const advance = nextDifficulty(state.difficulty);
   const passed = scoringEnabled ? passThreshold(score200) : false;
+  trackGoalActivity({
+  type: "test",
+  label: `Full test (${score200}/200)`,
+  score200,
+  passed,
+  skill: weakest
+});
 
   const panel = document.getElementById("reviewPanel");
 
@@ -8837,6 +9949,11 @@ async function showLearningComplete() {
 
   const panel = document.getElementById("practicePanel");
   if (!panel) return;
+  trackGoalActivity({
+  type: "learning",
+  label: "Learning Mode lesson",
+  skill: completedSkill
+});
 
   panel.innerHTML = `
     <div class="learningCompleteHero">
@@ -8980,6 +10097,11 @@ async function showLearningComplete() {
 });
 
       await setView("practice-results");
+      trackGoalActivity({
+  type: "practice",
+  label: "Practice session",
+  skill: state.practiceMeta?.skill || ""
+});
 
       document.getElementById("practiceMenuBtn").onclick = () => goToMainMenu();
       document.getElementById("practiceAgainBtn").onclick = async () => {
@@ -9883,6 +11005,8 @@ window.addEventListener("unhandledrejection", async (event) => {
       applyTheme(getSavedTheme());
       applyFontSize(getSavedFontSize());
       applyLanguage(getSavedLanguage());
+      wireGoalControls();
+renderGoalDock();
       await loadCurrentUser();
       updateStatus();
       await setView("menu");
