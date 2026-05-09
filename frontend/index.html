@@ -422,6 +422,20 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--topbar-text);
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.12s ease, transform 0.12s ease;
+}
+
+.brand:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.brand:active {
+  transform: scale(0.98);
 }
 
     #timerTop {
@@ -1397,7 +1411,7 @@ body.loadingActive {
 <body class="theme-original">
   <div class="topbar">
 <div class="topbarLeft">
-  <div class="brand">GED Practice Platform</div>
+  <div id="brandHomeBtn" class="brand" role="button" tabindex="0" title="Return to Main Menu">GED Practice Platform</div>
 </div>
     <div class="topbarCenter">
   <div id="timerTop" class="hidden"></div>
@@ -8726,6 +8740,34 @@ if (supportEmailBtn) {
     };
     document.getElementById("settingsBtn").onclick = openSettings;
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
+    const brandHomeBtn = document.getElementById("brandHomeBtn");
+if (brandHomeBtn) {
+  brandHomeBtn.addEventListener("click", () => {
+    if (state.mode === "menu") return;
+
+    if (typeof askReturnToMenu === "function") {
+      askReturnToMenu();
+      return;
+    }
+
+    goToMainMenu();
+  });
+
+  brandHomeBtn.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    event.preventDefault();
+
+    if (state.mode === "menu") return;
+
+    if (typeof askReturnToMenu === "function") {
+      askReturnToMenu();
+      return;
+    }
+
+    goToMainMenu();
+  });
+}
     document.getElementById("prevBtn").onclick = async () => {
       await prevQuestion();
     };
