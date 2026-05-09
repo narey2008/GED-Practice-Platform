@@ -337,6 +337,63 @@
   border-left-color: #b42318 !important;
 }
 
+.learningCompleteHero {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--panel);
+  margin-bottom: 14px;
+}
+
+.learningCompleteHero h2 {
+  margin: 0 0 8px;
+  color: var(--primary);
+}
+
+.learningCompleteMessage {
+  line-height: 1.7;
+  color: var(--text);
+  margin-top: 10px;
+}
+
+.learningNextStepBox {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border-left: 4px solid var(--primary);
+  line-height: 1.65;
+}
+
+.learningBadgeRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.learningBadge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: var(--card);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.learningCompleteStats {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 900px) {
+  .learningCompleteStats {
+    grid-template-columns: 1fr;
+  }
+}
+
     .topbar {
       height: 58px;
       background: var(--topbar);
@@ -7744,6 +7801,78 @@ if (practiceWeakestBtn) {
   }
 }
 
+function getHigherDifficultyLabel(difficulty) {
+  if (difficulty === "Easy") return "Medium";
+  if (difficulty === "Medium") return "GED-Level";
+  return "GED-Level";
+}
+
+function getSuggestedLearningSkill(skill) {
+  const nextMap = {
+    "Percent of a Number": "Percent Discount",
+    "Percent Discount": "Percent Increase",
+    "Percent Increase": "Percent Decrease",
+    "Percent Decrease": "Finding Percent Increase",
+    "Rectangle Area": "Rectangle Perimeter",
+    "Rectangle Perimeter": "Triangle Area",
+    "Triangle Area": "Area Cost Problems",
+    "Bar Graph Greatest Value": "Bar Graph Difference",
+    "Bar Graph Least Value": "Bar Graph Difference",
+    "Bar Graph Difference": "Bar Graph Total",
+    "Line Graph Change": "Line Graph Difference",
+    "Data Table Totals": "Data Table Difference",
+    "One-Step Equations": "Variables on Both Sides",
+    "Expression Substitution": "Expression Word Problems",
+    "Spinner Probability": "Marble Probability",
+    "Marble Probability": "Number Cube Probability"
+  };
+
+  return nextMap[skill] || skill;
+}
+
+function buildLearningCompletionTone({ correct, total, retryCount, completedSkill, completedDifficulty }) {
+  const percent = total ? correct / total : 0;
+  const higherDifficulty = getHigherDifficultyLabel(completedDifficulty);
+  const suggestedSkill = getSuggestedLearningSkill(completedSkill);
+
+  if (percent === 1 && retryCount === 0) {
+    return {
+      headline: "Excellent work — that lesson looked strong.",
+      message: `You moved through ${completedSkill} with confidence and answered every practice question correctly on the first pass. That is a strong sign you understood the main idea, not just the answer.`,
+      nextTitle: "Recommended next step",
+      nextMessage:
+        completedDifficulty === "GED-Level"
+          ? `You can either keep practicing ${completedSkill} at GED-Level to build speed, or move into ${suggestedSkill} next.`
+          : `Try ${completedSkill} again at ${higherDifficulty}, or move into ${suggestedSkill} if you feel ready.`
+    };
+  }
+
+  if (percent >= 0.8) {
+    return {
+      headline: "Nice progress — you are close to owning this skill.",
+      message: `You got most of the ${completedSkill} practice questions correct. A few moments may have needed extra thinking, but that is part of learning. The important thing is that you kept working through the lesson.`,
+      nextTitle: "Recommended next step",
+      nextMessage: `Do one more focused practice set for ${completedSkill}. If that feels comfortable, move up to ${higherDifficulty} or try ${suggestedSkill}.`
+    };
+  }
+
+  if (percent >= 0.5) {
+    return {
+      headline: "Good effort — this is the skill-building stage.",
+      message: `You are starting to build the pattern for ${completedSkill}, but this skill still needs more practice before it feels automatic. That is completely normal. Repeating the lesson once more will help the steps feel more natural.`,
+      nextTitle: "Recommended next step",
+      nextMessage: `Use “Learn This Again” first, then start a practice set for ${completedSkill}. Focus on why each answer works, not just which choice is correct.`
+    };
+  }
+
+  return {
+    headline: "This skill needs more support — and that is okay.",
+    message: `${completedSkill} is still a challenge right now, so the best move is not to rush forward. You made progress by trying the examples and practice questions. Now we should slow it down and walk through the lesson again.`,
+    nextTitle: "Recommended next step",
+    nextMessage: `Click “Learn This Again” and go step by step. After that, try the same skill at ${completedDifficulty}.`
+  };
+}
+
 async function showLearningComplete() {
   hideHighlighterTools?.();
   renderChart(null);
@@ -7755,6 +7884,20 @@ async function showLearningComplete() {
   const practiceQuestions = state.questions.filter((q) => q.learningPhase === "practice");
   const correct = practiceQuestions.filter((q) => q.learningCorrect).length;
   const total = practiceQuestions.length;
+  const retryCount = practiceQuestions.filter((q) => Number(q.learningAttempts || 0) > 1).length;
+  const missed = total - correct;
+
+  const completionTone = buildLearningCompletionTone({
+    correct,
+    total,
+    retryCount,
+    completedSkill,
+    completedDifficulty
+  });
+
+  const accuracyLabel = total ? `${Math.round((correct / total) * 100)}%` : "—";
+  const suggestedSkill = getSuggestedLearningSkill(completedSkill);
+  const higherDifficulty = getHigherDifficultyLabel(completedDifficulty);
 
   state.mode = "learning-complete";
   state.questions = [];
@@ -7769,28 +7912,49 @@ async function showLearningComplete() {
   if (!panel) return;
 
   panel.innerHTML = `
-    <h2 class="sectionTitle">Learning Complete</h2>
+    <div class="learningCompleteHero">
+      <div class="learningProgressPill">Lesson Complete</div>
+      <h2>${escapeHtml(completionTone.headline)}</h2>
 
-    <div class="practiceSummary">
-      <div class="reviewStat">
-        <div class="reviewStatLabel">Skill</div>
-        <div class="reviewStatValue">${escapeHtml(completedSkill)}</div>
+      <div class="learningCompleteMessage">
+        ${escapeHtml(completionTone.message)}
       </div>
 
-      <div class="reviewStat">
-        <div class="reviewStatLabel">Practice Correct</div>
-        <div class="reviewStatValue">${correct} / ${total}</div>
+      <div class="learningBadgeRow">
+        <span class="learningBadge">Skill: ${escapeHtml(completedSkill)}</span>
+        <span class="learningBadge">Difficulty: ${escapeHtml(completedDifficulty)}</span>
+        <span class="learningBadge">Accuracy: ${escapeHtml(accuracyLabel)}</span>
       </div>
     </div>
 
-    <div class="reviewItem">
-      <p class="muted">
-        You worked through guided examples, practiced the skill on your own, and got instant feedback along the way. Keep building from here — every lesson gets you closer to being GED-ready.
-      </p>
+<div class="practiceSummary learningCompleteStats">
+  <div class="reviewStat">
+    <div class="reviewStatLabel">Practice Correct</div>
+    <div class="reviewStatValue">${correct} / ${total}</div>
+  </div>
 
-      <div class="menuActions">
+  <div class="reviewStat">
+    <div class="reviewStatLabel">Incorrect</div>
+    <div class="reviewStatValue">${missed}</div>
+  </div>
+
+  <div class="reviewStat">
+    <div class="reviewStatLabel">Suggested Next</div>
+    <div class="reviewStatValue">${escapeHtml(suggestedSkill)}</div>
+  </div>
+</div>
+
+    <div class="reviewItem">
+      <div class="learningNextStepBox">
+        <strong>${escapeHtml(completionTone.nextTitle)}</strong><br>
+        ${escapeHtml(completionTone.nextMessage)}
+      </div>
+
+      <div class="menuActions" style="margin-top:14px;">
         <button id="learningAgainBtn" class="primaryBtn">Learn This Again</button>
-        <button id="learningPracticeBtn" class="secondaryBtn">Start Practice</button>
+        <button id="learningPracticeBtn" class="secondaryBtn">Practice This Skill</button>
+        <button id="learningNextSkillBtn" class="secondaryBtn">Try Suggested Skill</button>
+        <button id="learningHarderBtn" class="secondaryBtn">Try ${escapeHtml(higherDifficulty)}</button>
         <button id="learningMenuBtn" class="secondaryBtn">Main Menu</button>
       </div>
     </div>
@@ -7802,6 +7966,14 @@ async function showLearningComplete() {
 
   document.getElementById("learningPracticeBtn").onclick = async () => {
     await startPractice(completedSkill, completedDifficulty, false);
+  };
+
+  document.getElementById("learningNextSkillBtn").onclick = async () => {
+    await startLearningMode(suggestedSkill, completedDifficulty, false);
+  };
+
+  document.getElementById("learningHarderBtn").onclick = async () => {
+    await startLearningMode(completedSkill, higherDifficulty, false);
   };
 
   document.getElementById("learningMenuBtn").onclick = () => {
