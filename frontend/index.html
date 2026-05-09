@@ -636,9 +636,70 @@
     }
 
     .menuTitle {
-  font-weight: 700;
+  font-weight: 900;
   color: var(--primary);
-  margin: 0 0 14px;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.menuIntro {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--panel), var(--panel-2));
+  margin-bottom: 16px;
+}
+
+.menuSubtitle {
+  color: var(--muted);
+  line-height: 1.6;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.menuPillRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.menuPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: var(--card);
+  color: var(--text);
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.clickableMenuPill {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.clickableMenuPill:hover {
+  transform: translateY(-1px);
+  background: var(--panel-2);
+  border-color: var(--primary);
+}
+
+.clickableMenuPill:active {
+  transform: scale(0.98);
+}
+
+.clickableMenuPill:focus-visible {
+  outline: 3px solid rgba(21, 62, 117, 0.35);
+  outline-offset: 3px;
+}
+
+.menuPanelScrollHighlight {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(21, 62, 117, 0.16), 0 10px 24px rgba(8, 24, 46, 0.14);
 }
 
     .menuGrid {
@@ -647,22 +708,80 @@
     }
 
     .menuPanel {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      background: var(--panel);
-      color: var(--text);
-    }
-
-    .menuPanel h3 {
-  margin: 0 0 10px;
-  color: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  background: var(--panel);
+  color: var(--text);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
 
-    .menuPanel p {
+.menuPanel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-left: 5px solid var(--primary);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.menuPanel:hover {
+  transform: translateY(-2px);
+  border-color: rgba(21, 62, 117, 0.42);
+  box-shadow: 0 10px 24px rgba(8, 24, 46, 0.14);
+}
+
+.menuPanel h3 {
+  margin: 0 0 10px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menuPanel h3::before {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(17px * var(--font-scale));
+  flex: 0 0 auto;
+}
+
+#welcomePanel h3::before {
+  content: "👋";
+}
+
+#startTestPanel h3::before {
+  content: "📝";
+}
+
+#startPracticePanel h3::before {
+  content: "🎯";
+}
+
+#resumePanel h3::before {
+  content: "↩";
+}
+
+#learningModePanel h3::before {
+  content: "📘";
+}
+
+#supportPanel h3::before {
+  content: "💬";
+}
+
+.menuPanel p {
   margin: 0 0 12px;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
     .menuActions {
@@ -1626,6 +1745,18 @@ body.loadingActive {
   <div class="page">
     <div id="mainMenu" class="card menuWrap">
       <h1 class="menuTitle">Main Menu</h1>
+
+<div class="menuIntro">
+  <div id="menuSubtitle" class="menuSubtitle">
+    Choose a full test, focused practice, or guided Learning Mode.
+  </div>
+
+  <div class="menuPillRow">
+<span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">📝 46-question full test</span>
+<span id="menuPillPractice" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">🎯 Skill-specific practice</span>
+<span id="menuPillLearning" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">📘 Guided Learning Mode</span>
+  </div>
+</div>
       <div class="menuGrid">
         <div id="welcomePanel" class="menuPanel">
           <h3>Welcome</h3>
@@ -2763,6 +2894,12 @@ function getTranslations(language) {
   return {
     brand: isSpanish ? "Plataforma de Práctica GED" : "GED Practice Platform",
     mainMenu: isSpanish ? "Menú Principal" : "Main Menu",
+    menuSubtitle: isSpanish
+  ? "Elige un examen completo, práctica enfocada o modo de aprendizaje guiado."
+  : "Choose a full test, focused practice, or guided Learning Mode.",
+menuPillFullTest: isSpanish ? "📝 Examen completo de 46 preguntas" : "📝 46-question full test",
+menuPillPractice: isSpanish ? "🎯 Práctica por habilidad" : "🎯 Skill-specific practice",
+menuPillLearning: isSpanish ? "📘 Modo de aprendizaje guiado" : "📘 Guided Learning Mode",
 
     welcomeTitle: isSpanish ? "Bienvenido" : "Welcome",
     welcomeText: isSpanish
@@ -3512,6 +3649,15 @@ if (brandText) brandText.textContent = t.brand;
 
   const menuTitle = document.querySelector("#mainMenu .menuTitle");
   if (menuTitle) menuTitle.textContent = t.mainMenu;
+  const menuSubtitle = document.getElementById("menuSubtitle");
+const menuPillFullTest = document.getElementById("menuPillFullTest");
+const menuPillPractice = document.getElementById("menuPillPractice");
+const menuPillLearning = document.getElementById("menuPillLearning");
+
+if (menuSubtitle) menuSubtitle.textContent = t.menuSubtitle;
+if (menuPillFullTest) menuPillFullTest.textContent = t.menuPillFullTest;
+if (menuPillPractice) menuPillPractice.textContent = t.menuPillPractice;
+if (menuPillLearning) menuPillLearning.textContent = t.menuPillLearning;
 
   const welcomePanel = document.getElementById("welcomePanel");
   if (welcomePanel) {
@@ -3721,6 +3867,38 @@ if (legalInfoBtn) legalInfoBtn.textContent = t.legalTopBtn || "Legal / About";
 
   updateStatus();
 }
+
+function scrollToMainMenuPanel(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+
+  panel.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  panel.classList.add("menuPanelScrollHighlight");
+
+  setTimeout(() => {
+    panel.classList.remove("menuPanelScrollHighlight");
+  }, 1200);
+}
+
+function handleMenuPillActivation(event) {
+  const pill = event.target.closest(".clickableMenuPill");
+  if (!pill) return;
+
+  const isKeyboard = event.type === "keydown";
+  if (isKeyboard && event.key !== "Enter" && event.key !== " ") return;
+
+  event.preventDefault();
+
+  const targetId = pill.dataset.scrollTarget;
+  scrollToMainMenuPanel(targetId);
+}
+
+document.addEventListener("click", handleMenuPillActivation);
+document.addEventListener("keydown", handleMenuPillActivation);
 
     function formatTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
