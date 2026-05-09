@@ -941,6 +941,47 @@
   font-size: calc(13px * var(--font-scale));
 }
 
+.menuDetails {
+  margin: -2px 0 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.menuDetails summary {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: 0;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+  user-select: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.menuDetails summary:hover {
+  color: var(--primary);
+  background: transparent;
+}
+
+.menuDetailsList {
+  margin: 8px 0 0;
+  padding: 8px 12px 8px 24px;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: calc(12px * var(--font-scale));
+  background: transparent;
+}
+
+.menuDetailsList li {
+  margin: 3px 0;
+}
+
 .supportChipRow {
   display: flex;
   gap: 8px;
@@ -2030,6 +2071,18 @@ body.loadingActive {
 <p id="startTestHelperText">
   Choose a difficulty and take a timed 46-question GED-style math test.
 </p>
+
+<details class="menuDetails">
+  <summary>What’s included?</summary>
+  <ul class="menuDetailsList">
+    <li>46-question full math test format.</li>
+    <li>115-minute timer.</li>
+    <li>Part 1 starts without calculator support.</li>
+    <li>Part 2 includes calculator support.</li>
+    <li>Review screen before final submission.</li>
+  </ul>
+</details>
+
           <label for="difficultySelect">Difficulty</label>
           <select id="difficultySelect">
             <option>Easy</option>
@@ -2051,6 +2104,16 @@ body.loadingActive {
 <p id="startPracticeHelperText">
   Pick a specific skill and difficulty to get focused practice questions.
 </p>
+
+<details class="menuDetails">
+  <summary>What’s included?</summary>
+  <ul class="menuDetailsList">
+    <li>Choose a broad skill or a specific subskill.</li>
+    <li>Select Easy, Medium, or GED-Level difficulty.</li>
+    <li>Practice without committing to a full test.</li>
+    <li>Use focused practice to strengthen weak areas.</li>
+  </ul>
+</details>
 
           <label for="practiceSkillSelect">Skill</label>
 <select id="practiceSkillSelect">
@@ -2163,6 +2226,16 @@ body.loadingActive {
   Learn a skill step by step first, then answer practice questions with immediate feedback.
 </p>
 
+<details class="menuDetails">
+  <summary>What’s included?</summary>
+  <ul class="menuDetailsList">
+    <li>Tutor-style guided examples.</li>
+    <li>Step-by-step reveal support.</li>
+    <li>Try-again feedback when an answer needs another attempt.</li>
+    <li>Personalized completion screen after the lesson.</li>
+  </ul>
+</details>
+
   <label for="learningSkillSelect">Skill</label>
   <select id="learningSkillSelect"></select>
 
@@ -2203,6 +2276,7 @@ body.loadingActive {
   </div>
 </div>
     </div>
+  </div>
 
     <div id="legalPanel" class="mainMenuFooter">
   <div class="mainMenuFooterText">
@@ -4182,9 +4256,11 @@ if (languagePrevBtn) languagePrevBtn.textContent = t.previous;
 if (languageReportQuestionBtn) languageReportQuestionBtn.textContent = t.reportQuestion;
 
 if (languageSubmitTestBtn) {
+  const languageIsTutorial = state.mode === "test-tutorial";
+
   languageSubmitTestBtn.classList.toggle(
     "hidden",
-    isTutorial || !["test", "practice"].includes(state.mode)
+    languageIsTutorial || !["test", "practice"].includes(state.mode)
   );
 }
 
@@ -4417,42 +4493,65 @@ document.addEventListener("keydown", handleMenuPillActivation);
   updateAuthUI();
 }
 
-    async function setView(view) {
-      document.getElementById("mainMenu").classList.add("hidden");
-      document.getElementById("testView").classList.add("hidden");
-      document.getElementById("reviewPanel").classList.add("hidden");
-      document.getElementById("practicePanel").classList.add("hidden");
-      document.getElementById("profilePanel").classList.add("hidden");
+async function setView(view) {
+  const mainMenu = document.getElementById("mainMenu");
+  const testView = document.getElementById("testView");
+  const reviewPanel = document.getElementById("reviewPanel");
+  const practicePanel = document.getElementById("practicePanel");
+  const profilePanel = document.getElementById("profilePanel");
 
-      if (view === "menu") {
-        state.mode = "menu";
-        document.getElementById("mainMenu").classList.remove("hidden");
-      } else if (view === "test") {
-        document.getElementById("testView").classList.remove("hidden");
-      } else if (view === "review") {
-        state.mode = "review";
-        document.getElementById("reviewPanel").classList.remove("hidden");
-      } else if (view === "practice-results") {
-        state.mode = "practice-results";
-        document.getElementById("practicePanel").classList.remove("hidden");
-      } else if (view === "profile") {
-        state.mode = "profile";
-        document.getElementById("profilePanel").classList.remove("hidden");
-        if (view !== "test") {
-  setHighlighterEnabled(false);
+  if (mainMenu) mainMenu.classList.add("hidden");
+  if (testView) testView.classList.add("hidden");
+  if (reviewPanel) reviewPanel.classList.add("hidden");
+  if (practicePanel) practicePanel.classList.add("hidden");
+  if (profilePanel) profilePanel.classList.add("hidden");
 
-  const highlighterTools = document.getElementById("highlighterTools");
-  if (highlighterTools) {
-    highlighterTools.classList.add("hidden");
+  if (view === "menu") {
+    state.mode = "menu";
+    if (mainMenu) mainMenu.classList.remove("hidden");
+  } else if (
+    view === "test" ||
+    view === "practice" ||
+    view === "practice-example" ||
+    view === "learning" ||
+    view === "test-tutorial"
+  ) {
+    if (testView) testView.classList.remove("hidden");
+  } else if (view === "review") {
+    state.mode = "review";
+    if (reviewPanel) reviewPanel.classList.remove("hidden");
+  } else if (view === "practice-results") {
+    state.mode = "practice-results";
+    if (practicePanel) practicePanel.classList.remove("hidden");
+  } else if (view === "profile") {
+    state.mode = "profile";
+    if (profilePanel) profilePanel.classList.remove("hidden");
   }
+
+  const isQuestionView =
+    view === "test" ||
+    view === "practice" ||
+    view === "practice-example" ||
+    view === "learning" ||
+    view === "test-tutorial";
+
+  if (!isQuestionView) {
+    hideHighlighterTools();
+  }
+
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  requestAnimationFrame(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  });
+
+  updateTopbarMode();
+  await updateResumeVisibility();
 }
-      }
-if (view !== "test") {
-  hideHighlighterTools();
-}
-      updateTopbarMode();
-      await updateResumeVisibility();
-    }
 
 function showModal(title, bodyHtml, actions = []) {
   document.getElementById("modalTitle").innerText = title || tr("message");
@@ -4513,6 +4612,67 @@ async function withLoading(title, text, work) {
     return await work();
   } finally {
     hideLoading();
+  }
+}
+
+async function recoverToMainMenuAfterStartFailure(error, activityLabel = "activity") {
+  console.error(`Failed to start ${activityLabel}:`, error);
+
+  hideLoading();
+  stopTimer();
+  closeCalculator();
+
+  state.mode = "menu";
+  state.questions = [];
+  state.currentIndex = 0;
+  state.practiceMeta = null;
+  state.learningMeta = null;
+  state.tutorialQuestions = [];
+  state.tutorialIndex = 0;
+  state.inTutorial = false;
+  state.isPaused = false;
+  state.autoPaused = false;
+  state.timeoutMode = false;
+  state.lockedReviewMode = false;
+  state.navigatorVisible = false;
+
+  try {
+    await setView("menu");
+  } catch (viewError) {
+    console.error("Recovery setView failed:", viewError);
+
+    document.getElementById("mainMenu")?.classList.remove("hidden");
+    document.getElementById("testView")?.classList.add("hidden");
+    document.getElementById("reviewPanel")?.classList.add("hidden");
+    document.getElementById("practicePanel")?.classList.add("hidden");
+    document.getElementById("profilePanel")?.classList.add("hidden");
+
+    updateTopbarMode();
+  }
+
+  showModal(
+    tr("message"),
+    `
+      <div style="line-height:1.65;">
+        <strong>This activity could not start.</strong><br>
+        You were returned to the Main Menu so the page does not stay blank.
+        <br><br>
+        Please try again. If it keeps happening, use Contact Support and include what you clicked.
+        <br><br>
+        <span style="color:var(--muted);">
+          ${escapeHtml(error?.message || "Unknown startup error")}
+        </span>
+      </div>
+    `,
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
+async function runStartActivity(activityLabel, startFn) {
+  try {
+    await startFn();
+  } catch (error) {
+    await recoverToMainMenuAfterStartFailure(error, activityLabel);
   }
 }
 
@@ -6551,7 +6711,7 @@ footer.appendChild(submitBtn);
   await updateResumeVisibility();
 
   if (startImmediately) {
-    await startTest();
+    await runStartActivity("test", () => startTest());
   }
 }
     function continueAsGuest(startImmediately = false) {
@@ -7322,7 +7482,7 @@ async function beginRealTestAfterTutorial() {
     state.hasSeenFirstTestTutorial = true;
   }
 
-  await startTest(state.difficulty, false);
+  await runStartActivity("scored test", () => startTest(state.difficulty, false));
 }
 
    async function startTest(difficulty, showTutorial = true) {
@@ -7347,14 +7507,14 @@ async function beginRealTestAfterTutorial() {
       state.idleSeconds = 0;
       state.autoPaused = false;
 
-      await setView("test");
-      document.getElementById("questionText").innerText = tr("generatingTestText");
-      if (showTutorial && shouldShowTestTutorial()) {
+ if (showTutorial && shouldShowTestTutorial()) {
   startTutorialBeforeTest();
   return;
 }
+
       document.getElementById("choices").innerHTML = "";
       document.getElementById("feedback").innerText = "";
+      renderDiagram(null);
       renderChart(null);
 
       const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
@@ -7363,13 +7523,19 @@ async function beginRealTestAfterTutorial() {
       }
 
       const data = await res.json();
+      const generatedQuestions = Array.isArray(data.questions) ? data.questions : [];
 
-      state.questions = data.questions.map((q) => ({
+      if (!generatedQuestions.length) {
+        throw new Error("No test questions were generated. Please try again.");
+      }
+
+      state.questions = generatedQuestions.map((q) => ({
         ...q,
         userAnswer: null,
         flagged: false
       }));
 
+      await setView("test");
       resetIdleTracking();
       startTimer();
       renderQuestion();
@@ -7522,9 +7688,14 @@ async function gradeLearningQuestion() {
       }
 
       const data = await res.json();
+      const generatedQuestions = Array.isArray(data.questions) ? data.questions : [];
+
+      if (!generatedQuestions.length) {
+        throw new Error("No practice questions were generated for this skill. Please try another skill or difficulty.");
+      }
 
       state.mode = examplesOnly ? "practice-example" : "practice";
-      state.questions = data.questions.map((q) => ({
+      state.questions = generatedQuestions.map((q) => ({
         ...q,
         userAnswer: null,
         flagged: false,
@@ -9458,7 +9629,7 @@ async function handleEmailVerificationFromUrl() {
     if (startTestBtn) {
       startTestBtn.addEventListener("click", async () => {
         if (state.auth.guestMode) {
-          await startTest();
+          await runStartActivity("test", () => startTest());
           return;
         }
 
@@ -9503,13 +9674,13 @@ async function handleEmailVerificationFromUrl() {
                 variant: "primary",
                 onClick: async () => {
                   await clearSavedProgress();
-                  await startTest();
+                  await runStartActivity("test", () => startTest());
                 }
               }
             ]
           );
         } else {
-          await startTest();
+          await runStartActivity("test", () => startTest());
         }
       });
     }
@@ -9519,7 +9690,7 @@ async function handleEmailVerificationFromUrl() {
       startPracticeBtn.addEventListener("click", async () => {
         const skill = document.getElementById("practiceSkillSelect").value;
         const difficulty = document.getElementById("practiceDifficultySelect").value;
-        await startPractice(skill, difficulty, false);
+        await runStartActivity("practice", () => startPractice(skill, difficulty, false));
       });
     }
 
@@ -9648,7 +9819,7 @@ if (startLearningBtn) {
   startLearningBtn.addEventListener("click", async () => {
     const skill = document.getElementById("learningSkillSelect")?.value || document.getElementById("practiceSkillSelect")?.value;
     const difficulty = document.getElementById("learningDifficultySelect")?.value || document.getElementById("practiceDifficultySelect")?.value || "GED-Level";
-    await startLearningMode(skill, difficulty, false);
+    await runStartActivity("learning mode", () => startLearningMode(skill, difficulty, false));
   });
 }
 
@@ -9679,11 +9850,31 @@ document.getElementById("submitTestBtn").onclick = () => {
   window.addEventListener(eventName, handleUserActivity, { passive: true });
 });
 
-window.addEventListener("error", () => {
+window.addEventListener("error", async (event) => {
+  const activeModes = ["test", "practice", "practice-example", "learning", "test-tutorial"];
+
+  if (activeModes.includes(state.mode)) {
+    await recoverToMainMenuAfterStartFailure(
+      event.error || new Error(event.message || "Unexpected page error"),
+      "activity"
+    );
+    return;
+  }
+
   hideLoading();
 });
 
-window.addEventListener("unhandledrejection", () => {
+window.addEventListener("unhandledrejection", async (event) => {
+  const activeModes = ["test", "practice", "practice-example", "learning", "test-tutorial"];
+
+  if (activeModes.includes(state.mode)) {
+    await recoverToMainMenuAfterStartFailure(
+      event.reason instanceof Error ? event.reason : new Error(String(event.reason || "Unexpected startup error")),
+      "activity"
+    );
+    return;
+  }
+
   hideLoading();
 });
 
