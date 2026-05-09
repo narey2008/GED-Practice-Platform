@@ -425,8 +425,11 @@
   cursor: pointer;
   user-select: none;
   padding: 6px 8px;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: background 0.12s ease, transform 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .brand:hover {
@@ -436,6 +439,27 @@
 
 .brand:active {
   transform: scale(0.98);
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffffff, #dbeafe);
+  color: #153e75;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  flex: 0 0 auto;
+}
+
+.brandText {
+  display: inline-block;
 }
 
     #timerTop {
@@ -1363,9 +1387,16 @@ body.loadingActive {
 }
 
 @media (max-width: 520px) {
-  .brand {
-    font-size: calc(18px * var(--font-scale));
-  }
+.brand {
+  font-size: calc(18px * var(--font-scale));
+  gap: 8px;
+}
+
+.brandMark {
+  width: 30px;
+  height: 30px;
+  font-size: calc(10px * var(--font-scale));
+}
 
   @media (max-width: 900px) {
   #contactBtnTop,
@@ -1411,7 +1442,10 @@ body.loadingActive {
 <body class="theme-original">
   <div class="topbar">
 <div class="topbarLeft">
-  <div id="brandHomeBtn" class="brand" role="button" tabindex="0" title="Return to Main Menu">GED Practice Platform</div>
+  <div id="brandHomeBtn" class="brand" role="button" tabindex="0" title="Return to Main Menu">
+  <span class="brandMark" aria-hidden="true">GED</span>
+  <span class="brandText">GED Practice Platform</span>
+</div>
 </div>
     <div class="topbarCenter">
   <div id="timerTop" class="hidden"></div>
@@ -3324,8 +3358,8 @@ function translateQuestionType(value) {
 function applyLanguage(language) {
   const t = getTranslations(language);
   document.documentElement.setAttribute("data-language", language);
-  const brand = document.querySelector(".brand");
-  if (brand) brand.textContent = t.brand;
+const brandText = document.querySelector(".brandText");
+if (brandText) brandText.textContent = t.brand;
 
   const menuTitle = document.querySelector("#mainMenu .menuTitle");
   if (menuTitle) menuTitle.textContent = t.mainMenu;
@@ -8742,8 +8776,11 @@ if (supportEmailBtn) {
     document.getElementById("globalMenuBtn").onclick = askReturnToMenu;
     const brandHomeBtn = document.getElementById("brandHomeBtn");
 if (brandHomeBtn) {
-  brandHomeBtn.addEventListener("click", () => {
-    if (state.mode === "menu") return;
+  const returnHomeFromBrand = () => {
+    if (state.mode === "menu") {
+      goToMainMenu();
+      return;
+    }
 
     if (typeof askReturnToMenu === "function") {
       askReturnToMenu();
@@ -8751,22 +8788,15 @@ if (brandHomeBtn) {
     }
 
     goToMainMenu();
-  });
+  };
 
-  brandHomeBtn.addEventListener("keydown", (event) => {
+  brandHomeBtn.onclick = returnHomeFromBrand;
+
+  brandHomeBtn.onkeydown = (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
-
     event.preventDefault();
-
-    if (state.mode === "menu") return;
-
-    if (typeof askReturnToMenu === "function") {
-      askReturnToMenu();
-      return;
-    }
-
-    goToMainMenu();
-  });
+    returnHomeFromBrand();
+  };
 }
     document.getElementById("prevBtn").onclick = async () => {
       await prevQuestion();
