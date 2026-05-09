@@ -702,6 +702,82 @@
   box-shadow: 0 0 0 4px rgba(21, 62, 117, 0.16), 0 10px 24px rgba(8, 24, 46, 0.14);
 }
 
+.menuPathGuide {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.menuPathTitle {
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.menuPathGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.menuPathStep {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.menuPathStep:hover {
+  transform: translateY(-1px);
+  background: var(--panel-2);
+  border-color: var(--primary);
+  box-shadow: 0 8px 18px rgba(8, 24, 46, 0.12);
+}
+
+.menuPathStep:active {
+  transform: scale(0.98);
+}
+
+.menuPathStep:focus-visible {
+  outline: 3px solid rgba(21, 62, 117, 0.35);
+  outline-offset: 3px;
+}
+
+.menuPathNumber {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--button-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.menuPathStepTitle {
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+.menuPathStepText {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: calc(12px * var(--font-scale));
+}
+
+@media (max-width: 900px) {
+  .menuPathGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
     .menuGrid {
       display: grid;
       gap: 14px;
@@ -1752,9 +1828,33 @@ body.loadingActive {
   </div>
 
   <div class="menuPillRow">
-<span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">📝 46-question full test</span>
-<span id="menuPillPractice" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">🎯 Skill-specific practice</span>
-<span id="menuPillLearning" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">📘 Guided Learning Mode</span>
+    <span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">📝 46-question full test</span>
+    <span id="menuPillPractice" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">🎯 Skill-specific practice</span>
+    <span id="menuPillLearning" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">📘 Guided Learning Mode</span>
+  </div>
+
+  <div class="menuPathGuide">
+    <div id="menuPathTitle" class="menuPathTitle">Recommended Path</div>
+
+    <div class="menuPathGrid">
+      <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">
+        <div class="menuPathNumber">1</div>
+        <div id="menuPathLearningTitle" class="menuPathStepTitle">Learn first</div>
+        <div id="menuPathLearningText" class="menuPathStepText">Use guided examples when a skill feels new or confusing.</div>
+      </div>
+
+      <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">
+        <div class="menuPathNumber">2</div>
+        <div id="menuPathPracticeTitle" class="menuPathStepTitle">Practice the skill</div>
+        <div id="menuPathPracticeText" class="menuPathStepText">Build confidence with focused questions before a full test.</div>
+      </div>
+
+      <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">
+        <div class="menuPathNumber">3</div>
+        <div id="menuPathTestTitle" class="menuPathStepTitle">Take the full test</div>
+        <div id="menuPathTestText" class="menuPathStepText">Use the full test when you are ready for realistic GED-style practice.</div>
+      </div>
+    </div>
   </div>
 </div>
       <div class="menuGrid">
@@ -2900,6 +3000,19 @@ function getTranslations(language) {
 menuPillFullTest: isSpanish ? "📝 Examen completo de 46 preguntas" : "📝 46-question full test",
 menuPillPractice: isSpanish ? "🎯 Práctica por habilidad" : "🎯 Skill-specific practice",
 menuPillLearning: isSpanish ? "📘 Modo de aprendizaje guiado" : "📘 Guided Learning Mode",
+menuPathTitle: isSpanish ? "Ruta Recomendada" : "Recommended Path",
+menuPathLearningTitle: isSpanish ? "Aprende primero" : "Learn first",
+menuPathLearningText: isSpanish
+  ? "Usa ejemplos guiados cuando una habilidad sea nueva o confusa."
+  : "Use guided examples when a skill feels new or confusing.",
+menuPathPracticeTitle: isSpanish ? "Practica la habilidad" : "Practice the skill",
+menuPathPracticeText: isSpanish
+  ? "Desarrolla confianza con preguntas enfocadas antes de un examen completo."
+  : "Build confidence with focused questions before a full test.",
+menuPathTestTitle: isSpanish ? "Toma el examen completo" : "Take the full test",
+menuPathTestText: isSpanish
+  ? "Usa el examen completo cuando estés listo para práctica realista estilo GED."
+  : "Use the full test when you are ready for realistic GED-style practice.",
 
     welcomeTitle: isSpanish ? "Bienvenido" : "Welcome",
     welcomeText: isSpanish
@@ -3658,6 +3771,21 @@ if (menuSubtitle) menuSubtitle.textContent = t.menuSubtitle;
 if (menuPillFullTest) menuPillFullTest.textContent = t.menuPillFullTest;
 if (menuPillPractice) menuPillPractice.textContent = t.menuPillPractice;
 if (menuPillLearning) menuPillLearning.textContent = t.menuPillLearning;
+const menuPathTitle = document.getElementById("menuPathTitle");
+const menuPathLearningTitle = document.getElementById("menuPathLearningTitle");
+const menuPathLearningText = document.getElementById("menuPathLearningText");
+const menuPathPracticeTitle = document.getElementById("menuPathPracticeTitle");
+const menuPathPracticeText = document.getElementById("menuPathPracticeText");
+const menuPathTestTitle = document.getElementById("menuPathTestTitle");
+const menuPathTestText = document.getElementById("menuPathTestText");
+
+if (menuPathTitle) menuPathTitle.textContent = t.menuPathTitle;
+if (menuPathLearningTitle) menuPathLearningTitle.textContent = t.menuPathLearningTitle;
+if (menuPathLearningText) menuPathLearningText.textContent = t.menuPathLearningText;
+if (menuPathPracticeTitle) menuPathPracticeTitle.textContent = t.menuPathPracticeTitle;
+if (menuPathPracticeText) menuPathPracticeText.textContent = t.menuPathPracticeText;
+if (menuPathTestTitle) menuPathTestTitle.textContent = t.menuPathTestTitle;
+if (menuPathTestText) menuPathTestText.textContent = t.menuPathTestText;
 
   const welcomePanel = document.getElementById("welcomePanel");
   if (welcomePanel) {
