@@ -25,6 +25,43 @@ function simplifyFraction(numerator, denominator) {
   const g = gcd(numerator, denominator);
   return `${numerator / g}/${denominator / g}`;
 }
+const PROBABILITY_COLORS = {
+  Red: "#ef4444",
+  Blue: "#3b82f6",
+  Green: "#22c55e",
+  Yellow: "#facc15",
+  red: "#ef4444",
+  blue: "#3b82f6",
+  green: "#22c55e",
+  yellow: "#facc15"
+};
+
+function getProbabilityColor(label) {
+  return PROBABILITY_COLORS[label] || "#153e75";
+}
+
+function getProbabilityFill(label) {
+  const fills = {
+    Red: "#fee2e2",
+    Blue: "#dbeafe",
+    Green: "#dcfce7",
+    Yellow: "#fef9c3",
+    red: "#fee2e2",
+    blue: "#dbeafe",
+    green: "#dcfce7",
+    yellow: "#fef9c3"
+  };
+
+  return fills[label] || "#f8fbff";
+}
+
+function escapeSvgText(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function uniqueChoices(correct, wrongs) {
   const choices = new Set([String(correct)]);
@@ -61,41 +98,42 @@ function buildSpinnerSections(difficulty, p) {
 function buildSpinnerDiagram(labels) {
   const cx = 180;
   const cy = 128;
-  const r = 58;
-  const labelR = 35;
+  const r = 62;
   const n = labels.length;
 
-  const lines = [];
-  const labelText = [];
+  const wedges = [];
 
   for (let i = 0; i < n; i += 1) {
-    const boundaryAngle = -Math.PI / 2 + (2 * Math.PI * i) / n;
-    const x = cx + r * Math.cos(boundaryAngle);
-    const y = cy + r * Math.sin(boundaryAngle);
+    const startAngle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    const endAngle = -Math.PI / 2 + (2 * Math.PI * (i + 1)) / n;
 
-    lines.push(
-      `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" stroke="#153e75" stroke-width="2"/>`
-    );
+    const startX = cx + r * Math.cos(startAngle);
+    const startY = cy + r * Math.sin(startAngle);
+    const endX = cx + r * Math.cos(endAngle);
+    const endY = cy + r * Math.sin(endAngle);
 
-    const midAngle = -Math.PI / 2 + (2 * Math.PI * (i + 0.5)) / n;
-    const lx = cx + labelR * Math.cos(midAngle);
-    const ly = cy + labelR * Math.sin(midAngle);
+    const label = labels[i];
 
-    labelText.push(
-      `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" text-anchor="middle" dominant-baseline="middle" class="diagramLabel" style="font-size:12px;">${labels[i]}</text>`
-    );
+    wedges.push(`
+      <path
+        d="M ${cx} ${cy} L ${startX.toFixed(2)} ${startY.toFixed(2)} A ${r} ${r} 0 0 1 ${endX.toFixed(2)} ${endY.toFixed(2)} Z"
+        fill="${getProbabilityFill(label)}"
+        stroke="${getProbabilityColor(label)}"
+        stroke-width="2.5"
+      />
+    `);
   }
 
   return `
     <svg viewBox="0 0 360 240" xmlns="http://www.w3.org/2000/svg">
-      <text x="180" y="26" text-anchor="middle" class="diagramLabel">Spinner</text>
 
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#f8fbff" stroke="#153e75" stroke-width="4"/>
-      ${lines.join("")}
-      ${labelText.join("")}
+      <circle cx="${cx}" cy="${cy}" r="${r + 6}" fill="#f8fbff" stroke="#d7e1ee" stroke-width="2"/>
+      ${wedges.join("")}
+
+      <circle cx="${cx}" cy="${cy}" r="5" fill="#153e75"/>
 
       <line x1="${cx}" y1="58" x2="${cx}" y2="88" stroke="#153e75" stroke-width="4"/>
-      <polygon points="${cx},92 ${cx - 8},78 ${cx + 8},78" fill="#153e75"/>
+      <polygon points="${cx},94 ${cx - 9},79 ${cx + 9},79" fill="#153e75"/>
     </svg>
   `;
 }
@@ -128,16 +166,16 @@ function spinnerProbability(difficulty, p) {
 }
 
 function marblesProbability(difficulty, p) {
-  const marbleMax = Number(marbleMax || p.smallMax || 6);
+  const marbleMax = Number(p.marbleMax || p.smallMax || 6);
   const red = rand(1, marbleMax);
   const blue = rand(1, marbleMax);
   const green = difficulty === "Easy" ? rand(1, Math.max(2, Math.floor(marbleMax / 2))) : rand(1, marbleMax);
   const total = red + blue + green;
 
   const targets = [
-    { label: "red", count: red, stroke: "#ef4444" },
-    { label: "blue", count: blue, stroke: "#3b82f6" },
-    { label: "green", count: green, stroke: "#22c55e" }
+    { label: "red", count: red, stroke: "#ef4444", fill: "#fee2e2" },
+    { label: "blue", count: blue, stroke: "#3b82f6", fill: "#dbeafe" },
+    { label: "green", count: green, stroke: "#22c55e", fill: "#dcfce7" }
   ];
 
   const target = targets[rand(0, targets.length - 1)];
@@ -152,29 +190,38 @@ function marblesProbability(difficulty, p) {
 
   const marbles = [];
 
-  function addMarbles(count, stroke) {
+  function addMarbles(count, stroke, fill, label) {
     for (let i = 0; i < count; i += 1) {
-      marbles.push({ stroke });
+      marbles.push({ stroke, fill, label });
     }
   }
 
-  addMarbles(red, "#ef4444");
-  addMarbles(blue, "#3b82f6");
-  addMarbles(green, "#22c55e");
+  addMarbles(red, "#ef4444", "#fee2e2", "red");
+  addMarbles(blue, "#3b82f6", "#dbeafe", "blue");
+  addMarbles(green, "#22c55e", "#dcfce7", "green");
 
   const startX = 95;
   const startY = 88;
   const spacing = 20;
   const perRow = 5;
 
-  const circles = marbles.map((m, i) => {
-    const col = i % perRow;
-    const row = Math.floor(i / perRow);
-    const x = startX + col * spacing;
-    const y = startY + row * spacing;
+const circles = marbles.map((m, i) => {
+  const col = i % perRow;
+  const row = Math.floor(i / perRow);
+  const x = startX + col * spacing;
+  const y = startY + row * spacing;
 
-    return `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="${m.stroke}" stroke-width="3"/>`;
-  }).join("");
+  return `
+    <circle
+      cx="${x}"
+      cy="${y}"
+      r="7"
+      fill="${m.fill}"
+      stroke="${m.stroke}"
+      stroke-width="3"
+    />
+  `;
+}).join("");
 
   return {
     skill: "Probability",
@@ -186,25 +233,62 @@ function marblesProbability(difficulty, p) {
     choices: uniqueChoices(answer, wrongChoices),
     answer,
     diagram: `
-      <svg viewBox="0 0 380 260" xmlns="http://www.w3.org/2000/svg">
-        <text x="150" y="30" text-anchor="middle" class="diagramLabel">Bag of Marbles</text>
+      <svg viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
 
         <path d="M80 52 Q145 24 210 52 L230 198 Q145 232 60 198 Z"
               fill="#f8fbff" stroke="#153e75" stroke-width="4"/>
 
         ${circles}
-
-        <rect x="260" y="62" width="95" height="130" rx="8"
-              fill="#f8fbff" stroke="#d7e1ee" stroke-width="2"/>
-
-        <text x="275" y="92" class="diagramLabel">Red: ${red}</text>
-        <text x="275" y="125" class="diagramLabel">Blue: ${blue}</text>
-        <text x="275" y="158" class="diagramLabel">Green: ${green}</text>
-        <text x="275" y="185" class="diagramLabel">Total: ${total}</text>
       </svg>
     `,
     explanation: `Probability = favorable outcomes / total outcomes. There are ${target.count} ${target.label} marbles out of ${total} total marbles, so the probability is ${target.count}/${total}, which simplifies to ${answer}.`
   };
+}
+
+function buildNumberCubeDiagram(target) {
+  const matchingOutcomes = new Set(
+    String(target.outcomes || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)
+  );
+
+  const boxes = [1, 2, 3, 4, 5, 6].map((number, index) => {
+    const x = 55 + index * 50;
+    const isMatch = matchingOutcomes.has(String(number));
+
+    return `
+      <rect
+        x="${x}"
+        y="82"
+        width="40"
+        height="40"
+        rx="7"
+        fill="${isMatch ? "#dbeafe" : "#ffffff"}"
+        stroke="${isMatch ? "#153e75" : "#94a3b8"}"
+        stroke-width="${isMatch ? "3" : "2"}"
+      />
+
+      <text
+        x="${x + 20}"
+        y="109"
+        text-anchor="middle"
+        class="diagramLabel"
+        style="font-weight:${isMatch ? "900" : "700"}; fill:#10233f;"
+      >
+        ${number}
+      </text>
+    `;
+  }).join("");
+
+  return `
+    <svg viewBox="0 0 380 220" xmlns="http://www.w3.org/2000/svg">
+
+      <g>
+        ${boxes}
+      </g>
+    </svg>
+  `;
 }
 
 function diceProbability(difficulty, p) {
@@ -251,36 +335,8 @@ function diceProbability(difficulty, p) {
       "1/6"
     ]),
     answer,
-    diagram: `
-      <svg viewBox="0 0 380 220" xmlns="http://www.w3.org/2000/svg">
-        <text x="190" y="30" text-anchor="middle" class="diagramLabel">Fair Number Cube Outcomes</text>
-
-        <g>
-          <rect x="55" y="70" width="40" height="40" rx="6" fill="#f8fbff" stroke="#153e75" stroke-width="3"/>
-          <text x="75" y="97" text-anchor="middle" class="diagramLabel">1</text>
-
-          <rect x="105" y="70" width="40" height="40" rx="6" fill="#f8fbff" stroke="#153e75" stroke-width="3"/>
-          <text x="125" y="97" text-anchor="middle" class="diagramLabel">2</text>
-
-          <rect x="155" y="70" width="40" height="40" rx="6" fill="#f8fbff" stroke="#153e75" stroke-width="3"/>
-          <text x="175" y="97" text-anchor="middle" class="diagramLabel">3</text>
-
-          <rect x="205" y="70" width="40" height="40" rx="6" fill="#f8fbff" stroke="#153e75" stroke-width="3"/>
-          <text x="225" y="97" text-anchor="middle" class="diagramLabel">4</text>
-
-          <rect x="255" y="70" width="40" height="40" rx="6" fill="#f8fbff" stroke="#153e75" stroke-width="3"/>
-          <text x="275" y="97" text-anchor="middle" class="diagramLabel">5</text>
-
-          <rect x="305" y="70" width="40" height="40" rx="6" fill="#f8fbff" stroke="#153e75" stroke-width="3"/>
-          <text x="325" y="97" text-anchor="middle" class="diagramLabel">6</text>
-        </g>
-
-        <text x="190" y="155" text-anchor="middle" class="diagramLabel">
-          Favorable outcomes: ${target.outcomes}
-        </text>
-      </svg>
-    `,
-    explanation: `A fair number cube has 6 equally likely outcomes. The favorable outcomes for rolling ${target.label} are ${target.outcomes}, which gives ${target.favorable} favorable outcomes out of 6. The probability is ${target.favorable}/6, which simplifies to ${answer}.`
+diagram: buildNumberCubeDiagram(target),
+    explanation: `A fair number cube has 6 equally likely outcomes. The numbers that match rolling ${target.label} are ${target.outcomes}. That gives ${target.favorable} matching outcome(s) out of 6, so the probability is ${target.favorable}/6, which simplifies to ${answer}.`
   };
 }
 
