@@ -442,24 +442,50 @@
 }
 
 .brandMark {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ffffff, #dbeafe);
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(219, 234, 254, 0.95)),
+    radial-gradient(circle at 30% 20%, #ffffff, transparent 38%);
   color: #153e75;
-  border: 2px solid rgba(255, 255, 255, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.65);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(11px * var(--font-scale));
+font-size: calc(13px * var(--font-scale));
   font-weight: 900;
-  letter-spacing: 0.03em;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  letter-spacing: 0.02em;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(21, 62, 117, 0.12);
   flex: 0 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.brandStack {
+  display: grid;
+  gap: 2px;
+  line-height: 1.05;
 }
 
 .brandText {
   display: inline-block;
+  font-weight: 900;
+}
+
+.brandTagline {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+body.theme-light .brandTagline {
+  color: rgba(21, 62, 117, 0.72);
 }
 
     #timerTop {
@@ -2513,9 +2539,14 @@ body.loadingActive {
 }
 
 .brandMark {
-  width: 30px;
-  height: 30px;
-  font-size: calc(10px * var(--font-scale));
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  font-size: calc(11px * var(--font-scale));
+}
+
+.brandTagline {
+  font-size: calc(9px * var(--font-scale));
 }
 
   @media (max-width: 900px) {
@@ -2564,7 +2595,10 @@ body.loadingActive {
 <div class="topbarLeft">
   <div id="brandHomeBtn" class="brand" role="button" tabindex="0" title="Return to Main Menu">
   <span class="brandMark" aria-hidden="true">GED</span>
-  <span class="brandText">GED Practice Platform</span>
+  <span class="brandStack">
+    <span class="brandText">GED Practice Platform</span>
+    <span class="brandTagline">Practice • Learn • Pass</span>
+  </span>
 </div>
 </div>
     <div class="topbarCenter">
