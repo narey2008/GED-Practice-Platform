@@ -972,6 +972,53 @@
   margin-bottom: 12px;
 }
 
+.welcomeFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.welcomeFeatureCard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel-2);
+  padding: 12px;
+}
+
+.welcomeFeatureTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.welcomeFeatureIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.welcomeFeatureText {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: calc(13px * var(--font-scale));
+}
+
+@media (max-width: 900px) {
+  .welcomeFeatureGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
     .menuActions {
       display: flex;
       gap: 10px;
@@ -1932,12 +1979,15 @@ body.loadingActive {
 
   <div class="page">
     <div id="mainMenu" class="card menuWrap">
-      <h1 class="menuTitle">Main Menu</h1>
+<h1 class="menuTitle">Main Menu</h1>
 
-<div class="menuIntro">
-  <div id="menuSubtitle" class="menuSubtitle">
+<div class="menuGrid">
+<div id="welcomePanel" class="menuPanel">
+  <h3>Welcome</h3>
+
+  <p id="menuSubtitle">
     Choose a full test, focused practice, or guided Learning Mode.
-  </div>
+  </p>
 
   <div class="menuPillRow">
     <span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">📝 46-question full test</span>
@@ -1969,15 +2019,6 @@ body.loadingActive {
     </div>
   </div>
 </div>
-      <div class="menuGrid">
-        <div id="welcomePanel" class="menuPanel">
-          <h3>Welcome</h3>
-          <p>
-            Welcome to GED Practice Platform — a focused space to build confidence,
-            strengthen weak areas, and prepare step by step. Currently math only,
-            with more subjects coming soon.
-          </p>
-        </div>
 
         <div id="startTestPanel" class="menuPanel">
 <h3>Start a New Test</h3>
