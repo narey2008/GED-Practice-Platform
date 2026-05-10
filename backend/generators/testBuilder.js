@@ -23,6 +23,116 @@ const BROAD_PRACTICE_CATEGORIES = new Set([
   "Solving Equations and Inequalities",
   "Linear Equations and Slope"
 ]);
+const BROAD_CATEGORY_ALLOWED_TAGS = {
+  "Fractions, Decimals, and Percents": [
+    "Fractions",
+    "Decimals",
+    "Percent",
+    "Percent of a Number",
+    "Percent Discount",
+    "Percent of a Total",
+    "Comparing Percents"
+  ],
+
+  "Ratios, Proportions, and Percent Change": [
+    "Percent",
+    "Percent Change",
+    "Percent Increase",
+    "Percent Decrease",
+    "Finding Percent Increase",
+    "Percent Discount",
+    "Percent of a Total",
+    "Comparing Percents"
+  ],
+
+  "Area, Perimeter, Surface Area, and Volume": [
+    "Geometry",
+    "Rectangle Area",
+    "Rectangle Perimeter",
+    "Triangle Area",
+    "Area Cost Problems",
+    "Area Word Problems",
+    "Volume",
+    "Surface Area",
+    "Geometry + Cost"
+  ],
+
+  "Lines, Angles, and Coordinate Plane": [
+    "Slope",
+    "Slope From Graph",
+    "Number Line",
+    "Integer Number Line",
+    "Opposites on a Number Line",
+    "Temperature Number Line"
+  ],
+
+  "Data Tables and Graph Interpretation": [
+    "Bar Graph",
+    "Bar Graph Greatest Value",
+    "Bar Graph Least Value",
+    "Bar Graph Difference",
+    "Bar Graph Total",
+    "Bar Graph Interpretation",
+    "Data Table",
+    "Data Table Totals",
+    "Data Table Greatest Value",
+    "Data Table Least Value",
+    "Data Table Difference",
+    "Line Graph",
+    "Line Graph Change",
+    "Line Graph Greatest Value",
+    "Line Graph Least Value",
+    "Line Graph Difference",
+    "Scatter Plot",
+    "Scatter Plot Correlation",
+    "Graphs + Computation",
+    "Graph Totals",
+    "Graph Difference"
+  ],
+
+  "Mean, Median, and Probability": [
+    "Probability",
+    "Spinner Probability",
+    "Marble Probability",
+    "Number Cube Probability",
+    "Average",
+    "Data + Average"
+  ],
+
+  "Solving Equations and Inequalities": [
+    "Algebra",
+    "Linear Equations",
+    "Solving Equations and Inequalities",
+    "Expressions and Order of Operations",
+    "Expression Substitution",
+    "Expression Word Problems",
+    "One-Step Equations",
+    "Variables on Both Sides",
+    "Equation Word Problems",
+    "Equation Steps"
+  ],
+
+  "Linear Equations and Slope": [
+    "Linear Equations",
+    "One-Step Equations",
+    "Variables on Both Sides",
+    "Equation Word Problems",
+    "Slope",
+    "Slope From Graph"
+  ]
+};
+
+function questionHasAnyAllowedTag(question, allowedTags) {
+  const normalizedAllowed = new Set((allowedTags || []).map(normalizePracticeTag));
+
+  const questionTags = [
+    question.skill,
+    question.subskill,
+    question.topic
+  ].map(normalizePracticeTag);
+
+  return questionTags.some((tag) => normalizedAllowed.has(tag));
+}
 
 function normalizePracticeTag(value) {
   return String(value || "").trim().toLowerCase();
@@ -84,13 +194,16 @@ const generatorCatalog = [
     fn: geometry,
     skills: ["Geometry"],
     types: ["multiple"],
-    categoryTags: ["Area, Perimeter, Surface Area, and Volume", "Lines, Angles, and Coordinate Plane"],
-    subskillTags: [
-      "Geometry",
-      "Rectangle Area",
-      "Rectangle Perimeter",
-      "Triangle Area"
-    ]
+    categoryTags: ["Area, Perimeter, Surface Area, and Volume"],
+ subskillTags: [
+  "Geometry",
+  "Rectangle Area",
+  "Rectangle Perimeter",
+  "Triangle Area",
+  "Area Cost Problems",
+  "Volume",
+  "Surface Area"
+]
   },
   {
     name: "linearEquations",
@@ -305,14 +418,29 @@ function questionMatchesSelectedSkill(question, selectedSkill) {
   if (!selectedSkill) return true;
 
   if (isBroadPracticeCategory(selectedSkill)) {
-    return true;
+    return questionHasAnyAllowedTag(
+      question,
+      BROAD_CATEGORY_ALLOWED_TAGS[selectedSkill] || []
+    );
   }
 
-  return (
-    normalizePracticeTag(question.skill) === normalizePracticeTag(selectedSkill) ||
-    normalizePracticeTag(question.subskill) === normalizePracticeTag(selectedSkill) ||
-    normalizePracticeTag(question.topic) === normalizePracticeTag(selectedSkill)
-  );
+if (normalizePracticeTag(selectedSkill) === "geometry") {
+  return questionHasAnyAllowedTag(question, [
+    "Geometry",
+    "Rectangle Area",
+    "Rectangle Perimeter",
+    "Triangle Area",
+    "Area Cost Problems",
+    "Volume",
+    "Surface Area"
+  ]);
+}
+
+return (
+  normalizePracticeTag(question.skill) === normalizePracticeTag(selectedSkill) ||
+  normalizePracticeTag(question.subskill) === normalizePracticeTag(selectedSkill) ||
+  normalizePracticeTag(question.topic) === normalizePracticeTag(selectedSkill)
+);
 }
 
 function pickRandomEntry(entries) {
