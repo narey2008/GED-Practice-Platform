@@ -2810,11 +2810,14 @@ body.loadingActive {
 </optgroup>
 
   <optgroup label="Lines, Angles, and Coordinate Plane">
-    <option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
-    <option value="Integer Number Line">Integer Number Line</option>
-    <option value="Opposites on a Number Line">Opposites on a Number Line</option>
-    <option value="Temperature Number Line">Temperature Number Line</option>
-    <option value="Slope From Graph">Slope From Graph</option>
+<option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
+<option value="Number Line">Number Line</option>
+<option value="Integer Number Line">Integer Number Line</option>
+<option value="Opposites on a Number Line">Opposites on a Number Line</option>
+<option value="Temperature Number Line">Temperature Number Line</option>
+<option value="Decimal Number Line">Decimal Number Line</option>
+<option value="Fraction Number Line">Fraction Number Line</option>
+<option value="Inequality Number Line">Inequality Number Line</option>
   </optgroup>
 
   <optgroup label="Data Tables and Graph Interpretation">
@@ -4816,11 +4819,14 @@ if (practiceSkillSelect) {
 </optgroup>
 
     <optgroup label="Lines, Angles, and Coordinate Plane">
-      <option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
-      <option value="Integer Number Line">Integer Number Line</option>
-      <option value="Opposites on a Number Line">Opposites on a Number Line</option>
-      <option value="Temperature Number Line">Temperature Number Line</option>
-      <option value="Slope From Graph">Slope From Graph</option>
+<option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
+<option value="Number Line">Number Line</option>
+<option value="Integer Number Line">Integer Number Line</option>
+<option value="Opposites on a Number Line">Opposites on a Number Line</option>
+<option value="Temperature Number Line">Temperature Number Line</option>
+<option value="Decimal Number Line">Decimal Number Line</option>
+<option value="Fraction Number Line">Fraction Number Line</option>
+<option value="Inequality Number Line">Inequality Number Line</option>
     </optgroup>
 
     <optgroup label="Data Tables and Graph Interpretation">
@@ -9368,37 +9374,37 @@ function renderAnswerArea(q) {
   const container = document.getElementById("choices");
   container.innerHTML = "";
 
-  if (q.example) {
-    const box = document.createElement("div");
-    box.className = "practiceItem";
-    box.innerHTML = `
-      <div><strong>${state.mode === "learning" ? "Study the explanation above." : tr("guidedExampleText")}</strong></div>
-      <div class="muted" style="margin-top:8px;">
-        ${state.mode === "learning"
-          ? "When you understand the example, click Next to continue."
-          : tr("guidedExampleSubtext")}
-      </div>
-    `;
-    container.appendChild(box);
+if (q.example && q.type !== "hotspot") {
+  const box = document.createElement("div");
+  box.className = "practiceItem";
+  box.innerHTML = `
+    <div><strong>${state.mode === "learning" ? "Study the explanation above." : tr("guidedExampleText")}</strong></div>
+    <div class="muted" style="margin-top:8px;">
+      ${state.mode === "learning"
+        ? "When you understand the example, click Next to continue."
+        : tr("guidedExampleSubtext")}
+    </div>
+  `;
+  container.appendChild(box);
 
-    if (state.mode === "practice-example") {
-      appendLearningShortcut(container, "Still don’t understand?", async () => {
-        const skill = getCurrentLearningSkill();
-        const difficulty = getCurrentLearningDifficulty();
+  if (state.mode === "practice-example") {
+    appendLearningShortcut(container, "Still don’t understand?", async () => {
+      const skill = getCurrentLearningSkill();
+      const difficulty = getCurrentLearningDifficulty();
 
-        state.learningMeta = {
-          skill,
-          difficulty,
-          goToLearningAfterExample: false,
-          requestedFromExample: true
-        };
+      state.learningMeta = {
+        skill,
+        difficulty,
+        goToLearningAfterExample: false,
+        requestedFromExample: true
+      };
 
-        await startLearningMode(skill, difficulty, true);
-      });
-    }
-
-    return;
+      await startLearningMode(skill, difficulty, true);
+    });
   }
+
+  return;
+}
 
   if (q.type === "fill") {
     container.style.display = "block";
@@ -9579,29 +9585,66 @@ if (q.type === "hotspot") {
   const hotspot = q.hotspot || {};
   const min = Number(hotspot.min ?? -5);
   const max = Number(hotspot.max ?? 5);
-  const selected = String(q.userAnswer ?? "");
+  const step = Number(hotspot.step ?? 1);
+  const tickLabels = hotspot.tickLabels || {};
+
+  const toValueKey = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return String(value);
+    return String(Number(n.toFixed(5)));
+  };
+
+  const formatTickLabel = (value) => {
+    const key = toValueKey(value);
+    return tickLabels[key] || key;
+  };
+
+  const selected = toValueKey(q.userAnswer ?? "");
+  const isExampleOnly = !!q.example;
 
   const width = 760;
   const height = 220;
   const startX = 70;
   const endX = 690;
   const y = 108;
-  const count = max - min || 1;
+  const range = max - min || 1;
 
-  const ticks = [];
+  const values = [];
 
-  for (let value = min; value <= max; value += 1) {
-    const x = startX + ((value - min) / count) * (endX - startX);
-    const isSelected = selected === String(value);
-    const isMajor = value === 0 || Math.abs(value) % 2 === 0;
+  if (Array.isArray(hotspot.values) && hotspot.values.length) {
+    hotspot.values.forEach((value) => values.push(Number(value)));
+  } else {
+    const safeStep = Number.isFinite(step) && step > 0 ? step : 1;
+    const totalSteps = Math.round((max - min) / safeStep);
 
-    ticks.push(`
-      <g class="hotspotTick ${isSelected ? "hotspotSelected" : ""}" data-value="${value}" role="button" tabindex="0" aria-label="Select ${value}">
+    for (let i = 0; i <= totalSteps; i += 1) {
+      values.push(Number((min + i * safeStep).toFixed(5)));
+    }
+  }
+
+  const ticks = values.map((value) => {
+    const valueText = toValueKey(value);
+    const x = startX + ((value - min) / range) * (endX - startX);
+    const isSelected = selected === valueText;
+    const isInteger = Number.isInteger(value);
+    const isEndpoint = value === min || value === max;
+    const isTarget = toValueKey(hotspot.target) === valueText;
+    const isMajor = isInteger || isEndpoint || isTarget || isSelected;
+
+    const shouldShowLabel =
+      isInteger ||
+      isEndpoint ||
+      isTarget ||
+      isSelected ||
+      values.length <= 9;
+
+    return `
+      <g class="hotspotTick ${isSelected ? "hotspotSelected" : ""}" data-value="${escapeHtml(valueText)}" role="button" tabindex="0" aria-label="Select ${escapeHtml(formatTickLabel(value))}">
         <line
           x1="${x}"
-          y1="${y - (isMajor ? 18 : 12)}"
+          y1="${y - (isMajor ? 18 : 11)}"
           x2="${x}"
-          y2="${y + (isMajor ? 18 : 12)}"
+          y2="${y + (isMajor ? 18 : 11)}"
           stroke="#153e75"
           stroke-width="${isMajor ? "3" : "2"}"
         />
@@ -9609,21 +9652,25 @@ if (q.type === "hotspot") {
         <circle
           cx="${x}"
           cy="${y}"
-          r="${isSelected ? "15" : "13"}"
+          r="${isSelected ? "15" : "12"}"
           fill="${isSelected ? "#153e75" : "#ffffff"}"
           stroke="#153e75"
           stroke-width="${isSelected ? "4" : "2.5"}"
         />
 
-        <text
-          x="${x}"
-          y="${y + 52}"
-          text-anchor="middle"
-          class="diagramLabel"
-          style="font-size:${isMajor ? "17px" : "14px"};"
-        >
-          ${value}
-        </text>
+        ${
+          shouldShowLabel
+            ? `<text
+                x="${x}"
+                y="${y + 52}"
+                text-anchor="middle"
+                class="diagramLabel"
+                style="font-size:${isMajor ? "16px" : "13px"};"
+              >
+                ${escapeHtml(formatTickLabel(value))}
+              </text>`
+            : ""
+        }
 
         ${
           isSelected
@@ -9631,8 +9678,8 @@ if (q.type === "hotspot") {
             : ""
         }
       </g>
-    `);
-  }
+    `;
+  });
 
   const wrap = document.createElement("div");
   wrap.className = "hotspotWrap";
@@ -9654,20 +9701,26 @@ if (q.type === "hotspot") {
       ${ticks.join("")}
     </svg>
 
-    <div class="muted hotspotHelpText">
-      ${selected ? `Selected: ${escapeHtml(selected)}` : "Click a point on the number line."}
-    </div>
+<div class="muted hotspotHelpText">
+  ${
+    isExampleOnly
+      ? "Study the number line, then click Next to continue."
+      : selected
+      ? `Selected: ${escapeHtml(formatTickLabel(selected))}`
+      : "Click a point on the number line."
+  }
+</div>
   `;
 
   container.appendChild(wrap);
 
   wrap.querySelectorAll(".hotspotTick").forEach((tick) => {
-    const selectTick = async () => {
-      if (state.lockedReviewMode || state.isPaused) return;
-      q.userAnswer = tick.getAttribute("data-value");
-      renderAnswerArea(q);
-      await saveProgress();
-    };
+const selectTick = async () => {
+  if (isExampleOnly || state.lockedReviewMode || state.isPaused) return;
+  q.userAnswer = tick.getAttribute("data-value");
+  renderAnswerArea(q);
+  await saveProgress();
+};
 
     tick.addEventListener("click", selectTick);
 
@@ -9678,9 +9731,41 @@ if (q.type === "hotspot") {
     });
   });
 
-  appendLearningPracticeControls(container, q);
+if (isExampleOnly) {
+  const box = document.createElement("div");
+  box.className = "practiceItem";
+  box.innerHTML = `
+    <div><strong>${state.mode === "learning" ? "Study the explanation above." : tr("guidedExampleText")}</strong></div>
+    <div class="muted" style="margin-top:8px;">
+      ${state.mode === "learning"
+        ? "When you understand the example, click Next to continue."
+        : tr("guidedExampleSubtext")}
+    </div>
+  `;
+  container.appendChild(box);
+
+  if (state.mode === "practice-example") {
+    appendLearningShortcut(container, "Still don’t understand?", async () => {
+      const skill = getCurrentLearningSkill();
+      const difficulty = getCurrentLearningDifficulty();
+
+      state.learningMeta = {
+        skill,
+        difficulty,
+        goToLearningAfterExample: false,
+        requestedFromExample: true
+      };
+
+      await startLearningMode(skill, difficulty, true);
+    });
+  }
 
   return;
+}
+
+appendLearningPracticeControls(container, q);
+
+return;
 }
 
   container.style.display = "grid";
