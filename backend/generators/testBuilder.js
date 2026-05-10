@@ -88,14 +88,15 @@ const BROAD_CATEGORY_ALLOWED_TAGS = {
     "Graph Difference"
   ],
 
-  "Mean, Median, and Probability": [
-    "Probability",
-    "Spinner Probability",
-    "Marble Probability",
-    "Number Cube Probability",
-    "Average",
-    "Data + Average"
-  ],
+"Mean, Median, and Probability": [
+  "Probability",
+  "Spinner Probability",
+  "Marble Probability",
+  "Number Cube Probability",
+  "Average",
+  "Median",
+  "Data + Average"
+],
 
 "Solving Equations and Inequalities": [
   "Algebra",
@@ -309,13 +310,14 @@ subskillTags: [
       "Area, Perimeter, Surface Area, and Volume",
       "Mean, Median, and Probability"
     ],
-    subskillTags: [
-      "Percent of a Total",
-      "Graph Totals",
-      "Graph Difference",
-      "Area Cost Problems",
-      "Average"
-    ]
+subskillTags: [
+  "Percent of a Total",
+  "Graph Totals",
+  "Graph Difference",
+  "Area Cost Problems",
+  "Average",
+  "Median"
+]
   },
   {
     name: "dragDrop",

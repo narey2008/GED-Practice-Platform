@@ -517,13 +517,54 @@ function averageFromTable(difficulty, p) {
   };
 }
 
+function medianFromDataSet(difficulty, p) {
+  const count = difficulty === "Easy" ? 5 : 7;
+  const values = [];
+
+  while (values.length < count) {
+    const value = rand(p.scoreMin, p.scoreMax);
+
+    if (!values.includes(value)) {
+      values.push(value);
+    }
+  }
+
+  const sorted = [...values].sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+
+  const tableHtml = buildAverageTableHtml(values);
+
+  return {
+    skill: "Data + Average",
+    subskill: "Median",
+    topic: "Finding the median of a data set",
+    difficulty,
+    type: "multiple",
+    question:
+      `Use the table to answer the question.${tableHtml}<div style="margin-top:10px;">What is the median score?</div>`,
+    choices: uniqueNumberChoices(median, [
+      sorted[0],
+      sorted[sorted.length - 1],
+      Math.round(values.reduce((sum, value) => sum + value, 0) / values.length),
+      median + rand(2, 8)
+    ]),
+    answer: median,
+    explanation:
+      "Put the scores in order: " +
+      sorted.join(", ") +
+      ". The median is the middle value, so the median is " +
+      median +
+      "."
+  };
+}
+
 module.exports = function generateMultiStep(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
   const p = getDifficultyProfile(difficulty);
 
-  const easyBank = [percentOfTotal, graphPlusComputation, rectangleCost, averageFromTable];
-  const mediumBank = [percentOfTotal, graphPlusComputation, rectangleCost, averageFromTable];
-  const gedBank = [percentOfTotal, graphPlusComputation, rectangleCost, averageFromTable];
+const easyBank = [percentOfTotal, graphPlusComputation, rectangleCost, averageFromTable, medianFromDataSet];
+const mediumBank = [percentOfTotal, graphPlusComputation, rectangleCost, averageFromTable, medianFromDataSet];
+const gedBank = [percentOfTotal, graphPlusComputation, rectangleCost, averageFromTable, medianFromDataSet];
 
   const bank =
     difficulty === "Easy" ? easyBank : difficulty === "Medium" ? mediumBank : gedBank;
