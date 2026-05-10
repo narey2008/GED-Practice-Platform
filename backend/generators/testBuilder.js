@@ -51,10 +51,8 @@ const BROAD_CATEGORY_ALLOWED_TAGS = {
     "Rectangle Perimeter",
     "Triangle Area",
     "Area Cost Problems",
-    "Area Word Problems",
     "Volume",
-    "Surface Area",
-    "Geometry + Cost"
+    "Surface Area"
   ],
 
   "Lines, Angles, and Coordinate Plane": [
@@ -424,23 +422,23 @@ function questionMatchesSelectedSkill(question, selectedSkill) {
     );
   }
 
-if (normalizePracticeTag(selectedSkill) === "geometry") {
-  return questionHasAnyAllowedTag(question, [
-    "Geometry",
-    "Rectangle Area",
-    "Rectangle Perimeter",
-    "Triangle Area",
-    "Area Cost Problems",
-    "Volume",
-    "Surface Area"
-  ]);
-}
+  if (normalizePracticeTag(selectedSkill) === "geometry") {
+    return questionHasAnyAllowedTag(question, [
+      "Geometry",
+      "Rectangle Area",
+      "Rectangle Perimeter",
+      "Triangle Area",
+      "Area Cost Problems",
+      "Volume",
+      "Surface Area"
+    ]);
+  }
 
-return (
-  normalizePracticeTag(question.skill) === normalizePracticeTag(selectedSkill) ||
-  normalizePracticeTag(question.subskill) === normalizePracticeTag(selectedSkill) ||
-  normalizePracticeTag(question.topic) === normalizePracticeTag(selectedSkill)
-);
+  return (
+    normalizePracticeTag(question.skill) === normalizePracticeTag(selectedSkill) ||
+    normalizePracticeTag(question.subskill) === normalizePracticeTag(selectedSkill) ||
+    normalizePracticeTag(question.topic) === normalizePracticeTag(selectedSkill)
+  );
 }
 
 function pickRandomEntry(entries) {
