@@ -55,14 +55,17 @@ const BROAD_CATEGORY_ALLOWED_TAGS = {
     "Surface Area"
   ],
 
-  "Lines, Angles, and Coordinate Plane": [
-    "Slope",
-    "Slope From Graph",
-    "Number Line",
-    "Integer Number Line",
-    "Opposites on a Number Line",
-    "Temperature Number Line"
-  ],
+"Lines, Angles, and Coordinate Plane": [
+  "Slope",
+  "Slope From Graph",
+  "Number Line",
+  "Integer Number Line",
+  "Opposites on a Number Line",
+  "Temperature Number Line",
+  "Decimal Number Line",
+  "Fraction Number Line",
+  "Inequality Number Line"
+],
 
   "Data Tables and Graph Interpretation": [
     "Bar Graph",
@@ -345,12 +348,15 @@ subskillTags: [
     skills: ["Number Line"],
     types: ["hotspot"],
     categoryTags: ["Lines, Angles, and Coordinate Plane"],
-    subskillTags: [
-      "Number Line",
-      "Integer Number Line",
-      "Opposites on a Number Line",
-      "Temperature Number Line"
-    ]
+subskillTags: [
+  "Number Line",
+  "Integer Number Line",
+  "Opposites on a Number Line",
+  "Temperature Number Line",
+  "Decimal Number Line",
+  "Fraction Number Line",
+  "Inequality Number Line"
+]
   }
 ].filter((entry) => typeof entry.fn === "function");
 
@@ -466,7 +472,7 @@ function generateFromEntries(entries, difficulty, desiredType = null, selectedSk
     const entry = pickRandomEntry(usable);
 
     try {
-      const q = entry.fn({ difficulty });
+      const q = entry.fn({ difficulty, skill: selectedSkill });
       if (!q) continue;
 
       if (desiredType && q.type !== desiredType) continue;
