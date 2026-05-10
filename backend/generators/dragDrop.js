@@ -26,10 +26,10 @@ function fractionOrdering() {
     topic: "Ordering fractions",
     difficulty: "GED-Level",
     type: "dragdrop",
-    question: "Drag the values into order from least to greatest.",
+    question: "Drag the fractions into order from least to greatest.",
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: `Compare the fraction values from least to greatest: ${correct.join(", ")}.`
+    explanation: `Compare the fraction values. From least to greatest, the correct order is ${correct.join(", ")}.`
   };
 }
 
@@ -52,7 +52,7 @@ function decimalOrdering() {
     question: "Drag the decimals into order from least to greatest.",
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: `Compare place values. The correct order is ${correct.join(", ")}.`
+    explanation: `Compare place values. From least to greatest, the correct order is ${correct.join(", ")}.`
   };
 }
 
@@ -75,7 +75,7 @@ function percentOrdering() {
     question: "Drag the percents into order from least to greatest.",
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: `Compare the percent values directly. The correct order is ${correct.join(", ")}.`
+    explanation: `Compare the percent values directly. From least to greatest, the correct order is ${correct.join(", ")}.`
   };
 }
 
@@ -98,10 +98,10 @@ function equationStepOrdering() {
     topic: "Ordering equation-solving steps",
     difficulty: "GED-Level",
     type: "dragdrop",
-    question: `Drag the steps into the correct order to solve: ${a}x + ${b} = ${c}`,
+    question: `Drag the steps into the correct order to solve ${a}x + ${b} = ${c}.`,
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: `First subtract ${b}, then divide by ${a}. The solution is x = ${x}.`
+    explanation: `First subtract ${b} from both sides. Then divide both sides by ${a}. The solution is x = ${x}.`
   };
 }
 
@@ -127,7 +127,7 @@ function discountStepOrdering() {
     question: `Drag the steps into the correct order to find the sale price of a $${price} item with a ${discount}% discount.`,
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: `${discount}% of ${price} is ${discountAmount}. Then ${price} - ${discountAmount} = ${salePrice}.`
+    explanation: `${discount}% of $${price} is $${discountAmount}. Then subtract: $${price} - $${discountAmount} = $${salePrice}.`
   };
 }
 
@@ -147,14 +147,14 @@ function areaCostStepOrdering() {
 
   return {
     skill: "Geometry",
-    subskill: "Area Word Problems",
-    topic: "Using area to solve cost problems",
+    subskill: "Area Cost Problems",
+    topic: "Using area to calculate total cost",
     difficulty: "GED-Level",
     type: "dragdrop",
     question: `A rectangular floor is ${length} ft by ${width} ft. Tile costs $${cost} per square foot. Drag the steps into the correct order.`,
     choices: shuffle(correct),
     answer: orderAnswer(correct),
-    explanation: `Area is ${length} × ${width} = ${area}. Then ${area} × ${cost} = ${total}.`
+    explanation: `First find the area: ${length} × ${width} = ${area} square feet. Then multiply by the cost: ${area} × $${cost} = $${total}.`
   };
 }
 

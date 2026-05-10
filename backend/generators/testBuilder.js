@@ -322,14 +322,14 @@ const generatorCatalog = [
       "Solving Equations and Inequalities",
       "Area, Perimeter, Surface Area, and Volume"
     ],
-    subskillTags: [
-      "Fractions",
-      "Decimals",
-      "Comparing Percents",
-      "Equation Steps",
-      "Percent Discount",
-      "Area Word Problems"
-    ]
+subskillTags: [
+  "Fractions",
+  "Decimals",
+  "Comparing Percents",
+  "Equation Steps",
+  "Percent Discount",
+  "Area Cost Problems"
+]
   },
   {
     name: "hotspot",
