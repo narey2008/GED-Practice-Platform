@@ -116,41 +116,98 @@ function graphPlusComputation(difficulty, p) {
       answer + rand(3, 12)
     ]),
     answer,
-    chart: {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Customers",
-            data: values,
-            backgroundColor: "#1f4f95",
-            borderColor: "#153e75",
-            borderWidth: 1
-          }
-        ]
+chart: {
+  type: "bar",
+  data: {
+    labels,
+    datasets: [
+      {
+        label: "Customers",
+        data: values,
+        backgroundColor: "rgba(21, 62, 117, 0.78)",
+        borderColor: "#153e75",
+        borderWidth: 2,
+        borderRadius: 8,
+        maxBarThickness: 160,
+        categoryPercentage: 1,
+        barPercentage: 0.98
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    layout: {
+      padding: {
+        top: 8,
+        right: 18,
+        bottom: 8,
+        left: 72
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: "Customers"
-          }
+      title: {
+        display: true,
+        text: "Customers",
+        font: {
+          size: 17,
+          weight: "bold"
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            min: 0,
-            max: Math.max(...values) + 4,
-            ticks: { stepSize: difficulty === "Easy" ? 1 : 2 }
+        padding: {
+          top: 4,
+          bottom: 14
+        }
+      },
+      horizontalYAxisTitle: {
+        display: true,
+        text: "Customers",
+        font: {
+          size: 17,
+          weight: "bold"
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.parsed.y} customers`;
           }
         }
       }
     },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: {
+            size: 13,
+            weight: "bold"
+          }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        min: 0,
+        max: Math.max(...values) + 4,
+        ticks: {
+          stepSize: difficulty === "Easy" ? 1 : 2,
+          font: {
+            size: 13,
+            weight: "bold"
+          }
+        },
+        title: {
+          display: false
+        }
+      }
+    }
+  }
+},
     explanation: askTotal
       ? "Add all values: " + values.join(" + ") + " = " + total + "."
       : "Subtract the least value from the greatest value: " + maxValue + " - " + minValue + " = " + difference + "."
