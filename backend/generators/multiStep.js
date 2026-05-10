@@ -25,6 +25,102 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function buildAverageTableHtml(values) {
+  return `
+<div style="
+  margin:16px auto 14px;
+  max-width:520px;
+  border:1px solid #d7e1ee;
+  border-radius:14px;
+  overflow:hidden;
+  background:#ffffff;
+  box-shadow:0 6px 18px rgba(8,24,46,0.08);
+">
+  <div style="
+    background:#153e75;
+    color:#ffffff;
+    font-weight:800;
+    text-align:center;
+    padding:10px 12px;
+    font-size:16px;
+  ">
+    Test Scores
+  </div>
+
+  <table style="
+    width:100%;
+    border-collapse:collapse;
+    background:#ffffff;
+    color:#10233f;
+  ">
+    <thead>
+      <tr>
+        <th style="
+          border-bottom:1px solid #d7e1ee;
+          border-right:1px solid #d7e1ee;
+          padding:10px 12px;
+          background:#f8fbff;
+          color:#153e75;
+          text-align:left;
+          font-weight:900;
+        ">
+          Test
+        </th>
+
+        <th style="
+          border-bottom:1px solid #d7e1ee;
+          padding:10px 12px;
+          background:#f8fbff;
+          color:#153e75;
+          text-align:center;
+          font-weight:900;
+        ">
+          Score
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      ${values
+        .map(
+          (value, index) => `
+        <tr style="background:${index % 2 === 0 ? "#ffffff" : "#f8fbff"};">
+          <td style="
+            border-top:1px solid #eef2f7;
+            border-right:1px solid #d7e1ee;
+            padding:10px 12px;
+            font-weight:800;
+            text-align:left;
+          ">
+            Test ${index + 1}
+          </td>
+
+          <td style="
+            border-top:1px solid #eef2f7;
+            padding:10px 12px;
+            text-align:center;
+            font-weight:900;
+          ">
+            ${escapeHtml(value)}
+          </td>
+        </tr>
+      `
+        )
+        .join("")}
+    </tbody>
+  </table>
+</div>`;
+}
+
 function percentOfTotal(difficulty, p) {
   const total = rand(
     Math.ceil(p.largeMin / 10),
@@ -263,6 +359,7 @@ function averageFromTable(difficulty, p) {
 
   const sum = values.reduce((a, b) => a + b, 0);
   const avg = Math.round(sum / values.length);
+  const tableHtml = buildAverageTableHtml(values);
 
   return {
     skill: "Data + Average",
@@ -271,11 +368,7 @@ function averageFromTable(difficulty, p) {
     difficulty,
     type: "multiple",
     question:
-      "A student scored " +
-      values.join(", ") +
-      " on " +
-      values.length +
-      " tests. What was the average score?",
+      `Use the table to answer the question.${tableHtml}<div style="margin-top:10px;">What was the average score?</div>`,
     choices: uniqueNumberChoices(avg, [
       avg + rand(2, 8),
       Math.max(1, avg - rand(2, 8)),
@@ -287,6 +380,10 @@ function averageFromTable(difficulty, p) {
       "Add all scores and divide by " +
       values.length +
       ": " +
+      values.join(" + ") +
+      " = " +
+      sum +
+      ", and " +
       sum +
       " ÷ " +
       values.length +
