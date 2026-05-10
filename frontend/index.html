@@ -1237,31 +1237,57 @@ select {
 
 .hotspotWrap {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--panel);
-  padding: 14px;
+  padding: 16px;
 }
 
 .hotspotSvg {
   width: 100%;
-  height: 160px;
+  max-width: 720px;
+  height: 210px;
   display: block;
+  margin: 0 auto;
 }
 
 .hotspotTick {
   cursor: pointer;
 }
 
+.hotspotTick circle,
+.hotspotTick line,
+.hotspotTick text {
+  transition: transform 0.12s ease, stroke-width 0.12s ease, fill 0.12s ease;
+}
+
 .hotspotTick:hover circle {
   stroke: var(--primary);
   stroke-width: 4;
+  fill: rgba(21, 62, 117, 0.08);
+}
+
+.hotspotTick:hover text {
+  font-weight: 900;
 }
 
 .hotspotSelected circle {
   fill: var(--primary);
+  stroke: var(--primary);
 }
 
 .hotspotSelected text {
+  font-weight: 900;
+  fill: var(--primary);
+}
+
+.hotspotSelectedMarker {
+  font-weight: 900;
+  fill: var(--primary);
+}
+
+.hotspotHelpText {
+  margin-top: 8px;
+  text-align: center;
   font-weight: 800;
 }
 
@@ -9539,7 +9565,7 @@ appendLearningPracticeControls(container, q);
     return;
   }
 
-  if (q.type === "hotspot") {
+if (q.type === "hotspot") {
   container.style.display = "block";
 
   const hotspot = q.hotspot || {};
@@ -9547,24 +9573,55 @@ appendLearningPracticeControls(container, q);
   const max = Number(hotspot.max ?? 5);
   const selected = String(q.userAnswer ?? "");
 
-  const width = 360;
-  const height = 160;
-  const startX = 35;
-  const endX = 325;
-  const y = 80;
-  const count = max - min;
+  const width = 760;
+  const height = 220;
+  const startX = 70;
+  const endX = 690;
+  const y = 108;
+  const count = max - min || 1;
 
   const ticks = [];
 
   for (let value = min; value <= max; value += 1) {
     const x = startX + ((value - min) / count) * (endX - startX);
     const isSelected = selected === String(value);
+    const isMajor = value === 0 || Math.abs(value) % 2 === 0;
 
     ticks.push(`
-      <g class="hotspotTick ${isSelected ? "hotspotSelected" : ""}" data-value="${value}">
-        <line x1="${x}" y1="${y - 12}" x2="${x}" y2="${y + 12}" stroke="#153e75" stroke-width="3"/>
-        <circle cx="${x}" cy="${y}" r="12" fill="${isSelected ? "#153e75" : "transparent"}" stroke="#153e75" stroke-width="2"/>
-        <text x="${x}" y="${y + 42}" text-anchor="middle" class="diagramLabel">${value}</text>
+      <g class="hotspotTick ${isSelected ? "hotspotSelected" : ""}" data-value="${value}" role="button" tabindex="0" aria-label="Select ${value}">
+        <line
+          x1="${x}"
+          y1="${y - (isMajor ? 18 : 12)}"
+          x2="${x}"
+          y2="${y + (isMajor ? 18 : 12)}"
+          stroke="#153e75"
+          stroke-width="${isMajor ? "3" : "2"}"
+        />
+
+        <circle
+          cx="${x}"
+          cy="${y}"
+          r="${isSelected ? "15" : "13"}"
+          fill="${isSelected ? "#153e75" : "#ffffff"}"
+          stroke="#153e75"
+          stroke-width="${isSelected ? "4" : "2.5"}"
+        />
+
+        <text
+          x="${x}"
+          y="${y + 52}"
+          text-anchor="middle"
+          class="diagramLabel"
+          style="font-size:${isMajor ? "17px" : "14px"};"
+        >
+          ${value}
+        </text>
+
+        ${
+          isSelected
+            ? `<text x="${x}" y="${y - 34}" text-anchor="middle" class="hotspotSelectedMarker">Selected</text>`
+            : ""
+        }
       </g>
     `);
   }
@@ -9573,11 +9630,23 @@ appendLearningPracticeControls(container, q);
   wrap.className = "hotspotWrap";
   wrap.innerHTML = `
     <svg class="hotspotSvg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#153e75" stroke-width="4"/>
-      <polygon points="${endX},${y} ${endX - 10},${y - 7} ${endX - 10},${y + 7}" fill="#153e75"/>
+      <line
+        x1="${startX}"
+        y1="${y}"
+        x2="${endX}"
+        y2="${y}"
+        stroke="#153e75"
+        stroke-width="5"
+        stroke-linecap="round"
+      />
+
+      <polygon points="${endX},${y} ${endX - 14},${y - 9} ${endX - 14},${y + 9}" fill="#153e75"/>
+      <polygon points="${startX},${y} ${startX + 14},${y - 9} ${startX + 14},${y + 9}" fill="#153e75"/>
+
       ${ticks.join("")}
     </svg>
-    <div class="muted" style="margin-top:8px;">
+
+    <div class="muted hotspotHelpText">
       ${selected ? `Selected: ${escapeHtml(selected)}` : "Click a point on the number line."}
     </div>
   `;
@@ -9585,11 +9654,19 @@ appendLearningPracticeControls(container, q);
   container.appendChild(wrap);
 
   wrap.querySelectorAll(".hotspotTick").forEach((tick) => {
-    tick.addEventListener("click", async () => {
+    const selectTick = async () => {
       if (state.lockedReviewMode || state.isPaused) return;
       q.userAnswer = tick.getAttribute("data-value");
       renderAnswerArea(q);
       await saveProgress();
+    };
+
+    tick.addEventListener("click", selectTick);
+
+    tick.addEventListener("keydown", async (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      await selectTick();
     });
   });
 
