@@ -9248,6 +9248,9 @@ const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${en
       if (!themed.options.plugins.legend) themed.options.plugins.legend = {};
       if (!themed.options.plugins.legend.labels) themed.options.plugins.legend.labels = {};
       themed.options.plugins.legend.labels.color = textColor;
+      if (themed.options.plugins.horizontalYAxisTitle) {
+  themed.options.plugins.horizontalYAxisTitle.color = textColor;
+}
 
       if (themed.options.scales) {
         Object.keys(themed.options.scales).forEach((axisKey) => {
@@ -9714,8 +9717,44 @@ function renderDiagram(diagramMarkup) {
   wrap.style.display = "block";
 }
 
+const horizontalYAxisTitlePlugin = {
+  id: "horizontalYAxisTitle",
+
+  afterDraw(chart, args, pluginOptions) {
+    if (!pluginOptions || pluginOptions.display === false || !pluginOptions.text) return;
+    if (!chart.chartArea) return;
+
+    const ctx = chart.ctx;
+    const chartArea = chart.chartArea;
+
+    const fontSize = pluginOptions.font?.size || 17;
+    const fontWeight = pluginOptions.font?.weight || "bold";
+    const textColor =
+      pluginOptions.color ||
+      getComputedStyle(document.body).getPropertyValue("--chart-text").trim() ||
+      "#111827";
+
+ctx.save();
+ctx.font = `${fontWeight} ${fontSize}px Arial, sans-serif`;
+ctx.fillStyle = textColor;
+
+const labelText = String(pluginOptions.text || "");
+const labelWidth = ctx.measureText(labelText).width;
+
+const x = Math.max(8, chartArea.left - labelWidth - 28);
+const y = chartArea.top + (chartArea.bottom - chartArea.top) / 2;
+
+ctx.textAlign = "left";
+ctx.textBaseline = "middle";
+ctx.fillText(labelText, x, y);
+ctx.restore();
+  }
+};
+
 function renderChart(chartConfig) {
   const wrap = document.getElementById("questionChartWrap");
+
+  if (!wrap) return;
 
   if (state.currentChart) {
     try {
@@ -9723,6 +9762,7 @@ function renderChart(chartConfig) {
     } catch (error) {
       console.warn("CHART DESTROY WARNING:", error);
     }
+
     state.currentChart = null;
   }
 
@@ -9739,9 +9779,34 @@ function renderChart(chartConfig) {
   requestAnimationFrame(() => {
     try {
       const theme = getChartTheme();
-     
+
       Chart.defaults.color = theme.text;
-Chart.defaults.borderColor = theme.grid;
+      Chart.defaults.borderColor = theme.grid;
+
+      const baseOptions = chartConfig.options || {};
+      const basePlugins = baseOptions.plugins || {};
+      const baseScales = baseOptions.scales || {};
+
+      const themedScales = Object.fromEntries(
+        Object.entries(baseScales).map(([axisName, axis]) => [
+          axisName,
+          {
+            ...axis,
+            ticks: {
+              ...(axis.ticks || {}),
+              color: theme.text
+            },
+            grid: {
+              ...(axis.grid || {}),
+              color: theme.grid
+            },
+            title: {
+              ...(axis.title || {}),
+              color: theme.text
+            }
+          }
+        ])
+      );
 
       const finalConfig = {
         ...chartConfig,
@@ -9759,42 +9824,31 @@ Chart.defaults.borderColor = theme.grid;
           responsive: true,
           maintainAspectRatio: false,
           animation: false,
-          ...(chartConfig.options || {}),
+          ...baseOptions,
           plugins: {
-            ...(chartConfig.options?.plugins || {}),
+            ...basePlugins,
             legend: {
-              ...(chartConfig.options?.plugins?.legend || {}),
+              ...(basePlugins.legend || {}),
               labels: {
-                ...(chartConfig.options?.plugins?.legend?.labels || {}),
+                ...(basePlugins.legend?.labels || {}),
                 color: theme.text
               }
             },
             title: {
-              ...(chartConfig.options?.plugins?.title || {}),
+              ...(basePlugins.title || {}),
+              color: theme.text
+            },
+            horizontalYAxisTitle: {
+              ...(basePlugins.horizontalYAxisTitle || {}),
               color: theme.text
             }
           },
-          scales: Object.fromEntries(
-            Object.entries(chartConfig.options?.scales || {}).map(([axisName, axis]) => [
-              axisName,
-              {
-                ...axis,
-                ticks: {
-                  ...(axis.ticks || {}),
-                  color: theme.text
-                },
-                grid: {
-                  ...(axis.grid || {}),
-                  color: theme.grid
-                },
-                title: {
-                  ...(axis.title || {}),
-                  color: theme.text
-                }
-              }
-            ])
-          )
-        }
+          scales: themedScales
+        },
+        plugins: [
+          horizontalYAxisTitlePlugin,
+          ...(Array.isArray(chartConfig.plugins) ? chartConfig.plugins : [])
+        ]
       };
 
       state.currentChart = new Chart(canvas.getContext("2d"), finalConfig);
@@ -9804,6 +9858,7 @@ Chart.defaults.borderColor = theme.grid;
     }
   });
 }
+
     function goToEarliestIssue() {
       let targetIndex = state.questions.findIndex((q) => q.flagged);
       if (targetIndex === -1) {

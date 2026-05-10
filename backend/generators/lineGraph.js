@@ -90,7 +90,7 @@ module.exports = function generateLineGraph(options = {}) {
 
   if (selectedType === "change") {
     answer = change;
-    question = `Use the line graph to answer the question. How much did the value change from ${selected.labels[0]} to ${selected.labels[3]}?`;
+    question = `Use the line graph to answer the question. How much did the ${selected.title.toLowerCase()} change from ${selected.labels[0]} to ${selected.labels[3]}?`;
     choices = uniqueNumberChoices(answer, [
       values[3],
       values[0],
@@ -102,21 +102,21 @@ module.exports = function generateLineGraph(options = {}) {
     topic = "Finding change over time from a line graph";
   } else if (selectedType === "highest") {
     answer = selected.labels[maxIndex];
-    question = `Use the line graph to answer the question. During which week was the value the greatest?`;
+    question = `Use the line graph to answer the question. During which week was the ${selected.title.toLowerCase()} the greatest?`;
     choices = shuffle([...selected.labels]);
     explanation = `The highest point on the graph occurs at ${answer}.`;
     subskill = "Line Graph Greatest Value";
     topic = "Finding the greatest value on a line graph";
   } else if (selectedType === "lowest") {
     answer = selected.labels[minIndex];
-    question = `Use the line graph to answer the question. During which week was the value the least?`;
+    question = `Use the line graph to answer the question. During which week was the ${selected.title.toLowerCase()} the least?`;
     choices = shuffle([...selected.labels]);
     explanation = `The lowest point on the graph occurs at ${answer}.`;
     subskill = "Line Graph Least Value";
     topic = "Finding the least value on a line graph";
   } else {
     answer = maxValue - minValue;
-    question = `Use the line graph to answer the question. What is the difference between the greatest value and the least value?`;
+    question = `Use the line graph to answer the question. What is the difference between the greatest and least values shown?`;
     choices = uniqueNumberChoices(answer, [
       maxValue,
       minValue,
@@ -137,48 +137,102 @@ module.exports = function generateLineGraph(options = {}) {
     question,
     choices,
     answer,
-    chart: {
-      type: "line",
-      data: {
-        labels: selected.labels,
-        datasets: [
-          {
-            label: selected.title,
-            data: values,
-            borderColor: "#153e75",
-            backgroundColor: "#1f4f95",
-            fill: false,
-            tension: 0,
-            pointRadius: 5,
-            pointHoverRadius: 5
-          }
-        ]
+chart: {
+  type: "line",
+  data: {
+    labels: selected.labels,
+    datasets: [
+      {
+        label: selected.title,
+        data: values,
+        borderColor: "#153e75",
+        backgroundColor: "#153e75",
+        pointBackgroundColor: "#ffffff",
+        pointBorderColor: "#153e75",
+        pointBorderWidth: 3,
+        pointRadius: 6,
+        pointHoverRadius: 7,
+        hitRadius: 10,
+        borderWidth: 4,
+        fill: false,
+        tension: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+layout: {
+  padding: {
+    top: 8,
+    right: 18,
+    bottom: 8,
+    left: 72
+  }
+},
+    plugins: {
+      legend: {
+        display: false
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: selected.title
-          }
+      title: {
+        display: true,
+        text: selected.title,
+        font: {
+          size: 17,
+          weight: "bold"
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            min: 0,
-            max: maxValue + 3,
-            ticks: { stepSize: difficulty === "Easy" ? 1 : 2 },
-            title: {
-              display: true,
-              text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1)
-            }
+        padding: {
+          top: 4,
+          bottom: 14
+        }
+      },
+      horizontalYAxisTitle: {
+  display: true,
+  text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1),
+  font: {
+    size: 17,
+    weight: "bold"
+  }
+},
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.parsed.y} ${selected.unit}`;
           }
         }
       }
     },
+    scales: {
+      x: {
+        grid: {
+          display: true
+        },
+        ticks: {
+          font: {
+            size: 13,
+            weight: "bold"
+          }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        min: 0,
+        max: maxValue + 3,
+        ticks: {
+          stepSize: difficulty === "Easy" ? 1 : 2,
+          font: {
+            size: 13,
+            weight: "bold"
+          }
+        },
+title: {
+  display: false
+}
+      }
+    }
+  }
+},
     explanation
   };
 };
