@@ -25,6 +25,115 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
+function escapeSvgText(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function titleCase(value) {
+  return String(value || "")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatMoney(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "$0";
+  return Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`;
+}
+
+function buildPercentBarDiagram({ percent, wholeLabel, contextLabel }) {
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  const fillWidth = (safePercent / 100) * 280;
+
+  return `
+    <svg viewBox="0 0 420 210" xmlns="http://www.w3.org/2000/svg">
+      <text x="210" y="42" text-anchor="middle" class="diagramLabel" style="font-size:15px;">
+        ${escapeSvgText(wholeLabel)}
+      </text>
+
+      <rect
+        x="70"
+        y="78"
+        width="280"
+        height="44"
+        rx="12"
+        fill="#ffffff"
+        stroke="#153e75"
+        stroke-width="3"
+      />
+
+      <rect
+        x="70"
+        y="78"
+        width="${fillWidth.toFixed(2)}"
+        height="44"
+        rx="12"
+        fill="#dbeafe"
+        stroke="none"
+      />
+
+      <rect
+        x="70"
+        y="78"
+        width="280"
+        height="44"
+        rx="12"
+        fill="none"
+        stroke="#153e75"
+        stroke-width="3"
+      />
+
+      <text x="210" y="106" text-anchor="middle" dominant-baseline="middle" class="diagramLabel" style="font-size:15px;">
+        ${safePercent}%
+      </text>
+
+      <text x="210" y="158" text-anchor="middle" class="diagramLabel" style="font-size:14px;">
+        ${escapeSvgText(contextLabel)}
+      </text>
+    </svg>
+  `;
+}
+
+function buildDiscountDiagram({ price, discount }) {
+  return `
+    <svg viewBox="0 0 420 210" xmlns="http://www.w3.org/2000/svg">
+      <rect
+        x="82"
+        y="54"
+        width="256"
+        height="102"
+        rx="16"
+        fill="#f8fbff"
+        stroke="#153e75"
+        stroke-width="3"
+      />
+
+      <text x="140" y="92" text-anchor="middle" class="diagramLabel" style="font-size:14px;">
+        Original
+      </text>
+
+      <text x="140" y="122" text-anchor="middle" class="diagramLabel" style="font-size:22px; font-weight:900;">
+        ${escapeSvgText(formatMoney(price))}
+      </text>
+
+      <line x1="202" y1="76" x2="202" y2="136" stroke="#d7e1ee" stroke-width="2"/>
+
+      <text x="270" y="94" text-anchor="middle" class="diagramLabel" style="font-size:15px;">
+        ${discount}% off
+      </text>
+
+      <text x="270" y="124" text-anchor="middle" class="diagramLabel" style="font-size:15px;">
+        Sale price = ?
+      </text>
+    </svg>
+  `;
+}
+
 function percentOfNumberMultiple(difficulty, p) {
   const percent = p.percents[rand(0, p.percents.length - 1)];
   const base = rand(Math.ceil(p.largeMin / 10), Math.ceil(p.largeMax / 10)) * 10;
@@ -52,6 +161,11 @@ function percentOfNumberMultiple(difficulty, p) {
       Number((answer + rand(5, 15)).toFixed(2))
     ]),
     answer,
+    diagram: buildPercentBarDiagram({
+      percent,
+      contextLabel: `${percent}% means ${percent} out of every 100`,
+      wholeLabel: `Whole = ${base}`
+    }),
     explanation: `Convert ${percent}% to decimal form, ${percent / 100}. Then multiply by ${base}: ${base} × ${percent / 100} = ${answer}.`
   };
 }
@@ -72,6 +186,12 @@ function percentOfNumberFill(difficulty, p) {
         ? `What is ${percent}% of ${base}?`
         : `A class goal is to read ${base} pages. The class has read ${percent}% of the pages. How many pages has the class read?`,
     answer: String(answer),
+    diagram: buildPercentBarDiagram({
+      title: "Percent Model",
+      percent,
+      contextLabel: `${percent}% means ${percent} out of every 100`,
+      wholeLabel: `Whole = ${base}`
+    }),
     explanation: `Convert ${percent}% to decimal form, ${percent / 100}. Then multiply by ${base}: ${base} × ${percent / 100} = ${answer}.`
   };
 }
@@ -103,6 +223,11 @@ function percentDiscountMultiple(difficulty, p) {
       Number((answer + rand(4, 12)).toFixed(2))
     ]),
     answer,
+    diagram: buildDiscountDiagram({
+      item,
+      price,
+      discount
+    }),
     explanation: `Find the discount amount first: ${price} × ${discount / 100} = ${discountAmount}. Then subtract from the original price: ${price} - ${discountAmount} = ${answer}.`
   };
 }
@@ -125,6 +250,11 @@ function percentDiscountFill(difficulty, p) {
         ? `A $${price} item is ${discount}% off. What is the sale price?`
         : `A store marks down a $${price} item by ${discount}%. What is the sale price?`,
     answer: String(answer),
+    diagram: buildDiscountDiagram({
+      item: "item",
+      price,
+      discount
+    }),
     explanation: `Find the discount amount first: ${price} × ${discount / 100} = ${discountAmount}. Then subtract from the original price: ${price} - ${discountAmount} = ${answer}.`
   };
 }
@@ -151,6 +281,12 @@ function percentOfTotalMultiple(difficulty, p) {
       answer + rand(5, 15)
     ]),
     answer,
+    diagram: buildPercentBarDiagram({
+      title: "Percent of a Total",
+      percent,
+      contextLabel: `${percent}% of the group chose online classes`,
+      wholeLabel: `Total = ${total}`
+    }),
     explanation: `${percent}% of ${total} = (${percent}/100) × ${total} = ${answer}.`
   };
 }
