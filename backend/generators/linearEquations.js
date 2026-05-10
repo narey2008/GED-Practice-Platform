@@ -25,40 +25,50 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
-function oneStepMultiple(difficulty, p) {
+function twoStepMultiple(difficulty, p) {
   const x = rand(2, p.smallMax);
   const a = rand(2, difficulty === "Easy" ? 6 : p.smallMax);
   const b = rand(1, p.mediumMax);
-  const c = a * x + b;
+  const useAddition = rand(0, 1) === 1;
+
+  const c = useAddition ? a * x + b : a * x - b;
+  const equation = useAddition ? `${a}x + ${b} = ${c}` : `${a}x - ${b} = ${c}`;
 
   return {
     skill: "Linear Equations",
-    subskill: "One-Step Equations",
-    topic: "Solving one-step linear equations",
+    subskill: "Two-Step Equations",
+    topic: "Solving two-step linear equations",
     difficulty,
     type: "multiple",
-    question: `Solve for x: ${a}x + ${b} = ${c}`,
-    choices: uniqueNumberChoices(x, [x + 1, x + 2, x - 1, x - 2]),
+    question: `Solve for x: ${equation}`,
+    choices: uniqueNumberChoices(x, [x + 1, x + 2, x - 1, Math.max(1, x - 2)]),
     answer: x,
-    explanation: `Subtract ${b} from both sides to get ${a}x = ${c - b}. Then divide by ${a}, so x = ${x}.`
+    explanation: useAddition
+      ? `Subtract ${b} from both sides to get ${a}x = ${c - b}. Then divide by ${a}, so x = ${x}.`
+      : `Add ${b} to both sides to get ${a}x = ${c + b}. Then divide by ${a}, so x = ${x}.`
   };
 }
 
-function oneStepFill(difficulty, p) {
+function twoStepFill(difficulty, p) {
   const x = rand(2, p.smallMax);
   const a = rand(2, difficulty === "Easy" ? 6 : p.smallMax);
   const b = rand(1, p.mediumMax);
-  const c = a * x + b;
+  const useAddition = rand(0, 1) === 1;
+
+  const c = useAddition ? a * x + b : a * x - b;
+  const equation = useAddition ? `${a}x + ${b} = ${c}` : `${a}x - ${b} = ${c}`;
 
   return {
     skill: "Linear Equations",
-    subskill: "One-Step Equations",
-    topic: "Solving one-step linear equations",
+    subskill: "Two-Step Equations",
+    topic: "Solving two-step linear equations",
     difficulty,
     type: "fill",
-    question: `Solve for x: ${a}x + ${b} = ${c}`,
+    question: `Solve for x: ${equation}`,
     answer: String(x),
-    explanation: `Subtract ${b} from both sides to get ${a}x = ${c - b}. Then divide by ${a}, so x = ${x}.`
+    explanation: useAddition
+      ? `Subtract ${b} from both sides to get ${a}x = ${c - b}. Then divide by ${a}, so x = ${x}.`
+      : `Add ${b} to both sides to get ${a}x = ${c + b}. Then divide by ${a}, so x = ${x}.`
   };
 }
 
@@ -78,7 +88,7 @@ function variablesBothSidesMultiple(difficulty, p) {
     question: `Solve for x: ${a}x + ${b} = ${d}x + ${c}`,
     choices: uniqueNumberChoices(x, [x + 1, x - 1, x + 2, x + 3]),
     answer: x,
-    explanation: `Move variable terms to one side and constants to the other. Then divide both sides by ${a - d}. That gives x = ${x}.`
+    explanation: `Subtract ${d}x from both sides to get ${a - d}x + ${b} = ${c}. Then subtract ${b} and divide by ${a - d}. That gives x = ${x}.`
   };
 }
 
@@ -97,7 +107,7 @@ function variablesBothSidesFill(difficulty, p) {
     type: "fill",
     question: `Solve for x: ${a}x + ${b} = ${d}x + ${c}`,
     answer: String(x),
-    explanation: `Move variable terms to one side and constants to the other. Then divide both sides by ${a - d}. That gives x = ${x}.`
+    explanation: `Subtract ${d}x from both sides to get ${a - d}x + ${b} = ${c}. Then subtract ${b} and divide by ${a - d}. That gives x = ${x}.`
   };
 }
 
@@ -125,20 +135,20 @@ module.exports = function generateLinearEquations(options = {}) {
   const p = getDifficultyProfile(difficulty);
 
   const easyBank = [
-    oneStepMultiple,
-    oneStepFill
+    twoStepMultiple,
+    twoStepFill
   ];
 
   const mediumBank = [
-    oneStepMultiple,
-    oneStepFill,
+    twoStepMultiple,
+    twoStepFill,
     variablesBothSidesMultiple,
     equationWordProblemMultiple
   ];
 
   const gedBank = [
-    oneStepMultiple,
-    oneStepFill,
+    twoStepMultiple,
+    twoStepFill,
     variablesBothSidesMultiple,
     variablesBothSidesFill,
     equationWordProblemMultiple

@@ -107,19 +107,19 @@ const BROAD_CATEGORY_ALLOWED_TAGS = {
   "Simplifying Expressions",
   "Combining Like Terms",
   "Distributive Property",
-  "One-Step Equations",
   "Variables on Both Sides",
   "Equation Word Problems",
-  "Equation Steps"
+  "Equation Steps",
+  "Two-Step Equations",
 ],
 
   "Linear Equations and Slope": [
-    "Linear Equations",
-    "One-Step Equations",
-    "Variables on Both Sides",
-    "Equation Word Problems",
-    "Slope",
-    "Slope From Graph"
+"Linear Equations",
+"Two-Step Equations",
+"Variables on Both Sides",
+"Equation Word Problems",
+"Slope",
+"Slope From Graph"
   ]
 };
 
@@ -215,12 +215,12 @@ subskillTags: [
     skills: ["Linear Equations"],
     types: ["multiple", "fill"],
     categoryTags: ["Solving Equations and Inequalities"],
-    subskillTags: [
-      "Linear Equations",
-      "One-Step Equations",
-      "Variables on Both Sides",
-      "Equation Word Problems"
-    ]
+subskillTags: [
+  "Linear Equations",
+  "Two-Step Equations",
+  "Variables on Both Sides",
+  "Equation Word Problems"
+]
   },
   {
     name: "lineGraph",
