@@ -25,6 +25,27 @@ function uniqueNumberChoices(answer, wrongs) {
   return shuffle(Array.from(choices));
 }
 
+function uniqueTextChoices(answer, wrongs) {
+  const choices = new Set([answer]);
+
+  wrongs.forEach((w) => {
+    if (w && w !== answer && choices.size < 4) {
+      choices.add(w);
+    }
+  });
+
+  return shuffle(Array.from(choices));
+}
+
+function formatLinearExpression(coefficient, constant) {
+  const variablePart = coefficient === 1 ? "x" : `${coefficient}x`;
+
+  if (constant === 0) return variablePart;
+  if (constant > 0) return `${variablePart} + ${constant}`;
+
+  return `${variablePart} - ${Math.abs(constant)}`;
+}
+
 function orderOfOperationsMultiple(difficulty, p) {
   const a = rand(p.smallMin, p.smallMax);
   const b = rand(p.smallMin, p.smallMax);
@@ -111,6 +132,55 @@ function expressionSubstitutionFill(difficulty, p) {
   };
 }
 
+function combiningLikeTermsMultiple(difficulty, p) {
+  const a = rand(2, p.smallMax);
+  const b = rand(2, p.smallMax);
+  const constant = rand(1, p.mediumMax);
+  const answer = formatLinearExpression(a + b, constant);
+
+  return {
+    skill: "Algebra",
+    subskill: "Combining Like Terms",
+    topic: "Simplifying expressions by combining like terms",
+    difficulty,
+    type: "multiple",
+    question: `Simplify the expression: ${a}x + ${b}x + ${constant}`,
+    choices: uniqueTextChoices(answer, [
+      formatLinearExpression(a * b, constant),
+      `${a + b + constant}x`,
+      formatLinearExpression(a + b, constant + 1),
+      formatLinearExpression(a + b + 1, constant)
+    ]),
+    answer,
+    explanation: `Combine the like terms ${a}x and ${b}x: ${a}x + ${b}x = ${a + b}x. The simplified expression is ${answer}.`
+  };
+}
+
+function distributivePropertyMultiple(difficulty, p) {
+  const outside = rand(2, difficulty === "Easy" ? 5 : p.smallMax);
+  const coefficient = rand(2, difficulty === "Easy" ? 5 : p.smallMax);
+  const constant = rand(1, p.mediumMax);
+
+  const answer = formatLinearExpression(outside * coefficient, outside * constant);
+
+  return {
+    skill: "Algebra",
+    subskill: "Distributive Property",
+    topic: "Simplifying expressions using the distributive property",
+    difficulty,
+    type: "multiple",
+    question: `Simplify the expression: ${outside}(${coefficient}x + ${constant})`,
+    choices: uniqueTextChoices(answer, [
+      formatLinearExpression(outside * coefficient, constant),
+      formatLinearExpression(coefficient, outside * constant),
+      formatLinearExpression(outside + coefficient, outside * constant),
+      formatLinearExpression(outside * coefficient, outside + constant)
+    ]),
+    answer,
+    explanation: `Distribute ${outside} to both terms: ${outside} × ${coefficient}x = ${outside * coefficient}x and ${outside} × ${constant} = ${outside * constant}. The simplified expression is ${answer}.`
+  };
+}
+
 function simpleWordExpressionMultiple(difficulty, p) {
   const cost = rand(3, p.smallMax);
   const fee = rand(2, p.mediumMax);
@@ -148,7 +218,9 @@ module.exports = function generateAlgebra(options = {}) {
     orderOfOperationsMultiple,
     orderOfOperationsFill,
     expressionSubstitutionMultiple,
-    expressionSubstitutionFill
+    expressionSubstitutionFill,
+    combiningLikeTermsMultiple,
+    distributivePropertyMultiple
   ];
 
   const mediumBank = [
@@ -156,6 +228,8 @@ module.exports = function generateAlgebra(options = {}) {
     orderOfOperationsFill,
     expressionSubstitutionMultiple,
     expressionSubstitutionFill,
+    combiningLikeTermsMultiple,
+    distributivePropertyMultiple,
     simpleWordExpressionMultiple
   ];
 
@@ -164,6 +238,8 @@ module.exports = function generateAlgebra(options = {}) {
     orderOfOperationsFill,
     expressionSubstitutionMultiple,
     expressionSubstitutionFill,
+    combiningLikeTermsMultiple,
+    distributivePropertyMultiple,
     simpleWordExpressionMultiple
   ];
 

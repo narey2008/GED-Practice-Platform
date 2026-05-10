@@ -97,18 +97,21 @@ const BROAD_CATEGORY_ALLOWED_TAGS = {
     "Data + Average"
   ],
 
-  "Solving Equations and Inequalities": [
-    "Algebra",
-    "Linear Equations",
-    "Solving Equations and Inequalities",
-    "Expressions and Order of Operations",
-    "Expression Substitution",
-    "Expression Word Problems",
-    "One-Step Equations",
-    "Variables on Both Sides",
-    "Equation Word Problems",
-    "Equation Steps"
-  ],
+"Solving Equations and Inequalities": [
+  "Algebra",
+  "Linear Equations",
+  "Solving Equations and Inequalities",
+  "Expressions and Order of Operations",
+  "Expression Substitution",
+  "Expression Word Problems",
+  "Simplifying Expressions",
+  "Combining Like Terms",
+  "Distributive Property",
+  "One-Step Equations",
+  "Variables on Both Sides",
+  "Equation Word Problems",
+  "Equation Steps"
+],
 
   "Linear Equations and Slope": [
     "Linear Equations",
@@ -152,11 +155,14 @@ const generatorCatalog = [
     skills: ["Algebra"],
     types: ["multiple", "fill"],
     categoryTags: ["Expressions and Order of Operations", "Solving Equations and Inequalities"],
-    subskillTags: [
-      "Expressions and Order of Operations",
-      "Expression Substitution",
-      "Expression Word Problems"
-    ]
+subskillTags: [
+  "Expressions and Order of Operations",
+  "Expression Substitution",
+  "Expression Word Problems",
+  "Simplifying Expressions",
+  "Combining Like Terms",
+  "Distributive Property"
+]
   },
   {
     name: "barGraph",
