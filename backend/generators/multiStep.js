@@ -121,6 +121,59 @@ function buildAverageTableHtml(values) {
 </div>`;
 }
 
+function buildMultiStepPercentDiagram({ percent, total }) {
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  const fillWidth = (safePercent / 100) * 280;
+
+  return `
+    <svg viewBox="0 0 420 210" xmlns="http://www.w3.org/2000/svg">
+      <text x="210" y="42" text-anchor="middle" class="diagramLabel" style="font-size:15px;">
+        Total = ${escapeSvgText(total)}
+      </text>
+
+      <rect
+        x="70"
+        y="78"
+        width="280"
+        height="44"
+        rx="12"
+        fill="#ffffff"
+        stroke="#153e75"
+        stroke-width="3"
+      />
+
+      <rect
+        x="70"
+        y="78"
+        width="${fillWidth.toFixed(2)}"
+        height="44"
+        rx="12"
+        fill="#dbeafe"
+        stroke="none"
+      />
+
+      <rect
+        x="70"
+        y="78"
+        width="280"
+        height="44"
+        rx="12"
+        fill="none"
+        stroke="#153e75"
+        stroke-width="3"
+      />
+
+      <text x="210" y="106" text-anchor="middle" dominant-baseline="middle" class="diagramLabel" style="font-size:15px;">
+        ${safePercent}%
+      </text>
+
+      <text x="210" y="158" text-anchor="middle" class="diagramLabel" style="font-size:14px;">
+        Part = ?
+      </text>
+    </svg>
+  `;
+}
+
 function percentOfTotal(difficulty, p) {
   const total = rand(
     Math.ceil(p.largeMin / 10),
@@ -129,21 +182,22 @@ function percentOfTotal(difficulty, p) {
 
   const percent = p.percents[rand(0, p.percents.length - 1)];
   const answer = Math.round((percent / 100) * total);
+  const useFill = p.allowFill && rand(0, 3) === 0;
 
   const scenarios =
     difficulty === "Easy"
       ? [
-          "A store sold " + total + " items. " + percent + "% were notebooks. How many notebooks were sold?",
-          "A class has a goal of " + total + " pages. They read " + percent + "% of the pages. How many pages did they read?"
+          `A store sold ${total} items. ${percent}% were notebooks. How many notebooks were sold?`,
+          `A class has a goal of ${total} pages. They read ${percent}% of the pages. How many pages did they read?`
         ]
       : difficulty === "Medium"
       ? [
-          "A store sold " + total + " items in one day. " + percent + "% of the items were sold in the morning. How many items were sold in the morning?",
-          "A school ordered " + total + " supplies. " + percent + "% of them were notebooks. How many notebooks were ordered?"
+          `A store sold ${total} items in one day. ${percent}% of the items were sold in the morning. How many items were sold in the morning?`,
+          `A school ordered ${total} supplies. ${percent}% of them were notebooks. How many notebooks were ordered?`
         ]
       : [
-          "A school event had " + total + " tickets available. By noon, " + percent + "% of the tickets had been sold. How many tickets had been sold by noon?",
-          "A warehouse received " + total + " packages. If " + percent + "% were delivered the same day, how many packages were delivered that day?"
+          `A school event had ${total} tickets available. By noon, ${percent}% of the tickets had been sold. How many tickets had been sold by noon?`,
+          `A warehouse received ${total} packages. If ${percent}% were delivered the same day, how many packages were delivered that day?`
         ];
 
   return {
@@ -151,15 +205,21 @@ function percentOfTotal(difficulty, p) {
     subskill: "Percent of a Total",
     topic: "Finding a percent of a total in a word problem",
     difficulty,
-    type: p.allowFill && rand(0, 3) === 0 ? "fill" : "multiple",
+    type: useFill ? "fill" : "multiple",
     question: scenarios[rand(0, scenarios.length - 1)],
-    choices: uniqueNumberChoices(answer, [
-      answer + rand(5, 20),
-      Math.max(1, answer - rand(5, 20)),
-      total - answer,
-      Math.round(total / Math.max(1, percent))
-    ]),
-    answer: p.allowFill && rand(0, 3) === 0 ? String(answer) : answer,
+    choices: useFill
+      ? []
+      : uniqueNumberChoices(answer, [
+          answer + rand(5, 20),
+          Math.max(1, answer - rand(5, 20)),
+          total - answer,
+          Math.round(total / Math.max(1, percent))
+        ]),
+    answer: useFill ? String(answer) : answer,
+    diagram: buildMultiStepPercentDiagram({
+      percent,
+      total
+    }),
     explanation:
       percent +
       "% of " +
