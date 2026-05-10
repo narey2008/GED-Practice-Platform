@@ -9019,6 +9019,15 @@ async function beginRealTestAfterTutorial() {
   );
 }
 
+function getPracticeApiSkill(skill) {
+  const selectedSkill = String(skill || "").trim();
+
+  const apiSkillAliases = {
+    "Area, Perimeter, Surface Area, and Volume": "Geometry"
+  };
+
+  return apiSkillAliases[selectedSkill] || selectedSkill;
+}
 async function startLearningMode(skill, difficulty, fromPractice = false) {
   await withLoading(
     "Starting Learning Mode...",
@@ -9029,10 +9038,11 @@ async function startLearningMode(skill, difficulty, fromPractice = false) {
 
       const selectedSkill = skill || document.getElementById("learningSkillSelect")?.value || "Solving Equations and Inequalities";
       const selectedDifficulty = difficulty || document.getElementById("learningDifficultySelect")?.value || "GED-Level";
+      const apiSkill = getPracticeApiSkill(selectedSkill);
 
-      const res = await fetch(
-        `${API_BASE}/api/practice?count=8&difficulty=${encodeURIComponent(selectedDifficulty)}&skill=${encodeURIComponent(selectedSkill)}`
-      );
+const res = await fetch(
+  `${API_BASE}/api/practice?count=8&difficulty=${encodeURIComponent(selectedDifficulty)}&skill=${encodeURIComponent(apiSkill)}`
+);
 
       if (!res.ok) {
         throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
@@ -9155,8 +9165,10 @@ async function gradeLearningQuestion() {
       hideToast();
       stopTimer();
 
-      const count = examplesOnly ? 2 : 12;
-      const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(skill)}`);
+const count = examplesOnly ? 2 : 12;
+const apiSkill = getPracticeApiSkill(skill);
+
+const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(apiSkill)}`);
       if (!res.ok) {
         throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
       }

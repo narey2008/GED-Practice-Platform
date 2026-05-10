@@ -1592,8 +1592,15 @@ app.get("/api/practice", (req, res) => {
     const requested = Number(req.query.count) || 12;
     const count = Math.max(1, Math.min(30, requested));
     const difficulty = req.query.difficulty || "GED-Level";
-    const skill = req.query.skill || "";
-    const questions = buildTest({ count, difficulty, skill });
+const rawSkill = req.query.skill || "";
+
+const practiceSkillAliases = {
+  "Area, Perimeter, Surface Area, and Volume": "Geometry"
+};
+
+const skill = practiceSkillAliases[rawSkill] || rawSkill;
+
+const questions = buildTest({ count, difficulty, skill });
     res.json({ questions });
   } catch (error) {
     console.error("Failed to build practice set:", error);
