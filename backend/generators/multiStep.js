@@ -310,6 +310,66 @@ chart: {
   };
 }
 
+function escapeSvgText(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildRectangleCostDiagram({ length, width, costPerUnit, showCost }) {
+  return `
+    <svg viewBox="0 0 420 250" xmlns="http://www.w3.org/2000/svg">
+      <rect
+        x="120"
+        y="62"
+        width="190"
+        height="105"
+        fill="#f8fbff"
+        stroke="#153e75"
+        stroke-width="4"
+      />
+
+      <line
+        x1="120"
+        y1="188"
+        x2="310"
+        y2="188"
+        stroke="#153e75"
+        stroke-width="2"
+      />
+
+      <line
+        x1="94"
+        y1="62"
+        x2="94"
+        y2="167"
+        stroke="#153e75"
+        stroke-width="2"
+      />
+
+      <text x="215" y="214" text-anchor="middle" class="diagramLabel">
+        ${length} ft
+      </text>
+
+      <text x="66" y="118" text-anchor="middle" dominant-baseline="middle" class="diagramLabel">
+        ${width} ft
+      </text>
+
+      ${
+        showCost
+          ? `<text x="215" y="238" text-anchor="middle" class="diagramLabel" style="font-size:14px;">
+              ${escapeSvgText(`$${costPerUnit} per square foot`)}
+            </text>`
+          : `<text x="215" y="238" text-anchor="middle" class="diagramLabel" style="font-size:14px;">
+              Find the area
+            </text>`
+      }
+    </svg>
+  `;
+}
+
 function rectangleCost(difficulty, p) {
   const length = rand(p.mediumMin, p.lengthMax);
   const width = rand(p.smallMin, p.widthMax);
@@ -317,6 +377,7 @@ function rectangleCost(difficulty, p) {
 
   const area = length * width;
   const answer = area * costPerUnit;
+  const isEasy = difficulty === "Easy";
 
   return {
     skill: "Geometry + Cost",
@@ -324,28 +385,31 @@ function rectangleCost(difficulty, p) {
     topic: "Using area to calculate total cost",
     difficulty,
     type: "multiple",
-    question:
-      difficulty === "Easy"
-        ? "A rectangular floor is " + length + " ft by " + width + " ft. What is the area of the floor?"
-        : "A rectangular floor is " + length + " ft by " + width + " ft. Tile costs $" + costPerUnit + " per square foot. What is the total cost to cover the floor?",
-    choices:
-      difficulty === "Easy"
-        ? uniqueNumberChoices(area, [
-            2 * (length + width),
-            length + width,
-            area + rand(3, 10)
-          ])
-        : uniqueNumberChoices(answer, [
-            area,
-            answer + rand(20, 80),
-            area + costPerUnit,
-            2 * (length + width) * costPerUnit
-          ]),
-    answer: difficulty === "Easy" ? area : answer,
-    explanation:
-      difficulty === "Easy"
-        ? "Area = length × width, so " + length + " × " + width + " = " + area + "."
-        : "Area = " + length + " × " + width + " = " + area + ". Then multiply by cost: " + area + " × " + costPerUnit + " = " + answer + "."
+    question: isEasy
+      ? "The rectangular floor shown below is measured in feet. What is the area of the floor?"
+      : "The rectangular floor shown below is measured in feet. Tile costs $" + costPerUnit + " per square foot. What is the total cost to cover the floor?",
+    choices: isEasy
+      ? uniqueNumberChoices(area, [
+          2 * (length + width),
+          length + width,
+          area + rand(3, 10)
+        ])
+      : uniqueNumberChoices(answer, [
+          area,
+          answer + rand(20, 80),
+          area + costPerUnit,
+          2 * (length + width) * costPerUnit
+        ]),
+    answer: isEasy ? area : answer,
+    diagram: buildRectangleCostDiagram({
+      length,
+      width,
+      costPerUnit,
+      showCost: !isEasy
+    }),
+    explanation: isEasy
+      ? "Area = length × width, so " + length + " × " + width + " = " + area + "."
+      : "Area = " + length + " × " + width + " = " + area + ". Then multiply by cost: " + area + " × " + costPerUnit + " = " + answer + "."
   };
 }
 
