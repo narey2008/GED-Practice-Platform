@@ -91,14 +91,14 @@ module.exports = function generateBarGraph(options = {}) {
 
   if (selectedType === "greatest") {
     answer = selected.labels[maxIndex];
-    question = `Use the bar graph to answer the question. Which category has the greatest number of ${selected.unit}?`;
+    question = `Use the bar graph to answer the question. Which category shows the greatest number of ${selected.unit}?`;
     choices = shuffle([...selected.labels]);
     explanation = `The tallest bar is ${answer}, so ${answer} has the greatest number of ${selected.unit}.`;
     subskill = "Bar Graph Greatest Value";
     topic = "Finding the greatest value in a bar graph";
   } else if (selectedType === "least") {
     answer = selected.labels[minIndex];
-    question = `Use the bar graph to answer the question. Which category has the least number of ${selected.unit}?`;
+    question = `Use the bar graph to answer the question. Which category shows the least number of ${selected.unit}?`;
     choices = shuffle([...selected.labels]);
     explanation = `The shortest bar is ${answer}, so ${answer} has the least number of ${selected.unit}.`;
     subskill = "Bar Graph Least Value";
@@ -117,7 +117,7 @@ module.exports = function generateBarGraph(options = {}) {
     topic = "Finding the difference between values in a bar graph";
   } else {
     answer = total;
-    question = `Use the bar graph to answer the question. What is the total number of ${selected.unit} shown?`;
+    question = `Use the bar graph to answer the question. What is the total number of ${selected.unit} shown in all four categories?`;
     choices = uniqueNumberChoices(answer, [
       total + rand(3, 8),
       total - rand(3, 8),
@@ -138,45 +138,98 @@ module.exports = function generateBarGraph(options = {}) {
     question,
     choices,
     answer,
-    chart: {
-      type: "bar",
-      data: {
-        labels: selected.labels,
-        datasets: [
-          {
-            label: selected.title,
-            data: values,
-            backgroundColor: "#1f4f95",
-            borderColor: "#153e75",
-            borderWidth: 1
-          }
-        ]
+ chart: {
+  type: "bar",
+  data: {
+    labels: selected.labels,
+    datasets: [
+      {
+        label: selected.title,
+        data: values,
+        backgroundColor: "rgba(21, 62, 117, 0.78)",
+        borderColor: "#153e75",
+        borderWidth: 2,
+        borderRadius: 8,
+maxBarThickness: 160,
+categoryPercentage: 1,
+barPercentage: 0.98
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    layout: {
+      padding: {
+        top: 8,
+        right: 18,
+        bottom: 8,
+        left: 72
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: selected.title
-          }
+      title: {
+        display: true,
+        text: selected.title,
+        font: {
+          size: 17,
+          weight: "bold"
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            min: 0,
-            max: maxValue + 3,
-            ticks: { stepSize: difficulty === "Easy" ? 1 : 2 },
-            title: {
-              display: true,
-              text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1)
-            }
+        padding: {
+          top: 4,
+          bottom: 14
+        }
+      },
+      horizontalYAxisTitle: {
+        display: true,
+        text: selected.unit.charAt(0).toUpperCase() + selected.unit.slice(1),
+        font: {
+          size: 17,
+          weight: "bold"
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.parsed.y} ${selected.unit}`;
           }
         }
       }
     },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: {
+            size: 13,
+            weight: "bold"
+          }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        min: 0,
+        max: maxValue + 3,
+        ticks: {
+          stepSize: difficulty === "Easy" ? 1 : 2,
+          font: {
+            size: 13,
+            weight: "bold"
+          }
+        },
+        title: {
+          display: false
+        }
+      }
+    }
+  }
+},
     explanation
   };
 }; 
