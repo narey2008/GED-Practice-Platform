@@ -97,54 +97,120 @@ module.exports = function generateScatterPlot(options = {}) {
       "Constant relationship"
     ]),
     answer: selected.answer,
-    chart: {
-      type: "scatter",
-      data: {
-        datasets: [
-          {
-            label: selected.title,
-            data: selected.points,
-            parsing: false,
-            pointRadius: 5,
-            pointHoverRadius: 5,
-            backgroundColor: "#1f4f95"
-          }
-        ]
+chart: {
+  type: "scatter",
+  data: {
+    datasets: [
+      {
+        label: selected.title,
+        data: selected.points,
+        parsing: false,
+        pointRadius: 6,
+        pointHoverRadius: 7,
+        hitRadius: 10,
+        pointBackgroundColor: "#ffffff",
+        pointBorderColor: "#153e75",
+        pointBorderWidth: 3,
+        backgroundColor: "#153e75",
+        borderColor: "#153e75",
+        clip: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+layout: {
+  padding: {
+    top: 10,
+    right: 28,
+    bottom: 10,
+    left: 120
+  }
+},
+    plugins: {
+      legend: {
+        display: false
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false },
-          title: {
-            display: true,
-            text: selected.title
-          }
+      title: {
+        display: true,
+        text: selected.title,
+        font: {
+          size: 17,
+          weight: "bold"
         },
-        scales: {
-          x: {
-            type: "linear",
-            min: 0,
-            max: 10,
-            ticks: { stepSize: 1 },
-            title: {
-              display: true,
-              text: selected.xLabel
-            }
-          },
-          y: {
-            min: 0,
-            max: 10,
-            ticks: { stepSize: 1 },
-            title: {
-              display: true,
-              text: selected.yLabel
-            }
+        padding: {
+          top: 4,
+          bottom: 14
+        }
+      },
+      horizontalYAxisTitle: {
+        display: true,
+        text: selected.yLabel,
+        font: {
+          size: 17,
+          weight: "bold"
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `(${context.parsed.x}, ${context.parsed.y})`;
           }
         }
       }
     },
+    scales: {
+      x: {
+        type: "linear",
+        min: 0,
+        max: 11,
+        grid: {
+          display: true
+        },
+        ticks: {
+          stepSize: 1,
+          font: {
+            size: 13,
+            weight: "bold"
+          },
+          callback: function(value) {
+            return value <= 10 ? value : "";
+          }
+        },
+        title: {
+          display: true,
+          text: selected.xLabel,
+          font: {
+            size: 14,
+            weight: "bold"
+          }
+        }
+      },
+      y: {
+        min: 0,
+        max: 11,
+        grid: {
+          display: true
+        },
+        ticks: {
+          stepSize: 1,
+          font: {
+            size: 13,
+            weight: "bold"
+          },
+          callback: function(value) {
+            return value <= 10 ? value : "";
+          }
+        },
+        title: {
+          display: false
+        }
+      }
+    }
+  }
+},
     explanation: selected.explanation
   };
 };
