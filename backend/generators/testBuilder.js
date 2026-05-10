@@ -616,17 +616,15 @@ function buildTest(options = {}) {
     }
   }
 
-  while (rawQuestions.length < count) {
-    const question =
-  generateFromEntries(pool, difficulty, null, skill) ||
-  generateFromEntries(pool, difficulty);
+while (rawQuestions.length < count) {
+  const question = generateFromEntries(pool, difficulty, null, skill);
 
-    if (!question) {
-      throw new Error(`Unable to generate enough questions for selected skill: ${skill || "Mixed Test"}`);
-    }
-
-    addQuestion(question, true);
+  if (!question) {
+    throw new Error(`Unable to generate enough questions for selected skill: ${skill || "Mixed Test"}`);
   }
+
+  addQuestion(question, true);
+}
 
   const shuffledQuestions = shuffleQuestions(rawQuestions);
 
