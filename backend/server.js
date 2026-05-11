@@ -147,17 +147,17 @@ const mailTransport =
   process.env.SMTP_PORT &&
   process.env.SMTP_USER &&
   process.env.SMTP_PASS
-nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
-  family: 4,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-})
-
+    ? nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT),
+        secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
+        family: 4,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      })
+    : null;
 function createPasswordResetToken() {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
@@ -480,7 +480,7 @@ app.get("/api/health", async (req, res) => {
 app.get("/api/debug-email-verification-version", (req, res) => {
   res.json({
     ok: true,
-    version: "email-verification-backend-live-check",
+    version: "auth-email-deploy-check-2026-05-11",
     timestamp: new Date().toISOString()
   });
 });
