@@ -147,16 +147,16 @@ const mailTransport =
   process.env.SMTP_PORT &&
   process.env.SMTP_USER &&
   process.env.SMTP_PASS
-    ? nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
-        secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
-      })
-    : null;
+nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
+  family: 4,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+})
 
 function createPasswordResetToken() {
   const rawToken = crypto.randomBytes(32).toString("hex");

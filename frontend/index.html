@@ -7994,39 +7994,40 @@ function openDeleteAccountModal() {
 }
 
     function openAuthModal(initialMode = "signin") {
-  let currentMode = initialMode;
+  let currentMode = initialMode === "register" ? "register" : "signin";
 
   function renderAuthModal() {
     const isRegister = currentMode === "register";
 
     document.getElementById("modalTitle").innerText = isRegister ? tr("createAccount") : tr("signIn");
     document.getElementById("modalBody").innerHTML = `
-    <div style="margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2);">
-  <label for="authScoringEnabled" style="margin-bottom:8px;">Scoring Preference</label>
-  <div style="display:flex; align-items:flex-start; gap:10px;">
-    <input
-      id="authScoringEnabled"
-      type="checkbox"
-      checked
-      style="width:auto; margin-top:3px;"
-    />
-    <div style="line-height:1.5; color:var(--text);">
-      Keep scoring enabled for test score calculations and score-based progress tracking.
-      <div class="muted" style="margin-top:6px;">
-        You can change this later in your Profile settings. If you turn scoring off, your correct and incorrect answers will still be shown for learning.
-      </div>
-    </div>
-  </div>
-</div>
       <div style="display:flex; gap:10px; margin-bottom:14px;">
         <button id="authModeSignIn" type="button" class="${!isRegister ? "primaryBtn" : "secondaryBtn"}">${tr("signIn")}</button>
         <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">${tr("createAccount")}</button>
       </div>
 
-      ${isRegister ? `
-        <label for="authDisplayName">${tr("displayName")}</label>
-        <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
-      ` : ""}
+${isRegister ? `
+  <label for="authDisplayName">${tr("displayName")}</label>
+  <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
+
+  <div style="margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2);">
+    <label for="authScoringEnabled" style="margin-bottom:8px;">Scoring Preference</label>
+    <div style="display:flex; align-items:flex-start; gap:10px;">
+      <input
+        id="authScoringEnabled"
+        type="checkbox"
+        checked
+        style="width:auto; margin-top:3px;"
+      />
+      <div style="line-height:1.5; color:var(--text);">
+        Keep scoring enabled for test score calculations and score-based progress tracking.
+        <div class="muted" style="margin-top:6px;">
+          You can change this later in your Profile settings. If you turn scoring off, your correct and incorrect answers will still be shown for learning.
+        </div>
+      </div>
+    </div>
+  </div>
+` : ""}
 
       <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
       <input id="authEmail" type="email" placeholder="${tr("enterEmail")}" />
