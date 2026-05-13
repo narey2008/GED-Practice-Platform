@@ -18,7 +18,7 @@ const authMiddleware = require("./middleware/auth");
 const upload = require("./middleware/upload");
 
 console.log("RUNNING BACKEND SERVER FILE");
-console.log("DEBUG VERSION: email-diagnostics-v2-2026-05-13");
+console.log("DEBUG VERSION: api-json-error-handler-2026-05-13");
 
 dotenv.config();
 
@@ -1881,6 +1881,27 @@ app.get("/api/practice/history", authMiddleware, async (req, res) => {
     console.error(error);
     return res.status(500).json({ error: "Failed to load practice history." });
   }
+});
+
+app.use("/api", (req, res) => {
+  return res.status(404).json({
+    error: `API route not found: ${req.method} ${req.originalUrl}`
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error("EXPRESS ERROR HANDLER:");
+  console.error(err);
+
+  if (req.originalUrl && req.originalUrl.startsWith("/api/")) {
+    return res.status(500).json({
+      error: err.message || "Server error.",
+      code: err.code || null,
+      command: err.command || null
+    });
+  }
+
+  return next(err);
 });
 
 app.get("/", (req, res) => {
