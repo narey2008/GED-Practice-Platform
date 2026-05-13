@@ -158,6 +158,20 @@ const mailTransport =
         }
       })
     : null;
+
+if (mailTransport) {
+  mailTransport.verify((error) => {
+    if (error) {
+      console.error("SMTP VERIFY FAILED:");
+      console.error(error);
+    } else {
+      console.log("SMTP VERIFY SUCCESS: email transport is ready");
+    }
+  });
+} else {
+  console.warn("SMTP VERIFY SKIPPED: email transport is not configured");
+}
+
 function createPasswordResetToken() {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
@@ -263,12 +277,20 @@ async function sendLoginTwoFactorEmail({ email, rawToken }) {
     `
   });
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: "Your GED Practice Platform login security code",
-    html
-  });
+const info = await mailTransport.sendMail({
+  from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+  to: email,
+  subject: "Verify your GED Practice Platform account",
+  html
+});
+
+console.log("VERIFICATION EMAIL SEND RESULT:", {
+  to: email,
+  messageId: info.messageId,
+  accepted: info.accepted,
+  rejected: info.rejected,
+  response: info.response
+});
 }
 
 async function sendAccountActionVerificationEmail({ email, rawToken, actionType }) {
@@ -483,6 +505,70 @@ app.get("/api/debug-email-verification-version", (req, res) => {
     version: "auth-email-deploy-check-2026-05-11",
     timestamp: new Date().toISOString()
   });
+});
+
+app.post("/api/debug/send-test-email", async (req, res) => {
+  try {
+    const debugSecret = process.env.DEBUG_EMAIL_SECRET || "";
+    const providedSecret = req.headers["x-debug-secret"] || "";
+
+    if (!debugSecret || providedSecret !== debugSecret) {
+      return res.status(403).json({ error: "Forbidden." });
+    }
+
+    const to =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    if (!to) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    if (!mailTransport) {
+      return res.status(500).json({
+        error: "Email transport is not configured.",
+        smtpConfigured: false
+      });
+    }
+
+    const info = await mailTransport.sendMail({
+      from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
+      to,
+      subject: "GED Practice Platform email test",
+      text: "This is a test email from the GED Practice Platform backend.",
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;">
+          <h2>GED Practice Platform Email Test</h2>
+          <p>This is a test email from the backend.</p>
+          <p>If you received this, SMTP is working.</p>
+        </div>
+      `
+    });
+
+    console.log("DEBUG TEST EMAIL SEND RESULT:", {
+      to,
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response
+    });
+
+    return res.json({
+      success: true,
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response
+    });
+  } catch (error) {
+    console.error("DEBUG TEST EMAIL ERROR:");
+    console.error(error);
+
+    return res.status(500).json({
+      error: error.message || "Failed to send debug email."
+    });
+  }
 });
 
 app.get("/api/debug-forgot-password", (req, res) => {
