@@ -10,7 +10,7 @@
       const savedLanguage = localStorage.getItem("ged_practice_language_pref") || "English";
       document.documentElement.setAttribute("data-language", savedLanguage);
       let exampleEntrySource = null; 
-      window.GED_FRONTEND_AUTH_VERSION = "auth-mode-submit-fix-2026-05-11";
+window.GED_FRONTEND_AUTH_VERSION = "resend-verification-fix-2026-05-11";
 // "practice" OR "menu"
     })();
   </script>
@@ -7994,6 +7994,98 @@ function openDeleteAccountModal() {
   );
 }
 
+function openResendVerificationModal(prefilledEmail = "") {
+  showModal(
+    tr("resendVerification") || "Resend Verification",
+    `
+      <div style="line-height:1.65; color:var(--text);">
+        Your account exists, but the email address has not been verified yet.
+        Enter your email and we’ll send a new verification link.
+      </div>
+
+      <div style="margin-top:14px;">
+        <label for="resendVerificationEmail">${tr("email")}</label>
+        <input
+          id="resendVerificationEmail"
+          type="email"
+          value="${escapeHtml(prefilledEmail || "")}"
+          placeholder="${tr("enterEmail")}"
+        />
+      </div>
+
+      <div id="resendVerificationError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("resendVerification") || "Resend Verification",
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const emailInput = document.getElementById("resendVerificationEmail");
+          const errorEl = document.getElementById("resendVerificationError");
+
+          const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          if (!email) {
+            errorEl.textContent = tr("email") + " is required.";
+            errorEl.classList.remove("hidden");
+            return;
+          }
+
+          try {
+            await withLoading(
+              tr("resendVerificationLoading") || "Sending verification...",
+              "",
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({ email })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || "Failed to resend verification email.");
+                }
+
+                closeModal();
+
+                showModal(
+                  tr("verificationEmailSent") || "Verification Sent",
+                  tr("verificationEmailSentBody") ||
+                    "If an unverified account exists for that email, a new verification email has been sent.",
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || "Failed to resend verification email.";
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
     function openAuthModal(initialMode = "signin") {
   let currentMode = initialMode === "register" ? "register" : "signin";
 
@@ -8092,8 +8184,6 @@ const displayName = isSubmitRegister
   ? document.getElementById("authDisplayName").value.trim()
   : "";
 
-console.log("AUTH SUBMIT MODE:", submitMode);
-
       try {
 await withLoading(
   isSubmitRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
@@ -8108,8 +8198,6 @@ await withLoading(
     const payload = isSubmitRegister
       ? { email, password, displayName, scoringEnabled }
       : { email, password };
-
-    console.log("AUTH ENDPOINT:", endpoint);
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
               method: "POST",
@@ -8130,29 +8218,43 @@ await withLoading(
               throw new Error(`Auth request returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
             }
 
-            if (!res.ok) {
-              if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
-                closeModal();
-                showModal(
-                  tr("verifyEmailTitle"),
-                  tr("verifyEmailBody"),
-                  [
-                    {
-                      label: tr("resendVerification"),
-                      variant: "secondary",
-                      onClick: () => openResendVerificationModal(email)
-                    },
-                    {
-                      label: tr("close"),
-                      variant: "primary"
-                    }
-                  ]
-                );
-                return;
-              }
+if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
+  closeModal();
 
-              throw new Error(data.error || tr("failedAuthentication"));
-            }
+  showModal(
+    tr("verifyEmailTitle") || "Verify Your Email",
+    `
+      <div style="line-height:1.65;">
+        Please verify your email before signing in.
+        <br><br>
+        If you cannot find the verification email, you can send a new one.
+      </div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: tr("resendVerification") || "Resend Verification",
+        variant: "primary",
+        onClick: () => {
+          if (typeof openResendVerificationModal === "function") {
+            openResendVerificationModal(email);
+          } else {
+            showModal(
+              tr("resendVerification") || "Resend Verification",
+              "Please use Create Account again with the same email or contact support if the verification email does not arrive.",
+              [{ label: tr("close"), variant: "primary" }]
+            );
+          }
+        }
+      }
+    ]
+  );
+
+  return;
+}
 
 if (isSubmitRegister) {
   closeModal();
