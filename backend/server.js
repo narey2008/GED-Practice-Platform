@@ -151,6 +151,9 @@ const mailTransport =
         port: Number(process.env.SMTP_PORT),
         secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
         family: 4,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
@@ -536,10 +539,11 @@ app.post("/api/debug/send-test-email", async (req, res) => {
 
     if (!mailTransport) {
       return res.status(500).json({
-        error: "Email transport is not configured.",
-        smtpConfigured: false
+        error: "Email transport is not configured."
       });
     }
+
+    console.log("DEBUG TEST EMAIL ATTEMPT:", { to });
 
     const info = await mailTransport.sendMail({
       from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
@@ -575,7 +579,9 @@ app.post("/api/debug/send-test-email", async (req, res) => {
     console.error(error);
 
     return res.status(500).json({
-      error: error.message || "Failed to send debug email."
+      error: error.message || "Failed to send debug email.",
+      code: error.code || null,
+      command: error.command || null
     });
   }
 });

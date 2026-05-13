@@ -8,6 +8,14 @@ function shuffle(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+function normalizeSkill(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function pick(arr) {
+  return arr[rand(0, arr.length - 1)];
+}
+
 function gcd(a, b) {
   a = Math.abs(a);
   b = Math.abs(b);
@@ -25,6 +33,7 @@ function simplifyFraction(numerator, denominator) {
   const g = gcd(numerator, denominator);
   return `${numerator / g}/${denominator / g}`;
 }
+
 const PROBABILITY_COLORS = {
   Red: "#ef4444",
   Blue: "#3b82f6",
@@ -55,14 +64,6 @@ function getProbabilityFill(label) {
   return fills[label] || "#f8fbff";
 }
 
-function escapeSvgText(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function uniqueChoices(correct, wrongs) {
   const choices = new Set([String(correct)]);
 
@@ -72,7 +73,18 @@ function uniqueChoices(correct, wrongs) {
     }
   });
 
-  const fallback = ["1/2", "1/3", "1/4", "2/3", "3/4", "1/6", "5/6", "3/8", "2/5", "3/5"];
+  const fallback = [
+    "1/2",
+    "1/3",
+    "1/4",
+    "2/3",
+    "3/4",
+    "1/6",
+    "5/6",
+    "3/8",
+    "2/5",
+    "3/5"
+  ];
 
   fallback.forEach((choice) => {
     if (choices.size < 4 && String(choice) !== String(correct)) {
@@ -83,7 +95,7 @@ function uniqueChoices(correct, wrongs) {
   return shuffle(Array.from(choices));
 }
 
-function buildSpinnerSections(difficulty, p) {
+function buildSpinnerSections(difficulty) {
   if (difficulty === "Easy") {
     return ["Red", "Blue", "Green", "Yellow"];
   }
@@ -126,7 +138,6 @@ function buildSpinnerDiagram(labels) {
 
   return `
     <svg viewBox="0 0 360 240" xmlns="http://www.w3.org/2000/svg">
-
       <circle cx="${cx}" cy="${cy}" r="${r + 6}" fill="#f8fbff" stroke="#d7e1ee" stroke-width="2"/>
       ${wedges.join("")}
 
@@ -138,13 +149,19 @@ function buildSpinnerDiagram(labels) {
   `;
 }
 
-function spinnerProbability(difficulty, p) {
-  const labels = buildSpinnerSections(difficulty, p);
+function spinnerProbability(difficulty) {
+  const labels = buildSpinnerSections(difficulty);
   const uniqueColors = Array.from(new Set(labels));
   const selectedColor = uniqueColors[rand(0, uniqueColors.length - 1)];
   const favorable = labels.filter((label) => label === selectedColor).length;
   const total = labels.length;
   const answer = simplifyFraction(favorable, total);
+
+  const scenario = pick([
+    `A game spinner has ${total} equal sections. If the spinner is spun once, what is the probability of landing on ${selectedColor}?`,
+    `At a school activity, a spinner is divided into ${total} equal sections. What is the probability that one spin lands on ${selectedColor}?`,
+    `A prize spinner has ${total} equal sections. If a student spins it one time, what is the probability that it lands on ${selectedColor}?`
+  ]);
 
   return {
     skill: "Probability",
@@ -152,7 +169,7 @@ function spinnerProbability(difficulty, p) {
     topic: "Probability with spinner sections",
     difficulty,
     type: "multiple",
-    question: `The spinner is divided into ${total} equal sections. What is the probability of landing on ${selectedColor}?`,
+    question: scenario,
     choices: uniqueChoices(answer, [
       simplifyFraction(1, total),
       simplifyFraction(Math.min(total, favorable + 1), total),
@@ -161,7 +178,7 @@ function spinnerProbability(difficulty, p) {
     ]),
     answer,
     diagram: buildSpinnerDiagram(labels),
-    explanation: `There are ${total} equal sections and ${favorable} section(s) labeled ${selectedColor}. The probability is ${favorable}/${total}, which simplifies to ${answer}.`
+    explanation: `Count the sections that match the event. There are ${favorable} ${selectedColor} section(s) out of ${total} total sections, so the probability is ${favorable}/${total}, which simplifies to ${answer}.`
   };
 }
 
@@ -169,7 +186,11 @@ function marblesProbability(difficulty, p) {
   const marbleMax = Number(p.marbleMax || p.smallMax || 6);
   const red = rand(1, marbleMax);
   const blue = rand(1, marbleMax);
-  const green = difficulty === "Easy" ? rand(1, Math.max(2, Math.floor(marbleMax / 2))) : rand(1, marbleMax);
+  const green =
+    difficulty === "Easy"
+      ? rand(1, Math.max(2, Math.floor(marbleMax / 2)))
+      : rand(1, marbleMax);
+
   const total = red + blue + green;
 
   const targets = [
@@ -205,23 +226,31 @@ function marblesProbability(difficulty, p) {
   const spacing = 20;
   const perRow = 5;
 
-const circles = marbles.map((m, i) => {
-  const col = i % perRow;
-  const row = Math.floor(i / perRow);
-  const x = startX + col * spacing;
-  const y = startY + row * spacing;
+  const circles = marbles
+    .map((m, i) => {
+      const col = i % perRow;
+      const row = Math.floor(i / perRow);
+      const x = startX + col * spacing;
+      const y = startY + row * spacing;
 
-  return `
-    <circle
-      cx="${x}"
-      cy="${y}"
-      r="7"
-      fill="${m.fill}"
-      stroke="${m.stroke}"
-      stroke-width="3"
-    />
-  `;
-}).join("");
+      return `
+        <circle
+          cx="${x}"
+          cy="${y}"
+          r="7"
+          fill="${m.fill}"
+          stroke="${m.stroke}"
+          stroke-width="3"
+        />
+      `;
+    })
+    .join("");
+
+  const scenario = pick([
+    `A bag contains ${red} red marbles, ${blue} blue marbles, and ${green} green marbles. If 1 marble is chosen at random, what is the probability of choosing a ${target.label} marble?`,
+    `For a classroom game, a bag has ${red} red marbles, ${blue} blue marbles, and ${green} green marbles. One marble is picked without looking. What is the probability of picking a ${target.label} marble?`,
+    `A student randomly chooses 1 marble from a bag with ${red} red, ${blue} blue, and ${green} green marbles. What is the probability the marble is ${target.label}?`
+  ]);
 
   return {
     skill: "Probability",
@@ -229,12 +258,11 @@ const circles = marbles.map((m, i) => {
     topic: "Probability with colored marbles",
     difficulty,
     type: "multiple",
-    question: `A bag contains ${red} red marbles, ${blue} blue marbles, and ${green} green marbles. If 1 marble is chosen at random, what is the probability of choosing a ${target.label} marble?`,
+    question: scenario,
     choices: uniqueChoices(answer, wrongChoices),
     answer,
     diagram: `
       <svg viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
-
         <path d="M80 52 Q145 24 210 52 L230 198 Q145 232 60 198 Z"
               fill="#f8fbff" stroke="#153e75" stroke-width="4"/>
 
@@ -253,37 +281,38 @@ function buildNumberCubeDiagram(target) {
       .filter(Boolean)
   );
 
-  const boxes = [1, 2, 3, 4, 5, 6].map((number, index) => {
-    const x = 55 + index * 50;
-    const isMatch = matchingOutcomes.has(String(number));
+  const boxes = [1, 2, 3, 4, 5, 6]
+    .map((number, index) => {
+      const x = 55 + index * 50;
+      const isMatch = matchingOutcomes.has(String(number));
 
-    return `
-      <rect
-        x="${x}"
-        y="82"
-        width="40"
-        height="40"
-        rx="7"
-        fill="${isMatch ? "#dbeafe" : "#ffffff"}"
-        stroke="${isMatch ? "#153e75" : "#94a3b8"}"
-        stroke-width="${isMatch ? "3" : "2"}"
-      />
+      return `
+        <rect
+          x="${x}"
+          y="82"
+          width="40"
+          height="40"
+          rx="7"
+          fill="${isMatch ? "#dbeafe" : "#ffffff"}"
+          stroke="${isMatch ? "#153e75" : "#94a3b8"}"
+          stroke-width="${isMatch ? "3" : "2"}"
+        />
 
-      <text
-        x="${x + 20}"
-        y="109"
-        text-anchor="middle"
-        class="diagramLabel"
-        style="font-weight:${isMatch ? "900" : "700"}; fill:#10233f;"
-      >
-        ${number}
-      </text>
-    `;
-  }).join("");
+        <text
+          x="${x + 20}"
+          y="109"
+          text-anchor="middle"
+          class="diagramLabel"
+          style="font-weight:${isMatch ? "900" : "700"}; fill:#10233f;"
+        >
+          ${number}
+        </text>
+      `;
+    })
+    .join("");
 
   return `
     <svg viewBox="0 0 380 220" xmlns="http://www.w3.org/2000/svg">
-
       <g>
         ${boxes}
       </g>
@@ -291,7 +320,7 @@ function buildNumberCubeDiagram(target) {
   `;
 }
 
-function diceProbability(difficulty, p) {
+function diceProbability(difficulty) {
   const easyTargets = [
     { label: "a 2", favorable: 1, outcomes: "2" },
     { label: "a 5", favorable: 1, outcomes: "5" },
@@ -321,13 +350,19 @@ function diceProbability(difficulty, p) {
   const target = pool[rand(0, pool.length - 1)];
   const answer = simplifyFraction(target.favorable, 6);
 
+  const scenario = pick([
+    `A board game uses a fair number cube with faces numbered 1 through 6. If the cube is rolled once, what is the probability of rolling ${target.label}?`,
+    `A fair number cube is rolled one time during a classroom game. What is the probability of rolling ${target.label}?`,
+    `In a game, a fair number cube has faces numbered 1 through 6. What is the probability that one roll is ${target.label}?`
+  ]);
+
   return {
     skill: "Probability",
     subskill: "Number Cube Probability",
     topic: "Probability with a fair number cube",
     difficulty,
     type: "multiple",
-    question: `A fair number cube has faces numbered 1 through 6. If the cube is rolled once, what is the probability of rolling ${target.label}?`,
+    question: scenario,
     choices: uniqueChoices(answer, [
       simplifyFraction(Math.max(1, target.favorable - 1), 6),
       simplifyFraction(Math.min(6, target.favorable + 1), 6),
@@ -335,7 +370,7 @@ function diceProbability(difficulty, p) {
       "1/6"
     ]),
     answer,
-diagram: buildNumberCubeDiagram(target),
+    diagram: buildNumberCubeDiagram(target),
     explanation: `A fair number cube has 6 equally likely outcomes. The numbers that match rolling ${target.label} are ${target.outcomes}. That gives ${target.favorable} matching outcome(s) out of 6, so the probability is ${target.favorable}/6, which simplifies to ${answer}.`
   };
 }
@@ -343,6 +378,17 @@ diagram: buildNumberCubeDiagram(target),
 module.exports = function generateProbability(options = {}) {
   const difficulty = options.difficulty || "GED-Level";
   const p = getDifficultyProfile(difficulty);
+  const selectedSkill = normalizeSkill(options.skill);
+
+  const directMap = {
+    "spinner probability": spinnerProbability,
+    "marble probability": marblesProbability,
+    "number cube probability": diceProbability
+  };
+
+  if (directMap[selectedSkill]) {
+    return directMap[selectedSkill](difficulty, p);
+  }
 
   const bank = [
     spinnerProbability,
