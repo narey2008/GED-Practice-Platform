@@ -10,6 +10,7 @@
       const savedLanguage = localStorage.getItem("ged_practice_language_pref") || "English";
       document.documentElement.setAttribute("data-language", savedLanguage);
       let exampleEntrySource = null; 
+      window.GED_FRONTEND_AUTH_VERSION = "auth-mode-submit-fix-2026-05-11";
 // "practice" OR "menu"
     })();
   </script>
@@ -8075,6 +8076,7 @@ accountAccessBtn.onclick = () => {
     submitBtn.type = "button";
     submitBtn.className = "primaryBtn";
     submitBtn.innerText = isRegister ? tr("createAccount") : tr("signIn");
+    submitBtn.dataset.authMode = isRegister ? "register" : "signin";
 
     submitBtn.onclick = async () => {
       const authError = document.getElementById("authError");
@@ -8083,23 +8085,31 @@ accountAccessBtn.onclick = () => {
 
       const email = document.getElementById("authEmail").value.trim().toLowerCase();
       const password = document.getElementById("authPassword").value;
-      const displayName = isRegister
-        ? document.getElementById("authDisplayName").value.trim()
-        : "";
+const submitMode = submitBtn.dataset.authMode === "register" ? "register" : "signin";
+const isSubmitRegister = submitMode === "register";
+
+const displayName = isSubmitRegister
+  ? document.getElementById("authDisplayName").value.trim()
+  : "";
+
+console.log("AUTH SUBMIT MODE:", submitMode);
 
       try {
-        await withLoading(
-          isRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
-          tr(""),
-          async () => {
-            const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
-            const scoringEnabled = isRegister
-  ? !!document.getElementById("authScoringEnabled")?.checked
-  : true;
+await withLoading(
+  isSubmitRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
+  tr(""),
+  async () => {
+    const endpoint = isSubmitRegister ? "/api/auth/register" : "/api/auth/login";
 
-const payload = isRegister
-  ? { email, password, displayName, scoringEnabled }
-  : { email, password };
+    const scoringEnabled = isSubmitRegister
+      ? !!document.getElementById("authScoringEnabled")?.checked
+      : true;
+
+    const payload = isSubmitRegister
+      ? { email, password, displayName, scoringEnabled }
+      : { email, password };
+
+    console.log("AUTH ENDPOINT:", endpoint);
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
               method: "POST",
@@ -8121,7 +8131,7 @@ const payload = isRegister
             }
 
             if (!res.ok) {
-              if (!isRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
+              if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
                 closeModal();
                 showModal(
                   tr("verifyEmailTitle"),
@@ -8144,7 +8154,7 @@ const payload = isRegister
               throw new Error(data.error || tr("failedAuthentication"));
             }
 
-if (isRegister) {
+if (isSubmitRegister) {
   closeModal();
   showModal(
     tr("verifyEmailTitle"),
