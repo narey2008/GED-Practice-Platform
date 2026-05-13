@@ -18,8 +18,7 @@ const authMiddleware = require("./middleware/auth");
 const upload = require("./middleware/upload");
 
 console.log("RUNNING BACKEND SERVER FILE");
-console.log("DEBUG VERSION: forgot-password-route-check-2026-04-17");
-console.log("DEBUG VERSION: backend/server.js forgot-password build marker");
+console.log("DEBUG VERSION: email-diagnostics-v2-2026-05-13");
 
 dotenv.config();
 
@@ -158,6 +157,16 @@ const mailTransport =
         }
       })
     : null;
+
+console.log("EMAIL CONFIG BOOT CHECK:", {
+  smtpHostConfigured: !!process.env.SMTP_HOST,
+  smtpPortConfigured: !!process.env.SMTP_PORT,
+  smtpUserConfigured: !!process.env.SMTP_USER,
+  smtpPassConfigured: !!process.env.SMTP_PASS,
+  smtpPassLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0,
+  appBaseUrlConfigured: !!process.env.APP_BASE_URL,
+  mailTransportConfigured: !!mailTransport
+});
 
 if (mailTransport) {
   mailTransport.verify((error) => {
@@ -569,6 +578,25 @@ app.post("/api/debug/send-test-email", async (req, res) => {
       error: error.message || "Failed to send debug email."
     });
   }
+});
+
+app.get("/api/debug/email-config", (req, res) => {
+  res.json({
+    ok: true,
+    version: "email-diagnostics-v2-2026-05-13",
+    smtpHostConfigured: !!process.env.SMTP_HOST,
+    smtpHost: process.env.SMTP_HOST || null,
+    smtpPort: process.env.SMTP_PORT || null,
+    smtpSecure: process.env.SMTP_SECURE || null,
+    smtpUserConfigured: !!process.env.SMTP_USER,
+    smtpUserDomain: process.env.SMTP_USER
+      ? process.env.SMTP_USER.split("@")[1]
+      : null,
+    smtpPassConfigured: !!process.env.SMTP_PASS,
+    smtpPassLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0,
+    appBaseUrl: process.env.APP_BASE_URL || null,
+    mailTransportConfigured: !!mailTransport
+  });
 });
 
 app.get("/api/debug-forgot-password", (req, res) => {
