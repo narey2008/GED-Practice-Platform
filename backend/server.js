@@ -7,6 +7,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 
 const buildTest = require("./generators/testBuilder");
 const User = require("./models/User");
@@ -18,7 +20,7 @@ const authMiddleware = require("./middleware/auth");
 const upload = require("./middleware/upload");
 
 console.log("RUNNING BACKEND SERVER FILE");
-console.log("DEBUG VERSION: api-json-error-handler-2026-05-13");
+console.log("DEBUG VERSION: smtp-ipv4-force-2026-05-13");
 
 dotenv.config();
 
@@ -150,13 +152,21 @@ const mailTransport =
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT),
         secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
+
         family: 4,
+        localAddress: "0.0.0.0",
+
         connectionTimeout: 10000,
         greetingTimeout: 10000,
         socketTimeout: 15000,
+
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS
+        },
+
+        tls: {
+          servername: process.env.SMTP_HOST
         }
       })
     : null;
