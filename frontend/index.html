@@ -1081,6 +1081,36 @@ body.theme-light .brandTagline {
   font-size: calc(13px * var(--font-scale));
 }
 
+
+.knownBugsBlock {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel-2) 78%, transparent);
+}
+
+.knownBugsTitle {
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.knownBugsList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale));
+  line-height: 1.45;
+}
+
+.knownBugsNote {
+  margin-top: 8px;
+  font-size: calc(12px * var(--font-scale));
+  color: var(--muted);
+}
+
 @media (max-width: 900px) {
   .welcomeFeatureGrid {
     grid-template-columns: 1fr;
@@ -2695,6 +2725,16 @@ body.loadingActive {
   <p id="menuSubtitle">
     Choose a full test, focused practice, or guided Learning Mode.
   </p>
+
+  <div class="knownBugsBlock" aria-label="Known Bugs and In Progress">
+    <div class="knownBugsTitle">Known Bugs / In Progress</div>
+    <ul class="knownBugsList">
+      <li>Some graph visuals are being improved for dark mode.</li>
+      <li>Some question visuals may be refined over time.</li>
+      <li>Performance improvements are ongoing.</li>
+    </ul>
+    <div class="knownBugsNote">If something looks wrong, please use Contact / Support to report it.</div>
+  </div>
 
   <div class="menuPillRow">
     <span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">📝 46-question full test</span>
@@ -8068,6 +8108,12 @@ function openResendVerificationModal(prefilledEmail = "") {
 
                 closeModal();
 
+                showToast(
+                  tr("verificationEmailSent") || "Verification Sent",
+                  tr("verificationEmailSentBody") ||
+                    "If an unverified account exists for that email, a new verification email has been sent."
+                );
+
                 showModal(
                   tr("verificationEmailSent") || "Verification Sent",
                   tr("verificationEmailSentBody") ||
@@ -8218,6 +8264,14 @@ await withLoading(
               throw new Error(`Auth request returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
             }
 
+
+console.log("Login response:", {
+  ok: res.ok,
+  requiresTwoFactor: data?.requiresTwoFactor,
+  hasToken: !!data?.token,
+  error: data?.error || null
+});
+
 if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
   closeModal();
 
@@ -8276,11 +8330,114 @@ if (isSubmitRegister) {
   return;
 }
 
-if (data.requiresTwoFactor) {
-  closeModal();
-  showToast(tr("twoFactorCodeTitle"), tr("twoFactorCodeSentBody"));
-  openLoginTwoFactorModal(data.email);
+if (!isSubmitRegister && data.requiresTwoFactor === true) {
+  console.log("Opening inline login security code UI");
+
+  const twoFactorEmail = (data.email || email || "").trim().toLowerCase();
+
+  document.getElementById("modalTitle").innerText = tr("twoFactorCodeTitle");
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:12px;">We sent a security code to your email. Enter it below to finish logging in.</div>
+    <div style="margin-bottom:12px; color:var(--muted);">${tr("twoFactorCodeBody")}</div>
+    <div style="margin-bottom:12px; color:var(--muted);">${escapeHtml(twoFactorEmail)}</div>
+
+    <label for="inlineLoginTwoFactorCode">${tr("securityCode")}</label>
+    <input
+      id="inlineLoginTwoFactorCode"
+      type="text"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="${tr("twoFactorCodePlaceholder")}"
+    />
+
+    <div id="inlineLoginTwoFactorError" class="authError hidden"></div>
+  `;
+
+  const inlineFooter = document.getElementById("modalFooter");
+  inlineFooter.innerHTML = "";
+
+  const backBtn = document.createElement("button");
+  backBtn.type = "button";
+  backBtn.className = "secondaryBtn";
+  backBtn.innerText = tr("cancel");
+  backBtn.onclick = closeModal;
+
+  const verifyBtn = document.createElement("button");
+  verifyBtn.type = "button";
+  verifyBtn.className = "primaryBtn";
+  verifyBtn.innerText = tr("verifyAndContinue");
+
+  verifyBtn.onclick = async () => {
+    const inlineErrorEl = document.getElementById("inlineLoginTwoFactorError");
+    inlineErrorEl.classList.add("hidden");
+    inlineErrorEl.textContent = "";
+
+    const code = document.getElementById("inlineLoginTwoFactorCode").value.trim();
+
+    if (!code) {
+      inlineErrorEl.textContent = tr("securityCodeInvalid");
+      inlineErrorEl.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      await withLoading(
+        tr("twoFactorVerifyLoading"),
+        "",
+        async () => {
+          const verifyRes = await fetch(`${API_BASE}/api/auth/verify-login-2fa`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: twoFactorEmail, code })
+          });
+
+          const verifyContentType = verifyRes.headers.get("content-type") || "";
+          let verifyData = null;
+
+          if (verifyContentType.includes("application/json")) {
+            verifyData = await verifyRes.json();
+          } else {
+            const verifyText = await verifyRes.text();
+            throw new Error(`Verify login 2FA returned HTML instead of JSON. Response started with: ${verifyText.slice(0, 80)}`);
+          }
+
+          if (!verifyRes.ok) {
+            throw new Error(verifyData.error || tr("twoFactorCodeTitle"));
+          }
+
+          setAuthToken(verifyData.token);
+          state.auth.user = verifyData.user;
+          state.auth.guestMode = false;
+          localStorage.removeItem(GUEST_MODE_KEY);
+          updateAuthUI();
+        }
+      );
+
+      closeModal();
+      showModal(
+        tr("signedIn"),
+        `${tr("welcomeBack")}, ${state.auth.user.displayName || state.auth.user.email}.`
+      );
+    } catch (verifyError) {
+      inlineErrorEl.textContent = verifyError.message || tr("twoFactorCodeTitle");
+      inlineErrorEl.classList.remove("hidden");
+    }
+  };
+
+  inlineFooter.appendChild(backBtn);
+  inlineFooter.appendChild(verifyBtn);
+
   return;
+}
+
+if (!res.ok) {
+  throw new Error(data?.error || tr("failedAuthentication"));
+}
+
+if (!data?.token || !data?.user) {
+  throw new Error(tr("failedAuthentication"));
 }
 
 setAuthToken(data.token);
