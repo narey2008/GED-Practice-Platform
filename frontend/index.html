@@ -8218,6 +8218,14 @@ await withLoading(
               throw new Error(`Auth request returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
             }
 
+
+console.log("Login response:", {
+  ok: res.ok,
+  requiresTwoFactor: data?.requiresTwoFactor,
+  hasToken: !!data?.token,
+  error: data?.error || null
+});
+
 if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
   closeModal();
 
@@ -8376,6 +8384,14 @@ if (!isSubmitRegister && data.requiresTwoFactor === true) {
   inlineFooter.appendChild(verifyBtn);
 
   return;
+}
+
+if (!res.ok) {
+  throw new Error(data?.error || tr("failedAuthentication"));
+}
+
+if (!data?.token || !data?.user) {
+  throw new Error(tr("failedAuthentication"));
 }
 
 setAuthToken(data.token);
