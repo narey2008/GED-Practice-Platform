@@ -1081,6 +1081,42 @@ body.theme-light .brandTagline {
   font-size: calc(13px * var(--font-scale));
 }
 
+
+.knownBugsBlock {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel-2) 78%, transparent);
+}
+
+.knownBugsTitle {
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.knownBugsList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale));
+  line-height: 1.45;
+}
+
+.knownBugsNote {
+  margin-top: 8px;
+  font-size: calc(12px * var(--font-scale));
+  color: var(--muted);
+}
+
+
+.knownBugsBanner {
+  max-width: 980px;
+  margin: 12px auto 12px;
+}
+
 @media (max-width: 900px) {
   .welcomeFeatureGrid {
     grid-template-columns: 1fr;
@@ -2685,6 +2721,16 @@ body.loadingActive {
   </div>
 
   <div class="page">
+    <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
+      <div class="knownBugsTitle">Known Bugs / In Progress</div>
+      <ul class="knownBugsList">
+        <li>Some graph visuals are being improved for dark mode.</li>
+        <li>Some question visuals may be refined over time.</li>
+        <li>Performance improvements are ongoing.</li>
+      </ul>
+      <div class="knownBugsNote">If something looks wrong, please use Contact / Support to report it.</div>
+    </div>
+
     <div id="mainMenu" class="card menuWrap">
 <h1 class="menuTitle">Main Menu</h1>
 
@@ -6012,8 +6058,10 @@ async function setView(view) {
   const reviewPanel = document.getElementById("reviewPanel");
   const practicePanel = document.getElementById("practicePanel");
   const profilePanel = document.getElementById("profilePanel");
+  const mainMenuKnownBugs = document.getElementById("mainMenuKnownBugs");
 
   if (mainMenu) mainMenu.classList.add("hidden");
+  if (mainMenuKnownBugs) mainMenuKnownBugs.classList.add("hidden");
   if (testView) testView.classList.add("hidden");
   if (reviewPanel) reviewPanel.classList.add("hidden");
   if (practicePanel) practicePanel.classList.add("hidden");
@@ -6022,6 +6070,7 @@ async function setView(view) {
   if (view === "menu") {
     state.mode = "menu";
     if (mainMenu) mainMenu.classList.remove("hidden");
+    if (mainMenuKnownBugs) mainMenuKnownBugs.classList.remove("hidden");
   } else if (
     view === "test" ||
     view === "practice" ||
