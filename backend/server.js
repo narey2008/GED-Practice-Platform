@@ -6,9 +6,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
-const dns = require("dns");
-dns.setDefaultResultOrder("ipv4first");
+const { Resend } = require("resend");
 
 const buildTest = require("./generators/testBuilder");
 const User = require("./models/User");
@@ -20,13 +18,14 @@ const authMiddleware = require("./middleware/auth");
 const upload = require("./middleware/upload");
 
 console.log("RUNNING BACKEND SERVER FILE");
-console.log("DEBUG VERSION: smtp-ipv4-force-2026-05-13");
+console.log("DEBUG VERSION: resend-migration-2026-05-15");
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SUPPORT_INBOX = process.env.SUPPORT_INBOX || "gedpracticeplatform@gmail.com";
+const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || process.env.SUPPORT_INBOX || "gedpracticeplatform@gmail.com";
+const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 for (const key of requiredEnv) {
@@ -36,7 +35,7 @@ for (const key of requiredEnv) {
   }
 }
 
-const emailEnv = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "APP_BASE_URL"];
+const emailEnv = ["RESEND_API_KEY", "EMAIL_FROM", "SUPPORT_EMAIL", "APP_BASE_URL"];
 for (const key of emailEnv) {
   if (!process.env[key]) {
     console.warn(`Missing email environment variable: ${key}`);
@@ -143,55 +142,62 @@ function answersMatch(userAnswer, correctAnswer) {
   return a === b;
 }
 
-const mailTransport =
-  process.env.SMTP_HOST &&
-  process.env.SMTP_PORT &&
-  process.env.SMTP_USER &&
-  process.env.SMTP_PASS
-    ? nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
-        secure: String(process.env.SMTP_SECURE).toLowerCase() === "true",
-
-        family: 4,
-        localAddress: "0.0.0.0",
-
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000,
-
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        },
-
-        tls: {
-          servername: process.env.SMTP_HOST
-        }
-      })
-    : null;
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 console.log("EMAIL CONFIG BOOT CHECK:", {
-  smtpHostConfigured: !!process.env.SMTP_HOST,
-  smtpPortConfigured: !!process.env.SMTP_PORT,
-  smtpUserConfigured: !!process.env.SMTP_USER,
-  smtpPassConfigured: !!process.env.SMTP_PASS,
-  smtpPassLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0,
+  resendConfigured: !!process.env.RESEND_API_KEY,
+  emailFromConfigured: !!process.env.EMAIL_FROM,
+  supportEmailConfigured: !!process.env.SUPPORT_EMAIL,
   appBaseUrlConfigured: !!process.env.APP_BASE_URL,
-  mailTransportConfigured: !!mailTransport
+  emailClientConfigured: !!resend
 });
 
-if (mailTransport) {
-  mailTransport.verify((error) => {
-    if (error) {
-      console.error("SMTP VERIFY FAILED:");
-      console.error(error);
-    } else {
-      console.log("SMTP VERIFY SUCCESS: email transport is ready");
+if (!resend) {
+  console.warn("EMAIL VERIFY SKIPPED: Resend API is not configured");
+}
+
+async function sendEmail({ to, subject, html, text }) {
+  if (!resend) {
+    throw new Error("Email system is not configured.");
+  }
+
+  try {
+    const payload = {
+      from: EMAIL_FROM,
+      to,
+      subject,
+      html
+    };
+
+    if (text) payload.text = text;
+
+    const result = await resend.emails.send(payload);
+
+    if (result.error) {
+      console.error("RESEND SEND ERROR:", {
+        to,
+        subject,
+        errorName: result.error.name || null,
+        errorMessage: result.error.message || "Unknown Resend error"
+      });
+      throw new Error(result.error.message || "Email send failed.");
     }
-  });
-} else {
-  console.warn("SMTP VERIFY SKIPPED: email transport is not configured");
+
+    console.log("RESEND SEND SUCCESS:", {
+      to,
+      subject,
+      emailId: result.data?.id || null
+    });
+
+    return result.data;
+  } catch (error) {
+    console.error("RESEND SEND EXCEPTION:", {
+      to,
+      subject,
+      message: error.message
+    });
+    throw error;
+  }
 }
 
 function createPasswordResetToken() {
@@ -284,9 +290,7 @@ function createLoginTwoFactorToken() {
 }
 
 async function sendLoginTwoFactorEmail({ email, rawToken }) {
-  if (!mailTransport) {
-    throw new Error("Email system is not configured.");
-  }
+  
 
   const html = buildEmailTemplate({
     title: "Your Login Security Code",
@@ -299,26 +303,20 @@ async function sendLoginTwoFactorEmail({ email, rawToken }) {
     `
   });
 
-const info = await mailTransport.sendMail({
-  from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-  to: email,
-  subject: "Verify your GED Practice Platform account",
+const info = await sendEmail({
+    to: email,
+  subject: "Your GED Practice Platform login security code",
   html
 });
 
 console.log("VERIFICATION EMAIL SEND RESULT:", {
   to: email,
-  messageId: info.messageId,
-  accepted: info.accepted,
-  rejected: info.rejected,
-  response: info.response
+  emailId: info?.id || null
 });
 }
 
 async function sendAccountActionVerificationEmail({ email, rawToken, actionType }) {
-  if (!mailTransport) {
-    throw new Error("Email system is not configured.");
-  }
+  
 
   const actionLabelMap = {
     changePassword: "change your password",
@@ -328,9 +326,8 @@ async function sendAccountActionVerificationEmail({ email, rawToken, actionType 
 
   const actionLabel = actionLabelMap[actionType] || "complete a sensitive account action";
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: email,
+  await sendEmail({
+        to: email,
     subject: "Your GED Practice Platform security code",
     text: `You requested to ${actionLabel}.
 
@@ -354,7 +351,7 @@ If you did not request this, you can ignore this email.`,
   });
 }
 async function sendEmailVerificationEmail({ email, rawToken }) {
-  if (!mailTransport) throw new Error("Email system is not configured.");
+  
 
   const verifyUrl = `${process.env.APP_BASE_URL}/?verifyToken=${encodeURIComponent(rawToken)}&verifyEmail=${encodeURIComponent(email)}`;
 
@@ -365,18 +362,15 @@ async function sendEmailVerificationEmail({ email, rawToken }) {
     buttonUrl: verifyUrl
   });
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: email,
+  await sendEmail({
+        to: email,
     subject: "Verify your GED Practice Platform account",
     html
   });
 }
 
 async function sendPendingEmailChangeVerificationEmail({ email, rawToken }) {
-  if (!mailTransport) {
-    throw new Error("Email system is not configured.");
-  }
+  
 
   const verifyUrl = `${process.env.APP_BASE_URL}/?confirmEmailChangeToken=${encodeURIComponent(rawToken)}&confirmEmailChangeEmail=${encodeURIComponent(email)}`;
 
@@ -387,16 +381,15 @@ async function sendPendingEmailChangeVerificationEmail({ email, rawToken }) {
     buttonUrl: verifyUrl
   });
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: email,
+  await sendEmail({
+        to: email,
     subject: "Confirm your new GED Practice Platform email",
     html
   });
 }
 
 async function sendPasswordResetEmail({ email, rawToken }) {
-  if (!mailTransport) throw new Error("Email system is not configured.");
+  
 
   const resetUrl = `${process.env.APP_BASE_URL}/?resetToken=${encodeURIComponent(rawToken)}&resetEmail=${encodeURIComponent(email)}`;
 
@@ -407,24 +400,20 @@ async function sendPasswordResetEmail({ email, rawToken }) {
     buttonUrl: resetUrl
   });
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: email,
+  await sendEmail({
+        to: email,
     subject: "Reset your password",
     html
   });
 }
 
 async function sendSupportTicketEmail({ ticket }) {
-  if (!mailTransport) {
-    throw new Error("Email system is not configured.");
-  }
+  
 
   const submittedAt = new Date(ticket.createdAt || Date.now()).toISOString();
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: SUPPORT_INBOX,
+  await sendEmail({
+        to: SUPPORT_INBOX,
     subject: `[Support Ticket] ${ticket.subject}`,
     text: `
 New GED Practice Platform support ticket
@@ -479,13 +468,12 @@ ${ticket.details}
 }
 
 async function sendSupportConfirmationEmail({ to, ticket }) {
-  if (!mailTransport || !to) {
+  if (!to) {
     return;
   }
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to,
+  await sendEmail({
+        to,
     subject: "We received your GED Practice Platform support request",
     text: `
 We received your support request.
@@ -547,7 +535,7 @@ app.post("/api/debug/send-test-email", async (req, res) => {
       return res.status(400).json({ error: "Email is required." });
     }
 
-    if (!mailTransport) {
+    if (!resend) {
       return res.status(500).json({
         error: "Email transport is not configured."
       });
@@ -555,34 +543,27 @@ app.post("/api/debug/send-test-email", async (req, res) => {
 
     console.log("DEBUG TEST EMAIL ATTEMPT:", { to });
 
-    const info = await mailTransport.sendMail({
-      from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-      to,
+    const info = await sendEmail({
+            to,
       subject: "GED Practice Platform email test",
       text: "This is a test email from the GED Practice Platform backend.",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;">
           <h2>GED Practice Platform Email Test</h2>
           <p>This is a test email from the backend.</p>
-          <p>If you received this, SMTP is working.</p>
+          <p>If you received this, email delivery is working.</p>
         </div>
       `
     });
 
     console.log("DEBUG TEST EMAIL SEND RESULT:", {
       to,
-      messageId: info.messageId,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      response: info.response
+      emailId: info?.id || null
     });
 
     return res.json({
       success: true,
-      messageId: info.messageId,
-      accepted: info.accepted,
-      rejected: info.rejected,
-      response: info.response
+      emailId: info?.id || null
     });
   } catch (error) {
     console.error("DEBUG TEST EMAIL ERROR:");
@@ -599,19 +580,13 @@ app.post("/api/debug/send-test-email", async (req, res) => {
 app.get("/api/debug/email-config", (req, res) => {
   res.json({
     ok: true,
-    version: "email-diagnostics-v2-2026-05-13",
-    smtpHostConfigured: !!process.env.SMTP_HOST,
-    smtpHost: process.env.SMTP_HOST || null,
-    smtpPort: process.env.SMTP_PORT || null,
-    smtpSecure: process.env.SMTP_SECURE || null,
-    smtpUserConfigured: !!process.env.SMTP_USER,
-    smtpUserDomain: process.env.SMTP_USER
-      ? process.env.SMTP_USER.split("@")[1]
-      : null,
-    smtpPassConfigured: !!process.env.SMTP_PASS,
-    smtpPassLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0,
+    version: "email-diagnostics-resend-v1-2026-05-15",
+    resendConfigured: !!process.env.RESEND_API_KEY,
+    emailFromConfigured: !!process.env.EMAIL_FROM,
+    supportEmailConfigured: !!process.env.SUPPORT_EMAIL,
+    supportInbox: SUPPORT_INBOX || null,
     appBaseUrl: process.env.APP_BASE_URL || null,
-    mailTransportConfigured: !!mailTransport
+    emailClientConfigured: !!resend
   });
 });
 
@@ -797,7 +772,7 @@ app.post("/api/auth/verify-email", async (req, res) => {
 });
 
 async function sendWelcomeEmail(email) {
-  if (!mailTransport) return;
+  if (!resend) return;
 
   const html = buildEmailTemplate({
     title: "Welcome to GED Practice Platform",
@@ -806,9 +781,8 @@ async function sendWelcomeEmail(email) {
     buttonUrl: process.env.APP_BASE_URL
   });
 
-  await mailTransport.sendMail({
-    from: `"GED Practice Platform" <${process.env.SMTP_USER}>`,
-    to: email,
+  await sendEmail({
+        to: email,
     subject: "Welcome to GED Practice Platform",
     html
   });
