@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
 
     scoringEnabled: {
       type: Boolean,
-      default: true
+      default: null
     },
 
     emailVerified: {
