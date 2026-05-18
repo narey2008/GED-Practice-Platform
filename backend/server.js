@@ -309,7 +309,7 @@ const info = await sendEmail({
   html
 });
 
-console.log("VERIFICATION EMAIL SEND RESULT:", {
+console.log("LOGIN SECURITY CODE EMAIL SEND RESULT:", {
   to: email,
   emailId: info?.id || null
 });
