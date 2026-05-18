@@ -7668,7 +7668,8 @@ function openLoginTwoFactorModal(email) {
     <div style="margin-top:10px; font-size:12px; color:var(--muted); cursor:pointer;" id="login2faHelp">
       ${tr("accountAccessHelp")}
     </div>
-      <div style="margin-bottom:12px;">${tr("twoFactorCodeBody")}</div>
+      <div style="margin-bottom:12px;">We sent a security code to your email. Enter it below to finish logging in.</div>
+      <div style="margin-bottom:12px; color:var(--muted);">${tr("twoFactorCodeBody")}</div>
       <div style="margin-bottom:12px; color:var(--muted);">
         ${escapeHtml(email || "")}
       </div>
@@ -8277,8 +8278,6 @@ if (isSubmitRegister) {
 }
 
 if (data.requiresTwoFactor) {
-  closeModal();
-  showToast(tr("twoFactorCodeTitle"), tr("twoFactorCodeSentBody"));
   openLoginTwoFactorModal(data.email);
   return;
 }
