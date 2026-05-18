@@ -8141,6 +8141,75 @@ function openResendVerificationModal(prefilledEmail = "") {
   );
 }
 
+async function maybePromptScoringPreferenceAfterFirstSignIn() {
+  if (!state.auth.user || state.auth.user.scoringPreferenceSet === true) {
+    return;
+  }
+
+  await new Promise((resolve) => {
+    showModal(
+      "Choose Scoring Preference",
+      `
+        <div style="line-height:1.6;">
+          Enable scoring for GED-style score tracking, or disable it if you prefer correct/incorrect feedback and learning history only.
+          <br><br>
+          You can change this later in Profile settings.
+        </div>
+      `,
+      [
+        {
+          label: "Disable Scoring",
+          variant: "secondary",
+          keepOpen: true,
+          onClick: async () => {
+            try {
+              const res = await fetch(`${API_BASE}/api/account/scoring-preference`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${state.auth.token}`
+                },
+                body: JSON.stringify({ scoringEnabled: false })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to update scoring preference");
+              state.auth.user = data.user;
+              closeModal();
+              resolve();
+            } catch (error) {
+              showToast("Error", error.message || "Failed to update scoring preference");
+            }
+          }
+        },
+        {
+          label: "Enable Scoring",
+          variant: "primary",
+          keepOpen: true,
+          onClick: async () => {
+            try {
+              const res = await fetch(`${API_BASE}/api/account/scoring-preference`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${state.auth.token}`
+                },
+                body: JSON.stringify({ scoringEnabled: true })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to update scoring preference");
+              state.auth.user = data.user;
+              closeModal();
+              resolve();
+            } catch (error) {
+              showToast("Error", error.message || "Failed to update scoring preference");
+            }
+          }
+        }
+      ]
+    );
+  });
+}
+
     function openAuthModal(initialMode = "signin") {
   let currentMode = initialMode === "register" ? "register" : "signin";
 
@@ -8158,23 +8227,6 @@ ${isRegister ? `
   <label for="authDisplayName">${tr("displayName")}</label>
   <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
 
-  <div style="margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2);">
-    <label for="authScoringEnabled" style="margin-bottom:8px;">Scoring Preference</label>
-    <div style="display:flex; align-items:flex-start; gap:10px;">
-      <input
-        id="authScoringEnabled"
-        type="checkbox"
-        checked
-        style="width:auto; margin-top:3px;"
-      />
-      <div style="line-height:1.5; color:var(--text);">
-        Keep scoring enabled for test score calculations and score-based progress tracking.
-        <div class="muted" style="margin-top:6px;">
-          You can change this later in your Profile settings. If you turn scoring off, your correct and incorrect answers will still be shown for learning.
-        </div>
-      </div>
-    </div>
-  </div>
 ` : ""}
 
       <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
@@ -8246,12 +8298,8 @@ await withLoading(
   async () => {
     const endpoint = isSubmitRegister ? "/api/auth/register" : "/api/auth/login";
 
-    const scoringEnabled = isSubmitRegister
-      ? !!document.getElementById("authScoringEnabled")?.checked
-      : true;
-
     const payload = isSubmitRegister
-      ? { email, password, displayName, scoringEnabled }
+      ? { email, password, displayName }
       : { email, password };
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -8425,6 +8473,8 @@ if (!isSubmitRegister && data.requiresTwoFactor === true) {
       );
 
       closeModal();
+      await maybePromptScoringPreferenceAfterFirstSignIn();
+=======
       showModal(
         tr("signedIn"),
         `${tr("welcomeBack")}, ${state.auth.user.displayName || state.auth.user.email}.`
@@ -8455,6 +8505,7 @@ state.auth.guestMode = false;
 localStorage.removeItem(GUEST_MODE_KEY);
 updateAuthUI();
 closeModal();
+await maybePromptScoringPreferenceAfterFirstSignIn();
 
 showModal(
   tr("signedIn"),

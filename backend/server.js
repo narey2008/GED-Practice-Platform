@@ -82,6 +82,7 @@ function sanitizeUser(user) {
     email: user.email,
     displayName: user.displayName,
     scoringEnabled: user.scoringEnabled !== false,
+    scoringPreferenceSet: typeof user.scoringEnabled === "boolean",
     emailVerified: !!user.emailVerified,
     twoFactorEnabled: !!user.twoFactorEnabled || !!user.emailVerified,
     hasPendingVerifiedAction:
@@ -635,7 +636,7 @@ app.post("/api/auth/register", async (req, res) => {
         const scoringEnabled =
   typeof req.body.scoringEnabled === "boolean"
     ? req.body.scoringEnabled
-    : true;
+    : null;
 
     if (!rawEmail) {
       return res.status(400).json({ error: "Email is required." });
