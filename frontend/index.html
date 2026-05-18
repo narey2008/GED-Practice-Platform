@@ -7750,7 +7750,6 @@ function openLoginTwoFactorModal(email) {
   }
 }
 
-window.openLoginTwoFactorModal = openLoginTwoFactorModal;
 
 function openChangePasswordModal() {
   showModal(
@@ -8283,12 +8282,7 @@ if (isSubmitRegister) {
 }
 
 if (!isSubmitRegister && data.requiresTwoFactor === true) {
-  console.log("[Auth] Login requires security code; opening 2FA modal.", { email: data.email || "" });
-  if (typeof window.openLoginTwoFactorModal === "function") {
-    window.openLoginTwoFactorModal(data.email);
-  } else {
-    throw new Error("Security code UI is unavailable. Please refresh and try again.");
-  }
+  openLoginTwoFactorModal(data.email);
   return;
 }
 
