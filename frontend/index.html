@@ -8068,6 +8068,12 @@ function openResendVerificationModal(prefilledEmail = "") {
 
                 closeModal();
 
+                showToast(
+                  tr("verificationEmailSent") || "Verification Sent",
+                  tr("verificationEmailSentBody") ||
+                    "If an unverified account exists for that email, a new verification email has been sent."
+                );
+
                 showModal(
                   tr("verificationEmailSent") || "Verification Sent",
                   tr("verificationEmailSentBody") ||

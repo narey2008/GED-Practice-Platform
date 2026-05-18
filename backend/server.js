@@ -671,6 +671,10 @@ app.post("/api/auth/register", async (req, res) => {
   emailVerificationExpiresAt: expiresAt
 });
 
+    console.log("VERIFICATION EMAIL SEND ATTEMPT (register):", {
+      email: user.email
+    });
+
     await sendEmailVerificationEmail({
       email: user.email,
       rawToken
@@ -873,6 +877,10 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     if (!user.emailVerified) {
+      console.log("LOGIN BLOCKED: email not verified", {
+        email: user.email
+      });
+
       return res.status(403).json({
         error: "Please verify your email before signing in.",
         code: "EMAIL_NOT_VERIFIED",
@@ -880,7 +888,11 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
-    if (user.twoFactorEnabled) {
+    if (user.emailVerified === true && (user.twoFactorEnabled === true || user.twoFactorEnabled === false)) {
+      console.log("LOGIN SECURITY CODE SEND ATTEMPT:", {
+        email: user.email
+      });
+
       const { rawToken, tokenHash, expiresAt } = createLoginTwoFactorToken();
 
       user.loginTwoFactorTokenHash = tokenHash;
@@ -1422,6 +1434,10 @@ app.post("/api/auth/resend-verification", async (req, res) => {
     const user = await User.findOne({ email: rawEmail });
 
     if (user && !user.emailVerified) {
+      console.log("VERIFICATION EMAIL SEND ATTEMPT (resend):", {
+        email: user.email
+      });
+
       const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken();
 
       user.emailVerificationTokenHash = tokenHash;
