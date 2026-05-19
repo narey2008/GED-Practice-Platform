@@ -4039,8 +4039,8 @@ verificationEmailSent: isSpanish ? "Verificación Enviada" : "Verification Sent"
 verificationEmailSentBody: isSpanish
   ? "Si existe una cuenta sin verificar para ese correo, se ha enviado un nuevo correo de verificación."
   : "If an unverified account exists for that email, a new verification email has been sent.",
-verifyEmailLoading: isSpanish ? "Verificando Correo..." : "Verifying Email...",
-resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resending Verification...",
+verifyEmailLoading: isSpanish ? "Verificando tu correo..." : "Verifying your email...",
+resendVerificationLoading: isSpanish ? "Reenviando correo de verificación..." : "Resending verification email...",
 
 accountAccessHelp: isSpanish ? "Problemas de Acceso" : "Account Access Help",
 accountAccessHelpBody: isSpanish
@@ -4106,6 +4106,8 @@ twoFactorVerifyLoading: isSpanish ? "Verificando Código..." : "Verifying Code..
 twoFactorCodeSentBody: isSpanish
   ? "Se envió un código de inicio de sesión a tu correo conectado."
   : "A login security code was sent to your connected email.",
+resendCodeAvailableIn: isSpanish ? "Reenviar código disponible en" : "Resend code available in",
+loginCodeResentSuccess: isSpanish ? "Se envió un nuevo código de seguridad. Revisa tu correo." : "A new security code was sent. Check your email.",
 
     startPracticeTitle: isSpanish ? "Comenzar una Práctica" : "Start a Practice Test",
     startPracticeText: isSpanish
@@ -4265,8 +4267,8 @@ legalTopBtn: isSpanish ? "Legal" : "Legal",
     verificationEmailSentBody: isSpanish
       ? "Si existe una cuenta sin verificar para ese correo, se ha enviado un nuevo correo de verificación."
       : "If an unverified account exists for that email, a new verification email has been sent.",
-    verifyEmailLoading: isSpanish ? "Verificando Correo..." : "Verifying Email...",
-    resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resending Verification...",
+    verifyEmailLoading: isSpanish ? "Verificando tu correo..." : "Verifying your email...",
+    resendVerificationLoading: isSpanish ? "Reenviando correo de verificación..." : "Resending verification email...",
     verifiedStatus: isSpanish ? "Verificado" : "Verified",
     unverifiedStatus: isSpanish ? "No Verificado" : "Unverified",
     emailStatus: isSpanish ? "Estado del Correo" : "Email Status",
@@ -4347,7 +4349,7 @@ passwordResetSuccessBody: isSpanish
   ? "Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión."
   : "Your password has been reset. You can now sign in.",
 forgotPasswordLoading: isSpanish ? "Enviando Enlace..." : "Sending Link...",
-resetPasswordLoading: isSpanish ? "Restableciendo Contraseña..." : "Resetting Password...",
+resetPasswordLoading: isSpanish ? "Restableciendo contraseña..." : "Resetting password...",
 
     mode: isSpanish ? "Modo" : "Mode",
 fullTest: isSpanish ? "Examen Completo" : "Full Test",
@@ -6178,6 +6180,58 @@ async function withLoading(title, text, work) {
   }
 }
 
+let verificationResendCooldownUntilMs = 0;
+let verificationResendCooldownIntervalId = null;
+
+function formatVerificationResendTimeLeft(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getVerificationResendSecondsLeft() {
+  return Math.max(0, Math.ceil((verificationResendCooldownUntilMs - Date.now()) / 1000));
+}
+
+function startVerificationResendCooldown(seconds = 90) {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  verificationResendCooldownUntilMs = Date.now() + safeSeconds * 1000;
+}
+
+function stopVerificationResendCooldownTicker() {
+  if (verificationResendCooldownIntervalId) {
+    clearInterval(verificationResendCooldownIntervalId);
+    verificationResendCooldownIntervalId = null;
+  }
+}
+
+function bindVerificationResendCooldownUI({ buttonEl, hintEl, baseLabel }) {
+  if (!buttonEl || !hintEl) return () => {};
+
+  const render = () => {
+    const secondsLeft = getVerificationResendSecondsLeft();
+    if (secondsLeft > 0) {
+      buttonEl.disabled = true;
+      buttonEl.innerText = tr("resendVerification");
+      hintEl.innerText = `Resend available in ${formatVerificationResendTimeLeft(secondsLeft)}`;
+      hintEl.classList.remove("hidden");
+    } else {
+      buttonEl.disabled = false;
+      buttonEl.innerText = baseLabel || tr("resendVerification");
+      hintEl.innerText = "";
+      hintEl.classList.add("hidden");
+    }
+  };
+
+  render();
+  stopVerificationResendCooldownTicker();
+  verificationResendCooldownIntervalId = setInterval(render, 1000);
+
+  return () => {
+    stopVerificationResendCooldownTicker();
+  };
+}
+
 async function recoverToMainMenuAfterStartFailure(error, activityLabel = "activity") {
   console.error(`Failed to start ${activityLabel}:`, error);
 
@@ -7897,7 +7951,9 @@ function openChangePasswordModal() {
     `
       <label for="resendVerificationEmail">${tr("email")}</label>
       <input id="resendVerificationEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
+      <div id="resendVerificationCooldownHint" class="mutedText hidden" style="margin-top:8px;"></div>
       <div id="resendVerificationError" class="authError hidden"></div>
+      <div id="resendVerificationSuccess" class="authSuccess hidden"></div>
     `,
     [
       {
@@ -8076,11 +8132,24 @@ function openResendVerificationModal(prefilledEmail = "") {
         onClick: async () => {
           const emailInput = document.getElementById("resendVerificationEmail");
           const errorEl = document.getElementById("resendVerificationError");
+          const successEl = document.getElementById("resendVerificationSuccess");
+          const cooldownHintEl = document.getElementById("resendVerificationCooldownHint");
+          const resendActionBtn = document.getElementById("modalFooter")?.querySelector("button.primaryBtn");
+
+          if (resendActionBtn && cooldownHintEl) {
+            bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+          }
 
           const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
 
           errorEl.classList.add("hidden");
           errorEl.textContent = "";
+          if (successEl) {
+            successEl.classList.add("hidden");
+            successEl.textContent = "";
+          }
+
+          console.log("Resend verification clicked");
 
           if (!email) {
             errorEl.textContent = tr("email") + " is required.";
@@ -8111,24 +8180,27 @@ function openResendVerificationModal(prefilledEmail = "") {
                   throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
                 }
 
+                console.log("Resend verification response:", { ok: res.ok, error: data?.error || null });
+
                 if (!res.ok) {
+                  if (res.status === 429 && data && typeof data.retryAfterSeconds === "number") {
+                    startVerificationResendCooldown(data.retryAfterSeconds);
+                    if (resendActionBtn && cooldownHintEl) {
+                      bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+                    }
+                  }
                   throw new Error(data.error || "Failed to resend verification email.");
                 }
 
-                closeModal();
+                startVerificationResendCooldown(90);
+                if (resendActionBtn && cooldownHintEl) {
+                  bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+                }
 
-                showToast(
-                  tr("verificationEmailSent") || "Verification Sent",
-                  tr("verificationEmailSentBody") ||
-                    "If an unverified account exists for that email, a new verification email has been sent."
-                );
-
-                showModal(
-                  tr("verificationEmailSent") || "Verification Sent",
-                  tr("verificationEmailSentBody") ||
-                    "If an unverified account exists for that email, a new verification email has been sent.",
-                  [{ label: tr("close"), variant: "primary" }]
-                );
+                if (successEl) {
+                  successEl.textContent = "Verification email sent. Check your inbox.";
+                  successEl.classList.remove("hidden");
+                }
               }
             );
           } catch (error) {
@@ -8141,7 +8213,54 @@ function openResendVerificationModal(prefilledEmail = "") {
   );
 }
 
-    function maybePromptScoringPreferenceAfterSignIn(user) {
+    let loginTwoFactorResendCooldownUntilMs = 0;
+let loginTwoFactorResendCooldownIntervalId = null;
+
+function formatLoginTwoFactorTimeLeft(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getLoginTwoFactorSecondsLeft() {
+  return Math.max(0, Math.ceil((loginTwoFactorResendCooldownUntilMs - Date.now()) / 1000));
+}
+
+function startLoginTwoFactorResendCooldown(seconds = 90) {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  loginTwoFactorResendCooldownUntilMs = Date.now() + safeSeconds * 1000;
+}
+
+function bindLoginTwoFactorCooldownUI({ buttonEl, hintEl, baseLabel }) {
+  if (!buttonEl || !hintEl) return;
+
+  const render = () => {
+    const secondsLeft = getLoginTwoFactorSecondsLeft();
+    if (secondsLeft > 0) {
+      buttonEl.disabled = true;
+      buttonEl.innerText = baseLabel || tr("resendSecurityCode");
+      hintEl.innerText = `${tr("resendCodeAvailableIn")} ${formatLoginTwoFactorTimeLeft(secondsLeft)}`;
+      hintEl.classList.remove("hidden");
+    } else {
+      buttonEl.disabled = false;
+      buttonEl.innerText = baseLabel || tr("resendSecurityCode");
+      hintEl.innerText = "";
+      hintEl.classList.add("hidden");
+      if (loginTwoFactorResendCooldownIntervalId) {
+        clearInterval(loginTwoFactorResendCooldownIntervalId);
+        loginTwoFactorResendCooldownIntervalId = null;
+      }
+    }
+  };
+
+  render();
+  if (loginTwoFactorResendCooldownIntervalId) {
+    clearInterval(loginTwoFactorResendCooldownIntervalId);
+  }
+  loginTwoFactorResendCooldownIntervalId = setInterval(render, 1000);
+}
+
+function maybePromptScoringPreferenceAfterSignIn(user) {
   const signedInUser = user || state.auth.user;
   if (!signedInUser || !state.auth.token) return;
 
@@ -8305,7 +8424,9 @@ const displayName = isSubmitRegister
 
       try {
 await withLoading(
-  isSubmitRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
+  isSubmitRegister
+    ? (getSavedLanguage() === "Spanish" ? "Creando tu cuenta..." : "Creating your account...")
+    : (getSavedLanguage() === "Spanish" ? "Iniciando tu sesión..." : "Signing you in..."),
   tr(""),
   async () => {
     const endpoint = isSubmitRegister ? "/api/auth/register" : "/api/auth/login";
@@ -8344,6 +8465,8 @@ console.log("Login response:", {
 if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
   closeModal();
 
+  const unverifiedEmail = (email || "").trim().toLowerCase();
+
   showModal(
     tr("verifyEmailTitle") || "Verify Your Email",
     `
@@ -8352,6 +8475,9 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
         <br><br>
         If you cannot find the verification email, you can send a new one.
       </div>
+      <div id="verifyEmailResendSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
+      <div id="verifyEmailResendCooldownHint" class="mutedText hidden" style="margin-top:8px;"></div>
+      <div id="verifyEmailResendError" class="authError hidden" style="margin-top:10px;"></div>
     `,
     [
       {
@@ -8361,15 +8487,87 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
       {
         label: tr("resendVerification") || "Resend Verification",
         variant: "primary",
-        onClick: () => {
-          if (typeof openResendVerificationModal === "function") {
-            openResendVerificationModal(email);
-          } else {
-            showModal(
-              tr("resendVerification") || "Resend Verification",
-              "Please use Create Account again with the same email or contact support if the verification email does not arrive.",
-              [{ label: tr("close"), variant: "primary" }]
+        keepOpen: true,
+        onClick: async () => {
+          console.log("Verify-email resend button clicked");
+
+          const successEl = document.getElementById("verifyEmailResendSuccess");
+          const errorEl = document.getElementById("verifyEmailResendError");
+          const cooldownHintEl = document.getElementById("verifyEmailResendCooldownHint");
+          const resendActionBtn = document.getElementById("modalFooter")?.querySelector("button.primaryBtn");
+
+          if (resendActionBtn && cooldownHintEl) {
+            bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+          }
+
+          if (successEl) {
+            successEl.classList.add("hidden");
+            successEl.textContent = "";
+          }
+          if (errorEl) {
+            errorEl.classList.add("hidden");
+            errorEl.textContent = "";
+          }
+
+          if (!unverifiedEmail) {
+            if (errorEl) {
+              errorEl.textContent = "Email is required to resend verification.";
+              errorEl.classList.remove("hidden");
+            }
+            return;
+          }
+
+          try {
+            await withLoading(
+              tr("resendVerificationLoading") || "Resending verification...",
+              "",
+              async () => {
+                console.log("Calling resend verification endpoint");
+
+                const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: unverifiedEmail })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let resendData = null;
+
+                if (contentType.includes("application/json")) {
+                  resendData = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                console.log("Resend verification response:", { ok: res.ok, error: resendData?.error || null });
+
+                if (!res.ok) {
+                  if (res.status === 429 && resendData && typeof resendData.retryAfterSeconds === "number") {
+                    startVerificationResendCooldown(resendData.retryAfterSeconds);
+                    if (resendActionBtn && cooldownHintEl) {
+                      bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+                    }
+                  }
+                  throw new Error(resendData.error || "Failed to resend verification email.");
+                }
+
+                startVerificationResendCooldown(90);
+                if (resendActionBtn && cooldownHintEl) {
+                  bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+                }
+
+                if (successEl) {
+                  successEl.textContent = "Verification email sent. Check your inbox.";
+                  successEl.classList.remove("hidden");
+                }
+              }
             );
+          } catch (resendError) {
+            if (errorEl) {
+              errorEl.textContent = resendError.message || "Failed to resend verification email.";
+              errorEl.classList.remove("hidden");
+            }
           }
         }
       }
@@ -8381,21 +8579,113 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
 
 if (isSubmitRegister) {
   closeModal();
+
+  const registeredEmail = (email || "").trim().toLowerCase();
+
   showModal(
     tr("verifyEmailTitle"),
-    tr("verifyEmailBody"),
+    `
+      <div style="line-height:1.65;">${tr("verifyEmailBody")}</div>
+      <div style="margin-top:14px;">
+        <button id="postRegisterResendBtn" type="button" class="secondaryBtn">${tr("resendVerification")}</button>
+      </div>
+      <div id="postRegisterResendSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
+      <div id="postRegisterResendCooldownHint" class="mutedText hidden" style="margin-top:8px;"></div>
+      <div id="postRegisterResendError" class="authError hidden" style="margin-top:10px;"></div>
+    `,
     [
-      {
-        label: tr("resendVerification"),
-        variant: "secondary",
-        onClick: () => openResendVerificationModal(email)
-      },
       {
         label: tr("close"),
         variant: "primary"
       }
     ]
   );
+
+  const postRegisterResendBtn = document.getElementById("postRegisterResendBtn");
+  const postRegisterResendSuccess = document.getElementById("postRegisterResendSuccess");
+  const postRegisterResendError = document.getElementById("postRegisterResendError");
+  const postRegisterResendCooldownHint = document.getElementById("postRegisterResendCooldownHint");
+
+  if (postRegisterResendBtn && postRegisterResendCooldownHint) {
+    bindVerificationResendCooldownUI({ buttonEl: postRegisterResendBtn, hintEl: postRegisterResendCooldownHint, baseLabel: tr("resendVerification") });
+  }
+
+  if (postRegisterResendBtn) {
+    postRegisterResendBtn.onclick = async () => {
+      console.log("Post-registration resend verification clicked");
+
+      if (postRegisterResendSuccess) {
+        postRegisterResendSuccess.classList.add("hidden");
+        postRegisterResendSuccess.textContent = "";
+      }
+      if (postRegisterResendError) {
+        postRegisterResendError.classList.add("hidden");
+        postRegisterResendError.textContent = "";
+      }
+
+      if (!registeredEmail) {
+        if (postRegisterResendError) {
+          postRegisterResendError.textContent = "Email is required to resend verification.";
+          postRegisterResendError.classList.remove("hidden");
+        }
+        return;
+      }
+
+      try {
+        await withLoading(
+          tr("resendVerificationLoading") || "Resending verification...",
+          "",
+          async () => {
+            console.log("Calling resend verification endpoint from registration verify UI");
+
+            const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: registeredEmail })
+            });
+
+            const contentType = res.headers.get("content-type") || "";
+            let resendData = null;
+
+            if (contentType.includes("application/json")) {
+              resendData = await res.json();
+            } else {
+              const text = await res.text();
+              throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+            }
+
+            console.log("Resend verification response:", { ok: res.ok, error: resendData?.error || null });
+
+            if (!res.ok) {
+              if (res.status === 429 && resendData && typeof resendData.retryAfterSeconds === "number") {
+                startVerificationResendCooldown(resendData.retryAfterSeconds);
+                if (postRegisterResendBtn && postRegisterResendCooldownHint) {
+                  bindVerificationResendCooldownUI({ buttonEl: postRegisterResendBtn, hintEl: postRegisterResendCooldownHint, baseLabel: tr("resendVerification") });
+                }
+              }
+              throw new Error(resendData.error || "Failed to resend verification email.");
+            }
+
+            startVerificationResendCooldown(90);
+            if (postRegisterResendBtn && postRegisterResendCooldownHint) {
+              bindVerificationResendCooldownUI({ buttonEl: postRegisterResendBtn, hintEl: postRegisterResendCooldownHint, baseLabel: tr("resendVerification") });
+            }
+
+            if (postRegisterResendSuccess) {
+              postRegisterResendSuccess.textContent = "Verification email sent. Check your inbox.";
+              postRegisterResendSuccess.classList.remove("hidden");
+            }
+          }
+        );
+      } catch (resendError) {
+        if (postRegisterResendError) {
+          postRegisterResendError.textContent = resendError.message || "Failed to resend verification email.";
+          postRegisterResendError.classList.remove("hidden");
+        }
+      }
+    };
+  }
+
   return;
 }
 
@@ -8419,6 +8709,11 @@ if (!isSubmitRegister && data.requiresTwoFactor === true) {
       placeholder="${tr("twoFactorCodePlaceholder")}"
     />
 
+    <div style="margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button id="inlineLoginTwoFactorResendBtn" type="button" class="secondaryBtn">${tr("resendSecurityCode")}</button>
+      <div id="inlineLoginTwoFactorCooldownHint" class="mutedText hidden"></div>
+    </div>
+    <div id="inlineLoginTwoFactorSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
     <div id="inlineLoginTwoFactorError" class="authError hidden"></div>
   `;
 

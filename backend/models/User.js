@@ -37,6 +37,18 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    previousEmailVerificationTokenHash: {
+      type: String,
+      default: null
+    },
+    previousEmailVerificationExpiresAt: {
+      type: Date,
+      default: null
+    },
+    lastVerificationEmailSentAt: {
+      type: Date,
+      default: null
+    },
 
     passwordResetTokenHash: {
       type: String,
@@ -92,6 +104,18 @@ const userSchema = new mongoose.Schema(
       default: null
     },
     loginTwoFactorExpiresAt: {
+      type: Date,
+      default: null
+    },
+    previousLoginTwoFactorTokenHash: {
+      type: String,
+      default: null
+    },
+    previousLoginTwoFactorExpiresAt: {
+      type: Date,
+      default: null
+    },
+    lastLoginTwoFactorSentAt: {
       type: Date,
       default: null
     }
