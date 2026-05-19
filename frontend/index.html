@@ -7898,6 +7898,7 @@ function openChangePasswordModal() {
       <label for="resendVerificationEmail">${tr("email")}</label>
       <input id="resendVerificationEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
       <div id="resendVerificationError" class="authError hidden"></div>
+      <div id="resendVerificationSuccess" class="authSuccess hidden"></div>
     `,
     [
       {
@@ -8076,11 +8077,18 @@ function openResendVerificationModal(prefilledEmail = "") {
         onClick: async () => {
           const emailInput = document.getElementById("resendVerificationEmail");
           const errorEl = document.getElementById("resendVerificationError");
+          const successEl = document.getElementById("resendVerificationSuccess");
 
           const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
 
           errorEl.classList.add("hidden");
           errorEl.textContent = "";
+          if (successEl) {
+            successEl.classList.add("hidden");
+            successEl.textContent = "";
+          }
+
+          console.log("Resend verification clicked");
 
           if (!email) {
             errorEl.textContent = tr("email") + " is required.";
@@ -8111,24 +8119,16 @@ function openResendVerificationModal(prefilledEmail = "") {
                   throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
                 }
 
+                console.log("Resend verification response:", { ok: res.ok, error: data?.error || null });
+
                 if (!res.ok) {
                   throw new Error(data.error || "Failed to resend verification email.");
                 }
 
-                closeModal();
-
-                showToast(
-                  tr("verificationEmailSent") || "Verification Sent",
-                  tr("verificationEmailSentBody") ||
-                    "If an unverified account exists for that email, a new verification email has been sent."
-                );
-
-                showModal(
-                  tr("verificationEmailSent") || "Verification Sent",
-                  tr("verificationEmailSentBody") ||
-                    "If an unverified account exists for that email, a new verification email has been sent.",
-                  [{ label: tr("close"), variant: "primary" }]
-                );
+                if (successEl) {
+                  successEl.textContent = "Verification email sent. Check your inbox.";
+                  successEl.classList.remove("hidden");
+                }
               }
             );
           } catch (error) {
@@ -8363,6 +8363,7 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
       {
         label: tr("resendVerification") || "Resend Verification",
         variant: "primary",
+        keepOpen: true,
         onClick: () => {
           if (typeof openResendVerificationModal === "function") {
             openResendVerificationModal(email);
