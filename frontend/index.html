@@ -6293,6 +6293,38 @@ async function runStartActivity(activityLabel, startFn) {
   }
 }
 
+function requireSignedInOrGuestBeforeStart() {
+  if (state.auth.guestMode) return true;
+  if (state.auth.user && state.auth.token) return true;
+
+  showModal(
+    tr("signInRequired"),
+    tr("signInRequiredBody"),
+    [
+      { label: tr("cancel"), variant: "secondary" },
+      {
+        label: tr("signIn"),
+        variant: "secondary",
+        keepOpen: true,
+        onClick: async () => {
+          openAuthModal("signin");
+        }
+      },
+      {
+        label: tr("continueGuest"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          closeModal();
+          await continueAsGuest(true);
+        }
+      }
+    ]
+  );
+
+  return false;
+}
+
 function isMobileDevice() {
   return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
 }
@@ -12466,31 +12498,7 @@ async function handleEmailVerificationFromUrl() {
           return;
         }
 
-        if (!state.auth.user || !state.auth.token) {
-          showModal(
-            tr("signInRequired"),
-            tr("signInRequiredBody"),
-            [
-              { label: tr("cancel"), variant: "secondary" },
-              {
-                label: tr("signIn"),
-                variant: "secondary",
-                keepOpen: true,
-                onClick: async () => {
-                  openAuthModal("signin");
-                }
-              },
-              {
-                label: tr("continueGuest"),
-                variant: "primary",
-                keepOpen: true,
-                onClick: async () => {
-                  closeModal();
-                  await continueAsGuest(true);
-                }
-              }
-            ]
-          );
+        if (!requireSignedInOrGuestBeforeStart()) {
           return;
         }
 
@@ -12521,6 +12529,7 @@ async function handleEmailVerificationFromUrl() {
     const startPracticeBtn = document.getElementById("startPracticeBtn");
     if (startPracticeBtn) {
       startPracticeBtn.addEventListener("click", async () => {
+        if (!requireSignedInOrGuestBeforeStart()) return;
         const skill = document.getElementById("practiceSkillSelect").value;
         const difficulty = document.getElementById("practiceDifficultySelect").value;
         await runStartActivity("practice", () => startPractice(skill, difficulty, false));
@@ -12650,6 +12659,7 @@ if (questionTextForHighlighter) {
 const startLearningBtn = document.getElementById("startLearningBtn");
 if (startLearningBtn) {
   startLearningBtn.addEventListener("click", async () => {
+    if (!requireSignedInOrGuestBeforeStart()) return;
     const skill = document.getElementById("learningSkillSelect")?.value || document.getElementById("practiceSkillSelect")?.value;
     const difficulty = document.getElementById("learningDifficultySelect")?.value || document.getElementById("practiceDifficultySelect")?.value || "GED-Level";
     await runStartActivity("learning mode", () => startLearningMode(skill, difficulty, false));
