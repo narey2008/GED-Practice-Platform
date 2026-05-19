@@ -82,6 +82,7 @@ function sanitizeUser(user) {
     email: user.email,
     displayName: user.displayName,
     scoringEnabled: user.scoringEnabled !== false,
+    scoringPreferenceChosen: user.scoringPreferenceChosen === true,
     emailVerified: !!user.emailVerified,
     twoFactorEnabled: !!user.twoFactorEnabled || !!user.emailVerified,
     hasPendingVerifiedAction:
@@ -716,6 +717,7 @@ app.patch("/api/account/scoring-preference", authMiddleware, async (req, res) =>
     }
 
     user.scoringEnabled = scoringEnabled;
+    user.scoringPreferenceChosen = true;
     await user.save();
 
     return res.json({

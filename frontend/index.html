@@ -8298,6 +8298,7 @@ function bindLoginTwoFactorCooldownUI({ buttonEl, hintEl, baseLabel }) {
 function maybePromptScoringPreferenceAfterSignIn(user) {
   const signedInUser = user || state.auth.user;
   if (!signedInUser || !state.auth.token) return;
+  if (signedInUser.scoringPreferenceChosen === true) return;
 
   const promptKeyId = (signedInUser._id || signedInUser.id || signedInUser.email || "")
     .toString()

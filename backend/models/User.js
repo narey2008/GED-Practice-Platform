@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema(
       default: true
     },
 
+    scoringPreferenceChosen: {
+      type: Boolean,
+      default: false
+    },
+
     emailVerified: {
       type: Boolean,
       default: false
