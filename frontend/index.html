@@ -8158,23 +8158,6 @@ ${isRegister ? `
   <label for="authDisplayName">${tr("displayName")}</label>
   <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
 
-  <div style="margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2);">
-    <label for="authScoringEnabled" style="margin-bottom:8px;">Scoring Preference</label>
-    <div style="display:flex; align-items:flex-start; gap:10px;">
-      <input
-        id="authScoringEnabled"
-        type="checkbox"
-        checked
-        style="width:auto; margin-top:3px;"
-      />
-      <div style="line-height:1.5; color:var(--text);">
-        Keep scoring enabled for test score calculations and score-based progress tracking.
-        <div class="muted" style="margin-top:6px;">
-          You can change this later in your Profile settings. If you turn scoring off, your correct and incorrect answers will still be shown for learning.
-        </div>
-      </div>
-    </div>
-  </div>
 ` : ""}
 
       <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
@@ -8246,12 +8229,8 @@ await withLoading(
   async () => {
     const endpoint = isSubmitRegister ? "/api/auth/register" : "/api/auth/login";
 
-    const scoringEnabled = isSubmitRegister
-      ? !!document.getElementById("authScoringEnabled")?.checked
-      : true;
-
     const payload = isSubmitRegister
-      ? { email, password, displayName, scoringEnabled }
+      ? { email, password, displayName }
       : { email, password };
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
