@@ -8467,7 +8467,9 @@ if (!isSubmitRegister && data.requiresTwoFactor === true) {
       );
 
       closeModal();
+
       await maybePromptScoringPreferenceAfterFirstSignIn();
+=======
       showModal(
         tr("signedIn"),
         `${tr("welcomeBack")}, ${state.auth.user.displayName || state.auth.user.email}.`
