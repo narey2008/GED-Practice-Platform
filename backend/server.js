@@ -669,6 +669,8 @@ app.post("/api/auth/register", async (req, res) => {
   emailVerified: false,
   emailVerificationTokenHash: tokenHash,
   emailVerificationExpiresAt: expiresAt,
+  previousEmailVerificationTokenHash: null,
+  previousEmailVerificationExpiresAt: null,
   lastVerificationEmailSentAt: new Date()
 });
 
@@ -747,10 +749,20 @@ app.post("/api/auth/verify-email", async (req, res) => {
 
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
 
+    const now = new Date();
+
     const user = await User.findOne({
       email: rawEmail,
-      emailVerificationTokenHash: tokenHash,
-      emailVerificationExpiresAt: { $gt: new Date() }
+      $or: [
+        {
+          emailVerificationTokenHash: tokenHash,
+          emailVerificationExpiresAt: { $gt: now }
+        },
+        {
+          previousEmailVerificationTokenHash: tokenHash,
+          previousEmailVerificationExpiresAt: { $gt: now }
+        }
+      ]
     });
 
     if (!user) {
@@ -761,6 +773,8 @@ app.post("/api/auth/verify-email", async (req, res) => {
     user.twoFactorEnabled = true;
     user.emailVerificationTokenHash = null;
     user.emailVerificationExpiresAt = null;
+    user.previousEmailVerificationTokenHash = null;
+    user.previousEmailVerificationExpiresAt = null;
     await user.save();
 
     return res.json({
@@ -1460,6 +1474,8 @@ app.post("/api/auth/resend-verification", async (req, res) => {
 
       const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken();
 
+      user.previousEmailVerificationTokenHash = user.emailVerificationTokenHash || null;
+      user.previousEmailVerificationExpiresAt = user.emailVerificationExpiresAt || null;
       user.emailVerificationTokenHash = tokenHash;
       user.emailVerificationExpiresAt = expiresAt;
       user.lastVerificationEmailSentAt = new Date();
