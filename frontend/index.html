@@ -3970,6 +3970,30 @@ function getTranslations(language) {
 menuPillFullTest: isSpanish ? "Examen completo de 46 preguntas" : "46-question full test",
 menuPillPractice: isSpanish ? "Práctica por habilidad" : "Skill-specific practice",
 menuPillLearning: isSpanish ? "Modo de aprendizaje guiado" : "Guided Learning Mode",
+learningModeTitle: isSpanish ? "Modo de aprendizaje" : "Learning Mode",
+startLearning: isSpanish ? "Comenzar aprendizaje" : "Start Learning",
+knownBugsTitle: isSpanish ? "Errores conocidos / En progreso" : "Known Bugs / In Progress",
+knownBugsItem1: isSpanish ? "Algunos gráficos se están mejorando para el modo oscuro." : "Some graph visuals are being improved for dark mode.",
+knownBugsItem2: isSpanish ? "Algunas visuales de preguntas pueden refinarse con el tiempo." : "Some question visuals may be refined over time.",
+knownBugsItem3: isSpanish ? "Las mejoras de rendimiento continúan." : "Performance improvements are ongoing.",
+knownBugsNote: isSpanish ? "Si algo se ve incorrecto, usa Contacto / Soporte para reportarlo." : "If something looks wrong, please use Contact / Support to report it.",
+setGoal: isSpanish ? "Establecer meta" : "Set Goal",
+goalIdeas: isSpanish ? "Ideas de metas" : "Goal Ideas",
+myGedGoal: isSpanish ? "Mi meta GED" : "My GED Goal",
+setYourGedGoal: isSpanish ? "Establece tu meta GED" : "Set your GED goal",
+goalProgressTitle: isSpanish ? "Progreso de meta" : "Goal Progress",
+completeLabel: isSpanish ? "Completado" : "Complete",
+expiredLabel: isSpanish ? "Vencido" : "Expired",
+goalPercentComplete: isSpanish ? "% completado" : "% complete",
+supportChipBugReports: isSpanish ? "Reportes de errores" : "Bug reports",
+supportChipAdditions: isSpanish ? "Adiciones" : "Additions",
+supportChipChanges: isSpanish ? "Cambios" : "Changes",
+supportChipRemovals: isSpanish ? "Eliminaciones" : "Removals",
+supportChipQuestionIssues: isSpanish ? "Problemas con preguntas" : "Question issues",
+supportChipAccountHelp: isSpanish ? "Ayuda de cuenta" : "Account help",
+supportMiniNote: isSpanish
+  ? "Tus comentarios ayudan a mejorar la plataforma. Envía cualquier cosa que se sienta confusa, dañada, faltante o que valga la pena mejorar."
+  : "Your feedback helps improve the platform. Send anything that feels confusing, broken, missing, or worth improving.",
 menuPathTitle: isSpanish ? "Ruta Recomendada" : "Recommended Path",
 menuPathLearningTitle: isSpanish ? "Aprende primero" : "Learn First",
 menuPathLearningText: isSpanish
@@ -4827,90 +4851,166 @@ if (menuPathTestText) menuPathTestText.textContent = t.menuPathTestText;
 
 if (practiceSkillSelect) {
   const currentSkill = practiceSkillSelect.value;
+  const skillLabel = (label) => {
+    if (language === "Spanish") {
+      const map = {
+        "Fractions, Decimals, and Percents": "Fracciones, decimales y porcentajes",
+        "Ratios, Proportions, and Percent Change": "Razones, proporciones y cambio porcentual",
+        "Geometry and Measurement": "Geometría y medición",
+        "Lines, Angles, and Coordinate Plane": "Rectas, ángulos y plano cartesiano",
+        "Data Tables and Graph Interpretation": "Tablas de datos e interpretación de gráficos",
+        "Mean, Median, and Probability": "Media, mediana y probabilidad",
+        "Expressions and Equations": "Expresiones y ecuaciones",
+        "Linear Equations and Slope": "Ecuaciones lineales y pendiente",
+        "Mixed: Fractions, Decimals, and Percents": "Mixto: Fracciones, decimales y porcentajes",
+        "Ordering Fractions": "Ordenar fracciones",
+        "Ordering Decimals": "Ordenar decimales",
+        "Comparing Percents": "Comparar porcentajes",
+        "Percent of a Number": "Porcentaje de un número",
+        "Percent Discount": "Descuento porcentual",
+        "Percent of a Total": "Porcentaje de un total",
+        "Mixed: Ratios, Proportions, and Percent Change": "Mixto: Razones, proporciones y cambio porcentual",
+        "Percent Increase": "Aumento porcentual",
+        "Percent Decrease": "Disminución porcentual",
+        "Finding Percent Increase": "Calcular aumento porcentual",
+        "Mixed: Area, Perimeter, Surface Area, and Volume": "Mixto: Área, perímetro, área de superficie y volumen",
+        "Rectangle Area": "Área de rectángulo",
+        "Rectangle Perimeter": "Perímetro de rectángulo",
+        "Triangle Area": "Área de triángulo",
+        "Area Cost Problems": "Problemas de costo por área",
+        "Volume": "Volumen",
+        "Surface Area": "Área de superficie",
+        "Mixed: Lines, Angles, and Coordinate Plane": "Mixto: Rectas, ángulos y plano cartesiano",
+        "Number Line": "Recta numérica",
+        "Integer Number Line": "Recta numérica de enteros",
+        "Opposites on a Number Line": "Opuestos en la recta numérica",
+        "Temperature Number Line": "Recta numérica de temperatura",
+        "Decimal Number Line": "Recta numérica decimal",
+        "Fraction Number Line": "Recta numérica de fracciones",
+        "Inequality Number Line": "Recta numérica de desigualdades",
+        "Mixed: Data Tables and Graph Interpretation": "Mixto: Tablas de datos e interpretación de gráficos",
+        "Bar Graph: Greatest Value": "Gráfico de barras: valor mayor",
+        "Bar Graph: Least Value": "Gráfico de barras: valor menor",
+        "Bar Graph: Difference": "Gráfico de barras: diferencia",
+        "Bar Graph: Total": "Gráfico de barras: total",
+        "Line Graph: Change": "Gráfico lineal: cambio",
+        "Line Graph: Greatest Value": "Gráfico lineal: valor mayor",
+        "Line Graph: Least Value": "Gráfico lineal: valor menor",
+        "Line Graph: Difference": "Gráfico lineal: diferencia",
+        "Data Table: Totals": "Tabla de datos: totales",
+        "Data Table: Greatest Value": "Tabla de datos: valor mayor",
+        "Data Table: Least Value": "Tabla de datos: valor menor",
+        "Data Table: Difference": "Tabla de datos: diferencia",
+        "Scatter Plot Correlation": "Correlación en diagrama de dispersión",
+        "Graph Totals": "Totales de gráficos",
+        "Graph Difference": "Diferencia en gráficos",
+        "Mixed: Mean, Median, and Probability": "Mixto: Media, mediana y probabilidad",
+        "Average": "Promedio",
+        "Median": "Mediana",
+        "Probability": "Probabilidad",
+        "Spinner Probability": "Probabilidad con ruleta",
+        "Marble Probability": "Probabilidad con canicas",
+        "Number Cube Probability": "Probabilidad con cubo numérico",
+        "Mixed: Solving Equations and Inequalities": "Mixto: Resolver ecuaciones y desigualdades",
+        "Expressions and Order of Operations": "Expresiones y orden de operaciones",
+        "Expression Substitution": "Sustitución en expresiones",
+        "Expression Word Problems": "Problemas de expresiones",
+        "Two-Step Equations": "Ecuaciones de dos pasos",
+        "Variables on Both Sides": "Variables en ambos lados",
+        "Equation Word Problems": "Problemas de ecuaciones",
+        "Equation Steps": "Pasos de ecuaciones",
+        "Mixed: Linear Equations and Slope": "Mixto: Ecuaciones lineales y pendiente",
+        "Linear Equations": "Ecuaciones lineales",
+        "Slope From Graph": "Pendiente desde gráfico"
+      };
+      return map[label] || label;
+    }
+    return label;
+  };
 
   practiceSkillSelect.innerHTML = `
-    <optgroup label="Fractions, Decimals, and Percents">
-      <option value="Fractions, Decimals, and Percents">Mixed: Fractions, Decimals, and Percents</option>
-      <option value="Fractions">Ordering Fractions</option>
-      <option value="Decimals">Ordering Decimals</option>
-      <option value="Comparing Percents">Comparing Percents</option>
-      <option value="Percent of a Number">Percent of a Number</option>
-      <option value="Percent Discount">Percent Discount</option>
-      <option value="Percent of a Total">Percent of a Total</option>
+    <optgroup label="${skillLabel("Fractions, Decimals, and Percents")}">
+      <option value="Fractions, Decimals, and Percents">${skillLabel("Mixed: Fractions, Decimals, and Percents")}</option>
+      <option value="Fractions">${skillLabel("Ordering Fractions")}</option>
+      <option value="Decimals">${skillLabel("Ordering Decimals")}</option>
+      <option value="Comparing Percents">${skillLabel("Comparing Percents")}</option>
+      <option value="Percent of a Number">${skillLabel("Percent of a Number")}</option>
+      <option value="Percent Discount">${skillLabel("Percent Discount")}</option>
+      <option value="Percent of a Total">${skillLabel("Percent of a Total")}</option>
     </optgroup>
 
-    <optgroup label="Ratios, Proportions, and Percent Change">
-      <option value="Ratios, Proportions, and Percent Change">Mixed: Ratios, Proportions, and Percent Change</option>
-      <option value="Percent Increase">Percent Increase</option>
-      <option value="Percent Decrease">Percent Decrease</option>
-      <option value="Finding Percent Increase">Finding Percent Increase</option>
+    <optgroup label="${skillLabel("Ratios, Proportions, and Percent Change")}">
+      <option value="Ratios, Proportions, and Percent Change">${skillLabel("Mixed: Ratios, Proportions, and Percent Change")}</option>
+      <option value="Percent Increase">${skillLabel("Percent Increase")}</option>
+      <option value="Percent Decrease">${skillLabel("Percent Decrease")}</option>
+      <option value="Finding Percent Increase">${skillLabel("Finding Percent Increase")}</option>
     </optgroup>
 
-<optgroup label="Geometry and Measurement">
-  <option value="Area, Perimeter, Surface Area, and Volume">Mixed: Area, Perimeter, Surface Area, and Volume</option>
-  <option value="Rectangle Area">Rectangle Area</option>
-  <option value="Rectangle Perimeter">Rectangle Perimeter</option>
-  <option value="Triangle Area">Triangle Area</option>
-  <option value="Area Cost Problems">Area Cost Problems</option>
-  <option value="Volume">Volume</option>
-  <option value="Surface Area">Surface Area</option>
+<optgroup label="${skillLabel("Geometry and Measurement")}">
+  <option value="Area, Perimeter, Surface Area, and Volume">${skillLabel("Mixed: Area, Perimeter, Surface Area, and Volume")}</option>
+  <option value="Rectangle Area">${skillLabel("Rectangle Area")}</option>
+  <option value="Rectangle Perimeter">${skillLabel("Rectangle Perimeter")}</option>
+  <option value="Triangle Area">${skillLabel("Triangle Area")}</option>
+  <option value="Area Cost Problems">${skillLabel("Area Cost Problems")}</option>
+  <option value="Volume">${skillLabel("Volume")}</option>
+  <option value="Surface Area">${skillLabel("Surface Area")}</option>
 </optgroup>
 
-    <optgroup label="Lines, Angles, and Coordinate Plane">
-<option value="Lines, Angles, and Coordinate Plane">Mixed: Lines, Angles, and Coordinate Plane</option>
-<option value="Number Line">Number Line</option>
-<option value="Integer Number Line">Integer Number Line</option>
-<option value="Opposites on a Number Line">Opposites on a Number Line</option>
-<option value="Temperature Number Line">Temperature Number Line</option>
-<option value="Decimal Number Line">Decimal Number Line</option>
-<option value="Fraction Number Line">Fraction Number Line</option>
-<option value="Inequality Number Line">Inequality Number Line</option>
+    <optgroup label="${skillLabel("Lines, Angles, and Coordinate Plane")}">
+<option value="Lines, Angles, and Coordinate Plane">${skillLabel("Mixed: Lines, Angles, and Coordinate Plane")}</option>
+<option value="Number Line">${skillLabel("Number Line")}</option>
+<option value="Integer Number Line">${skillLabel("Integer Number Line")}</option>
+<option value="Opposites on a Number Line">${skillLabel("Opposites on a Number Line")}</option>
+<option value="Temperature Number Line">${skillLabel("Temperature Number Line")}</option>
+<option value="Decimal Number Line">${skillLabel("Decimal Number Line")}</option>
+<option value="Fraction Number Line">${skillLabel("Fraction Number Line")}</option>
+<option value="Inequality Number Line">${skillLabel("Inequality Number Line")}</option>
     </optgroup>
 
-    <optgroup label="Data Tables and Graph Interpretation">
-      <option value="Data Tables and Graph Interpretation">Mixed: Data Tables and Graph Interpretation</option>
-      <option value="Bar Graph Greatest Value">Bar Graph: Greatest Value</option>
-      <option value="Bar Graph Least Value">Bar Graph: Least Value</option>
-      <option value="Bar Graph Difference">Bar Graph: Difference</option>
-      <option value="Bar Graph Total">Bar Graph: Total</option>
-      <option value="Line Graph Change">Line Graph: Change</option>
-      <option value="Line Graph Greatest Value">Line Graph: Greatest Value</option>
-      <option value="Line Graph Least Value">Line Graph: Least Value</option>
-      <option value="Line Graph Difference">Line Graph: Difference</option>
-      <option value="Data Table Totals">Data Table: Totals</option>
-      <option value="Data Table Greatest Value">Data Table: Greatest Value</option>
-      <option value="Data Table Least Value">Data Table: Least Value</option>
-      <option value="Data Table Difference">Data Table: Difference</option>
-      <option value="Scatter Plot Correlation">Scatter Plot Correlation</option>
-      <option value="Graph Totals">Graph Totals</option>
-      <option value="Graph Difference">Graph Difference</option>
+    <optgroup label="${skillLabel("Data Tables and Graph Interpretation")}">
+      <option value="Data Tables and Graph Interpretation">${skillLabel("Mixed: Data Tables and Graph Interpretation")}</option>
+      <option value="Bar Graph Greatest Value">${skillLabel("Bar Graph: Greatest Value")}</option>
+      <option value="Bar Graph Least Value">${skillLabel("Bar Graph: Least Value")}</option>
+      <option value="Bar Graph Difference">${skillLabel("Bar Graph: Difference")}</option>
+      <option value="Bar Graph Total">${skillLabel("Bar Graph: Total")}</option>
+      <option value="Line Graph Change">${skillLabel("Line Graph: Change")}</option>
+      <option value="Line Graph Greatest Value">${skillLabel("Line Graph: Greatest Value")}</option>
+      <option value="Line Graph Least Value">${skillLabel("Line Graph: Least Value")}</option>
+      <option value="Line Graph Difference">${skillLabel("Line Graph: Difference")}</option>
+      <option value="Data Table Totals">${skillLabel("Data Table: Totals")}</option>
+      <option value="Data Table Greatest Value">${skillLabel("Data Table: Greatest Value")}</option>
+      <option value="Data Table Least Value">${skillLabel("Data Table: Least Value")}</option>
+      <option value="Data Table Difference">${skillLabel("Data Table: Difference")}</option>
+      <option value="Scatter Plot Correlation">${skillLabel("Scatter Plot Correlation")}</option>
+      <option value="Graph Totals">${skillLabel("Graph Totals")}</option>
+      <option value="Graph Difference">${skillLabel("Graph Difference")}</option>
     </optgroup>
 
-<optgroup label="Mean, Median, and Probability">
-  <option value="Mean, Median, and Probability">Mixed: Mean, Median, and Probability</option>
-  <option value="Average">Average</option>
-  <option value="Median">Median</option>
-  <option value="Probability">Probability</option>
-  <option value="Spinner Probability">Spinner Probability</option>
-  <option value="Marble Probability">Marble Probability</option>
-  <option value="Number Cube Probability">Number Cube Probability</option>
+<optgroup label="${skillLabel("Mean, Median, and Probability")}">
+  <option value="Mean, Median, and Probability">${skillLabel("Mixed: Mean, Median, and Probability")}</option>
+  <option value="Average">${skillLabel("Average")}</option>
+  <option value="Median">${skillLabel("Median")}</option>
+  <option value="Probability">${skillLabel("Probability")}</option>
+  <option value="Spinner Probability">${skillLabel("Spinner Probability")}</option>
+  <option value="Marble Probability">${skillLabel("Marble Probability")}</option>
+  <option value="Number Cube Probability">${skillLabel("Number Cube Probability")}</option>
 </optgroup>
 
-<optgroup label="Expressions and Equations">
-  <option value="Solving Equations and Inequalities">Mixed: Solving Equations and Inequalities</option>
-  <option value="Expressions and Order of Operations">Expressions and Order of Operations</option>
-  <option value="Expression Substitution">Expression Substitution</option>
-  <option value="Expression Word Problems">Expression Word Problems</option>
-  <option value="Two-Step Equations">Two-Step Equations</option>
-  <option value="Variables on Both Sides">Variables on Both Sides</option>
-  <option value="Equation Word Problems">Equation Word Problems</option>
-  <option value="Equation Steps">Equation Steps</option>
+<optgroup label="${skillLabel("Expressions and Equations")}">
+  <option value="Solving Equations and Inequalities">${skillLabel("Mixed: Solving Equations and Inequalities")}</option>
+  <option value="Expressions and Order of Operations">${skillLabel("Expressions and Order of Operations")}</option>
+  <option value="Expression Substitution">${skillLabel("Expression Substitution")}</option>
+  <option value="Expression Word Problems">${skillLabel("Expression Word Problems")}</option>
+  <option value="Two-Step Equations">${skillLabel("Two-Step Equations")}</option>
+  <option value="Variables on Both Sides">${skillLabel("Variables on Both Sides")}</option>
+  <option value="Equation Word Problems">${skillLabel("Equation Word Problems")}</option>
+  <option value="Equation Steps">${skillLabel("Equation Steps")}</option>
 </optgroup>
 
-<optgroup label="Linear Equations and Slope">
-  <option value="Linear Equations and Slope">Mixed: Linear Equations and Slope</option>
-  <option value="Linear Equations">Linear Equations</option>
-  <option value="Slope From Graph">Slope From Graph</option>
+<optgroup label="${skillLabel("Linear Equations and Slope")}">
+  <option value="Linear Equations and Slope">${skillLabel("Mixed: Linear Equations and Slope")}</option>
+  <option value="Linear Equations">${skillLabel("Linear Equations")}</option>
+  <option value="Slope From Graph">${skillLabel("Slope From Graph")}</option>
 </optgroup>
   `;
 syncLearningSkillDropdown();
@@ -5033,6 +5133,47 @@ if (languageLearningModeHelperText) {
   languageLearningModeHelperText.textContent =
     t.learningModeHelperText || "Learn a skill step by step first, then answer practice questions with immediate feedback.";
 }
+const languageLearningModePanel = document.getElementById("learningModePanel");
+if (languageLearningModePanel) {
+  const learningModeTitle = languageLearningModePanel.querySelector("h3");
+  if (learningModeTitle) learningModeTitle.textContent = t.learningModeTitle || "Learning Mode";
+}
+const knownBugsBlock = document.getElementById("mainMenuKnownBugs");
+if (knownBugsBlock) {
+  const knownBugsTitle = knownBugsBlock.querySelector(".knownBugsTitle");
+  const knownBugsItems = knownBugsBlock.querySelectorAll(".knownBugsList li");
+  const knownBugsNote = knownBugsBlock.querySelector(".knownBugsNote");
+  if (knownBugsTitle) knownBugsTitle.textContent = t.knownBugsTitle;
+  if (knownBugsItems[0]) knownBugsItems[0].textContent = t.knownBugsItem1;
+  if (knownBugsItems[1]) knownBugsItems[1].textContent = t.knownBugsItem2;
+  if (knownBugsItems[2]) knownBugsItems[2].textContent = t.knownBugsItem3;
+  if (knownBugsNote) knownBugsNote.textContent = t.knownBugsNote;
+}
+const languageEditGoalBtn = document.getElementById("editGoalBtn");
+const languageGoalIdeasBtn = document.getElementById("goalIdeasBtn");
+if (languageEditGoalBtn) languageEditGoalBtn.textContent = t.setGoal;
+if (languageGoalIdeasBtn) languageGoalIdeasBtn.textContent = t.goalIdeas;
+const learningDifficultySelect = document.getElementById("learningDifficultySelect");
+if (learningDifficultySelect) {
+  const currentLearningDifficulty = learningDifficultySelect.value;
+  learningDifficultySelect.innerHTML = `
+    <option value="Easy">${translateDifficultyLabel("Easy")}</option>
+    <option value="Medium">${translateDifficultyLabel("Medium")}</option>
+    <option value="GED-Level">${translateDifficultyLabel("GED-Level")}</option>
+  `;
+  learningDifficultySelect.value = currentLearningDifficulty;
+}
+const startLearningBtn = document.getElementById("startLearningBtn");
+if (startLearningBtn) startLearningBtn.textContent = t.startLearning;
+const supportChips = Array.from(document.querySelectorAll("#supportPanel .supportChip"));
+if (supportChips[0]) supportChips[0].textContent = t.supportChipBugReports;
+if (supportChips[1]) supportChips[1].textContent = t.supportChipAdditions;
+if (supportChips[2]) supportChips[2].textContent = t.supportChipChanges;
+if (supportChips[3]) supportChips[3].textContent = t.supportChipRemovals;
+if (supportChips[4]) supportChips[4].textContent = t.supportChipQuestionIssues;
+if (supportChips[5]) supportChips[5].textContent = t.supportChipAccountHelp;
+const supportMiniNote = document.querySelector("#supportPanel .supportMiniNote");
+if (supportMiniNote) supportMiniNote.textContent = t.supportMiniNote;
 
 if (languageLoadingTitle) languageLoadingTitle.innerText = t.loading;
 if (languageLoadingText) languageLoadingText.innerText = "";
@@ -5450,9 +5591,9 @@ function renderGoalDock() {
 
   if (!goal) {
     launcherBtn.classList.remove("goalLauncherHasGoal");
-    launcherBtn.textContent = "🎯 Set Goal";
-    launcherBtn.title = "Set your GED goal";
-    launcherBtn.setAttribute("aria-label", "Set your GED goal");
+    launcherBtn.textContent = `🎯 ${tr("setGoal")}`;
+    launcherBtn.title = tr("setYourGedGoal");
+    launcherBtn.setAttribute("aria-label", tr("setYourGedGoal"));
     return;
   }
 
@@ -5461,23 +5602,23 @@ function renderGoalDock() {
   const isComplete = progress >= 100;
   const isExpired = deadlineInfo?.expired && !isComplete;
 
-  let statusLabel = `${progress}% complete`;
+  let statusLabel = `${progress}${tr("goalPercentComplete")}`;
 
   if (isComplete) {
-    statusLabel = "Complete";
+    statusLabel = tr("completeLabel");
   } else if (isExpired) {
-    statusLabel = "Expired";
+    statusLabel = tr("expiredLabel");
   }
 
-  const goalTitle = goal.title || "My GED Goal";
+  const goalTitle = goal.title || tr("myGedGoal");
 
   launcherBtn.classList.add("goalLauncherHasGoal");
   launcherBtn.title = `${goalTitle} — ${statusLabel}`;
   launcherBtn.setAttribute("aria-label", `${goalTitle}. ${statusLabel}. Open goal settings.`);
 
   launcherBtn.innerHTML = `
-    <span class="goalLauncherContent">
-      <span class="goalLauncherMain">🎯 Goal Progress</span>
+      <span class="goalLauncherContent">
+      <span class="goalLauncherMain">🎯 ${tr("goalProgressTitle")}</span>
       <span class="goalLauncherMeta">${escapeHtml(goalTitle)} · ${escapeHtml(statusLabel)}</span>
       <span class="goalLauncherMiniTrack" aria-hidden="true">
         <span class="goalLauncherMiniFill" style="width:${progress}%"></span>
@@ -5501,7 +5642,7 @@ function openGoalModal() {
   const todayISO = getTodayISODate();
 
   showModal(
-    "My GED Goal",
+    tr("myGedGoal"),
     `
       <div class="goalFormGrid">
         <div class="goalFormRow">
@@ -11495,14 +11636,14 @@ function renderProfileGoalsSection() {
   if (!goal) {
     return `
       <div class="profileGoalEmpty">
-        <h3 style="margin:0 0 8px; color:var(--primary);">🎯 Goals</h3>
+        <h3 style="margin:0 0 8px; color:var(--primary);">🎯 ${tr("goalsTab")}</h3>
         <p style="margin:0 0 12px;">
           You do not have an active GED goal yet. Set one to track progress toward practice, learning, score, skill, or pass-ready targets.
         </p>
 
         <div class="menuActions">
-          <button id="profileGoalSetBtn" class="primaryBtn">Set Goal</button>
-          <button id="profileGoalIdeasBtn" class="secondaryBtn">Goal Ideas</button>
+          <button id="profileGoalSetBtn" class="primaryBtn">${tr("setGoal")}</button>
+          <button id="profileGoalIdeasBtn" class="secondaryBtn">${tr("goalIdeas")}</button>
         </div>
       </div>
     `;
@@ -11515,12 +11656,12 @@ function renderProfileGoalsSection() {
   const currentCount = Number(goal.currentCount || 0);
   const targetCount = Number(goal.targetCount || 1);
 
-  let statusLabel = `${progress}% complete`;
+  let statusLabel = `${progress}${tr("goalPercentComplete")}`;
 
   if (isComplete) {
-    statusLabel = "Complete";
+    statusLabel = tr("completeLabel");
   } else if (isExpired) {
-    statusLabel = "Expired";
+    statusLabel = tr("expiredLabel");
   }
 
   const deadlineLabel = deadlineInfo
@@ -11535,7 +11676,7 @@ function renderProfileGoalsSection() {
     <div class="profileGoalCard">
       <div class="profileGoalHeader">
         <div>
-          <div class="profileGoalTitle">${escapeHtml(goal.title || "My GED Goal")}</div>
+          <div class="profileGoalTitle">${escapeHtml(goal.title || tr("myGedGoal"))}</div>
           <div class="profileGoalDetail">
             ${escapeHtml(goal.detailText || goal.text || getGoalTypeLabel(goal.type))}
           </div>
@@ -11571,8 +11712,8 @@ function renderProfileGoalsSection() {
       </div>
 
       <div class="menuActions">
-        <button id="profileGoalEditBtn" class="secondaryBtn">Edit Goal</button>
-        <button id="profileGoalIdeasBtn" class="secondaryBtn">Goal Ideas</button>
+        <button id="profileGoalEditBtn" class="secondaryBtn">${tr("editGoal")}</button>
+        <button id="profileGoalIdeasBtn" class="secondaryBtn">${tr("goalIdeas")}</button>
         <button id="profileGoalShowDockBtn" class="secondaryBtn">Open Goal Settings</button>
         <button id="profileGoalProgressBtn" class="secondaryBtn">View Progress</button>
         <button id="profileGoalClearBtn" class="dangerBtn">Clear Goal</button>
