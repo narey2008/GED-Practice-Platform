@@ -668,7 +668,8 @@ app.post("/api/auth/register", async (req, res) => {
   scoringEnabled,
   emailVerified: false,
   emailVerificationTokenHash: tokenHash,
-  emailVerificationExpiresAt: expiresAt
+  emailVerificationExpiresAt: expiresAt,
+  lastVerificationEmailSentAt: new Date()
 });
 
     console.log("VERIFICATION EMAIL SEND ATTEMPT (register):", {
@@ -1434,6 +1435,25 @@ app.post("/api/auth/resend-verification", async (req, res) => {
     const user = await User.findOne({ email: rawEmail });
 
     if (user && !user.emailVerified) {
+      const now = Date.now();
+      const cooldownMs = 90 * 1000;
+      const lastSentMs = user.lastVerificationEmailSentAt
+        ? new Date(user.lastVerificationEmailSentAt).getTime()
+        : 0;
+      const elapsedMs = now - lastSentMs;
+
+      if (lastSentMs && elapsedMs < cooldownMs) {
+        const retryAfterSeconds = Math.max(1, Math.ceil((cooldownMs - elapsedMs) / 1000));
+        console.log("VERIFICATION RESEND BLOCKED: cooldown active", {
+          email: user.email,
+          retryAfterSeconds
+        });
+        return res.status(429).json({
+          error: "Please wait before requesting another verification email.",
+          retryAfterSeconds
+        });
+      }
+
       console.log("VERIFICATION EMAIL SEND ATTEMPT (resend):", {
         email: user.email
       });
@@ -1442,6 +1462,7 @@ app.post("/api/auth/resend-verification", async (req, res) => {
 
       user.emailVerificationTokenHash = tokenHash;
       user.emailVerificationExpiresAt = expiresAt;
+      user.lastVerificationEmailSentAt = new Date();
       await user.save();
 
       await sendEmailVerificationEmail({

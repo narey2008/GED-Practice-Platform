@@ -6178,6 +6178,58 @@ async function withLoading(title, text, work) {
   }
 }
 
+let verificationResendCooldownUntilMs = 0;
+let verificationResendCooldownIntervalId = null;
+
+function formatVerificationResendTimeLeft(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getVerificationResendSecondsLeft() {
+  return Math.max(0, Math.ceil((verificationResendCooldownUntilMs - Date.now()) / 1000));
+}
+
+function startVerificationResendCooldown(seconds = 90) {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  verificationResendCooldownUntilMs = Date.now() + safeSeconds * 1000;
+}
+
+function stopVerificationResendCooldownTicker() {
+  if (verificationResendCooldownIntervalId) {
+    clearInterval(verificationResendCooldownIntervalId);
+    verificationResendCooldownIntervalId = null;
+  }
+}
+
+function bindVerificationResendCooldownUI({ buttonEl, hintEl, baseLabel }) {
+  if (!buttonEl || !hintEl) return () => {};
+
+  const render = () => {
+    const secondsLeft = getVerificationResendSecondsLeft();
+    if (secondsLeft > 0) {
+      buttonEl.disabled = true;
+      buttonEl.innerText = tr("resendVerification");
+      hintEl.innerText = `Resend available in ${formatVerificationResendTimeLeft(secondsLeft)}`;
+      hintEl.classList.remove("hidden");
+    } else {
+      buttonEl.disabled = false;
+      buttonEl.innerText = baseLabel || tr("resendVerification");
+      hintEl.innerText = "";
+      hintEl.classList.add("hidden");
+    }
+  };
+
+  render();
+  stopVerificationResendCooldownTicker();
+  verificationResendCooldownIntervalId = setInterval(render, 1000);
+
+  return () => {
+    stopVerificationResendCooldownTicker();
+  };
+}
+
 async function recoverToMainMenuAfterStartFailure(error, activityLabel = "activity") {
   console.error(`Failed to start ${activityLabel}:`, error);
 
@@ -7897,6 +7949,7 @@ function openChangePasswordModal() {
     `
       <label for="resendVerificationEmail">${tr("email")}</label>
       <input id="resendVerificationEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
+      <div id="resendVerificationCooldownHint" class="mutedText hidden" style="margin-top:8px;"></div>
       <div id="resendVerificationError" class="authError hidden"></div>
       <div id="resendVerificationSuccess" class="authSuccess hidden"></div>
     `,
@@ -8078,6 +8131,12 @@ function openResendVerificationModal(prefilledEmail = "") {
           const emailInput = document.getElementById("resendVerificationEmail");
           const errorEl = document.getElementById("resendVerificationError");
           const successEl = document.getElementById("resendVerificationSuccess");
+          const cooldownHintEl = document.getElementById("resendVerificationCooldownHint");
+          const resendActionBtn = document.getElementById("modalFooter")?.querySelector("button.primaryBtn");
+
+          if (resendActionBtn && cooldownHintEl) {
+            bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+          }
 
           const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
 
@@ -8122,7 +8181,18 @@ function openResendVerificationModal(prefilledEmail = "") {
                 console.log("Resend verification response:", { ok: res.ok, error: data?.error || null });
 
                 if (!res.ok) {
+                  if (res.status === 429 && data && typeof data.retryAfterSeconds === "number") {
+                    startVerificationResendCooldown(data.retryAfterSeconds);
+                    if (resendActionBtn && cooldownHintEl) {
+                      bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+                    }
+                  }
                   throw new Error(data.error || "Failed to resend verification email.");
+                }
+
+                startVerificationResendCooldown(90);
+                if (resendActionBtn && cooldownHintEl) {
+                  bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
                 }
 
                 if (successEl) {
@@ -8357,6 +8427,7 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
         If you cannot find the verification email, you can send a new one.
       </div>
       <div id="verifyEmailResendSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
+      <div id="verifyEmailResendCooldownHint" class="mutedText hidden" style="margin-top:8px;"></div>
       <div id="verifyEmailResendError" class="authError hidden" style="margin-top:10px;"></div>
     `,
     [
@@ -8373,6 +8444,12 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
 
           const successEl = document.getElementById("verifyEmailResendSuccess");
           const errorEl = document.getElementById("verifyEmailResendError");
+          const cooldownHintEl = document.getElementById("verifyEmailResendCooldownHint");
+          const resendActionBtn = document.getElementById("modalFooter")?.querySelector("button.primaryBtn");
+
+          if (resendActionBtn && cooldownHintEl) {
+            bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+          }
 
           if (successEl) {
             successEl.classList.add("hidden");
@@ -8417,7 +8494,18 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
                 console.log("Resend verification response:", { ok: res.ok, error: resendData?.error || null });
 
                 if (!res.ok) {
+                  if (res.status === 429 && resendData && typeof resendData.retryAfterSeconds === "number") {
+                    startVerificationResendCooldown(resendData.retryAfterSeconds);
+                    if (resendActionBtn && cooldownHintEl) {
+                      bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
+                    }
+                  }
                   throw new Error(resendData.error || "Failed to resend verification email.");
+                }
+
+                startVerificationResendCooldown(90);
+                if (resendActionBtn && cooldownHintEl) {
+                  bindVerificationResendCooldownUI({ buttonEl: resendActionBtn, hintEl: cooldownHintEl, baseLabel: tr("resendVerification") });
                 }
 
                 if (successEl) {
@@ -8453,6 +8541,7 @@ if (isSubmitRegister) {
         <button id="postRegisterResendBtn" type="button" class="secondaryBtn">${tr("resendVerification")}</button>
       </div>
       <div id="postRegisterResendSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
+      <div id="postRegisterResendCooldownHint" class="mutedText hidden" style="margin-top:8px;"></div>
       <div id="postRegisterResendError" class="authError hidden" style="margin-top:10px;"></div>
     `,
     [
@@ -8466,6 +8555,11 @@ if (isSubmitRegister) {
   const postRegisterResendBtn = document.getElementById("postRegisterResendBtn");
   const postRegisterResendSuccess = document.getElementById("postRegisterResendSuccess");
   const postRegisterResendError = document.getElementById("postRegisterResendError");
+  const postRegisterResendCooldownHint = document.getElementById("postRegisterResendCooldownHint");
+
+  if (postRegisterResendBtn && postRegisterResendCooldownHint) {
+    bindVerificationResendCooldownUI({ buttonEl: postRegisterResendBtn, hintEl: postRegisterResendCooldownHint, baseLabel: tr("resendVerification") });
+  }
 
   if (postRegisterResendBtn) {
     postRegisterResendBtn.onclick = async () => {
@@ -8514,7 +8608,18 @@ if (isSubmitRegister) {
             console.log("Resend verification response:", { ok: res.ok, error: resendData?.error || null });
 
             if (!res.ok) {
+              if (res.status === 429 && resendData && typeof resendData.retryAfterSeconds === "number") {
+                startVerificationResendCooldown(resendData.retryAfterSeconds);
+                if (postRegisterResendBtn && postRegisterResendCooldownHint) {
+                  bindVerificationResendCooldownUI({ buttonEl: postRegisterResendBtn, hintEl: postRegisterResendCooldownHint, baseLabel: tr("resendVerification") });
+                }
+              }
               throw new Error(resendData.error || "Failed to resend verification email.");
+            }
+
+            startVerificationResendCooldown(90);
+            if (postRegisterResendBtn && postRegisterResendCooldownHint) {
+              bindVerificationResendCooldownUI({ buttonEl: postRegisterResendBtn, hintEl: postRegisterResendCooldownHint, baseLabel: tr("resendVerification") });
             }
 
             if (postRegisterResendSuccess) {

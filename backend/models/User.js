@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null
     },
+    lastVerificationEmailSentAt: {
+      type: Date,
+      default: null
+    },
 
     passwordResetTokenHash: {
       type: String,
