@@ -3970,6 +3970,20 @@ function getTranslations(language) {
 menuPillFullTest: isSpanish ? "Examen completo de 46 preguntas" : "46-question full test",
 menuPillPractice: isSpanish ? "Práctica por habilidad" : "Skill-specific practice",
 menuPillLearning: isSpanish ? "Modo de aprendizaje guiado" : "Guided Learning Mode",
+learningModeTitle: isSpanish ? "Modo de aprendizaje" : "Learning Mode",
+knownBugsTitle: isSpanish ? "Errores conocidos / En progreso" : "Known Bugs / In Progress",
+knownBugsItem1: isSpanish ? "Algunos gráficos se están mejorando para el modo oscuro." : "Some graph visuals are being improved for dark mode.",
+knownBugsItem2: isSpanish ? "Algunas visuales de preguntas pueden refinarse con el tiempo." : "Some question visuals may be refined over time.",
+knownBugsItem3: isSpanish ? "Las mejoras de rendimiento continúan." : "Performance improvements are ongoing.",
+knownBugsNote: isSpanish ? "Si algo se ve incorrecto, usa Contacto / Soporte para reportarlo." : "If something looks wrong, please use Contact / Support to report it.",
+setGoal: isSpanish ? "Establecer meta" : "Set Goal",
+goalIdeas: isSpanish ? "Ideas de metas" : "Goal Ideas",
+myGedGoal: isSpanish ? "Mi meta GED" : "My GED Goal",
+setYourGedGoal: isSpanish ? "Establece tu meta GED" : "Set your GED goal",
+goalProgressTitle: isSpanish ? "Progreso de meta" : "Goal Progress",
+completeLabel: isSpanish ? "Completado" : "Complete",
+expiredLabel: isSpanish ? "Vencido" : "Expired",
+goalPercentComplete: isSpanish ? "% completado" : "% complete",
 menuPathTitle: isSpanish ? "Ruta Recomendada" : "Recommended Path",
 menuPathLearningTitle: isSpanish ? "Aprende primero" : "Learn First",
 menuPathLearningText: isSpanish
@@ -5033,6 +5047,26 @@ if (languageLearningModeHelperText) {
   languageLearningModeHelperText.textContent =
     t.learningModeHelperText || "Learn a skill step by step first, then answer practice questions with immediate feedback.";
 }
+const languageLearningModePanel = document.getElementById("learningModePanel");
+if (languageLearningModePanel) {
+  const learningModeTitle = languageLearningModePanel.querySelector("h3");
+  if (learningModeTitle) learningModeTitle.textContent = t.learningModeTitle || "Learning Mode";
+}
+const knownBugsBlock = document.getElementById("mainMenuKnownBugs");
+if (knownBugsBlock) {
+  const knownBugsTitle = knownBugsBlock.querySelector(".knownBugsTitle");
+  const knownBugsItems = knownBugsBlock.querySelectorAll(".knownBugsList li");
+  const knownBugsNote = knownBugsBlock.querySelector(".knownBugsNote");
+  if (knownBugsTitle) knownBugsTitle.textContent = t.knownBugsTitle;
+  if (knownBugsItems[0]) knownBugsItems[0].textContent = t.knownBugsItem1;
+  if (knownBugsItems[1]) knownBugsItems[1].textContent = t.knownBugsItem2;
+  if (knownBugsItems[2]) knownBugsItems[2].textContent = t.knownBugsItem3;
+  if (knownBugsNote) knownBugsNote.textContent = t.knownBugsNote;
+}
+const languageEditGoalBtn = document.getElementById("editGoalBtn");
+const languageGoalIdeasBtn = document.getElementById("goalIdeasBtn");
+if (languageEditGoalBtn) languageEditGoalBtn.textContent = t.setGoal;
+if (languageGoalIdeasBtn) languageGoalIdeasBtn.textContent = t.goalIdeas;
 
 if (languageLoadingTitle) languageLoadingTitle.innerText = t.loading;
 if (languageLoadingText) languageLoadingText.innerText = "";
@@ -5450,9 +5484,9 @@ function renderGoalDock() {
 
   if (!goal) {
     launcherBtn.classList.remove("goalLauncherHasGoal");
-    launcherBtn.textContent = "🎯 Set Goal";
-    launcherBtn.title = "Set your GED goal";
-    launcherBtn.setAttribute("aria-label", "Set your GED goal");
+    launcherBtn.textContent = `🎯 ${tr("setGoal")}`;
+    launcherBtn.title = tr("setYourGedGoal");
+    launcherBtn.setAttribute("aria-label", tr("setYourGedGoal"));
     return;
   }
 
@@ -5461,23 +5495,23 @@ function renderGoalDock() {
   const isComplete = progress >= 100;
   const isExpired = deadlineInfo?.expired && !isComplete;
 
-  let statusLabel = `${progress}% complete`;
+  let statusLabel = `${progress}${tr("goalPercentComplete")}`;
 
   if (isComplete) {
-    statusLabel = "Complete";
+    statusLabel = tr("completeLabel");
   } else if (isExpired) {
-    statusLabel = "Expired";
+    statusLabel = tr("expiredLabel");
   }
 
-  const goalTitle = goal.title || "My GED Goal";
+  const goalTitle = goal.title || tr("myGedGoal");
 
   launcherBtn.classList.add("goalLauncherHasGoal");
   launcherBtn.title = `${goalTitle} — ${statusLabel}`;
   launcherBtn.setAttribute("aria-label", `${goalTitle}. ${statusLabel}. Open goal settings.`);
 
   launcherBtn.innerHTML = `
-    <span class="goalLauncherContent">
-      <span class="goalLauncherMain">🎯 Goal Progress</span>
+      <span class="goalLauncherContent">
+      <span class="goalLauncherMain">🎯 ${tr("goalProgressTitle")}</span>
       <span class="goalLauncherMeta">${escapeHtml(goalTitle)} · ${escapeHtml(statusLabel)}</span>
       <span class="goalLauncherMiniTrack" aria-hidden="true">
         <span class="goalLauncherMiniFill" style="width:${progress}%"></span>
@@ -5501,7 +5535,7 @@ function openGoalModal() {
   const todayISO = getTodayISODate();
 
   showModal(
-    "My GED Goal",
+    tr("myGedGoal"),
     `
       <div class="goalFormGrid">
         <div class="goalFormRow">
@@ -11495,14 +11529,14 @@ function renderProfileGoalsSection() {
   if (!goal) {
     return `
       <div class="profileGoalEmpty">
-        <h3 style="margin:0 0 8px; color:var(--primary);">🎯 Goals</h3>
+        <h3 style="margin:0 0 8px; color:var(--primary);">🎯 ${tr("goalsTab")}</h3>
         <p style="margin:0 0 12px;">
           You do not have an active GED goal yet. Set one to track progress toward practice, learning, score, skill, or pass-ready targets.
         </p>
 
         <div class="menuActions">
-          <button id="profileGoalSetBtn" class="primaryBtn">Set Goal</button>
-          <button id="profileGoalIdeasBtn" class="secondaryBtn">Goal Ideas</button>
+          <button id="profileGoalSetBtn" class="primaryBtn">${tr("setGoal")}</button>
+          <button id="profileGoalIdeasBtn" class="secondaryBtn">${tr("goalIdeas")}</button>
         </div>
       </div>
     `;
@@ -11515,12 +11549,12 @@ function renderProfileGoalsSection() {
   const currentCount = Number(goal.currentCount || 0);
   const targetCount = Number(goal.targetCount || 1);
 
-  let statusLabel = `${progress}% complete`;
+  let statusLabel = `${progress}${tr("goalPercentComplete")}`;
 
   if (isComplete) {
-    statusLabel = "Complete";
+    statusLabel = tr("completeLabel");
   } else if (isExpired) {
-    statusLabel = "Expired";
+    statusLabel = tr("expiredLabel");
   }
 
   const deadlineLabel = deadlineInfo
@@ -11535,7 +11569,7 @@ function renderProfileGoalsSection() {
     <div class="profileGoalCard">
       <div class="profileGoalHeader">
         <div>
-          <div class="profileGoalTitle">${escapeHtml(goal.title || "My GED Goal")}</div>
+          <div class="profileGoalTitle">${escapeHtml(goal.title || tr("myGedGoal"))}</div>
           <div class="profileGoalDetail">
             ${escapeHtml(goal.detailText || goal.text || getGoalTypeLabel(goal.type))}
           </div>
@@ -11571,8 +11605,8 @@ function renderProfileGoalsSection() {
       </div>
 
       <div class="menuActions">
-        <button id="profileGoalEditBtn" class="secondaryBtn">Edit Goal</button>
-        <button id="profileGoalIdeasBtn" class="secondaryBtn">Goal Ideas</button>
+        <button id="profileGoalEditBtn" class="secondaryBtn">${tr("editGoal")}</button>
+        <button id="profileGoalIdeasBtn" class="secondaryBtn">${tr("goalIdeas")}</button>
         <button id="profileGoalShowDockBtn" class="secondaryBtn">Open Goal Settings</button>
         <button id="profileGoalProgressBtn" class="secondaryBtn">View Progress</button>
         <button id="profileGoalClearBtn" class="dangerBtn">Clear Goal</button>
