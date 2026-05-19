@@ -4039,8 +4039,8 @@ verificationEmailSent: isSpanish ? "Verificación Enviada" : "Verification Sent"
 verificationEmailSentBody: isSpanish
   ? "Si existe una cuenta sin verificar para ese correo, se ha enviado un nuevo correo de verificación."
   : "If an unverified account exists for that email, a new verification email has been sent.",
-verifyEmailLoading: isSpanish ? "Verificando Correo..." : "Verifying Email...",
-resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resending Verification...",
+verifyEmailLoading: isSpanish ? "Verificando tu correo..." : "Verifying your email...",
+resendVerificationLoading: isSpanish ? "Reenviando correo de verificación..." : "Resending verification email...",
 
 accountAccessHelp: isSpanish ? "Problemas de Acceso" : "Account Access Help",
 accountAccessHelpBody: isSpanish
@@ -4265,8 +4265,8 @@ legalTopBtn: isSpanish ? "Legal" : "Legal",
     verificationEmailSentBody: isSpanish
       ? "Si existe una cuenta sin verificar para ese correo, se ha enviado un nuevo correo de verificación."
       : "If an unverified account exists for that email, a new verification email has been sent.",
-    verifyEmailLoading: isSpanish ? "Verificando Correo..." : "Verifying Email...",
-    resendVerificationLoading: isSpanish ? "Reenviando Verificación..." : "Resending Verification...",
+    verifyEmailLoading: isSpanish ? "Verificando tu correo..." : "Verifying your email...",
+    resendVerificationLoading: isSpanish ? "Reenviando correo de verificación..." : "Resending verification email...",
     verifiedStatus: isSpanish ? "Verificado" : "Verified",
     unverifiedStatus: isSpanish ? "No Verificado" : "Unverified",
     emailStatus: isSpanish ? "Estado del Correo" : "Email Status",
@@ -4347,7 +4347,7 @@ passwordResetSuccessBody: isSpanish
   ? "Tu contraseña ha sido restablecida. Ahora puedes iniciar sesión."
   : "Your password has been reset. You can now sign in.",
 forgotPasswordLoading: isSpanish ? "Enviando Enlace..." : "Sending Link...",
-resetPasswordLoading: isSpanish ? "Restableciendo Contraseña..." : "Resetting Password...",
+resetPasswordLoading: isSpanish ? "Restableciendo contraseña..." : "Resetting password...",
 
     mode: isSpanish ? "Modo" : "Mode",
 fullTest: isSpanish ? "Examen Completo" : "Full Test",
@@ -8305,7 +8305,9 @@ const displayName = isSubmitRegister
 
       try {
 await withLoading(
-  isSubmitRegister ? tr("createAccount") + "..." : tr("signIn") + "...",
+  isSubmitRegister
+    ? (getSavedLanguage() === "Spanish" ? "Creando tu cuenta..." : "Creating your account...")
+    : (getSavedLanguage() === "Spanish" ? "Iniciando tu sesión..." : "Signing you in..."),
   tr(""),
   async () => {
     const endpoint = isSubmitRegister ? "/api/auth/register" : "/api/auth/login";
