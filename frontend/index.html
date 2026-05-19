@@ -1081,6 +1081,42 @@ body.theme-light .brandTagline {
   font-size: calc(13px * var(--font-scale));
 }
 
+
+.knownBugsBlock {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel-2) 78%, transparent);
+}
+
+.knownBugsTitle {
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.knownBugsList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale));
+  line-height: 1.45;
+}
+
+.knownBugsNote {
+  margin-top: 8px;
+  font-size: calc(12px * var(--font-scale));
+  color: var(--muted);
+}
+
+
+.knownBugsBanner {
+  max-width: 980px;
+  margin: 12px auto 12px;
+}
+
 @media (max-width: 900px) {
   .welcomeFeatureGrid {
     grid-template-columns: 1fr;
@@ -2685,6 +2721,16 @@ body.loadingActive {
   </div>
 
   <div class="page">
+    <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
+      <div class="knownBugsTitle">Known Bugs / In Progress</div>
+      <ul class="knownBugsList">
+        <li>Some graph visuals are being improved for dark mode.</li>
+        <li>Some question visuals may be refined over time.</li>
+        <li>Performance improvements are ongoing.</li>
+      </ul>
+      <div class="knownBugsNote">If something looks wrong, please use Contact / Support to report it.</div>
+    </div>
+
     <div id="mainMenu" class="card menuWrap">
 <h1 class="menuTitle">Main Menu</h1>
 
@@ -4603,12 +4649,6 @@ difficultyMedium: isSpanish ? "Mediano" : "Medium",
 difficultyGed: isSpanish ? "Nivel GED" : "GED-Level",
 
 scoringPreference: isSpanish ? "Preferencia de Puntuación" : "Scoring Preference",
-scoringEnabledSignupLabel: isSpanish
-  ? "Mantener la puntuación activada para cálculos de examen y seguimiento basado en puntuación."
-  : "Keep scoring enabled for test score calculations and score-based progress tracking.",
-scoringEnabledSignupHint: isSpanish
-  ? "Puedes cambiar esto después en la configuración de tu Perfil. Si desactivas la puntuación, tus respuestas correctas e incorrectas seguirán mostrándose para aprender."
-  : "You can change this later in your Profile settings. If you turn scoring off, your correct and incorrect answers will still be shown for learning.",
 
 multipleChoice: isSpanish ? "Opción Múltiple" : "Multiple Choice",
 fillBlank: isSpanish ? "Respuesta Abierta" : "Fill Blank",
@@ -6012,8 +6052,10 @@ async function setView(view) {
   const reviewPanel = document.getElementById("reviewPanel");
   const practicePanel = document.getElementById("practicePanel");
   const profilePanel = document.getElementById("profilePanel");
+  const mainMenuKnownBugs = document.getElementById("mainMenuKnownBugs");
 
   if (mainMenu) mainMenu.classList.add("hidden");
+  if (mainMenuKnownBugs) mainMenuKnownBugs.classList.add("hidden");
   if (testView) testView.classList.add("hidden");
   if (reviewPanel) reviewPanel.classList.add("hidden");
   if (practicePanel) practicePanel.classList.add("hidden");
@@ -6022,6 +6064,7 @@ async function setView(view) {
   if (view === "menu") {
     state.mode = "menu";
     if (mainMenu) mainMenu.classList.remove("hidden");
+    if (mainMenuKnownBugs) mainMenuKnownBugs.classList.remove("hidden");
   } else if (
     view === "test" ||
     view === "practice" ||
@@ -8068,6 +8111,12 @@ function openResendVerificationModal(prefilledEmail = "") {
 
                 closeModal();
 
+                showToast(
+                  tr("verificationEmailSent") || "Verification Sent",
+                  tr("verificationEmailSentBody") ||
+                    "If an unverified account exists for that email, a new verification email has been sent."
+                );
+
                 showModal(
                   tr("verificationEmailSent") || "Verification Sent",
                   tr("verificationEmailSentBody") ||
@@ -8084,6 +8133,75 @@ function openResendVerificationModal(prefilledEmail = "") {
       }
     ]
   );
+}
+
+async function maybePromptScoringPreferenceAfterFirstSignIn() {
+  if (!state.auth.user || state.auth.user.scoringPreferenceSet === true) {
+    return;
+  }
+
+  await new Promise((resolve) => {
+    showModal(
+      "Choose Scoring Preference",
+      `
+        <div style="line-height:1.6;">
+          Enable scoring for GED-style score tracking, or disable it if you prefer correct/incorrect feedback and learning history only.
+          <br><br>
+          You can change this later in Profile settings.
+        </div>
+      `,
+      [
+        {
+          label: "Disable Scoring",
+          variant: "secondary",
+          keepOpen: true,
+          onClick: async () => {
+            try {
+              const res = await fetch(`${API_BASE}/api/account/scoring-preference`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${state.auth.token}`
+                },
+                body: JSON.stringify({ scoringEnabled: false })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to update scoring preference");
+              state.auth.user = data.user;
+              closeModal();
+              resolve();
+            } catch (error) {
+              showToast("Error", error.message || "Failed to update scoring preference");
+            }
+          }
+        },
+        {
+          label: "Enable Scoring",
+          variant: "primary",
+          keepOpen: true,
+          onClick: async () => {
+            try {
+              const res = await fetch(`${API_BASE}/api/account/scoring-preference`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${state.auth.token}`
+                },
+                body: JSON.stringify({ scoringEnabled: true })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "Failed to update scoring preference");
+              state.auth.user = data.user;
+              closeModal();
+              resolve();
+            } catch (error) {
+              showToast("Error", error.message || "Failed to update scoring preference");
+            }
+          }
+        }
+      ]
+    );
+  });
 }
 
     function openAuthModal(initialMode = "signin") {
@@ -8103,23 +8221,6 @@ ${isRegister ? `
   <label for="authDisplayName">${tr("displayName")}</label>
   <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
 
-  <div style="margin-top:12px; padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--panel-2);">
-    <label for="authScoringEnabled" style="margin-bottom:8px;">Scoring Preference</label>
-    <div style="display:flex; align-items:flex-start; gap:10px;">
-      <input
-        id="authScoringEnabled"
-        type="checkbox"
-        checked
-        style="width:auto; margin-top:3px;"
-      />
-      <div style="line-height:1.5; color:var(--text);">
-        Keep scoring enabled for test score calculations and score-based progress tracking.
-        <div class="muted" style="margin-top:6px;">
-          You can change this later in your Profile settings. If you turn scoring off, your correct and incorrect answers will still be shown for learning.
-        </div>
-      </div>
-    </div>
-  </div>
 ` : ""}
 
       <label style="margin-top:${isRegister ? "12px" : "0"};" for="authEmail">${tr("email")}</label>
@@ -8191,12 +8292,8 @@ await withLoading(
   async () => {
     const endpoint = isSubmitRegister ? "/api/auth/register" : "/api/auth/login";
 
-    const scoringEnabled = isSubmitRegister
-      ? !!document.getElementById("authScoringEnabled")?.checked
-      : true;
-
     const payload = isSubmitRegister
-      ? { email, password, displayName, scoringEnabled }
+      ? { email, password, displayName }
       : { email, password };
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -8217,6 +8314,14 @@ await withLoading(
               const text = await res.text();
               throw new Error(`Auth request returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
             }
+
+
+console.log("Login response:", {
+  ok: res.ok,
+  requiresTwoFactor: data?.requiresTwoFactor,
+  hasToken: !!data?.token,
+  error: data?.error || null
+});
 
 if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
   closeModal();
@@ -8276,11 +8381,115 @@ if (isSubmitRegister) {
   return;
 }
 
-if (data.requiresTwoFactor) {
-  closeModal();
-  showToast(tr("twoFactorCodeTitle"), tr("twoFactorCodeSentBody"));
-  openLoginTwoFactorModal(data.email);
+if (!isSubmitRegister && data.requiresTwoFactor === true) {
+  console.log("Opening inline login security code UI");
+
+  const twoFactorEmail = (data.email || email || "").trim().toLowerCase();
+
+  document.getElementById("modalTitle").innerText = tr("twoFactorCodeTitle");
+  document.getElementById("modalBody").innerHTML = `
+    <div style="margin-bottom:12px;">We sent a security code to your email. Enter it below to finish logging in.</div>
+    <div style="margin-bottom:12px; color:var(--muted);">${tr("twoFactorCodeBody")}</div>
+    <div style="margin-bottom:12px; color:var(--muted);">${escapeHtml(twoFactorEmail)}</div>
+
+    <label for="inlineLoginTwoFactorCode">${tr("securityCode")}</label>
+    <input
+      id="inlineLoginTwoFactorCode"
+      type="text"
+      inputmode="numeric"
+      maxlength="6"
+      placeholder="${tr("twoFactorCodePlaceholder")}"
+    />
+
+    <div id="inlineLoginTwoFactorError" class="authError hidden"></div>
+  `;
+
+  const inlineFooter = document.getElementById("modalFooter");
+  inlineFooter.innerHTML = "";
+
+  const backBtn = document.createElement("button");
+  backBtn.type = "button";
+  backBtn.className = "secondaryBtn";
+  backBtn.innerText = tr("cancel");
+  backBtn.onclick = closeModal;
+
+  const verifyBtn = document.createElement("button");
+  verifyBtn.type = "button";
+  verifyBtn.className = "primaryBtn";
+  verifyBtn.innerText = tr("verifyAndContinue");
+
+  verifyBtn.onclick = async () => {
+    const inlineErrorEl = document.getElementById("inlineLoginTwoFactorError");
+    inlineErrorEl.classList.add("hidden");
+    inlineErrorEl.textContent = "";
+
+    const code = document.getElementById("inlineLoginTwoFactorCode").value.trim();
+
+    if (!code) {
+      inlineErrorEl.textContent = tr("securityCodeInvalid");
+      inlineErrorEl.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      await withLoading(
+        tr("twoFactorVerifyLoading"),
+        "",
+        async () => {
+          const verifyRes = await fetch(`${API_BASE}/api/auth/verify-login-2fa`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email: twoFactorEmail, code })
+          });
+
+          const verifyContentType = verifyRes.headers.get("content-type") || "";
+          let verifyData = null;
+
+          if (verifyContentType.includes("application/json")) {
+            verifyData = await verifyRes.json();
+          } else {
+            const verifyText = await verifyRes.text();
+            throw new Error(`Verify login 2FA returned HTML instead of JSON. Response started with: ${verifyText.slice(0, 80)}`);
+          }
+
+          if (!verifyRes.ok) {
+            throw new Error(verifyData.error || tr("twoFactorCodeTitle"));
+          }
+
+          setAuthToken(verifyData.token);
+          state.auth.user = verifyData.user;
+          state.auth.guestMode = false;
+          localStorage.removeItem(GUEST_MODE_KEY);
+          updateAuthUI();
+        }
+      );
+
+      closeModal();
+      await maybePromptScoringPreferenceAfterFirstSignIn();
+      showModal(
+        tr("signedIn"),
+        `${tr("welcomeBack")}, ${state.auth.user.displayName || state.auth.user.email}.`
+      );
+    } catch (verifyError) {
+      inlineErrorEl.textContent = verifyError.message || tr("twoFactorCodeTitle");
+      inlineErrorEl.classList.remove("hidden");
+    }
+  };
+
+  inlineFooter.appendChild(backBtn);
+  inlineFooter.appendChild(verifyBtn);
+
   return;
+}
+
+if (!res.ok) {
+  throw new Error(data?.error || tr("failedAuthentication"));
+}
+
+if (!data?.token || !data?.user) {
+  throw new Error(tr("failedAuthentication"));
 }
 
 setAuthToken(data.token);
@@ -8289,6 +8498,7 @@ state.auth.guestMode = false;
 localStorage.removeItem(GUEST_MODE_KEY);
 updateAuthUI();
 closeModal();
+await maybePromptScoringPreferenceAfterFirstSignIn();
 
 showModal(
   tr("signedIn"),
