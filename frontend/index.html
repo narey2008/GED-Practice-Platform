@@ -6293,7 +6293,7 @@ async function runStartActivity(activityLabel, startFn) {
   }
 }
 
-function requireSignedInOrGuestBeforeStart() {
+function requireSignedInOrGuestBeforeStart(startAction = null) {
   if (state.auth.guestMode) return true;
   if (state.auth.user && state.auth.token) return true;
 
@@ -6307,6 +6307,7 @@ function requireSignedInOrGuestBeforeStart() {
         variant: "secondary",
         keepOpen: true,
         onClick: async () => {
+          pendingPostAuthStartAction = typeof startAction === "function" ? startAction : null;
           openAuthModal("signin");
         }
       },
@@ -6316,7 +6317,7 @@ function requireSignedInOrGuestBeforeStart() {
         keepOpen: true,
         onClick: async () => {
           closeModal();
-          await continueAsGuest(true);
+          await continueAsGuest(true, startAction);
         }
       }
     ]
@@ -6324,6 +6325,8 @@ function requireSignedInOrGuestBeforeStart() {
 
   return false;
 }
+
+let pendingPostAuthStartAction = null;
 
 function isMobileDevice() {
   return /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent);
@@ -8944,6 +8947,13 @@ localStorage.removeItem(GUEST_MODE_KEY);
 updateAuthUI();
 closeModal();
 
+const postAuthStartAction = pendingPostAuthStartAction;
+pendingPostAuthStartAction = null;
+if (typeof postAuthStartAction === "function") {
+  await postAuthStartAction();
+  return;
+}
+
 showModal(
   tr("signedIn"),
   `${tr("welcomeBack")}, ${data.user.displayName || data.user.email}.`
@@ -8984,18 +8994,23 @@ footer.appendChild(submitBtn);
   document.getElementById("modalBackdrop").style.display = "flex";
   renderAuthModal();
 }
-    async function beginGuestMode(startImmediately = false) {
+    async function beginGuestMode(startImmediately = false, startAction = null) {
   state.auth.user = null;
   setGuestMode(true);
   setAuthToken("");
   updateAuthUI();
   await updateResumeVisibility();
 
+  if (startImmediately && typeof startAction === "function") {
+    await startAction();
+    return;
+  }
+
   if (startImmediately) {
     await runStartActivity("test", () => startTest());
   }
 }
-    function continueAsGuest(startImmediately = false) {
+    function continueAsGuest(startImmediately = false, startAction = null) {
   if (state.auth.user || state.auth.token) {
     showModal(
       tr("leaveAccountGuestTitle"),
@@ -9006,7 +9021,7 @@ footer.appendChild(submitBtn);
           label: tr("signOutAndContinue"),
           variant: "primary",
           onClick: async () => {
-            await beginGuestMode(startImmediately);
+            await beginGuestMode(startImmediately, startAction);
           }
         }
       ]
@@ -9023,7 +9038,7 @@ footer.appendChild(submitBtn);
         label: tr("continueGuest"),
         variant: "primary",
         onClick: async () => {
-          await beginGuestMode(startImmediately);
+          await beginGuestMode(startImmediately, startAction);
         }
       }
     ]
@@ -12498,7 +12513,7 @@ async function handleEmailVerificationFromUrl() {
           return;
         }
 
-        if (!requireSignedInOrGuestBeforeStart()) {
+        if (!requireSignedInOrGuestBeforeStart(() => runStartActivity("test", () => startTest()))) {
           return;
         }
 
@@ -12529,9 +12544,10 @@ async function handleEmailVerificationFromUrl() {
     const startPracticeBtn = document.getElementById("startPracticeBtn");
     if (startPracticeBtn) {
       startPracticeBtn.addEventListener("click", async () => {
-        if (!requireSignedInOrGuestBeforeStart()) return;
         const skill = document.getElementById("practiceSkillSelect").value;
         const difficulty = document.getElementById("practiceDifficultySelect").value;
+        const startPracticeAction = () => runStartActivity("practice", () => startPractice(skill, difficulty, false));
+        if (!requireSignedInOrGuestBeforeStart(startPracticeAction)) return;
         await runStartActivity("practice", () => startPractice(skill, difficulty, false));
       });
     }
@@ -12659,9 +12675,10 @@ if (questionTextForHighlighter) {
 const startLearningBtn = document.getElementById("startLearningBtn");
 if (startLearningBtn) {
   startLearningBtn.addEventListener("click", async () => {
-    if (!requireSignedInOrGuestBeforeStart()) return;
     const skill = document.getElementById("learningSkillSelect")?.value || document.getElementById("practiceSkillSelect")?.value;
     const difficulty = document.getElementById("learningDifficultySelect")?.value || document.getElementById("practiceDifficultySelect")?.value || "GED-Level";
+    const startLearningAction = () => runStartActivity("learning mode", () => startLearningMode(skill, difficulty, false));
+    if (!requireSignedInOrGuestBeforeStart(startLearningAction)) return;
     await runStartActivity("learning mode", () => startLearningMode(skill, difficulty, false));
   });
 }
