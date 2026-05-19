@@ -8442,21 +8442,96 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
 
 if (isSubmitRegister) {
   closeModal();
+
+  const registeredEmail = (email || "").trim().toLowerCase();
+
   showModal(
     tr("verifyEmailTitle"),
-    tr("verifyEmailBody"),
+    `
+      <div style="line-height:1.65;">${tr("verifyEmailBody")}</div>
+      <div style="margin-top:14px;">
+        <button id="postRegisterResendBtn" type="button" class="secondaryBtn">${tr("resendVerification")}</button>
+      </div>
+      <div id="postRegisterResendSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
+      <div id="postRegisterResendError" class="authError hidden" style="margin-top:10px;"></div>
+    `,
     [
-      {
-        label: tr("resendVerification"),
-        variant: "secondary",
-        onClick: () => openResendVerificationModal(email)
-      },
       {
         label: tr("close"),
         variant: "primary"
       }
     ]
   );
+
+  const postRegisterResendBtn = document.getElementById("postRegisterResendBtn");
+  const postRegisterResendSuccess = document.getElementById("postRegisterResendSuccess");
+  const postRegisterResendError = document.getElementById("postRegisterResendError");
+
+  if (postRegisterResendBtn) {
+    postRegisterResendBtn.onclick = async () => {
+      console.log("Post-registration resend verification clicked");
+
+      if (postRegisterResendSuccess) {
+        postRegisterResendSuccess.classList.add("hidden");
+        postRegisterResendSuccess.textContent = "";
+      }
+      if (postRegisterResendError) {
+        postRegisterResendError.classList.add("hidden");
+        postRegisterResendError.textContent = "";
+      }
+
+      if (!registeredEmail) {
+        if (postRegisterResendError) {
+          postRegisterResendError.textContent = "Email is required to resend verification.";
+          postRegisterResendError.classList.remove("hidden");
+        }
+        return;
+      }
+
+      try {
+        await withLoading(
+          tr("resendVerificationLoading") || "Resending verification...",
+          "",
+          async () => {
+            console.log("Calling resend verification endpoint from registration verify UI");
+
+            const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: registeredEmail })
+            });
+
+            const contentType = res.headers.get("content-type") || "";
+            let resendData = null;
+
+            if (contentType.includes("application/json")) {
+              resendData = await res.json();
+            } else {
+              const text = await res.text();
+              throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+            }
+
+            console.log("Resend verification response:", { ok: res.ok, error: resendData?.error || null });
+
+            if (!res.ok) {
+              throw new Error(resendData.error || "Failed to resend verification email.");
+            }
+
+            if (postRegisterResendSuccess) {
+              postRegisterResendSuccess.textContent = "Verification email sent. Check your inbox.";
+              postRegisterResendSuccess.classList.remove("hidden");
+            }
+          }
+        );
+      } catch (resendError) {
+        if (postRegisterResendError) {
+          postRegisterResendError.textContent = resendError.message || "Failed to resend verification email.";
+          postRegisterResendError.classList.remove("hidden");
+        }
+      }
+    };
+  }
+
   return;
 }
 
