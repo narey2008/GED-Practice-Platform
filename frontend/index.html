@@ -857,28 +857,17 @@ body.theme-light .brandTagline {
   flex: 0 0 auto;
 }
 
-#welcomePanel h3::before {
-  content: "👋";
-}
-
-#startTestPanel h3::before {
-  content: "📝";
-}
-
-#startPracticePanel h3::before {
-  content: "🎯";
+#welcomePanel h3::before,
+#startTestPanel h3::before,
+#startPracticePanel h3::before,
+#learningModePanel h3::before,
+#supportPanel h3::before {
+  content: none;
+  display: none;
 }
 
 #resumePanel h3::before {
   content: "↩";
-}
-
-#learningModePanel h3::before {
-  content: "📘";
-}
-
-#supportPanel h3::before {
-  content: "💬";
 }
 
 #startTestPanel,
@@ -2743,9 +2732,9 @@ body.loadingActive {
   </p>
 
   <div class="menuPillRow">
-    <span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">📝 46-question full test</span>
-    <span id="menuPillPractice" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">🎯 Skill-specific practice</span>
-    <span id="menuPillLearning" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">📘 Guided Learning Mode</span>
+    <span id="menuPillFullTest" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">46-question full test</span>
+    <span id="menuPillPractice" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">Skill-specific practice</span>
+    <span id="menuPillLearning" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">Guided Learning Mode</span>
   </div>
 
   <div class="menuPathGuide">
@@ -2977,12 +2966,12 @@ body.loadingActive {
   </p>
 
   <div class="supportChipRow" aria-label="Support request types">
-    <span class="supportChip">🐞 Bug reports</span>
-    <span class="supportChip">➕ Additions</span>
-    <span class="supportChip">✏️ Changes</span>
-    <span class="supportChip">🧹 Removals</span>
-    <span class="supportChip">❓ Question issues</span>
-    <span class="supportChip">🔐 Account help</span>
+    <span class="supportChip">Bug reports</span>
+    <span class="supportChip">Additions</span>
+    <span class="supportChip">Changes</span>
+    <span class="supportChip">Removals</span>
+    <span class="supportChip">Question issues</span>
+    <span class="supportChip">Account help</span>
   </div>
 
   <div class="supportMiniNote">
@@ -3978,9 +3967,9 @@ function getTranslations(language) {
     menuSubtitle: isSpanish
   ? "Elige un examen completo, práctica enfocada o modo de aprendizaje guiado."
   : "Choose a full test, focused practice, or guided Learning Mode.",
-menuPillFullTest: isSpanish ? "📝 Examen completo de 46 preguntas" : "📝 46-question full test",
-menuPillPractice: isSpanish ? "🎯 Práctica por habilidad" : "🎯 Skill-specific practice",
-menuPillLearning: isSpanish ? "📘 Modo de aprendizaje guiado" : "📘 Guided Learning Mode",
+menuPillFullTest: isSpanish ? "Examen completo de 46 preguntas" : "46-question full test",
+menuPillPractice: isSpanish ? "Práctica por habilidad" : "Skill-specific practice",
+menuPillLearning: isSpanish ? "Modo de aprendizaje guiado" : "Guided Learning Mode",
 menuPathTitle: isSpanish ? "Ruta Recomendada" : "Recommended Path",
 menuPathLearningTitle: isSpanish ? "Aprende primero" : "Learn First",
 menuPathLearningText: isSpanish
