@@ -861,24 +861,16 @@ body.theme-light .brandTagline {
   content: "👋";
 }
 
-#startTestPanel h3::before {
-  content: "";
-}
-
-#startPracticePanel h3::before {
-  content: "";
+#startTestPanel h3::before,
+#startPracticePanel h3::before,
+#learningModePanel h3::before,
+#supportPanel h3::before {
+  content: none;
+  display: none;
 }
 
 #resumePanel h3::before {
   content: "↩";
-}
-
-#learningModePanel h3::before {
-  content: "";
-}
-
-#supportPanel h3::before {
-  content: "";
 }
 
 #startTestPanel,
