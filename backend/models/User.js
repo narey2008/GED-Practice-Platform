@@ -106,6 +106,18 @@ const userSchema = new mongoose.Schema(
     loginTwoFactorExpiresAt: {
       type: Date,
       default: null
+    },
+    previousLoginTwoFactorTokenHash: {
+      type: String,
+      default: null
+    },
+    previousLoginTwoFactorExpiresAt: {
+      type: Date,
+      default: null
+    },
+    lastLoginTwoFactorSentAt: {
+      type: Date,
+      default: null
     }
   },
   {

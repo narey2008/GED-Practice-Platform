@@ -1500,6 +1500,73 @@ app.post("/api/auth/resend-verification", async (req, res) => {
   }
 });
 
+app.post("/api/auth/resend-login-2fa", async (req, res) => {
+  try {
+    const rawEmail =
+      typeof req.body.email === "string"
+        ? req.body.email.trim().toLowerCase()
+        : "";
+
+    if (!rawEmail) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+
+    const user = await User.findOne({ email: rawEmail });
+
+    if (!user || user.emailVerified !== true) {
+      return res.status(400).json({ error: "Unable to resend login security code." });
+    }
+
+    const cooldownMs = 90 * 1000;
+    const now = Date.now();
+    const lastSentMs = user.lastLoginTwoFactorSentAt
+      ? new Date(user.lastLoginTwoFactorSentAt).getTime()
+      : 0;
+    const elapsedMs = now - lastSentMs;
+
+    if (lastSentMs && elapsedMs < cooldownMs) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((cooldownMs - elapsedMs) / 1000));
+      console.log("LOGIN SECURITY CODE RESEND BLOCKED: cooldown active", {
+        email: user.email,
+        retryAfterSeconds
+      });
+      return res.status(429).json({
+        error: "Please wait before requesting another login security code.",
+        retryAfterSeconds
+      });
+    }
+
+    console.log("LOGIN SECURITY CODE RESEND ATTEMPT", {
+      email: user.email
+    });
+
+    const { rawToken, tokenHash, expiresAt } = createLoginTwoFactorToken();
+
+    user.previousLoginTwoFactorTokenHash = user.loginTwoFactorTokenHash || null;
+    user.previousLoginTwoFactorExpiresAt = user.loginTwoFactorExpiresAt || null;
+    user.loginTwoFactorTokenHash = tokenHash;
+    user.loginTwoFactorExpiresAt = expiresAt;
+    user.lastLoginTwoFactorSentAt = new Date();
+    await user.save();
+
+    await sendLoginTwoFactorEmail({
+      email: user.email,
+      rawToken
+    });
+
+    return res.json({
+      success: true,
+      message: "A new login security code was sent."
+    });
+  } catch (error) {
+    console.error("RESEND LOGIN 2FA ERROR:");
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Failed to resend login security code."
+    });
+  }
+});
+
 app.post("/api/auth/delete-account", authMiddleware, async (req, res) => {
   try {
     const password =
