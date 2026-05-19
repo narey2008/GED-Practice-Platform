@@ -8726,13 +8726,113 @@ if (!isSubmitRegister && data.requiresTwoFactor === true) {
   backBtn.innerText = tr("cancel");
   backBtn.onclick = closeModal;
 
+  const inlineResendBtn = document.getElementById("inlineLoginTwoFactorResendBtn");
+  const inlineCooldownHint = document.getElementById("inlineLoginTwoFactorCooldownHint");
+  const inlineSuccessEl = document.getElementById("inlineLoginTwoFactorSuccess");
+  const inlineErrorEl = document.getElementById("inlineLoginTwoFactorError");
+
+  startLoginTwoFactorResendCooldown(90);
+  if (inlineResendBtn && inlineCooldownHint) {
+    bindLoginTwoFactorCooldownUI({
+      buttonEl: inlineResendBtn,
+      hintEl: inlineCooldownHint,
+      baseLabel: tr("resendSecurityCode")
+    });
+  }
+
+  if (inlineResendBtn) {
+    inlineResendBtn.onclick = async () => {
+      console.log("Login security-code resend clicked");
+
+      if (inlineErrorEl) {
+        inlineErrorEl.classList.add("hidden");
+        inlineErrorEl.textContent = "";
+      }
+      if (inlineSuccessEl) {
+        inlineSuccessEl.classList.add("hidden");
+        inlineSuccessEl.textContent = "";
+      }
+
+      if (!twoFactorEmail) {
+        if (inlineErrorEl) {
+          inlineErrorEl.textContent = "Email is required.";
+          inlineErrorEl.classList.remove("hidden");
+        }
+        return;
+      }
+
+      try {
+        await withLoading(
+          tr("resendVerificationLoading") || "Resending...",
+          "",
+          async () => {
+            console.log("Calling login security-code resend endpoint");
+            const resendRes = await fetch(`${API_BASE}/api/auth/resend-login-2fa`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: twoFactorEmail })
+            });
+
+            const resendType = resendRes.headers.get("content-type") || "";
+            let resendData = null;
+
+            if (resendType.includes("application/json")) {
+              resendData = await resendRes.json();
+            } else {
+              const resendText = await resendRes.text();
+              throw new Error(`Resend login 2FA returned HTML instead of JSON. Response started with: ${resendText.slice(0, 80)}`);
+            }
+
+            console.log("Login security-code resend response:", {
+              ok: resendRes.ok,
+              retryAfterSeconds: resendData?.retryAfterSeconds || null,
+              error: resendData?.error || null
+            });
+
+            if (!resendRes.ok) {
+              if (resendRes.status === 429 && typeof resendData?.retryAfterSeconds === "number") {
+                startLoginTwoFactorResendCooldown(resendData.retryAfterSeconds);
+                if (inlineResendBtn && inlineCooldownHint) {
+                  bindLoginTwoFactorCooldownUI({
+                    buttonEl: inlineResendBtn,
+                    hintEl: inlineCooldownHint,
+                    baseLabel: tr("resendSecurityCode")
+                  });
+                }
+              }
+              throw new Error(resendData.error || tr("twoFactorCodeTitle"));
+            }
+
+            startLoginTwoFactorResendCooldown(90);
+            if (inlineResendBtn && inlineCooldownHint) {
+              bindLoginTwoFactorCooldownUI({
+                buttonEl: inlineResendBtn,
+                hintEl: inlineCooldownHint,
+                baseLabel: tr("resendSecurityCode")
+              });
+            }
+
+            if (inlineSuccessEl) {
+              inlineSuccessEl.textContent = "A new security code was sent. Check your email.";
+              inlineSuccessEl.classList.remove("hidden");
+            }
+          }
+        );
+      } catch (resendError) {
+        if (inlineErrorEl) {
+          inlineErrorEl.textContent = resendError.message || tr("twoFactorCodeTitle");
+          inlineErrorEl.classList.remove("hidden");
+        }
+      }
+    };
+  }
+
   const verifyBtn = document.createElement("button");
   verifyBtn.type = "button";
   verifyBtn.className = "primaryBtn";
   verifyBtn.innerText = tr("verifyAndContinue");
 
   verifyBtn.onclick = async () => {
-    const inlineErrorEl = document.getElementById("inlineLoginTwoFactorError");
     inlineErrorEl.classList.add("hidden");
     inlineErrorEl.textContent = "";
 
