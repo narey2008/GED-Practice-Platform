@@ -8346,6 +8346,8 @@ console.log("Login response:", {
 if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
   closeModal();
 
+  const unverifiedEmail = (email || "").trim().toLowerCase();
+
   showModal(
     tr("verifyEmailTitle") || "Verify Your Email",
     `
@@ -8354,6 +8356,8 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
         <br><br>
         If you cannot find the verification email, you can send a new one.
       </div>
+      <div id="verifyEmailResendSuccess" class="authSuccess hidden" style="margin-top:10px;"></div>
+      <div id="verifyEmailResendError" class="authError hidden" style="margin-top:10px;"></div>
     `,
     [
       {
@@ -8364,15 +8368,69 @@ if (!isSubmitRegister && data && data.code === "EMAIL_NOT_VERIFIED") {
         label: tr("resendVerification") || "Resend Verification",
         variant: "primary",
         keepOpen: true,
-        onClick: () => {
-          if (typeof openResendVerificationModal === "function") {
-            openResendVerificationModal(email);
-          } else {
-            showModal(
-              tr("resendVerification") || "Resend Verification",
-              "Please use Create Account again with the same email or contact support if the verification email does not arrive.",
-              [{ label: tr("close"), variant: "primary" }]
+        onClick: async () => {
+          console.log("Verify-email resend button clicked");
+
+          const successEl = document.getElementById("verifyEmailResendSuccess");
+          const errorEl = document.getElementById("verifyEmailResendError");
+
+          if (successEl) {
+            successEl.classList.add("hidden");
+            successEl.textContent = "";
+          }
+          if (errorEl) {
+            errorEl.classList.add("hidden");
+            errorEl.textContent = "";
+          }
+
+          if (!unverifiedEmail) {
+            if (errorEl) {
+              errorEl.textContent = "Email is required to resend verification.";
+              errorEl.classList.remove("hidden");
+            }
+            return;
+          }
+
+          try {
+            await withLoading(
+              tr("resendVerificationLoading") || "Resending verification...",
+              "",
+              async () => {
+                console.log("Calling resend verification endpoint");
+
+                const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: unverifiedEmail })
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let resendData = null;
+
+                if (contentType.includes("application/json")) {
+                  resendData = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Resend verification returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                console.log("Resend verification response:", { ok: res.ok, error: resendData?.error || null });
+
+                if (!res.ok) {
+                  throw new Error(resendData.error || "Failed to resend verification email.");
+                }
+
+                if (successEl) {
+                  successEl.textContent = "Verification email sent. Check your inbox.";
+                  successEl.classList.remove("hidden");
+                }
+              }
             );
+          } catch (resendError) {
+            if (errorEl) {
+              errorEl.textContent = resendError.message || "Failed to resend verification email.";
+              errorEl.classList.remove("hidden");
+            }
           }
         }
       }
