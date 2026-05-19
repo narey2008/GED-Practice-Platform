@@ -1540,7 +1540,7 @@ app.post("/api/auth/resend-login-2fa", async (req, res) => {
       email: user.email
     });
 
-    const { rawToken, tokenHash, expiresAt } = createSixDigitToken();
+    const { rawToken, tokenHash, expiresAt } = createLoginTwoFactorToken();
 
     user.previousLoginTwoFactorTokenHash = user.loginTwoFactorTokenHash || null;
     user.previousLoginTwoFactorExpiresAt = user.loginTwoFactorExpiresAt || null;
