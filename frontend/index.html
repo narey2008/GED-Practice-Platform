@@ -1099,6 +1099,20 @@ body.theme-light .brandTagline {
   font-size: calc(12px * var(--font-scale));
   color: var(--muted);
 }
+.knownBugsInlineLink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 2px;
+  color: #93c5fd;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+.knownBugsInlineLink:hover,
+.knownBugsInlineLink:focus-visible {
+  color: #bfdbfe;
+}
 
 
 .knownBugsBanner {
@@ -2725,7 +2739,9 @@ body.loadingActive {
         <li>Polishing history, review, and question-reporting tools.</li>
         <li>Support/contact upgrades are planned.</li>
       </ul>
-      <div class="knownBugsNote">See something confusing or broken? Use Support / Contact to report it.</div>
+      <div class="knownBugsNote">
+        <span id="knownBugsNotePrefix">See something confusing or broken? Use </span><button id="knownBugsSupportLink" type="button" class="knownBugsInlineLink">Support / Contact</button><span id="knownBugsNoteSuffix"> to report it.</span>
+      </div>
     </div>
 
     <div id="mainMenu" class="card menuWrap">
@@ -4306,7 +4322,9 @@ knownBugsTitle: isSpanish ? "Errores conocidos / En progreso" : "Known Bugs / In
 knownBugsItem1: isSpanish ? "Monitoreamos la legibilidad de gráficos y elementos visuales en modo claro/oscuro." : "Monitoring graph and visual readability across light/dark mode.",
 knownBugsItem2: isSpanish ? "Estamos puliendo las herramientas de historial, revisión y reporte de preguntas." : "Polishing history, review, and question-reporting tools.",
 knownBugsItem3: isSpanish ? "Hay mejoras planificadas para Soporte/Contacto." : "Support/contact upgrades are planned.",
-knownBugsNote: isSpanish ? "¿Ves algo confuso o con fallas? Usa Soporte / Contacto para reportarlo." : "See something confusing or broken? Use Support / Contact to report it.",
+knownBugsNotePrefix: isSpanish ? "¿Ves algo confuso o con fallas? Usa" : "See something confusing or broken? Use",
+knownBugsSupportLink: isSpanish ? "Soporte / Contacto" : "Support / Contact",
+knownBugsNoteSuffix: isSpanish ? "para reportarlo." : "to report it.",
 setGoal: isSpanish ? "Establecer meta" : "Set Goal",
 goalIdeas: isSpanish ? "Ideas de metas" : "Goal Ideas",
 myGedGoal: isSpanish ? "Mi meta GED" : "My GED Goal",
@@ -5477,12 +5495,16 @@ const knownBugsBlock = document.getElementById("mainMenuKnownBugs");
 if (knownBugsBlock) {
   const knownBugsTitle = knownBugsBlock.querySelector(".knownBugsTitle");
   const knownBugsItems = knownBugsBlock.querySelectorAll(".knownBugsList li");
-  const knownBugsNote = knownBugsBlock.querySelector(".knownBugsNote");
+  const knownBugsNotePrefix = knownBugsBlock.querySelector("#knownBugsNotePrefix");
+  const knownBugsSupportLink = knownBugsBlock.querySelector("#knownBugsSupportLink");
+  const knownBugsNoteSuffix = knownBugsBlock.querySelector("#knownBugsNoteSuffix");
   if (knownBugsTitle) knownBugsTitle.textContent = t.knownBugsTitle;
   if (knownBugsItems[0]) knownBugsItems[0].textContent = t.knownBugsItem1;
   if (knownBugsItems[1]) knownBugsItems[1].textContent = t.knownBugsItem2;
   if (knownBugsItems[2]) knownBugsItems[2].textContent = t.knownBugsItem3;
-  if (knownBugsNote) knownBugsNote.textContent = t.knownBugsNote;
+  if (knownBugsNotePrefix) knownBugsNotePrefix.textContent = `${t.knownBugsNotePrefix} `;
+  if (knownBugsSupportLink) knownBugsSupportLink.textContent = t.knownBugsSupportLink;
+  if (knownBugsNoteSuffix) knownBugsNoteSuffix.textContent = ` ${t.knownBugsNoteSuffix}`;
 }
 const languageEditGoalBtn = document.getElementById("editGoalBtn");
 const languageGoalIdeasBtn = document.getElementById("goalIdeasBtn");
@@ -13260,6 +13282,10 @@ if (legalInfoFooterBtn) {
 const supportEmailBtn = document.getElementById("supportEmailBtn");
 if (supportEmailBtn) {
   supportEmailBtn.onclick = () => openSupportContactModal();
+}
+const knownBugsSupportLink = document.getElementById("knownBugsSupportLink");
+if (knownBugsSupportLink) {
+  knownBugsSupportLink.onclick = () => openSupportContactModal();
 }
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {
