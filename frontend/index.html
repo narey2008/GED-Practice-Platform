@@ -3766,9 +3766,13 @@ function getAverageScore(history) {
 function getChartTheme() {
   const styles = getComputedStyle(document.body);
 
+  const isDark = document.body.classList.contains("theme-dark");
+
   return {
     text: styles.getPropertyValue("--chart-text").trim() || "#111827",
-    grid: styles.getPropertyValue("--chart-grid").trim() || "#c8d2df"
+    grid: styles.getPropertyValue("--chart-grid").trim() || "#c8d2df",
+    tooltipBg: isDark ? "rgba(15, 23, 42, 0.96)" : "rgba(255, 255, 255, 0.96)",
+    tooltipBorder: isDark ? "rgba(229, 231, 235, 0.35)" : "rgba(148, 163, 184, 0.45)"
   };
 }
 
@@ -10171,8 +10175,9 @@ const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${en
     function updateChartTheme(chartConfig) {
       if (!chartConfig) return null;
 
-      const textColor = getComputedStyle(document.body).getPropertyValue("--chart-text").trim() || "#111827";
-      const gridColor = getComputedStyle(document.body).getPropertyValue("--chart-grid").trim() || "#c8d2df";
+      const theme = getChartTheme();
+      const textColor = theme.text;
+      const gridColor = theme.grid;
 
       const themed = JSON.parse(JSON.stringify(chartConfig));
 
@@ -10181,6 +10186,14 @@ const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${en
       if (!themed.options.plugins.legend) themed.options.plugins.legend = {};
       if (!themed.options.plugins.legend.labels) themed.options.plugins.legend.labels = {};
       themed.options.plugins.legend.labels.color = textColor;
+      if (!themed.options.plugins.title) themed.options.plugins.title = {};
+      themed.options.plugins.title.color = textColor;
+      if (!themed.options.plugins.tooltip) themed.options.plugins.tooltip = {};
+      themed.options.plugins.tooltip.titleColor = textColor;
+      themed.options.plugins.tooltip.bodyColor = textColor;
+      themed.options.plugins.tooltip.backgroundColor = theme.tooltipBg;
+      themed.options.plugins.tooltip.borderColor = theme.tooltipBorder;
+      themed.options.plugins.tooltip.borderWidth = themed.options.plugins.tooltip.borderWidth ?? 1;
       if (themed.options.plugins.horizontalYAxisTitle) {
   themed.options.plugins.horizontalYAxisTitle.color = textColor;
 }
@@ -10715,6 +10728,33 @@ return;
   appendLearningPracticeControls(container, q);
 }
 
+
+function normalizeGeneratedVisualPalette(wrap) {
+  if (!wrap) return;
+
+  wrap.style.background = "#f8fafc";
+  wrap.style.borderColor = "#cbd5e1";
+
+  const htmlTextNodes = wrap.querySelectorAll("div, section, article, aside, p, span, li, td, th, strong, em, small, label");
+  htmlTextNodes.forEach((el) => {
+    if (!el.textContent || !el.textContent.trim()) return;
+    el.style.color = "#0f172a";
+  });
+
+  const svgNodes = wrap.querySelectorAll("svg");
+  svgNodes.forEach((svg) => {
+    svg.style.color = "#0f172a";
+  });
+
+  const svgTextNodes = wrap.querySelectorAll("svg text, svg tspan");
+  svgTextNodes.forEach((node) => {
+    if (!node.textContent || !node.textContent.trim()) return;
+    node.setAttribute("fill", "#0f172a");
+    node.style.fill = "#0f172a";
+    node.style.color = "#0f172a";
+  });
+}
+
 function renderDiagram(diagramMarkup) {
   const wrap = document.getElementById("questionDiagramWrap");
   if (!wrap) return;
@@ -10727,6 +10767,7 @@ function renderDiagram(diagramMarkup) {
 
   wrap.innerHTML = diagramMarkup;
   wrap.style.display = "block";
+  normalizeGeneratedVisualPalette(wrap);
 }
 
 const horizontalYAxisTitlePlugin = {
@@ -10849,6 +10890,14 @@ function renderChart(chartConfig) {
             title: {
               ...(basePlugins.title || {}),
               color: theme.text
+            },
+            tooltip: {
+              ...(basePlugins.tooltip || {}),
+              titleColor: theme.text,
+              bodyColor: theme.text,
+              backgroundColor: theme.tooltipBg,
+              borderColor: theme.tooltipBorder,
+              borderWidth: basePlugins.tooltip?.borderWidth ?? 1
             },
             horizontalYAxisTitle: {
               ...(basePlugins.horizontalYAxisTitle || {}),
