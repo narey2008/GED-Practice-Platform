@@ -6993,7 +6993,6 @@ ${tr("thankYou")}`;
   }
 
   return {
-    to: "gedpracticeplatform@gmail.com",
     subject,
     body
   };
@@ -7001,12 +7000,12 @@ ${tr("thankYou")}`;
 
 function buildSupportMailtoLink(options = {}) {
   const emailData = buildSupportEmailData(options);
-  return `mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
+  return `mailto:?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
 }
 
 function buildSupportGmailLink(options = {}) {
   const emailData = buildSupportEmailData(options);
-  return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailData.to)}&su=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
+  return `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
 }
 
 function supportLabel(key, fallback) {
