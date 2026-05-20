@@ -13,6 +13,7 @@ const User = require("./models/User");
 const SavedProgress = require("./models/SavedProgress");
 const TestHistory = require("./models/TestHistory");
 const PracticeHistory = require("./models/PracticeHistory");
+const LearningHistory = require("./models/LearningHistory");
 const SupportTicket = require("./models/SupportTicket");
 const authMiddleware = require("./middleware/auth");
 const upload = require("./middleware/upload");
@@ -1986,6 +1987,79 @@ app.get("/api/practice/history", authMiddleware, async (req, res) => {
     console.error("GET PRACTICE HISTORY ERROR:");
     console.error(error);
     return res.status(500).json({ error: "Failed to load practice history." });
+  }
+});
+
+app.post("/api/learning/complete", authMiddleware, async (req, res) => {
+  try {
+    const {
+      skill,
+      subskill,
+      difficulty,
+      examplesStudied,
+      questionsAnswered,
+      correctCount,
+      incorrectCount,
+      totalQuestions,
+      completedAt
+    } = req.body || {};
+
+    const safeTotalQuestions = Number(totalQuestions);
+    const safeCorrectCount = Number(correctCount);
+    const safeIncorrectCount = Number(incorrectCount);
+    const safeExamplesStudied = Number(examplesStudied);
+    const safeQuestionsAnswered = Number(questionsAnswered);
+
+    if (
+      !Number.isFinite(safeTotalQuestions) ||
+      safeTotalQuestions < 0 ||
+      !Number.isFinite(safeCorrectCount) ||
+      safeCorrectCount < 0 ||
+      !Number.isFinite(safeIncorrectCount) ||
+      safeIncorrectCount < 0 ||
+      !Number.isFinite(safeExamplesStudied) ||
+      safeExamplesStudied < 0 ||
+      !Number.isFinite(safeQuestionsAnswered) ||
+      safeQuestionsAnswered < 0
+    ) {
+      return res.status(400).json({ error: "Invalid learning history data." });
+    }
+
+    const history = await LearningHistory.create({
+      userId: req.auth.userId,
+      skill: skill || "Learning Mode",
+      subskill: subskill || "",
+      difficulty: difficulty || "GED-Level",
+      examplesStudied: safeExamplesStudied,
+      questionsAnswered: safeQuestionsAnswered,
+      correctCount: safeCorrectCount,
+      incorrectCount: safeIncorrectCount,
+      totalQuestions: safeTotalQuestions,
+      completedAt: completedAt ? new Date(completedAt) : new Date()
+    });
+
+    return res.json({
+      success: true,
+      historyId: history._id
+    });
+  } catch (error) {
+    console.error("COMPLETE LEARNING ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to save completed learning session." });
+  }
+});
+
+app.get("/api/learning/history", authMiddleware, async (req, res) => {
+  try {
+    const history = await LearningHistory.find({ userId: req.auth.userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return res.json({ history });
+  } catch (error) {
+    console.error("GET LEARNING HISTORY ERROR:");
+    console.error(error);
+    return res.status(500).json({ error: "Failed to load learning history." });
   }
 });
 
