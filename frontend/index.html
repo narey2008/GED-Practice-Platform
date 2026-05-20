@@ -4678,6 +4678,7 @@ skillStatistics: isSpanish ? "Estadística" : "Statistics",
     currentFocus: isSpanish ? "Enfoque Actual" : "Current Focus",
     nextFocus: isSpanish ? "Siguiente Enfoque" : "Next Focus",
     progressNote: isSpanish ? "Nota de Progreso" : "Progress Note",
+    goalsTab: isSpanish ? "Goals" : "Goals",
     testHistory: isSpanish ? "Historial de Exámenes" : "Test History",
     practiceHistory: isSpanish ? "Historial de Práctica" : "Practice History",
     learningHistory: isSpanish ? "Historial de Aprendizaje" : "Learning History",
@@ -11536,7 +11537,7 @@ if (practiceWeakestBtn) {
 function getHigherDifficultyLabel(difficulty) {
   if (difficulty === "Easy") return "Medium";
   if (difficulty === "Medium") return "GED-Level";
-  return "GED-Level";
+  return "";
 }
 
 function getSuggestedLearningSkill(skill) {
@@ -11709,7 +11710,11 @@ async function showLearningComplete() {
         <button id="learningAgainBtn" class="primaryBtn">Learn This Again</button>
         <button id="learningPracticeBtn" class="secondaryBtn">Practice This Skill</button>
         <button id="learningNextSkillBtn" class="secondaryBtn">Try Suggested Skill</button>
-        <button id="learningHarderBtn" class="secondaryBtn">Try ${escapeHtml(higherDifficulty)}</button>
+        ${
+          higherDifficulty
+            ? `<button id="learningHarderBtn" class="secondaryBtn">Try ${escapeHtml(higherDifficulty)}</button>`
+            : ""
+        }
         <button id="learningMenuBtn" class="secondaryBtn">Main Menu</button>
       </div>
     </div>
@@ -11727,9 +11732,12 @@ async function showLearningComplete() {
     await startLearningMode(suggestedSkill, completedDifficulty, false);
   };
 
-  document.getElementById("learningHarderBtn").onclick = async () => {
-    await startLearningMode(completedSkill, higherDifficulty, false);
-  };
+  const learningHarderBtn = document.getElementById("learningHarderBtn");
+  if (learningHarderBtn && higherDifficulty) {
+    learningHarderBtn.onclick = async () => {
+      await startLearningMode(completedSkill, higherDifficulty, false);
+    };
+  }
 
   document.getElementById("learningMenuBtn").onclick = () => {
     goToMainMenu();
@@ -12385,7 +12393,7 @@ panel.innerHTML = `
   <div class="profileContentSectionBody">
     <div class="profileHistoryTabs">
     <div class="menuActions">
-      <button id="goalsTabBtn" class="secondaryBtn">Goals</button>
+      <button id="goalsTabBtn" class="secondaryBtn">🎯 ${tr("goalsTab")}</button>
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
       <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
       <button id="learningHistoryTabBtn" class="secondaryBtn">${tr("learningHistory")}</button>
