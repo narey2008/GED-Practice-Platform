@@ -10729,130 +10729,29 @@ return;
 }
 
 
-function parseCssColorToRgb(colorValue) {
-  if (!colorValue) return null;
-  const match = colorValue.match(/rgba?\(([^)]+)\)/i);
-  if (!match) return null;
-
-  const parts = match[1].split(",").map((part) => part.trim());
-  if (parts.length < 3) return null;
-
-  const r = Number(parts[0]);
-  const g = Number(parts[1]);
-  const b = Number(parts[2]);
-  const a = parts.length >= 4 ? Number(parts[3]) : 1;
-
-  if (![r, g, b, a].every((value) => Number.isFinite(value))) return null;
-
-  return {
-    r: Math.min(255, Math.max(0, r)),
-    g: Math.min(255, Math.max(0, g)),
-    b: Math.min(255, Math.max(0, b)),
-    a: Math.min(1, Math.max(0, a))
-  };
-}
-
-function compositeOver(base, over) {
-  if (!over) return base;
-  const alpha = over.a;
-  const inv = 1 - alpha;
-  return {
-    r: Math.round(over.r * alpha + base.r * inv),
-    g: Math.round(over.g * alpha + base.g * inv),
-    b: Math.round(over.b * alpha + base.b * inv),
-    a: 1
-  };
-}
-
-function getRelativeLuminance({ r, g, b }) {
-  const normalize = (channel) => {
-    const c = channel / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  };
-
-  const R = normalize(r);
-  const G = normalize(g);
-  const B = normalize(b);
-  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
-}
-
-function getContrastRatio(foreground, background) {
-  const fgL = getRelativeLuminance(foreground);
-  const bgL = getRelativeLuminance(background);
-  const light = Math.max(fgL, bgL);
-  const dark = Math.min(fgL, bgL);
-  return (light + 0.05) / (dark + 0.05);
-}
-
-function findNearestSolidBackgroundColor(el, stopEl) {
-  const fallback = { r: 255, g: 255, b: 255, a: 1 };
-  const bodyBg = parseCssColorToRgb(getComputedStyle(document.body).backgroundColor);
-  const base = bodyBg && bodyBg.a > 0.01 ? { ...bodyBg, a: 1 } : fallback;
-
-  let current = el;
-  let composed = { ...base };
-
-  while (current && current !== document.documentElement) {
-    const bg = parseCssColorToRgb(getComputedStyle(current).backgroundColor);
-    if (bg && bg.a > 0.01) {
-      composed = compositeOver(composed, bg);
-      if (bg.a >= 0.99) return composed;
-    }
-
-    if (current === stopEl) break;
-    current = current.parentElement;
-  }
-
-  return composed;
-}
-
-function preferredReadableTextColor(background) {
-  const dark = { r: 15, g: 23, b: 42, a: 1 };
-  const light = { r: 248, g: 250, b: 252, a: 1 };
-  const darkContrast = getContrastRatio(dark, background);
-  const lightContrast = getContrastRatio(light, background);
-  return darkContrast >= lightContrast ? { color: "#0f172a", contrast: darkContrast } : { color: "#f8fafc", contrast: lightContrast };
-}
-
-function applyDiagramContrastFix(wrap) {
+function normalizeGeneratedVisualPalette(wrap) {
   if (!wrap) return;
 
-  const minContrast = 4.5;
-  const htmlTextNodes = wrap.querySelectorAll("div, section, article, aside, p, span, li, td, th, strong, em, small, label");
+  wrap.style.background = "#f8fafc";
+  wrap.style.borderColor = "#cbd5e1";
 
+  const htmlTextNodes = wrap.querySelectorAll("div, section, article, aside, p, span, li, td, th, strong, em, small, label");
   htmlTextNodes.forEach((el) => {
     if (!el.textContent || !el.textContent.trim()) return;
+    el.style.color = "#0f172a";
+  });
 
-    const bg = findNearestSolidBackgroundColor(el, wrap);
-    const currentText = parseCssColorToRgb(getComputedStyle(el).color);
-    if (!currentText) return;
-
-    const currentContrast = getContrastRatio({ ...currentText, a: 1 }, bg);
-    if (currentContrast >= minContrast) return;
-
-    const preferred = preferredReadableTextColor(bg);
-    if (preferred.contrast > currentContrast) {
-      el.style.color = preferred.color;
-    }
+  const svgNodes = wrap.querySelectorAll("svg");
+  svgNodes.forEach((svg) => {
+    svg.style.color = "#0f172a";
   });
 
   const svgTextNodes = wrap.querySelectorAll("svg text, svg tspan");
   svgTextNodes.forEach((node) => {
     if (!node.textContent || !node.textContent.trim()) return;
-
-    const bg = findNearestSolidBackgroundColor(node, wrap);
-    const currentFill = parseCssColorToRgb(getComputedStyle(node).fill) || parseCssColorToRgb(getComputedStyle(node).color);
-    if (!currentFill) return;
-
-    const currentContrast = getContrastRatio({ ...currentFill, a: 1 }, bg);
-    if (currentContrast >= minContrast) return;
-
-    const preferred = preferredReadableTextColor(bg);
-    if (preferred.contrast > currentContrast) {
-      node.setAttribute("fill", preferred.color);
-      node.style.fill = preferred.color;
-      node.style.color = preferred.color;
-    }
+    node.setAttribute("fill", "#0f172a");
+    node.style.fill = "#0f172a";
+    node.style.color = "#0f172a";
   });
 }
 
@@ -10868,7 +10767,7 @@ function renderDiagram(diagramMarkup) {
 
   wrap.innerHTML = diagramMarkup;
   wrap.style.display = "block";
-  applyDiagramContrastFix(wrap);
+  normalizeGeneratedVisualPalette(wrap);
 }
 
 const horizontalYAxisTitlePlugin = {
