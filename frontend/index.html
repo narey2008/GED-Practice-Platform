@@ -3098,7 +3098,7 @@ body.loadingActive {
     <div id="testView" class="testCard hidden">
       <div class="testHeader">
         <div id="questionIndicator" class="questionIndicator">Question 1 / 46</div>
-        <div id="devQuestionIdLabel" class="questionIndicator hidden" style="font-size:12px; opacity:0.7; color:var(--mutedText);">Dev Question ID: QIDv1:...</div>
+        <div id="devQuestionIdLabel" class="questionIndicator hidden" style="font-size:12px; opacity:0.7; color:var(--mutedText);">Question ID: QIDv1:...</div>
         <div><div id="flagIndicator" class="flagIndicator hidden">🚩 Flagged</div></div>
       </div>
 
@@ -3290,7 +3290,7 @@ function updateDevQuestionIdLabel() {
 
   const current = state.questions[state.currentIndex];
   const qid = buildCurrentQuestionReportId(current, state.currentIndex, state.mode);
-  labelEl.textContent = `Dev Question ID: ${qid}`;
+  labelEl.textContent = `Question ID: ${qid}`;
   labelEl.classList.remove("hidden");
 }
 
