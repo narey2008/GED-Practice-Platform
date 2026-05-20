@@ -12501,11 +12501,9 @@ panel.innerHTML = `
               <div>${tr("skill")}: ${escapeHtml(translateSkillLabel(entry.skill || "Learning Mode"))}</div>
               <div>Subskill: ${escapeHtml(translateSkillLabel(entry.subskill || "—"))}</div>
               <div>${tr("difficulty")}: ${escapeHtml(translateDifficultyLabel(entry.difficulty || "GED-Level"))}</div>
-              <div>Examples Studied: ${Number(entry.examplesStudied) || 0}</div>
               <div>Questions Answered: ${Number(entry.questionsAnswered) || 0}</div>
               <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
               <div>${tr("wrong")}: ${Number(entry.incorrectCount) || 0}</div>
-              <div>Total: ${Number(entry.totalQuestions) || 0}</div>
             `;
             learningSection.appendChild(item);
           });
