@@ -736,14 +736,17 @@ body.theme-light .brandTagline {
 }
 
 #mainMenuRecommendedPath {
-  width: min(520px, calc(100% - 36px));
-  margin: 4px 0 12px;
+  position: absolute;
+  top: 76px;
+  left: 18px;
+  z-index: 30;
+  width: 300px;
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
   color: var(--text);
-  box-shadow: 0 4px 14px rgba(8,24,46,0.12);
+  box-shadow: 0 12px 28px rgba(8,24,46,0.18);
 }
 
 #mainMenuRecommendedPath .menuPathGuide {
@@ -2460,7 +2463,8 @@ body.loadingActive {
 
 @media (max-width: 520px) {
   .goalDock,
-  .goalLauncherBtn {
+  .goalLauncherBtn,
+  #mainMenuRecommendedPath {
     position: static;
     width: auto;
     max-width: none;
@@ -2752,28 +2756,28 @@ body.loadingActive {
   <div class="page">
     <section id="mainMenuRecommendedPath" aria-label="Recommended learning path">
       <div class="menuPathGuide">
-              <div id="menuPathTitle" class="menuPathTitle">Recommended Path</div>
-      
-              <div class="menuPathGrid">
-                <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">
-                  <div class="menuPathNumber">1</div>
-                  <div id="menuPathLearningTitle" class="menuPathStepTitle">Learn First</div>
-                  <div id="menuPathLearningText" class="menuPathStepText">Use guided examples when a skill feels new or confusing.</div>
-                </div>
-      
-                <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">
-                  <div class="menuPathNumber">2</div>
-                  <div id="menuPathPracticeTitle" class="menuPathStepTitle">Practice the Skill</div>
-                  <div id="menuPathPracticeText" class="menuPathStepText">Build confidence with focused questions before a full test.</div>
-                </div>
-      
-                <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">
-                  <div class="menuPathNumber">3</div>
-                  <div id="menuPathTestTitle" class="menuPathStepTitle">Take the Full Test</div>
-                  <div id="menuPathTestText" class="menuPathStepText">Use the full test when you are ready for realistic GED-style practice.</div>
-                </div>
-              </div>
-            </div>
+        <div id="menuPathTitle" class="menuPathTitle">Recommended Path</div>
+
+        <div class="menuPathGrid">
+          <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">
+            <div class="menuPathNumber">1</div>
+            <div id="menuPathLearningTitle" class="menuPathStepTitle">Learn First</div>
+            <div id="menuPathLearningText" class="menuPathStepText">Use guided examples when a skill feels new or confusing.</div>
+          </div>
+
+          <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">
+            <div class="menuPathNumber">2</div>
+            <div id="menuPathPracticeTitle" class="menuPathStepTitle">Practice the Skill</div>
+            <div id="menuPathPracticeText" class="menuPathStepText">Build confidence with focused questions before a full test.</div>
+          </div>
+
+          <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">
+            <div class="menuPathNumber">3</div>
+            <div id="menuPathTestTitle" class="menuPathStepTitle">Take the Full Test</div>
+            <div id="menuPathTestText" class="menuPathStepText">Use the full test when you are ready for realistic GED-style practice.</div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
