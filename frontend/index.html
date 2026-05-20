@@ -4680,12 +4680,16 @@ skillStatistics: isSpanish ? "Estadística" : "Statistics",
     progressNote: isSpanish ? "Nota de Progreso" : "Progress Note",
     testHistory: isSpanish ? "Historial de Exámenes" : "Test History",
     practiceHistory: isSpanish ? "Historial de Práctica" : "Practice History",
+    learningHistory: isSpanish ? "Historial de Aprendizaje" : "Learning History",
     noTestHistory: isSpanish
       ? "Todavía no hay historial de exámenes completados. Cuando envíes un examen con sesión iniciada, aparecerá aquí."
       : "No completed test history yet. Once you submit a test while signed in, it will appear here.",
     noPracticeHistory: isSpanish
       ? "Todavía no hay historial de práctica completada. Cuando termines una práctica con sesión iniciada, aparecerá aquí."
       : "No completed practice history yet. Once you finish a practice set while signed in, it will appear here.",
+    noLearningHistory: isSpanish
+      ? "Todavía no hay historial de aprendizaje completado. Cuando termines una lección con sesión iniciada, aparecerá aquí."
+      : "No completed learning history yet. Once you finish a learning lesson while signed in, it will appear here.",
     viewDetails: isSpanish ? "Ver Detalles" : "View Details",
     hideDetails: isSpanish ? "Ocultar Detalles" : "Hide Details",
     date: isSpanish ? "Fecha" : "Date",
@@ -11270,6 +11274,24 @@ async function saveCompletedPracticeToHistory() {
   }
 }
 
+async function saveCompletedLearningToHistory(payload) {
+  if (!state.auth.user || !state.auth.token || state.auth.guestMode) return;
+  if (!payload || typeof payload !== "object") return;
+
+  try {
+    await fetch(`${API_BASE}/api/learning/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error("Failed to save completed learning history", error);
+  }
+}
+
     function scaledScore() {
       if (!state.questions.length) return 0;
       let correct = 0;
@@ -11596,6 +11618,24 @@ async function showLearningComplete() {
   const total = practiceQuestions.length;
   const retryCount = practiceQuestions.filter((q) => Number(q.learningAttempts || 0) > 1).length;
   const missed = total - correct;
+  const examplesStudied = state.questions.filter((q) => q.learningPhase === "example").length;
+  const answeredQuestions = practiceQuestions.filter((q) => isQuestionAnswered(q)).length;
+  const completedSubskill =
+    (practiceQuestions.find((q) => q.subskill)?.subskill) ||
+    state.learningMeta?.subskill ||
+    "";
+
+  await saveCompletedLearningToHistory({
+    skill: completedSkill,
+    subskill: completedSubskill,
+    difficulty: completedDifficulty,
+    examplesStudied,
+    questionsAnswered: answeredQuestions,
+    correctCount: correct,
+    incorrectCount: missed,
+    totalQuestions: total,
+    completedAt: new Date().toISOString()
+  });
 
   const completionTone = buildLearningCompletionTone({
     correct,
@@ -12050,17 +12090,21 @@ async function openProfilePanel(defaultTab = "goals") {
       await setView("profile");
 
       try {
-        const [testRes, practiceRes] = await Promise.all([
+        const [testRes, practiceRes, learningRes] = await Promise.all([
   fetch(`${API_BASE}/api/test/history`, {
     headers: { ...getAuthHeaders() }
   }),
   fetch(`${API_BASE}/api/practice/history`, {
+    headers: { ...getAuthHeaders() }
+  }),
+  fetch(`${API_BASE}/api/learning/history`, {
     headers: { ...getAuthHeaders() }
   })
 ]);
 
         const testData = await testRes.json();
         const practiceData = await practiceRes.json();
+        const learningData = await learningRes.json();
 
         if (!testRes.ok) {
           throw new Error(testData.error || tr("failedLoadHistory"));
@@ -12069,9 +12113,13 @@ async function openProfilePanel(defaultTab = "goals") {
         if (!practiceRes.ok) {
           throw new Error(practiceData.error || tr("failedLoadHistory"));
         }
+        if (!learningRes.ok) {
+          throw new Error(learningData.error || tr("failedLoadHistory"));
+        }
 
         const testHistory = Array.isArray(testData.history) ? testData.history : [];
         const practiceHistory = Array.isArray(practiceData.history) ? practiceData.history : [];
+        const learningHistory = Array.isArray(learningData.history) ? learningData.history : [];
 
         const bestScore =
   state.auth.user?.scoringEnabled === false
@@ -12340,12 +12388,14 @@ panel.innerHTML = `
       <button id="goalsTabBtn" class="secondaryBtn">Goals</button>
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
       <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
+      <button id="learningHistoryTabBtn" class="secondaryBtn">${tr("learningHistory")}</button>
     </div>
   </div>
 
     <div id="goalsSection" class="hidden"></div>
     <div id="testHistorySection" class="hidden"></div>
     <div id="practiceHistorySection" class="hidden"></div>
+    <div id="learningHistorySection" class="hidden"></div>
   </div>
 </section>
 `;
@@ -12353,6 +12403,7 @@ panel.innerHTML = `
         const goalsSection = document.getElementById("goalsSection");
         const testSection = document.getElementById("testHistorySection");
         const practiceSection = document.getElementById("practiceHistorySection");
+        const learningSection = document.getElementById("learningHistorySection");
 
         if (goalsSection) {
           goalsSection.innerHTML = renderProfileGoalsSection();
@@ -12427,10 +12478,36 @@ panel.innerHTML = `
           });
         }
 
+        if (!learningHistory.length) {
+          learningSection.innerHTML = `
+            <div class="reviewItem">${tr("noLearningHistory")}</div>
+          `;
+        } else {
+          learningHistory.forEach((entry, index) => {
+            const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
+            const item = document.createElement("div");
+            item.className = "reviewItem";
+            item.innerHTML = `
+              <div><strong>Learning Session ${learningHistory.length - index}</strong></div>
+              <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
+              <div>${tr("skill")}: ${escapeHtml(translateSkillLabel(entry.skill || "Learning Mode"))}</div>
+              <div>Subskill: ${escapeHtml(translateSkillLabel(entry.subskill || "—"))}</div>
+              <div>${tr("difficulty")}: ${escapeHtml(translateDifficultyLabel(entry.difficulty || "GED-Level"))}</div>
+              <div>Examples Studied: ${Number(entry.examplesStudied) || 0}</div>
+              <div>Questions Answered: ${Number(entry.questionsAnswered) || 0}</div>
+              <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
+              <div>${tr("wrong")}: ${Number(entry.incorrectCount) || 0}</div>
+              <div>Total: ${Number(entry.totalQuestions) || 0}</div>
+            `;
+            learningSection.appendChild(item);
+          });
+        }
+
         function showTab(tabName) {
           goalsSection.classList.toggle("hidden", tabName !== "goals");
           testSection.classList.toggle("hidden", tabName !== "tests");
           practiceSection.classList.toggle("hidden", tabName !== "practice");
+          learningSection.classList.toggle("hidden", tabName !== "learning");
         }
 
         document.getElementById("goalsTabBtn").onclick = () => {
@@ -12443,6 +12520,9 @@ panel.innerHTML = `
 
         document.getElementById("practiceHistoryTabBtn").onclick = () => {
           showTab("practice");
+        };
+        document.getElementById("learningHistoryTabBtn").onclick = () => {
+          showTab("learning");
         };
 
         showTab(defaultTab);
