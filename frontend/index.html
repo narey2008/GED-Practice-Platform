@@ -640,7 +640,7 @@ body.theme-light .brandTagline {
 
     .questionNavBtn.flagged::after {
       content: "🚩";
-      position: absolute;
+      position: fixed;
       right: 4px;
       top: 2px;
       font-size: 10px;
@@ -735,7 +735,7 @@ body.theme-light .brandTagline {
   padding-top: 14px;
 }
 
-#mainMenuRecommendedPath {
+#mainMenuRecommendedPathDock {
   position: absolute;
   top: 76px;
   left: 18px;
@@ -2516,7 +2516,7 @@ body.loadingActive {
 @media (max-width: 520px) {
   .goalDock,
   .goalLauncherBtn,
-  #mainMenuRecommendedPath {
+  #mainMenuRecommendedPathDock {
     position: static;
     width: auto;
     max-width: none;
@@ -2805,8 +2805,7 @@ body.loadingActive {
     <div id="questionNavGrid" class="questionNavGrid"></div>
   </div>
 
-  <div class="page">
-    <section id="mainMenuRecommendedPath" aria-label="Recommended learning path">
+    <section id="mainMenuRecommendedPathDock" aria-label="Recommended learning path">
       <div id="menuPathTitle" class="menuPathDockTitle">Recommended Path</div>
       <div class="menuPathDockList">
         <div class="menuPathDockItem" role="button" tabindex="0" data-scroll-target="learningModePanel">
@@ -2826,6 +2825,9 @@ body.loadingActive {
         </div>
       </div>
     </section>
+
+  <div class="page">
+
 
     <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
       <div class="knownBugsTitle">Known Bugs / In Progress</div>
@@ -6624,7 +6626,7 @@ async function setView(view) {
   const practicePanel = document.getElementById("practicePanel");
   const profilePanel = document.getElementById("profilePanel");
   const mainMenuKnownBugs = document.getElementById("mainMenuKnownBugs");
-  const mainMenuRecommendedPath = document.getElementById("mainMenuRecommendedPath");
+  const mainMenuRecommendedPath = document.getElementById("mainMenuRecommendedPathDock");
 
   if (mainMenu) mainMenu.classList.add("hidden");
   if (mainMenuKnownBugs) mainMenuKnownBugs.classList.add("hidden");
