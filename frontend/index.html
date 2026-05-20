@@ -3113,6 +3113,8 @@ hasSeenFirstTestTutorial: localStorage.getItem("ged_seen_first_test_tutorial") =
   idleSeconds: 0,
   autoPaused: false,
 supportTicketPauseActive: false,
+shownTenMinuteWarning: false,
+shownOneMinuteWarning: false,
 highlighterEnabled: false,
 auth: {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
@@ -9270,6 +9272,34 @@ function handleUserActivity() {
   resetIdleTracking();
 }
 
+function showFullTestTimeWarning(minutes) {
+  if (state.mode !== "test") return;
+
+  const title = minutes === 1 ? "1 minute remaining" : "10 minutes remaining";
+  const body = minutes === 1
+    ? "<p>You have 1 minute remaining.</p>"
+    : "<p>You have 10 minutes remaining. Use your time wisely.</p>";
+
+  showModal(title, body, [{ label: tr("close"), variant: "primary" }]);
+}
+
+function maybeShowFullTestTimeWarnings() {
+  if (state.mode !== "test") return;
+  if (state.timeoutMode || state.lockedReviewMode) return;
+
+  if (!state.shownTenMinuteWarning && state.timeRemaining <= 10 * 60) {
+    state.shownTenMinuteWarning = true;
+    showFullTestTimeWarning(10);
+    saveProgress().catch((error) => console.error("Failed to save 10-minute warning state", error));
+  }
+
+  if (!state.shownOneMinuteWarning && state.timeRemaining <= 60) {
+    state.shownOneMinuteWarning = true;
+    showFullTestTimeWarning(1);
+    saveProgress().catch((error) => console.error("Failed to save 1-minute warning state", error));
+  }
+}
+
     async function saveProgress() {
   if (!state.auth.user || !state.auth.token) return;
   if (state.auth.guestMode) return;
@@ -9295,7 +9325,9 @@ function handleUserActivity() {
         lockedReviewMode: state.lockedReviewMode,
         isPaused: state.isPaused,
         idleSeconds: state.idleSeconds,
-        autoPaused: state.autoPaused
+        autoPaused: state.autoPaused,
+        shownTenMinuteWarning: !!state.shownTenMinuteWarning,
+        shownOneMinuteWarning: !!state.shownOneMinuteWarning
       })
     });
   } catch (error) {
@@ -9361,6 +9393,8 @@ function handleUserActivity() {
         state.isPaused = !!progress.isPaused;
         state.idleSeconds = Number(progress.idleSeconds) || 0;
         state.autoPaused = !!progress.autoPaused;
+        state.shownTenMinuteWarning = !!progress.shownTenMinuteWarning;
+        state.shownOneMinuteWarning = !!progress.shownOneMinuteWarning;
         state.navigatorVisible = false;
 
         document.getElementById("difficultySelect").value = state.difficulty;
@@ -9405,9 +9439,10 @@ function handleUserActivity() {
       label: tr("finishLastQuestion"),
       variant: "primary",
       onClick: async () => {
+        closeModal();
         state.timeoutMode = true;
         state.navigatorVisible = false;
-        state.lockedReviewMode = true;
+        state.lockedReviewMode = false;
         updateStatus();
         renderQuestion();
         await saveProgress();
@@ -9460,6 +9495,7 @@ await openReviewBeforeSubmitModal();
 
     state.timeRemaining -= 1;
     state.idleSeconds += 1;
+    maybeShowFullTestTimeWarnings();
 
     if (state.timeRemaining <= 0) {
       state.timeRemaining = 0;
@@ -9945,6 +9981,8 @@ async function beginRealTestAfterTutorial() {
       state.isPaused = false;
       state.idleSeconds = 0;
       state.autoPaused = false;
+      state.shownTenMinuteWarning = false;
+      state.shownOneMinuteWarning = false;
 
  if (showTutorial && shouldShowTestTutorial()) {
   startTutorialBeforeTest();
@@ -12688,6 +12726,8 @@ async function handleEmailVerificationFromUrl() {
   state.idleSeconds = 0;
   state.autoPaused = false;
   state.supportTicketPauseActive = false;
+  state.shownTenMinuteWarning = false;
+  state.shownOneMinuteWarning = false;
 
   renderChart(null);
   setView("menu");
@@ -12728,6 +12768,31 @@ async function handleEmailVerificationFromUrl() {
         }
       });
     }
+
+    (function setupLocalDevTimerHelper() {
+      const host = window.location.hostname;
+      const isLocalHost = host === "localhost" || host === "127.0.0.1";
+      if (!isLocalHost) return;
+
+      window.__GED_DEV_SET_TIMER_SECONDS = function __GED_DEV_SET_TIMER_SECONDS(seconds) {
+        if (state.mode !== "test" || !state.questions.length) {
+          console.warn("GED dev timer helper only works during an active full test.");
+          return;
+        }
+
+        const parsedSeconds = Number(seconds);
+        if (!Number.isFinite(parsedSeconds)) {
+          console.warn("Please provide a finite number of seconds.");
+          return;
+        }
+
+        state.timeRemaining = Math.max(0, Math.floor(parsedSeconds));
+        maybeShowFullTestTimeWarnings();
+        updateStatus();
+      };
+
+      console.log("GED dev timer helper available: __GED_DEV_SET_TIMER_SECONDS(seconds)");
+    })();
 
     const startPracticeBtn = document.getElementById("startPracticeBtn");
     if (startPracticeBtn) {
