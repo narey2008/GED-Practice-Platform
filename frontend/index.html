@@ -3338,6 +3338,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+        ${q.explanation ? `<div style="margin-top:8px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
       </div>
     `;
   }).join("");
@@ -3363,6 +3364,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
+        ${q.explanation ? `<div style="margin-top:8px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
       </div>
     `;
   }).join("");
@@ -12585,8 +12587,6 @@ panel.innerHTML = `
         } else {
           testHistory.forEach((entry, index) => {
             const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
-            const detailsId = `testHistoryDetails_${index}`;
-
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
@@ -12602,16 +12602,11 @@ panel.innerHTML = `
               <div>${tr("wrongUnanswered")}: ${Number(entry.wrongOrUnansweredCount) || 0}</div>
               <div>${tr("weakestSkill")}: ${escapeHtml(translateSkillLabel(entry.weakestSkill || "—"))}</div>
               <div style="margin-top:12px;">
-                <button class="secondaryBtn testHistoryToggleBtn" data-target="${detailsId}">${tr("viewDetails")}</button>
+                <button class="secondaryBtn testHistoryDetailsBtn" data-index="${index}">${tr("viewDetails")}</button>
               </div>
-              <div id="${detailsId}" class="hidden"></div>
             `;
 
             testSection.appendChild(item);
-
-            const detailsContainer = item.querySelector(`#${detailsId}`);
-            detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
-            renderReviewCharts(detailsContainer);
           });
         }
 
@@ -12622,8 +12617,6 @@ panel.innerHTML = `
         } else {
           practiceHistory.forEach((entry, index) => {
             const completedDate = new Date(entry.completedAt || entry.createdAt).toLocaleString();
-            const detailsId = `practiceHistoryDetails_${index}`;
-
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
@@ -12635,16 +12628,11 @@ panel.innerHTML = `
               <div>${tr("wrong")}: ${Number(entry.wrongCount) || 0}</div>
               <div>${tr("accuracy")}: ${Number(entry.accuracyPercent) || 0}%</div>
               <div style="margin-top:12px;">
-                <button class="secondaryBtn practiceHistoryToggleBtn" data-target="${detailsId}">${tr("viewDetails")}</button>
+                <button class="secondaryBtn practiceHistoryDetailsBtn" data-index="${index}">${tr("viewDetails")}</button>
               </div>
-              <div id="${detailsId}" class="hidden"></div>
             `;
 
             practiceSection.appendChild(item);
-
-            const detailsContainer = item.querySelector(`#${detailsId}`);
-            detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
-            renderReviewCharts(detailsContainer);
           });
         }
 
@@ -12699,27 +12687,25 @@ panel.innerHTML = `
         showTab(defaultTab);
         wireProfileAccountNav();
 
-        panel.querySelectorAll(".testHistoryToggleBtn").forEach((btn) => {
+        panel.querySelectorAll(".testHistoryDetailsBtn").forEach((btn) => {
           btn.onclick = () => {
-            const targetId = btn.getAttribute("data-target");
-            const details = document.getElementById(targetId);
-            if (!details) return;
-
-            const isHidden = details.classList.contains("hidden");
-            details.classList.toggle("hidden", !isHidden);
-            btn.textContent = isHidden ? tr("hideDetails") : tr("viewDetails");
+            const index = Number(btn.getAttribute("data-index"));
+            const entry = testHistory[index];
+            showModal("Test Details", `<div id="testDetailsModalBody">${renderHistoryDetails(entry?.questions || [])}</div>`, [
+              { label: tr("close"), variant: "secondary", onClick: closeModal }
+            ]);
+            renderReviewCharts(document.getElementById("testDetailsModalBody"));
           };
         });
 
-        panel.querySelectorAll(".practiceHistoryToggleBtn").forEach((btn) => {
+        panel.querySelectorAll(".practiceHistoryDetailsBtn").forEach((btn) => {
           btn.onclick = () => {
-            const targetId = btn.getAttribute("data-target");
-            const details = document.getElementById(targetId);
-            if (!details) return;
-
-            const isHidden = details.classList.contains("hidden");
-            details.classList.toggle("hidden", !isHidden);
-            btn.textContent = isHidden ? tr("hideDetails") : tr("viewDetails");
+            const index = Number(btn.getAttribute("data-index"));
+            const entry = practiceHistory[index];
+            showModal("Practice Details", `<div id="practiceDetailsModalBody">${renderPracticeHistoryDetails(entry?.questions || [])}</div>`, [
+              { label: tr("close"), variant: "secondary", onClick: closeModal }
+            ]);
+            renderReviewCharts(document.getElementById("practiceDetailsModalBody"));
           };
         });
 
