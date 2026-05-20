@@ -9277,8 +9277,8 @@ function showFullTestTimeWarning(minutes) {
 
   const title = minutes === 1 ? "1 minute remaining" : "10 minutes remaining";
   const body = minutes === 1
-    ? "<p>You have 1 minute left on this full test.</p>"
-    : "<p>You have 10 minutes left on this full test.</p>";
+    ? "<p>You have 1 minute remaining.</p>"
+    : "<p>You have 10 minutes remaining. Use your time wisely.</p>";
 
   showModal(title, body, [{ label: tr("close"), variant: "primary" }]);
 }
@@ -9439,9 +9439,10 @@ function maybeShowFullTestTimeWarnings() {
       label: tr("finishLastQuestion"),
       variant: "primary",
       onClick: async () => {
+        closeModal();
         state.timeoutMode = true;
         state.navigatorVisible = false;
-        state.lockedReviewMode = true;
+        state.lockedReviewMode = false;
         updateStatus();
         renderQuestion();
         await saveProgress();
