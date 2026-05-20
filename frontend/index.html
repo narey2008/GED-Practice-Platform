@@ -507,7 +507,7 @@ body.theme-light .brandTagline {
     .page {
       max-width: 1080px;
       margin: 0 auto;
-      padding: 190px 18px 24px;
+      padding: 18px 18px 24px;
       min-height: calc(100vh - 58px);
       position: relative;
     }
@@ -740,9 +740,8 @@ body.theme-light .brandTagline {
   top: 76px;
   left: 18px;
   z-index: 30;
-  width: 420px;
-  max-width: calc(100% - 36px);
-  padding: 12px 14px;
+  width: 300px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
@@ -750,12 +749,64 @@ body.theme-light .brandTagline {
   box-shadow: 0 12px 28px rgba(8,24,46,0.18);
 }
 
-#mainMenuRecommendedPath .menuPathGuide {
-  margin-top: 0;
-  border-top: none;
-  padding-top: 0;
+.menuPathDockTitle {
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 8px;
 }
 
+.menuPathDockList {
+  display: grid;
+  gap: 6px;
+}
+
+.menuPathDockItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.menuPathDockItem:hover {
+  transform: translateY(-1px);
+  background: var(--panel-2);
+  border-color: var(--primary);
+}
+
+.menuPathDockItem:active {
+  transform: scale(0.98);
+}
+
+.menuPathDockItem:focus-visible {
+  outline: 3px solid rgba(21, 62, 117, 0.35);
+  outline-offset: 3px;
+}
+
+.menuPathDockNumber {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--button-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.menuPathDockText {
+  line-height: 1.25;
+}
 
 .menuPathTitle {
   font-weight: 900;
@@ -2472,10 +2523,6 @@ body.loadingActive {
     margin: 12px 10px 0;
   }
 
-  .page {
-    padding-top: 18px;
-  }
-
   .goalDock {
     max-height: none;
     overflow-y: visible;
@@ -2760,27 +2807,22 @@ body.loadingActive {
 
   <div class="page">
     <section id="mainMenuRecommendedPath" aria-label="Recommended learning path">
-      <div class="menuPathGuide">
-        <div id="menuPathTitle" class="menuPathTitle">Recommended Path</div>
-
-        <div class="menuPathGrid">
-          <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">
-            <div class="menuPathNumber">1</div>
-            <div id="menuPathLearningTitle" class="menuPathStepTitle">Learn First</div>
-            <div id="menuPathLearningText" class="menuPathStepText">Use guided examples when a skill feels new or confusing.</div>
-          </div>
-
-          <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">
-            <div class="menuPathNumber">2</div>
-            <div id="menuPathPracticeTitle" class="menuPathStepTitle">Practice the Skill</div>
-            <div id="menuPathPracticeText" class="menuPathStepText">Build confidence with focused questions before a full test.</div>
-          </div>
-
-          <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">
-            <div class="menuPathNumber">3</div>
-            <div id="menuPathTestTitle" class="menuPathStepTitle">Take the Full Test</div>
-            <div id="menuPathTestText" class="menuPathStepText">Use the full test when you are ready for realistic GED-style practice.</div>
-          </div>
+      <div id="menuPathTitle" class="menuPathDockTitle">Recommended Path</div>
+      <div class="menuPathDockList">
+        <div class="menuPathDockItem" role="button" tabindex="0" data-scroll-target="learningModePanel">
+          <span class="menuPathDockNumber">1</span>
+          <span id="menuPathLearningTitle" class="menuPathDockText">Learn First</span>
+          <span id="menuPathLearningText" class="hidden">Use guided examples when a skill feels new or confusing.</span>
+        </div>
+        <div class="menuPathDockItem" role="button" tabindex="0" data-scroll-target="startPracticePanel">
+          <span class="menuPathDockNumber">2</span>
+          <span id="menuPathPracticeTitle" class="menuPathDockText">Practice the Skill</span>
+          <span id="menuPathPracticeText" class="hidden">Build confidence with focused questions before a full test.</span>
+        </div>
+        <div class="menuPathDockItem" role="button" tabindex="0" data-scroll-target="startTestPanel">
+          <span class="menuPathDockNumber">3</span>
+          <span id="menuPathTestTitle" class="menuPathDockText">Take the Full Test</span>
+          <span id="menuPathTestText" class="hidden">Use the full test when you are ready for realistic GED-style practice.</span>
         </div>
       </div>
     </section>
