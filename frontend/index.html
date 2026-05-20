@@ -640,7 +640,7 @@ body.theme-light .brandTagline {
 
     .questionNavBtn.flagged::after {
       content: "🚩";
-      position: absolute;
+      position: fixed;
       right: 4px;
       top: 2px;
       font-size: 10px;
@@ -733,6 +733,79 @@ body.theme-light .brandTagline {
   margin-top: 14px;
   border-top: 1px solid var(--border);
   padding-top: 14px;
+}
+
+#mainMenuRecommendedPathDock {
+  position: absolute;
+  top: 76px;
+  left: 18px;
+  z-index: 30;
+  width: 300px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 12px 28px rgba(8,24,46,0.18);
+}
+
+.menuPathDockTitle {
+  font-weight: 900;
+  color: var(--primary);
+  margin-bottom: 8px;
+}
+
+.menuPathDockList {
+  display: grid;
+  gap: 6px;
+}
+
+.menuPathDockItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.menuPathDockItem:hover {
+  transform: translateY(-1px);
+  background: var(--panel-2);
+  border-color: var(--primary);
+}
+
+.menuPathDockItem:active {
+  transform: scale(0.98);
+}
+
+.menuPathDockItem:focus-visible {
+  outline: 3px solid rgba(21, 62, 117, 0.35);
+  outline-offset: 3px;
+}
+
+.menuPathDockNumber {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--button-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  flex: 0 0 auto;
+}
+
+.menuPathDockText {
+  line-height: 1.25;
 }
 
 .menuPathTitle {
@@ -2442,7 +2515,8 @@ body.loadingActive {
 
 @media (max-width: 520px) {
   .goalDock,
-  .goalLauncherBtn {
+  .goalLauncherBtn,
+  #mainMenuRecommendedPathDock {
     position: static;
     width: auto;
     max-width: none;
@@ -2731,7 +2805,30 @@ body.loadingActive {
     <div id="questionNavGrid" class="questionNavGrid"></div>
   </div>
 
+    <section id="mainMenuRecommendedPathDock" aria-label="Recommended learning path">
+      <div id="menuPathTitle" class="menuPathDockTitle">Recommended Path</div>
+      <div class="menuPathDockList">
+        <div class="menuPathDockItem clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">
+          <span class="menuPathDockNumber">1</span>
+          <span id="menuPathLearningTitle" class="menuPathDockText">Learn First</span>
+          <span id="menuPathLearningText" class="hidden">Use guided examples when a skill feels new or confusing.</span>
+        </div>
+        <div class="menuPathDockItem clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">
+          <span class="menuPathDockNumber">2</span>
+          <span id="menuPathPracticeTitle" class="menuPathDockText">Practice the Skill</span>
+          <span id="menuPathPracticeText" class="hidden">Build confidence with focused questions before a full test.</span>
+        </div>
+        <div class="menuPathDockItem clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">
+          <span class="menuPathDockNumber">3</span>
+          <span id="menuPathTestTitle" class="menuPathDockText">Take the Full Test</span>
+          <span id="menuPathTestText" class="hidden">Use the full test when you are ready for realistic GED-style practice.</span>
+        </div>
+      </div>
+    </section>
+
   <div class="page">
+
+
     <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
       <div class="knownBugsTitle">Known Bugs / In Progress</div>
       <ul class="knownBugsList">
@@ -2744,8 +2841,12 @@ body.loadingActive {
       </div>
     </div>
 
+
+
     <div id="mainMenu" class="card menuWrap">
 <h1 class="menuTitle">Main Menu</h1>
+
+
 
 <div class="menuGrid">
 <div id="welcomePanel" class="menuPanel">
@@ -2761,29 +2862,6 @@ body.loadingActive {
     <span id="menuPillLearning" class="menuPill clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">Guided Learning Mode</span>
   </div>
 
-  <div class="menuPathGuide">
-    <div id="menuPathTitle" class="menuPathTitle">Recommended Path</div>
-
-    <div class="menuPathGrid">
-      <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="learningModePanel">
-        <div class="menuPathNumber">1</div>
-        <div id="menuPathLearningTitle" class="menuPathStepTitle">Learn First</div>
-        <div id="menuPathLearningText" class="menuPathStepText">Use guided examples when a skill feels new or confusing.</div>
-      </div>
-
-      <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startPracticePanel">
-        <div class="menuPathNumber">2</div>
-        <div id="menuPathPracticeTitle" class="menuPathStepTitle">Practice the Skill</div>
-        <div id="menuPathPracticeText" class="menuPathStepText">Build confidence with focused questions before a full test.</div>
-      </div>
-
-      <div class="menuPathStep clickableMenuPill" role="button" tabindex="0" data-scroll-target="startTestPanel">
-        <div class="menuPathNumber">3</div>
-        <div id="menuPathTestTitle" class="menuPathStepTitle">Take the Full Test</div>
-        <div id="menuPathTestText" class="menuPathStepText">Use the full test when you are ready for realistic GED-style practice.</div>
-      </div>
-    </div>
-  </div>
 </div>
 
         <div id="startTestPanel" class="menuPanel">
@@ -6548,9 +6626,11 @@ async function setView(view) {
   const practicePanel = document.getElementById("practicePanel");
   const profilePanel = document.getElementById("profilePanel");
   const mainMenuKnownBugs = document.getElementById("mainMenuKnownBugs");
+  const mainMenuRecommendedPath = document.getElementById("mainMenuRecommendedPathDock");
 
   if (mainMenu) mainMenu.classList.add("hidden");
   if (mainMenuKnownBugs) mainMenuKnownBugs.classList.add("hidden");
+  if (mainMenuRecommendedPath) mainMenuRecommendedPath.classList.add("hidden");
   if (testView) testView.classList.add("hidden");
   if (reviewPanel) reviewPanel.classList.add("hidden");
   if (practicePanel) practicePanel.classList.add("hidden");
@@ -6560,6 +6640,7 @@ async function setView(view) {
     state.mode = "menu";
     if (mainMenu) mainMenu.classList.remove("hidden");
     if (mainMenuKnownBugs) mainMenuKnownBugs.classList.remove("hidden");
+    if (mainMenuRecommendedPath) mainMenuRecommendedPath.classList.remove("hidden");
   } else if (
     view === "test" ||
     view === "practice" ||
