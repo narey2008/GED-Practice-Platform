@@ -3098,6 +3098,7 @@ body.loadingActive {
     <div id="testView" class="testCard hidden">
       <div class="testHeader">
         <div id="questionIndicator" class="questionIndicator">Question 1 / 46</div>
+        <div id="devQuestionIdLabel" class="questionIndicator hidden" style="font-size:12px; opacity:0.7; color:var(--mutedText);">Question ID: QIDv1:...</div>
         <div><div id="flagIndicator" class="flagIndicator hidden">🚩 Flagged</div></div>
       </div>
 
@@ -3268,6 +3269,29 @@ function buildCurrentQuestionReportId(question, index, mode) {
   const hashPart = shortStableHash(signature);
 
   return `QIDv1:${modePart}:${skillPart}:${subskillPart}:${typePart}:${setIdPart}:${hashPart}`;
+}
+
+const GED_DEV_LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
+const GED_DEV_IS_LOCALHOST = GED_DEV_LOCAL_HOSTNAMES.has(window.location.hostname);
+let gedDevShowQuestionId = false;
+
+function updateDevQuestionIdLabel() {
+  const labelEl = document.getElementById("devQuestionIdLabel");
+  if (!labelEl) return;
+
+  const activeModes = new Set(["test", "practice", "learning", "practice-example", "test-tutorial"]);
+  const hasQuestion = Array.isArray(state.questions) && state.questions.length > 0 && state.questions[state.currentIndex];
+  const canShow = GED_DEV_IS_LOCALHOST && gedDevShowQuestionId && activeModes.has(state.mode) && hasQuestion;
+
+  if (!canShow) {
+    labelEl.classList.add("hidden");
+    return;
+  }
+
+  const current = state.questions[state.currentIndex];
+  const qid = buildCurrentQuestionReportId(current, state.currentIndex, state.mode);
+  labelEl.textContent = `Question ID: ${qid}`;
+  labelEl.classList.remove("hidden");
 }
 
 function normalizeComparableAnswer(value) {
@@ -10225,6 +10249,7 @@ if (clearHighlightsBtn) {
     submitBtn.disabled = state.isPaused;
     submitBtn.innerText = state.mode === "practice" ? tr("submitPractice") : tr("submitTest");
     updateQuestionNavigator();
+    updateDevQuestionIdLabel();
   } else {
     document.getElementById("questionIndicator").innerText = `${tr("questionWord")} 1 / 46`;
     document.getElementById("questionPosition").innerText = "1 / 46";
@@ -10247,6 +10272,7 @@ if (clearHighlightsBtn) {
     if (!state.questions.length && highlighterTools) {
   highlighterTools.classList.add("hidden");
 }
+    updateDevQuestionIdLabel();
   }
 
   updateAuthUI();
@@ -13328,6 +13354,19 @@ async function handleEmailVerificationFromUrl() {
       };
 
       console.log("GED dev timer helper available: __GED_DEV_SET_TIMER_SECONDS(seconds)");
+    })();
+
+    (function setupLocalDevQuestionIdHelper() {
+      if (!GED_DEV_IS_LOCALHOST) return;
+
+      window.__GED_DEV_SHOW_QUESTION_ID = function __GED_DEV_SHOW_QUESTION_ID(enabled) {
+        gedDevShowQuestionId = !!enabled;
+        updateDevQuestionIdLabel();
+        console.log(`GED dev question ID label ${gedDevShowQuestionId ? "enabled" : "disabled"}.`);
+        return gedDevShowQuestionId;
+      };
+
+      console.log("GED local dev helper available: window.__GED_DEV_SHOW_QUESTION_ID(true|false)");
     })();
 
     const startPracticeBtn = document.getElementById("startPracticeBtn");
