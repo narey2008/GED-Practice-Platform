@@ -3283,6 +3283,128 @@ function getReviewVisualMarkup(q, idPrefix = "review", index = 0) {
   return html;
 }
 
+function renderHistorySpecialTypeMarkup(q) {
+  if (!q || typeof q !== "object") return "";
+
+  if (q.type === "hotspot") {
+    const hotspot = q.hotspot || {};
+    const min = Number(hotspot.min ?? -5);
+    const max = Number(hotspot.max ?? 5);
+    const step = Number(hotspot.step ?? 1);
+    const tickLabels = hotspot.tickLabels || {};
+
+    const toValueKey = (value) => {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return String(value ?? "").trim();
+      return String(Number(n.toFixed(5)));
+    };
+
+    const formatTickLabel = (value) => {
+      const key = toValueKey(value);
+      return tickLabels[key] || key || "—";
+    };
+
+    const userKey = toValueKey(q.userAnswer ?? "");
+    const correctKey = toValueKey(hotspot.target ?? q.answer ?? "");
+    const hasUser = String(userKey || "").trim() !== "";
+    const hasCorrect = String(correctKey || "").trim() !== "";
+
+    const values = [];
+    if (Array.isArray(hotspot.values) && hotspot.values.length) {
+      hotspot.values.forEach((value) => values.push(Number(value)));
+    } else if (Number.isFinite(min) && Number.isFinite(max)) {
+      const safeStep = Number.isFinite(step) && step > 0 ? step : 1;
+      const totalSteps = Math.round((max - min) / safeStep);
+      for (let i = 0; i <= totalSteps; i += 1) {
+        values.push(Number((min + i * safeStep).toFixed(5)));
+      }
+    }
+
+    if (!values.length) {
+      return `<div class="reviewItem" style="margin-top:10px;">Hotspot details were not fully saved for this history record.</div>`;
+    }
+
+    const width = 760;
+    const height = 220;
+    const startX = 70;
+    const endX = 690;
+    const y = 108;
+    const range = max - min || 1;
+
+    const ticks = values.map((value) => {
+      const valueText = toValueKey(value);
+      const x = startX + ((value - min) / range) * (endX - startX);
+      const isSelected = hasUser && userKey === valueText;
+      const isCorrect = hasCorrect && correctKey === valueText;
+      const isInteger = Number.isInteger(value);
+      const isEndpoint = value === min || value === max;
+      const isMajor = isInteger || isEndpoint || isSelected || isCorrect;
+      const shouldShowLabel = isInteger || isEndpoint || isSelected || isCorrect || values.length <= 9;
+
+      return `
+        <g class="hotspotTick ${isSelected ? "hotspotSelected" : ""}">
+          <line x1="${x}" y1="${y - (isMajor ? 18 : 11)}" x2="${x}" y2="${y + (isMajor ? 18 : 11)}" stroke="#153e75" stroke-width="${isMajor ? "3" : "2"}" />
+          <circle cx="${x}" cy="${y}" r="${isSelected ? "15" : "12"}" fill="${isSelected ? "#153e75" : "#ffffff"}" stroke="#153e75" stroke-width="${isSelected ? "4" : "2.5"}" />
+          ${shouldShowLabel ? `<text x="${x}" y="${y + 52}" text-anchor="middle" class="diagramLabel hotspotValueLabel" style="font-size:${isMajor ? "16px" : "13px"};">${escapeHtml(formatTickLabel(value))}</text>` : ""}
+          ${isSelected ? `<text x="${x}" y="${y - 34}" text-anchor="middle" class="hotspotSelectedMarker">Your Selection</text>` : ""}
+          ${isCorrect ? `<text x="${x}" y="${y - (isSelected ? 52 : 34)}" text-anchor="middle" class="hotspotSelectedMarker">Correct</text>` : ""}
+        </g>
+      `;
+    });
+
+    return `
+      <div class="hotspotWrap" style="margin-top:10px;">
+        <svg class="hotspotSvg" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line x1="${startX}" y1="${y}" x2="${endX}" y2="${y}" stroke="#153e75" stroke-width="5" stroke-linecap="round" />
+          <polygon points="${endX},${y} ${endX - 14},${y - 9} ${endX - 14},${y + 9}" fill="#153e75"/>
+          <polygon points="${startX},${y} ${startX + 14},${y - 9} ${startX + 14},${y + 9}" fill="#153e75"/>
+          ${ticks.join("")}
+        </svg>
+        <div class="muted hotspotHelpText">Review only: hotspot answers are not interactive in history.</div>
+      </div>
+    `;
+  }
+
+  if (q.type === "dragdrop") {
+    const choices = Array.isArray(q.choices) ? q.choices : [];
+    const userOrder = Array.isArray(q.userAnswer) ? q.userAnswer : [];
+    const correctOrder = Array.isArray(q.answer)
+      ? q.answer
+      : (String(q.answer ?? "").trim() ? String(q.answer).split("|").map((x) => x.trim()).filter(Boolean) : []);
+
+    if (!choices.length && !userOrder.length && !correctOrder.length) {
+      return `<div class="reviewItem" style="margin-top:10px;">Drag/drop details were not fully saved for this history record.</div>`;
+    }
+
+    const remaining = choices.filter((item) => !userOrder.includes(item));
+
+    const chips = (arr, emptyText) => {
+      if (!arr.length) return `<div class="dragDropEmpty">${escapeHtml(emptyText)}</div>`;
+      return arr.map((item) => `<div class="dragChip" draggable="false">${escapeHtml(String(item))}</div>`).join("");
+    };
+
+    return `
+      <div class="dragDropWrap" style="margin-top:10px;">
+        <div class="dragDropAnswer">
+          <div class="dragDropLabel">Your submitted order</div>
+          <div class="dragDropItems">${chips(userOrder, "No submitted order saved.")}</div>
+        </div>
+        <div class="dragDropBank">
+          <div class="dragDropLabel">Available items</div>
+          <div class="dragDropItems">${chips(remaining, "No remaining items.")}</div>
+        </div>
+        <div class="dragDropAnswer">
+          <div class="dragDropLabel">Correct order</div>
+          <div class="dragDropItems">${chips(correctOrder, "No correct order saved.")}</div>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px;">Review only: drag/drop answers are not interactive in history.</div>
+    `;
+  }
+
+  return "";
+}
+
 function renderReviewCharts(container) {
   if (!container || typeof Chart === "undefined") return;
 
@@ -3335,6 +3457,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
         <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
         <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
         ${getReviewVisualMarkup(q, "testHistory", i)}
+        ${renderHistorySpecialTypeMarkup(q)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
@@ -3361,6 +3484,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
         <div><strong>Q${i + 1}</strong></div>
         <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
         ${getReviewVisualMarkup(q, "practiceHistory", i)}
+        ${renderHistorySpecialTypeMarkup(q)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
@@ -3406,6 +3530,7 @@ function renderLearningSessionDetails(entry) {
         <div><strong>Example ${i + 1}</strong></div>
         <div style="margin-top:8px; line-height:1.6;">${q.question || "—"}</div>
         ${getReviewVisualMarkup(q, "learningExample", i)}
+        ${renderHistorySpecialTypeMarkup(q)}
         ${q.explanation ? `<div style="margin-top:10px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
       </div>
     `).join("")
@@ -3421,6 +3546,7 @@ function renderLearningSessionDetails(entry) {
         <div><strong>Practice Q${i + 1}</strong></div>
         <div style="margin-top:8px; line-height:1.6;">${q.question || "—"}</div>
         ${getReviewVisualMarkup(q, "learningPractice", i)}
+        ${renderHistorySpecialTypeMarkup(q)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         ${hasResult ? `<div>${tr("result")}: <span class="${q.isCorrect ? "correct" : "incorrect"}">${q.isCorrect ? tr("correct") : tr("incorrect")}</span></div>` : ""}
