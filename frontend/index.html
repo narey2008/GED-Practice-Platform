@@ -3244,6 +3244,80 @@ function answersMatch(userAnswer, correctAnswer) {
   return a === b;
 }
 
+function getReviewVisualMarkup(q, idPrefix = "review", index = 0) {
+  if (!q || typeof q !== "object") return "";
+
+  const chartCandidate = q.chart || q.chartConfig || q.graph || null;
+  const hasChart = chartCandidate && chartCandidate.type && chartCandidate.data;
+
+  const visualMarkup =
+    q.diagram ||
+    q.diagramMarkup ||
+    q.visual ||
+    q.table ||
+    q.imageMarkup ||
+    q.svgMarkup ||
+    q.htmlMarkup ||
+    "";
+
+  let html = "";
+
+  if (visualMarkup) {
+    html += `
+      <div class="generatedVisualCard" style="margin-top:10px;">
+        ${visualMarkup}
+      </div>
+    `;
+  }
+
+  if (hasChart) {
+    const chartId = `${idPrefix}_chart_${index}`;
+    const encoded = encodeURIComponent(JSON.stringify(chartCandidate));
+    html += `
+      <div class="questionChartWrap" style="margin-top:10px; min-height:260px; position:relative;">
+        <canvas id="${chartId}" data-review-chart="${encoded}"></canvas>
+      </div>
+    `;
+  }
+
+  return html;
+}
+
+function renderReviewCharts(container) {
+  if (!container || typeof Chart === "undefined") return;
+
+  const chartCanvases = container.querySelectorAll("canvas[data-review-chart]");
+
+  chartCanvases.forEach((canvas) => {
+    if (!canvas || canvas.dataset.chartRendered === "1") return;
+
+    try {
+      const raw = decodeURIComponent(canvas.dataset.reviewChart || "");
+      const parsed = JSON.parse(raw);
+      const themed = updateChartTheme(parsed);
+      if (!themed || !themed.type || !themed.data) return;
+
+      new Chart(canvas.getContext("2d"), {
+        ...themed,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          ...(themed.options || {})
+        },
+        plugins: [
+          horizontalYAxisTitlePlugin,
+          ...(Array.isArray(themed.plugins) ? themed.plugins : [])
+        ]
+      });
+
+      canvas.dataset.chartRendered = "1";
+    } catch (error) {
+      console.error("REVIEW CHART RENDER ERROR:", error);
+    }
+  });
+}
+
     function renderHistoryDetails(questions) {
   if (!Array.isArray(questions) || !questions.length) {
     return `<div class="reviewItem" style="margin-top:10px;">${tr("noQuestionDataTest")}</div>`;
@@ -3260,6 +3334,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""}</div>
         <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+        ${getReviewVisualMarkup(q, "testHistory", i)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
@@ -3284,6 +3359,7 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Q${i + 1}</strong></div>
         <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+        ${getReviewVisualMarkup(q, "practiceHistory", i)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
         <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
@@ -11494,6 +11570,7 @@ state.questions.forEach((q, i) => {
   div.innerHTML = `
     <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""} — ${statusLabel}</div>
     <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+    ${getReviewVisualMarkup(q, "testResults", i)}
     <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(isAnswered ? userAnswerDisplay : tr("noAnswerDash"))}</div>
     <div>${tr("correct")}: ${escapeHtml(correctAnswerDisplay || tr("noAnswerDash"))}</div>
     <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
@@ -11502,6 +11579,8 @@ state.questions.forEach((q, i) => {
 
   panel.appendChild(div);
 });
+
+renderReviewCharts(panel);
 
   await setView("review");
   await clearSavedProgress();
@@ -11806,6 +11885,7 @@ async function showLearningComplete() {
   div.innerHTML = `
     <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""} — ${statusLabel}</div>
     <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
+    ${getReviewVisualMarkup(q, "practiceResults", i)}
     <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(isAnswered ? userAnswerDisplay : tr("noAnswerDash"))}</div>
     <div>${tr("correct")}: ${escapeHtml(correctAnswerDisplay || tr("noAnswerDash"))}</div>
     <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
@@ -11814,6 +11894,8 @@ async function showLearningComplete() {
 
   panel.appendChild(div);
 });
+
+      renderReviewCharts(panel);
 
       await setView("practice-results");
       trackGoalActivity({
@@ -12451,6 +12533,7 @@ panel.innerHTML = `
 
             const detailsContainer = item.querySelector(`#${detailsId}`);
             detailsContainer.innerHTML = renderHistoryDetails(entry.questions || []);
+            renderReviewCharts(detailsContainer);
           });
         }
 
@@ -12483,6 +12566,7 @@ panel.innerHTML = `
 
             const detailsContainer = item.querySelector(`#${detailsId}`);
             detailsContainer.innerHTML = renderPracticeHistoryDetails(entry.questions || []);
+            renderReviewCharts(detailsContainer);
           });
         }
 
