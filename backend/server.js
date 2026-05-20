@@ -2001,7 +2001,9 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
       correctCount,
       incorrectCount,
       totalQuestions,
-      completedAt
+      completedAt,
+      detailExamples,
+      detailPracticeQuestions
     } = req.body || {};
 
     const safeTotalQuestions = Number(totalQuestions);
@@ -2025,6 +2027,9 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Invalid learning history data." });
     }
 
+    const safeDetailExamples = Array.isArray(detailExamples) ? detailExamples : [];
+    const safeDetailPracticeQuestions = Array.isArray(detailPracticeQuestions) ? detailPracticeQuestions : [];
+
     const history = await LearningHistory.create({
       userId: req.auth.userId,
       skill: skill || "Learning Mode",
@@ -2035,6 +2040,8 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
       correctCount: safeCorrectCount,
       incorrectCount: safeIncorrectCount,
       totalQuestions: safeTotalQuestions,
+      detailExamples: safeDetailExamples,
+      detailPracticeQuestions: safeDetailPracticeQuestions,
       completedAt: completedAt ? new Date(completedAt) : new Date()
     });
 

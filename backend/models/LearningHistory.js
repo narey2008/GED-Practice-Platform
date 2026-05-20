@@ -40,6 +40,15 @@ const learningHistorySchema = new mongoose.Schema(
       type: Number,
       required: true
     },
+
+    detailExamples: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: []
+    },
+    detailPracticeQuestions: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: []
+    },
     completedAt: {
       type: Date,
       default: Date.now

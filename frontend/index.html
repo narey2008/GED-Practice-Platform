@@ -3368,6 +3368,74 @@ const isCorrect = answersMatch(q.userAnswer, q.answer);
   }).join("");
 }
 
+function buildLearningDetailItem(q) {
+  if (!q || typeof q !== "object") return null;
+  return {
+    id: q.id || q.reportId || q.questionId || null,
+    question: q.question || q.prompt || "",
+    type: q.type || "",
+    options: Array.isArray(q.options) ? q.options : [],
+    answer: q.answer ?? "",
+    userAnswer: q.userAnswer ?? "",
+    isCorrect: typeof q.learningCorrect === "boolean" ? q.learningCorrect : (typeof q.isCorrect === "boolean" ? q.isCorrect : null),
+    explanation: q.explanation || q.feedback || "",
+    skill: q.skill || "",
+    subskill: q.subskill || "",
+    topic: q.topic || "",
+    chart: q.chart || q.chartConfig || q.graph || null,
+    diagram: q.diagram || q.diagramMarkup || "",
+    visual: q.visual || q.table || q.imageMarkup || q.svgMarkup || q.htmlMarkup || "",
+    table: q.table || "",
+    learningFeedbackState: q.learningFeedbackState || ""
+  };
+}
+
+function renderLearningSessionDetails(entry) {
+  const examples = Array.isArray(entry?.detailExamples) ? entry.detailExamples : [];
+  const practiceQuestions = Array.isArray(entry?.detailPracticeQuestions) ? entry.detailPracticeQuestions : [];
+
+  if (!examples.length && !practiceQuestions.length) {
+    return `<div class="reviewItem" style="margin-top:10px;">Details were not saved for this earlier learning session.</div>`;
+  }
+
+  const examplesHtml = examples.length
+    ? examples.map((q, i) => `
+      <div class="reviewItem" style="margin-top:10px;">
+        <div><strong>Example ${i + 1}</strong></div>
+        <div style="margin-top:8px; line-height:1.6;">${q.question || "—"}</div>
+        ${getReviewVisualMarkup(q, "learningExample", i)}
+        ${q.explanation ? `<div style="margin-top:10px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
+      </div>
+    `).join("")
+    : `<div class="reviewItem" style="margin-top:10px;">No example details saved for this session.</div>`;
+
+  const practiceHtml = practiceQuestions.length
+    ? practiceQuestions.map((q, i) => {
+      const userAnswer = Array.isArray(q.userAnswer) ? q.userAnswer.join(" → ") : String(q.userAnswer ?? "").trim();
+      const correctAnswer = String(q.answer ?? "").trim();
+      const hasResult = typeof q.isCorrect === "boolean";
+      return `
+      <div class="reviewItem" style="margin-top:10px;">
+        <div><strong>Practice Q${i + 1}</strong></div>
+        <div style="margin-top:8px; line-height:1.6;">${q.question || "—"}</div>
+        ${getReviewVisualMarkup(q, "learningPractice", i)}
+        <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
+        <div>${tr("correct")}: ${escapeHtml(correctAnswer || tr("noAnswerDash"))}</div>
+        ${hasResult ? `<div>${tr("result")}: <span class="${q.isCorrect ? "correct" : "incorrect"}">${q.isCorrect ? tr("correct") : tr("incorrect")}</span></div>` : ""}
+        ${q.explanation ? `<div style="margin-top:8px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
+      </div>
+    `;
+    }).join("")
+    : `<div class="reviewItem" style="margin-top:10px;">No practice question details saved for this session.</div>`;
+
+  return `
+    <h3 style="margin:4px 0 8px;">Examples Studied</h3>
+    ${examplesHtml}
+    <h3 style="margin:16px 0 8px;">Practice Questions Completed</h3>
+    ${practiceHtml}
+  `;
+}
+
 let desmosCalculator = null;
 
 function openCalculator() {
@@ -11705,6 +11773,14 @@ async function showLearningComplete() {
     state.learningMeta?.subskill ||
     "";
 
+  const detailExamples = state.questions
+    .filter((q) => q.learningPhase === "example")
+    .map(buildLearningDetailItem)
+    .filter(Boolean);
+  const detailPracticeQuestions = practiceQuestions
+    .map(buildLearningDetailItem)
+    .filter(Boolean);
+
   await saveCompletedLearningToHistory({
     skill: completedSkill,
     subskill: completedSubskill,
@@ -11714,6 +11790,8 @@ async function showLearningComplete() {
     correctCount: correct,
     incorrectCount: missed,
     totalQuestions: total,
+    detailExamples,
+    detailPracticeQuestions,
     completedAt: new Date().toISOString()
   });
 
@@ -12588,6 +12666,9 @@ panel.innerHTML = `
               <div>Questions Answered: ${Number(entry.questionsAnswered) || 0}</div>
               <div>${tr("correctCount")}: ${Number(entry.correctCount) || 0}</div>
               <div>${tr("wrong")}: ${Number(entry.incorrectCount) || 0}</div>
+              <div style="margin-top:12px;">
+                <button class="secondaryBtn learningHistoryDetailsBtn" data-index="${index}">${tr("viewDetails")}</button>
+              </div>
             `;
             learningSection.appendChild(item);
           });
@@ -12639,6 +12720,17 @@ panel.innerHTML = `
             const isHidden = details.classList.contains("hidden");
             details.classList.toggle("hidden", !isHidden);
             btn.textContent = isHidden ? tr("hideDetails") : tr("viewDetails");
+          };
+        });
+
+        panel.querySelectorAll(".learningHistoryDetailsBtn").forEach((btn) => {
+          btn.onclick = () => {
+            const index = Number(btn.getAttribute("data-index"));
+            const entry = learningHistory[index];
+            showModal("Learning Session Details", `<div id="learningDetailsModalBody">${renderLearningSessionDetails(entry)}</div>`, [
+              { label: tr("close"), variant: "secondary", onClick: closeModal }
+            ]);
+            renderReviewCharts(document.getElementById("learningDetailsModalBody"));
           };
         });
 
