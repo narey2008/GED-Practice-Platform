@@ -507,7 +507,7 @@ body.theme-light .brandTagline {
     .page {
       max-width: 1080px;
       margin: 0 auto;
-      padding: 18px 18px 24px;
+      padding: 190px 18px 24px;
       min-height: calc(100vh - 58px);
       position: relative;
     }
@@ -740,8 +740,9 @@ body.theme-light .brandTagline {
   top: 76px;
   left: 18px;
   z-index: 30;
-  width: 300px;
-  padding: 14px 16px;
+  width: 420px;
+  max-width: calc(100% - 36px);
+  padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--card);
@@ -2469,6 +2470,10 @@ body.loadingActive {
     width: auto;
     max-width: none;
     margin: 12px 10px 0;
+  }
+
+  .page {
+    padding-top: 18px;
   }
 
   .goalDock {
