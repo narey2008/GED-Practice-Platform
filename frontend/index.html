@@ -10569,7 +10569,7 @@ async function beginRealTestAfterTutorial() {
 
       state.questions = generatedQuestions.map((q) => ({
         ...q,
-        userAnswer: null,
+        userAnswer: 0,
         flagged: false
       }));
 
@@ -10622,7 +10622,7 @@ const res = await fetch(
       state.mode = "learning";
       state.questions = generated.map((q, index) => ({
         ...q,
-        userAnswer: null,
+        userAnswer: 0,
         flagged: false,
         learningPhase: index < 3 ? "example" : "practice",
         example: index < 3,
@@ -10747,7 +10747,7 @@ const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${en
       state.mode = examplesOnly ? "practice-example" : "practice";
       state.questions = generatedQuestions.map((q) => ({
         ...q,
-        userAnswer: null,
+        userAnswer: 0,
         flagged: false,
         example: examplesOnly
       }));
@@ -13466,7 +13466,7 @@ window.addEventListener("resize", () => {
         type: "hotspot",
         question: "DEV: Click the point on the number line that represents 0.",
         answer: "0",
-        userAnswer: null,
+        userAnswer: 0,
         hotspot: {
           type: "numberLine",
           min: -5,
