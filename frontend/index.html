@@ -3328,6 +3328,22 @@ function normalizeComparableAnswer(value) {
   return cleaned;
 }
 
+function hasExplicitHotspotSelection(q) {
+  if (!q || q.type !== "hotspot") return false;
+
+  const raw = q.userAnswer;
+  if (raw === null || raw === undefined || String(raw).trim() === "") {
+    return false;
+  }
+
+  if (q.hotspotTouched === true) {
+    return true;
+  }
+
+  // Backward compatibility: older saved hotspot clicks were stored as strings.
+  return typeof raw === "string";
+}
+
 function isQuestionAnswered(q) {
   if (!q) return false;
 
@@ -3336,7 +3352,7 @@ function isQuestionAnswered(q) {
   }
 
   if (q.type === "hotspot") {
-    return String(q.userAnswer ?? "").trim() !== "";
+    return hasExplicitHotspotSelection(q);
   }
 
   if (q.type === "fill") {
@@ -11133,7 +11149,7 @@ if (q.type === "hotspot") {
     return tickLabels[key] || key;
   };
 
-  const hasSelection = q.userAnswer !== null && q.userAnswer !== undefined && String(q.userAnswer).trim() !== "";
+  const hasSelection = hasExplicitHotspotSelection(q);
   const selectedKey = hasSelection ? toValueKey(q.userAnswer) : "";
   const isExampleOnly = !!q.example;
 
@@ -11252,7 +11268,10 @@ if (q.type === "hotspot") {
   wrap.querySelectorAll(".hotspotTick").forEach((tick) => {
 const selectTick = async () => {
   if (isExampleOnly || state.lockedReviewMode || state.isPaused) return;
-  q.userAnswer = tick.getAttribute("data-value");
+  const rawValue = tick.getAttribute("data-value");
+  const numericValue = Number(rawValue);
+  q.userAnswer = Number.isFinite(numericValue) ? numericValue : rawValue;
+  q.hotspotTouched = true;
   renderAnswerArea(q);
   await saveProgress();
 };
@@ -13468,6 +13487,7 @@ window.addEventListener("resize", () => {
         question: "DEV: Click the point on the number line that represents 0.",
         answer: "0",
         userAnswer: null,
+        hotspotTouched: false,
         hotspot: {
           type: "numberLine",
           min: -5,
