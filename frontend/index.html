@@ -7190,14 +7190,27 @@ function openSupportContactModal(prefill = {}) {
                   formData.append("screenshot", screenshotFile);
                 }
 
+                const supportAbortController = new AbortController();
+                const supportTimeoutMs = 20000;
+                const supportTimeoutId = setTimeout(() => {
+                  supportAbortController.abort();
+                }, supportTimeoutMs);
+
                 console.debug("Support ticket fetch started");
-                const res = await fetch(`${API_BASE}/api/support/ticket`, {
-                  method: "POST",
-                  headers: {
-                    ...getAuthHeaders()
-                  },
-                  body: formData
-                });
+                let res;
+
+                try {
+                  res = await fetch(`${API_BASE}/api/support/ticket`, {
+                    method: "POST",
+                    headers: {
+                      ...getAuthHeaders()
+                    },
+                    body: formData,
+                    signal: supportAbortController.signal
+                  });
+                } finally {
+                  clearTimeout(supportTimeoutId);
+                }
 
                 console.debug("Support ticket response status:", {
                   ok: res.ok,
@@ -7243,6 +7256,10 @@ function openSupportContactModal(prefill = {}) {
             );
           } catch (error) {
             console.error("SUPPORT CONTACT ERROR:", error);
+            console.debug("Support submit failed/timed out", {
+              name: error?.name || null,
+              message: error?.message || null
+            });
 
             if (statusEl) {
               statusEl.classList.add("hidden");
@@ -7250,7 +7267,11 @@ function openSupportContactModal(prefill = {}) {
             }
 
             if (errorEl) {
-              errorEl.textContent = error.message || "Failed to submit support request.";
+              if (error?.name === "AbortError") {
+                errorEl.textContent = "Support request timed out. Please try again.";
+              } else {
+                errorEl.textContent = error.message || "Failed to submit support request.";
+              }
               errorEl.classList.remove("hidden");
             }
           } finally {
