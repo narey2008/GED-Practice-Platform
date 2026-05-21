@@ -11522,7 +11522,7 @@ function renderChart(chartConfig) {
     function goToEarliestIssue() {
       let targetIndex = state.questions.findIndex((q) => q.flagged);
       if (targetIndex === -1) {
-        targetIndex = state.questions.findIndex((q) => String(q.userAnswer ?? "").trim() === "");
+        targetIndex = state.questions.findIndex((q) => !isQuestionAnswered(q));
       }
 
       if (targetIndex !== -1) {
@@ -11610,9 +11610,7 @@ async function openReviewBeforeSubmitModal() {
 }
 
     function confirmPracticeSubmit() {
-  const hasUnanswered = state.questions.some(
-    (q) => String(q.userAnswer ?? "").trim() === ""
-  );
+  const hasUnanswered = state.questions.some((q) => !isQuestionAnswered(q));
 
   showModal(
     tr("submitPracticeTitle"),
