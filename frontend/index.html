@@ -2553,6 +2553,13 @@ body.loadingActive {
   }
 }
 
+@media (max-width: 1360px) {
+  /* Hide detached recommended path dock when side space is unsafe to prevent overlap. */
+  #mainMenuRecommendedPathDock {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1100px) {
   .questionNavigator {
     display: none !important;
