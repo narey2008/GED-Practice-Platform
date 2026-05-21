@@ -7101,6 +7101,7 @@ function openSupportContactModal(prefill = {}) {
         <strong>User Status:</strong> ${escapeHtml(signedInLabel)}
       </div>
 
+      <div id="supportContactStatus" class="muted hidden" style="margin-top:10px;"></div>
       <div id="supportContactError" class="authError hidden"></div>
     `,
     [
@@ -7121,16 +7122,9 @@ function openSupportContactModal(prefill = {}) {
           console.debug("Support submit clicked");
 
           const errorEl = document.getElementById("supportContactError");
+          const statusEl = document.getElementById("supportContactStatus");
           const submitBtn = document.querySelector('#modalBackdrop .modalFooter .primaryBtn');
-
-          if (submitBtn) {
-            submitBtn.disabled = true;
-          }
-
-          if (errorEl) {
-            errorEl.classList.add("hidden");
-            errorEl.textContent = "";
-          }
+          const originalBtnText = submitBtn?.innerText || "Submit Support Request";
 
           const type = document.getElementById("supportTypeSelect")?.value || "other";
           const subject = document.getElementById("supportSubject")?.value.trim() || "";
@@ -7139,6 +7133,16 @@ function openSupportContactModal(prefill = {}) {
           const contactEmail = document.getElementById("supportContactEmail")?.value.trim().toLowerCase() || "";
           const deviceBrowser = document.getElementById("supportDeviceBrowser")?.value.trim() || "";
           const screenshotFile = document.getElementById("supportScreenshot")?.files?.[0] || null;
+
+          if (errorEl) {
+            errorEl.classList.add("hidden");
+            errorEl.textContent = "";
+          }
+
+          if (statusEl) {
+            statusEl.classList.add("hidden");
+            statusEl.textContent = "";
+          }
 
           if (!subject) {
             if (errorEl) {
@@ -7157,6 +7161,16 @@ function openSupportContactModal(prefill = {}) {
           }
 
           try {
+            if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.innerText = "Sending...";
+            }
+
+            if (statusEl) {
+              statusEl.textContent = "Sending support request...";
+              statusEl.classList.remove("hidden");
+            }
+
             await withLoading(
               "Submitting Support Request...",
               "Please do not refresh.",
@@ -7176,12 +7190,18 @@ function openSupportContactModal(prefill = {}) {
                   formData.append("screenshot", screenshotFile);
                 }
 
+                console.debug("Support ticket fetch started");
                 const res = await fetch(`${API_BASE}/api/support/ticket`, {
                   method: "POST",
                   headers: {
                     ...getAuthHeaders()
                   },
                   body: formData
+                });
+
+                console.debug("Support ticket response status:", {
+                  ok: res.ok,
+                  status: res.status
                 });
 
                 const contentType = res.headers.get("content-type") || "";
@@ -7192,7 +7212,7 @@ function openSupportContactModal(prefill = {}) {
                 } else {
                   const text = await res.text();
                   throw new Error(
-                    `Support ticket returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`
+                    `Support ticket returned non-JSON response. Response started with: ${text.slice(0, 80)}`
                   );
                 }
 
@@ -7205,17 +7225,29 @@ function openSupportContactModal(prefill = {}) {
                   throw new Error(data.error || "Failed to submit support request.");
                 }
 
-                closeModal();
-                await resumeAfterSupportTicketIfNeeded();
+                if (statusEl) {
+                  statusEl.textContent = "Support request sent successfully.";
+                  statusEl.classList.remove("hidden");
+                }
 
                 showToast(
                   "Support Request Sent",
                   data.message || "Your support request was submitted successfully."
                 );
+
+                setTimeout(async () => {
+                  closeModal();
+                  await resumeAfterSupportTicketIfNeeded();
+                }, 250);
               }
             );
           } catch (error) {
             console.error("SUPPORT CONTACT ERROR:", error);
+
+            if (statusEl) {
+              statusEl.classList.add("hidden");
+              statusEl.textContent = "";
+            }
 
             if (errorEl) {
               errorEl.textContent = error.message || "Failed to submit support request.";
@@ -7224,7 +7256,9 @@ function openSupportContactModal(prefill = {}) {
           } finally {
             if (submitBtn) {
               submitBtn.disabled = false;
+              submitBtn.innerText = originalBtnText;
             }
+            console.debug("Support submit finished");
           }
         }
       }
