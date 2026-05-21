@@ -469,6 +469,24 @@ ${ticket.details}
   });
 }
 
+async function withTimeout(promise, timeoutMs, timeoutMessage) {
+  let timer = null;
+
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const timeoutError = new Error(timeoutMessage || "Operation timed out.");
+      timeoutError.code = "ETIMEDOUT";
+      reject(timeoutError);
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function sendSupportConfirmationEmail({ to, ticket }) {
   if (!to) {
     return;
@@ -1705,7 +1723,23 @@ app.post("/api/support/ticket", upload.single("screenshot"), async (req, res) =>
       source: "support_form"
     });
 
-    await sendSupportTicketEmail({ ticket });
+    try {
+      await withTimeout(
+        sendSupportTicketEmail({ ticket }),
+        20000,
+        "Support inbox delivery timed out."
+      );
+    } catch (error) {
+      console.error("SUPPORT TICKET DELIVERY ERROR:", {
+        recipient: SUPPORT_INBOX,
+        code: error?.code || error?.name || null,
+        message: error?.message || "Unknown support delivery error"
+      });
+
+      return res.status(502).json({
+        error: "Support ticket was saved, but delivery to support inbox failed. Please try again shortly."
+      });
+    }
 
     if (contactEmail) {
       await sendSupportConfirmationEmail({
