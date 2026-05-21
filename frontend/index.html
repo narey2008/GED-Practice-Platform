@@ -12010,6 +12010,7 @@ state.questions.forEach((q, i) => {
     <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""} — ${statusLabel}</div>
     <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
     ${getReviewVisualMarkup(q, "testResults", i)}
+    ${renderHistorySpecialTypeMarkup(q)}
     <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(isAnswered ? userAnswerDisplay : tr("noAnswerDash"))}</div>
     <div>${tr("correct")}: ${escapeHtml(correctAnswerDisplay || tr("noAnswerDash"))}</div>
     <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
