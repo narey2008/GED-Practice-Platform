@@ -2553,6 +2553,14 @@ body.loadingActive {
   }
 }
 
+@media (max-width: 1600px) {
+  /* Hide detached dock on non-wide viewports to avoid any overlap with centered menu content. */
+  #mainMenuRecommendedPathDock {
+    display: none !important;
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 1100px) {
   .questionNavigator {
     display: none !important;
@@ -6643,6 +6651,24 @@ if (goalLauncherBtn) {
   updateAuthUI();
 }
 
+
+const RECOMMENDED_PATH_DOCK_MIN_WIDTH = 1600;
+
+function isRecommendedPathDockViewportSafe() {
+  return window.innerWidth > RECOMMENDED_PATH_DOCK_MIN_WIDTH;
+}
+
+function syncRecommendedPathDockVisibilityForViewport() {
+  const mainMenuRecommendedPath = document.getElementById("mainMenuRecommendedPathDock");
+  if (!mainMenuRecommendedPath) return;
+
+  if (state.mode === "menu" && isRecommendedPathDockViewportSafe()) {
+    mainMenuRecommendedPath.classList.remove("hidden");
+  } else {
+    mainMenuRecommendedPath.classList.add("hidden");
+  }
+}
+
 async function setView(view) {
   const mainMenu = document.getElementById("mainMenu");
   const testView = document.getElementById("testView");
@@ -6664,7 +6690,7 @@ async function setView(view) {
     state.mode = "menu";
     if (mainMenu) mainMenu.classList.remove("hidden");
     if (mainMenuKnownBugs) mainMenuKnownBugs.classList.remove("hidden");
-    if (mainMenuRecommendedPath) mainMenuRecommendedPath.classList.remove("hidden");
+    syncRecommendedPathDockVisibilityForViewport();
   } else if (
     view === "test" ||
     view === "practice" ||
@@ -13364,6 +13390,10 @@ async function handleEmailVerificationFromUrl() {
   renderChart(null);
   setView("menu");
 }
+
+window.addEventListener("resize", () => {
+  syncRecommendedPathDockVisibilityForViewport();
+});
 
     const startTestBtn = document.getElementById("startTestBtn");
     if (startTestBtn) {
