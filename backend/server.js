@@ -1705,7 +1705,19 @@ app.post("/api/support/ticket", upload.single("screenshot"), async (req, res) =>
       source: "support_form"
     });
 
-    await sendSupportTicketEmail({ ticket });
+    try {
+      await sendSupportTicketEmail({ ticket });
+    } catch (error) {
+      console.error("SUPPORT TICKET DELIVERY ERROR:", {
+        recipient: SUPPORT_INBOX,
+        code: error?.code || error?.name || null,
+        message: error?.message || "Unknown support delivery error"
+      });
+
+      return res.status(502).json({
+        error: "Support ticket was saved, but delivery to support inbox failed. Please try again shortly."
+      });
+    }
 
     if (contactEmail) {
       await sendSupportConfirmationEmail({

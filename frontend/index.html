@@ -7118,7 +7118,14 @@ function openSupportContactModal(prefill = {}) {
         variant: "primary",
         keepOpen: true,
         onClick: async () => {
+          console.debug("Support submit clicked");
+
           const errorEl = document.getElementById("supportContactError");
+          const submitBtn = document.querySelector('#modalBackdrop .modalFooter .primaryBtn');
+
+          if (submitBtn) {
+            submitBtn.disabled = true;
+          }
 
           if (errorEl) {
             errorEl.classList.add("hidden");
@@ -7189,6 +7196,11 @@ function openSupportContactModal(prefill = {}) {
                   );
                 }
 
+                console.debug("Support ticket response:", {
+                  ok: res.ok,
+                  error: data?.error || null
+                });
+
                 if (!res.ok) {
                   throw new Error(data.error || "Failed to submit support request.");
                 }
@@ -7208,6 +7220,10 @@ function openSupportContactModal(prefill = {}) {
             if (errorEl) {
               errorEl.textContent = error.message || "Failed to submit support request.";
               errorEl.classList.remove("hidden");
+            }
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
             }
           }
         }
