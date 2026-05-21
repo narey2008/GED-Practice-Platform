@@ -11133,7 +11133,8 @@ if (q.type === "hotspot") {
     return tickLabels[key] || key;
   };
 
-  const selected = toValueKey(q.userAnswer ?? "");
+  const hasSelection = q.userAnswer !== null && q.userAnswer !== undefined && String(q.userAnswer).trim() !== "";
+  const selectedKey = hasSelection ? toValueKey(q.userAnswer) : "";
   const isExampleOnly = !!q.example;
 
   const width = 760;
@@ -11159,7 +11160,7 @@ if (q.type === "hotspot") {
   const ticks = values.map((value) => {
     const valueText = toValueKey(value);
     const x = startX + ((value - min) / range) * (endX - startX);
-    const isSelected = selected === valueText;
+    const isSelected = hasSelection && selectedKey === valueText;
     const isInteger = Number.isInteger(value);
     const isEndpoint = value === min || value === max;
     const isTarget = toValueKey(hotspot.target) === valueText;
@@ -11239,8 +11240,8 @@ if (q.type === "hotspot") {
   ${
     isExampleOnly
       ? "Study the number line, then click Next to continue."
-      : selected
-      ? `Selected: ${escapeHtml(formatTickLabel(selected))}`
+      : hasSelection
+      ? `Selected: ${escapeHtml(formatTickLabel(selectedKey))}`
       : "Click a point on the number line."
   }
 </div>
