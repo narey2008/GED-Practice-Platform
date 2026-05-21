@@ -13454,6 +13454,49 @@ window.addEventListener("resize", () => {
       console.log("GED dev timer helper available: __GED_DEV_SET_TIMER_SECONDS(seconds)");
     })();
 
+
+    (function setupLocalDevHotspotZeroHelper() {
+      if (!GED_DEV_IS_LOCALHOST) return;
+
+      const buildHotspotZeroFixture = () => ({
+        skill: "Number Line",
+        subskill: "Dev Hotspot Zero",
+        topic: "Local developer hotspot zero fixture",
+        difficulty: "GED-Level",
+        type: "hotspot",
+        question: "DEV: Click the point on the number line that represents 0.",
+        answer: "0",
+        userAnswer: null,
+        hotspot: {
+          type: "numberLine",
+          min: -5,
+          max: 5,
+          step: 1,
+          target: 0,
+          values: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5],
+          tickLabels: { "0": "0" }
+        },
+        explanation: "0 is at the origin on the number line."
+      });
+
+      window.__GED_DEV_FORCE_HOTSPOT_ZERO = function __GED_DEV_FORCE_HOTSPOT_ZERO() {
+        const activeModes = new Set(["test", "practice", "learning", "practice-example", "test-tutorial"]);
+        if (!activeModes.has(state.mode) || !Array.isArray(state.questions) || !state.questions.length) {
+          console.warn("Start a test, practice, or learning session first, then run __GED_DEV_FORCE_HOTSPOT_ZERO().");
+          return false;
+        }
+
+        state.questions[state.currentIndex] = buildHotspotZeroFixture();
+        renderQuestion();
+        updateStatus();
+        updateDevQuestionIdLabel();
+        console.log("Loaded local hotspot-zero fixture into the current question.");
+        return true;
+      };
+
+      console.log("GED dev helper available: __GED_DEV_FORCE_HOTSPOT_ZERO()");
+    })();
+
     (function setupLocalDevQuestionIdHelper() {
       if (!GED_DEV_IS_LOCALHOST) return;
 
