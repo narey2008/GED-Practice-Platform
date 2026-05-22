@@ -3626,7 +3626,7 @@ function renderReviewCharts(container) {
         ]
       });
 
-      reviewChartInstances.set(canvas, chart);
+      reviewChartInstances.set(canvas, { chart, container });
     } catch (error) {
       console.error("REVIEW CHART RENDER ERROR:", error);
     }
@@ -3638,20 +3638,28 @@ const reviewChartInstances = new Map();
 function destroyReviewCharts(container) {
   if (!container || typeof Chart === "undefined") return;
 
+  reviewChartInstances.forEach((tracked, canvas) => {
+    if (!tracked) return;
+
+    const trackedChart = tracked.chart || tracked;
+    const trackedContainer = tracked.container || null;
+    const belongsToContainer = trackedContainer === container || container.contains(canvas);
+    const canvasRemovedFromDom = !document.contains(canvas);
+
+    if (!belongsToContainer && !canvasRemovedFromDom) return;
+
+    try {
+      trackedChart.destroy();
+    } catch (error) {
+      console.warn("REVIEW CHART DESTROY WARNING:", error);
+    }
+
+    reviewChartInstances.delete(canvas);
+  });
+
   const chartCanvases = container.querySelectorAll("canvas[data-review-chart]");
   chartCanvases.forEach((canvas) => {
-    if (!canvas) return;
-
-    const tracked = reviewChartInstances.get(canvas);
-    if (tracked) {
-      try {
-        tracked.destroy();
-      } catch (error) {
-        console.warn("REVIEW CHART DESTROY WARNING:", error);
-      }
-      reviewChartInstances.delete(canvas);
-      return;
-    }
+    if (!canvas || reviewChartInstances.has(canvas)) return;
 
     const existing = Chart.getChart(canvas);
     if (existing) {
@@ -6863,6 +6871,7 @@ await updateResumeVisibility();
 
 function showModal(title, bodyHtml, actions = []) {
   document.getElementById("modalTitle").innerText = title || tr("message");
+  destroyReviewCharts(document.getElementById("modalBody"));
   document.getElementById("modalBody").innerHTML = bodyHtml;
 
       const footer = document.getElementById("modalFooter");
@@ -12202,6 +12211,8 @@ async function showReview() {
 
   const panel = document.getElementById("reviewPanel");
 
+  destroyReviewCharts(panel);
+
   panel.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
       <h2 class="sectionTitle" style="margin:0;">${tr("testResults")}</h2>
@@ -12543,6 +12554,8 @@ async function showLearningComplete() {
 }).length;
 
       const panel = document.getElementById("practicePanel");
+      destroyReviewCharts(panel);
+
       panel.innerHTML = `
         <h2 class="sectionTitle">${tr("practiceResults")}</h2>
 
