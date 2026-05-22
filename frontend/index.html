@@ -3229,7 +3229,7 @@ let goalDockDismissed = false;
         ? "http://localhost:3000"
         : "https://api.gedpracticeplatform.com";
 
-    let state = {
+let state = {
   mode: "menu",
   difficulty: "GED-Level",
   questions: [],
@@ -3260,6 +3260,16 @@ auth: {
     guestMode: localStorage.getItem(GUEST_MODE_KEY) === "true"
   }
 };
+const startFlowInFlight = {
+  test: false,
+  practice: false,
+  learning: false
+};
+
+function formatElapsedMs(ms) {
+  const safeMs = Number.isFinite(ms) ? ms : 0;
+  return `${safeMs.toFixed(1)}ms`;
+}
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -10588,6 +10598,8 @@ async function beginRealTestAfterTutorial() {
 }
 
    async function startTest(difficulty, showTutorial = true) {
+  const flowStartedAt = performance.now();
+  console.log("[StartFlow][test] flow started");
   await withLoading(
     tr("startingTest"),
     tr("generatingTest"),
@@ -10621,7 +10633,12 @@ async function beginRealTestAfterTutorial() {
       renderDiagram(null);
       renderChart(null);
 
+      const requestStartedAt = performance.now();
+      console.log("[StartFlow][test] request started");
       const res = await fetch(`${API_BASE}/api/test?count=${TEST_LENGTH}&difficulty=${encodeURIComponent(state.difficulty)}`);
+      console.log(
+        `[StartFlow][test] request completed status=${res.status} elapsed=${formatElapsedMs(performance.now() - requestStartedAt)}`
+      );
       if (!res.ok) {
         throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
       }
@@ -10643,8 +10660,10 @@ async function beginRealTestAfterTutorial() {
       resetIdleTracking();
       startTimer();
       renderQuestion();
+      console.log("[StartFlow][test] render/view switch completed");
       await saveProgress();
       await updateResumeVisibility();
+      console.log(`[StartFlow][test] total elapsed=${formatElapsedMs(performance.now() - flowStartedAt)}`);
     }
   );
 }
@@ -10659,6 +10678,8 @@ function getPracticeApiSkill(skill) {
   return apiSkillAliases[selectedSkill] || selectedSkill;
 }
 async function startLearningMode(skill, difficulty, fromPractice = false) {
+  const flowStartedAt = performance.now();
+  console.log("[StartFlow][learning] flow started");
   await withLoading(
     "Starting Learning Mode...",
     "Building examples and practice questions.",
@@ -10670,9 +10691,14 @@ async function startLearningMode(skill, difficulty, fromPractice = false) {
       const selectedDifficulty = difficulty || document.getElementById("learningDifficultySelect")?.value || "GED-Level";
       const apiSkill = getPracticeApiSkill(selectedSkill);
 
+const requestStartedAt = performance.now();
+console.log("[StartFlow][learning] request started");
 const res = await fetch(
   `${API_BASE}/api/practice?count=8&difficulty=${encodeURIComponent(selectedDifficulty)}&skill=${encodeURIComponent(apiSkill)}`
 );
+      console.log(
+        `[StartFlow][learning] request completed status=${res.status} elapsed=${formatElapsedMs(performance.now() - requestStartedAt)}`
+      );
 
       if (!res.ok) {
         throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
@@ -10718,6 +10744,8 @@ const res = await fetch(
       await setView("test");
       renderQuestion();
       updateStatus();
+      console.log("[StartFlow][learning] render/view switch completed");
+      console.log(`[StartFlow][learning] total elapsed=${formatElapsedMs(performance.now() - flowStartedAt)}`);
     }
   );
 }
@@ -10786,6 +10814,8 @@ async function gradeLearningQuestion() {
 }
 
     async function startPractice(skill, difficulty, examplesOnly = false) {
+  const flowStartedAt = performance.now();
+  console.log(`[StartFlow][practice] flow started examplesOnly=${examplesOnly ? "yes" : "no"}`);
   await withLoading(
     examplesOnly ? tr("loadingExamples") : tr("startingPractice"),
     examplesOnly
@@ -10798,7 +10828,12 @@ async function gradeLearningQuestion() {
 const count = examplesOnly ? 2 : 12;
 const apiSkill = getPracticeApiSkill(skill);
 
+const requestStartedAt = performance.now();
+console.log(`[StartFlow][practice] request started examplesOnly=${examplesOnly ? "yes" : "no"}`);
 const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${encodeURIComponent(difficulty)}&skill=${encodeURIComponent(apiSkill)}`);
+      console.log(
+        `[StartFlow][practice] request completed status=${res.status} elapsed=${formatElapsedMs(performance.now() - requestStartedAt)} examplesOnly=${examplesOnly ? "yes" : "no"}`
+      );
       if (!res.ok) {
         throw new Error(`${tr("apiRequestFailed")}: ${res.status} ${res.statusText}`);
       }
@@ -10832,7 +10867,9 @@ const res = await fetch(`${API_BASE}/api/practice?count=${count}&difficulty=${en
 
       await setView("test");
       renderQuestion();
+      console.log("[StartFlow][practice] render/view switch completed");
       await updateResumeVisibility();
+      console.log(`[StartFlow][practice] total elapsed=${formatElapsedMs(performance.now() - flowStartedAt)}`);
     }
   );
 }
@@ -13523,6 +13560,13 @@ window.addEventListener("resize", () => {
     const startTestBtn = document.getElementById("startTestBtn");
     if (startTestBtn) {
       startTestBtn.addEventListener("click", async () => {
+        if (startFlowInFlight.test) {
+          console.warn("[StartFlow][test] duplicate start click ignored while loading");
+          return;
+        }
+        startFlowInFlight.test = true;
+        startTestBtn.disabled = true;
+        try {
         if (state.auth.guestMode) {
           await runStartActivity("test", () => startTest());
           return;
@@ -13552,6 +13596,10 @@ window.addEventListener("resize", () => {
           );
         } else {
           await runStartActivity("test", () => startTest());
+        }
+        } finally {
+          startFlowInFlight.test = false;
+          startTestBtn.disabled = false;
         }
       });
     }
@@ -13641,11 +13689,22 @@ window.addEventListener("resize", () => {
     const startPracticeBtn = document.getElementById("startPracticeBtn");
     if (startPracticeBtn) {
       startPracticeBtn.addEventListener("click", async () => {
+        if (startFlowInFlight.practice) {
+          console.warn("[StartFlow][practice] duplicate start click ignored while loading");
+          return;
+        }
+        startFlowInFlight.practice = true;
+        startPracticeBtn.disabled = true;
+        try {
         const skill = document.getElementById("practiceSkillSelect").value;
         const difficulty = document.getElementById("practiceDifficultySelect").value;
         const startPracticeAction = () => runStartActivity("practice", () => startPractice(skill, difficulty, false));
         if (!requireSignedInOrGuestBeforeStart(startPracticeAction)) return;
         await runStartActivity("practice", () => startPractice(skill, difficulty, false));
+        } finally {
+          startFlowInFlight.practice = false;
+          startPracticeBtn.disabled = false;
+        }
       });
     }
 
@@ -13791,11 +13850,22 @@ if (questionTextForHighlighter) {
 const startLearningBtn = document.getElementById("startLearningBtn");
 if (startLearningBtn) {
   startLearningBtn.addEventListener("click", async () => {
+    if (startFlowInFlight.learning) {
+      console.warn("[StartFlow][learning] duplicate start click ignored while loading");
+      return;
+    }
+    startFlowInFlight.learning = true;
+    startLearningBtn.disabled = true;
+    try {
     const skill = document.getElementById("learningSkillSelect")?.value || document.getElementById("practiceSkillSelect")?.value;
     const difficulty = document.getElementById("learningDifficultySelect")?.value || document.getElementById("practiceDifficultySelect")?.value || "GED-Level";
     const startLearningAction = () => runStartActivity("learning mode", () => startLearningMode(skill, difficulty, false));
     if (!requireSignedInOrGuestBeforeStart(startLearningAction)) return;
     await runStartActivity("learning mode", () => startLearningMode(skill, difficulty, false));
+    } finally {
+      startFlowInFlight.learning = false;
+      startLearningBtn.disabled = false;
+    }
   });
 }
 
