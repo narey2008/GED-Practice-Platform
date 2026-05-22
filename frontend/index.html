@@ -1952,6 +1952,16 @@ select {
   border-top: 1px solid var(--border);
 }
 
+.profileGoalsFocusActions h3 {
+  margin: 0 0 6px;
+  color: var(--primary);
+}
+
+.profileGoalsFocusActions p {
+  margin: 0;
+  color: var(--muted);
+}
+
 @media (max-width: 900px) {
   .profileContentSection {
     margin-left: 0;
@@ -13257,8 +13267,7 @@ panel.innerHTML = `
     </div>
 
     <div class="profileGoalsFocusActions">
-      <div class="profileActionCard">
-        <h3>Practice Focus</h3>
+      <h3>Practice Focus</h3>
       <p>Jump directly into your weakest skill or continue reviewing your progress.</p>
 
       <div class="menuActions">
@@ -13269,8 +13278,6 @@ panel.innerHTML = `
         }
       </div>
     </div>
-
-      </div>
 
     <div id="goalsSection"></div>
     </div>
@@ -13356,7 +13363,7 @@ panel.innerHTML = `
   </div>
 
   <div id="profileDangerSectionBody" class="profileContentSectionBody hidden">
-    <div class="profileActionCard profileDangerZone">
+    <div class="profileDangerZone">
       <p>Deleting your account permanently removes your saved account data.</p>
 
       <div class="menuActions">
