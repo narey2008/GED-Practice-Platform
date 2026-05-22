@@ -1784,6 +1784,8 @@ app.get("/api/progress", authMiddleware, async (req, res) => {
         overtimeUsed: saved.overtimeUsed,
         timeoutMode: saved.timeoutMode,
         lockedReviewMode: saved.lockedReviewMode,
+        shownTenMinuteWarning: !!saved.shownTenMinuteWarning,
+        shownOneMinuteWarning: !!saved.shownOneMinuteWarning,
         updatedAt: saved.updatedAt
       }
     });
@@ -1806,7 +1808,9 @@ app.post("/api/progress/save", authMiddleware, async (req, res) => {
       practiceMeta: req.body.practiceMeta || null,
       overtimeUsed: !!req.body.overtimeUsed,
       timeoutMode: !!req.body.timeoutMode,
-      lockedReviewMode: !!req.body.lockedReviewMode
+      lockedReviewMode: !!req.body.lockedReviewMode,
+      shownTenMinuteWarning: !!req.body.shownTenMinuteWarning,
+      shownOneMinuteWarning: !!req.body.shownOneMinuteWarning
     };
 
     const saved = await SavedProgress.findOneAndUpdate(

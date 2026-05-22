@@ -9971,16 +9971,21 @@ function maybeShowFullTestTimeWarnings() {
   if (state.mode !== "test") return;
   if (state.timeoutMode || state.lockedReviewMode) return;
 
-  if (!state.shownTenMinuteWarning && state.timeRemaining <= 10 * 60) {
-    state.shownTenMinuteWarning = true;
-    showFullTestTimeWarning(10);
-    saveProgress().catch((error) => console.error("Failed to save 10-minute warning state", error));
-  }
-
   if (!state.shownOneMinuteWarning && state.timeRemaining <= 60) {
     state.shownOneMinuteWarning = true;
     showFullTestTimeWarning(1);
     saveProgress().catch((error) => console.error("Failed to save 1-minute warning state", error));
+    return;
+  }
+
+  if (
+    !state.shownTenMinuteWarning &&
+    state.timeRemaining <= 10 * 60 &&
+    state.timeRemaining > 60
+  ) {
+    state.shownTenMinuteWarning = true;
+    showFullTestTimeWarning(10);
+    saveProgress().catch((error) => console.error("Failed to save 10-minute warning state", error));
   }
 }
 
