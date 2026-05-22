@@ -13286,20 +13286,15 @@ panel.innerHTML = `
   </div>
 
   <div id="profileAccountSettingsSectionBody" class="profileContentSectionBody hidden">
-    <div class="profileActionCard">
-      <h3>Account Settings</h3>
-      <p>Manage your username, email, password, security, and scoring preference.</p>
+    <p>Manage your username, email, password, security, and scoring preference.</p>
 
-      <div class="menuActions">
-        <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
-        <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
-        <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
-        <button id="profileScoringToggleBtn" class="secondaryBtn">
-          ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
-        </button>
-      </div>
-    </div>
-
+    <div class="menuActions">
+      <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
+      <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
+      <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+      <button id="profileScoringToggleBtn" class="secondaryBtn">
+        ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
+      </button>
     </div>
   </div>
 </section>
@@ -13313,21 +13308,16 @@ panel.innerHTML = `
   </div>
 
   <div id="profileSecuritySectionBody" class="profileContentSectionBody hidden">
-    <div class="profileActionCard">
-      <h3>Security & Access</h3>
-      <p>Use these options if you need account-access help or need to enable account protection.</p>
+    <p>Use these options if you need account-access help or need to enable account protection.</p>
 
-      <div class="menuActions">
-        <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
+    <div class="menuActions">
+      <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
 
-        ${
-          (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
-            ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
-            : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
-        }
-      </div>
-    </div>
-
+      ${
+        (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
+          ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
+          : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
+      }
     </div>
   </div>
 </section>
@@ -13367,7 +13357,6 @@ panel.innerHTML = `
 
   <div id="profileDangerSectionBody" class="profileContentSectionBody hidden">
     <div class="profileActionCard profileDangerZone">
-      <h3>Danger Zone</h3>
       <p>Deleting your account permanently removes your saved account data.</p>
 
       <div class="menuActions">
