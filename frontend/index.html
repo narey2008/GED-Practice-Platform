@@ -3712,15 +3712,18 @@ function renderLearningSessionDetails(entry) {
   }
 
   const examplesHtml = examples.length
-    ? examples.map((q, i) => `
+    ? examples.map((q, i) => {
+      const questionText = q.question || q.prompt || "—";
+      return `
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Example ${i + 1}</strong></div>
-        <div style="margin-top:8px; line-height:1.6;">${q.question || "—"}</div>
+        <div style="margin-top:8px; line-height:1.6;">${escapeHtml(questionText)}</div>
         ${getReviewVisualMarkup(q, "learningExample", i)}
         ${renderHistorySpecialTypeMarkup(q)}
         ${q.explanation ? `<div style="margin-top:10px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
       </div>
-    `).join("")
+    `;
+    }).join("")
     : `<div class="reviewItem" style="margin-top:10px;">No example details saved for this session.</div>`;
 
   const practiceHtml = practiceQuestions.length
@@ -3728,10 +3731,11 @@ function renderLearningSessionDetails(entry) {
       const userAnswer = Array.isArray(q.userAnswer) ? q.userAnswer.join(" → ") : String(q.userAnswer ?? "").trim();
       const correctAnswer = String(q.answer ?? "").trim();
       const hasResult = typeof q.isCorrect === "boolean";
+      const questionText = q.question || q.prompt || "—";
       return `
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Practice Q${i + 1}</strong></div>
-        <div style="margin-top:8px; line-height:1.6;">${q.question || "—"}</div>
+        <div style="margin-top:8px; line-height:1.6;">${escapeHtml(questionText)}</div>
         ${getReviewVisualMarkup(q, "learningPractice", i)}
         ${renderHistorySpecialTypeMarkup(q)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
