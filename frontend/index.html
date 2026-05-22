@@ -3165,6 +3165,16 @@ body.loadingActive {
   </div>
 </div>
 
+  <div id="formulaSheetModal" class="modalBackdrop">
+  <div id="formulaSheetBox" class="modal" style="max-width:520px; max-height:75vh; position:fixed; overflow:hidden;">
+    <div id="formulaSheetHeader" class="modalHeader" style="cursor:move; display:flex; justify-content:space-between; align-items:center;">
+      <span>Formula Sheet</span>
+      <button id="closeFormulaSheetBtn" class="secondaryBtn" style="padding:6px 10px;">✕</button>
+    </div>
+    <div id="formulaSheetBody" class="modalBody" style="max-height:calc(75vh - 64px); overflow-y:auto;"></div>
+  </div>
+</div>
+
     <div id="loadingOverlay" class="loadingOverlay" aria-live="polite" aria-busy="true">
     <div class="loadingCard">
       <div class="loadingSpinner"></div>
@@ -3912,9 +3922,9 @@ function closeCalculator() {
   if (modal) modal.style.display = "none";
 }
 
-function makeCalculatorDraggable() {
-  const box = document.getElementById("calculatorBox");
-  const header = document.getElementById("calculatorHeader");
+function makeModalDraggable(boxId, headerId) {
+  const box = document.getElementById(boxId);
+  const header = document.getElementById(headerId);
   if (!box || !header) return;
 
   let isDragging = false;
@@ -3935,8 +3945,12 @@ function makeCalculatorDraggable() {
 
   document.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
-    box.style.left = `${e.clientX - offsetX}px`;
-    box.style.top = `${e.clientY - offsetY}px`;
+    const maxLeft = Math.max(0, window.innerWidth - box.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - box.offsetHeight);
+    const nextLeft = Math.min(Math.max(0, e.clientX - offsetX), maxLeft);
+    const nextTop = Math.min(Math.max(0, e.clientY - offsetY), maxTop);
+    box.style.left = `${nextLeft}px`;
+    box.style.top = `${nextTop}px`;
   });
 
   document.addEventListener("mouseup", () => {
@@ -7787,9 +7801,12 @@ function showToast(title, text, duration = 6000) {
 }
 
 function openFormulaSheetModal() {
-  showModal(
-    "Formula Sheet",
-    `
+  const modal = document.getElementById("formulaSheetModal");
+  const box = document.getElementById("formulaSheetBox");
+  const body = document.getElementById("formulaSheetBody");
+  if (!modal || !box || !body) return;
+
+  body.innerHTML = `
       <div class="reviewItem">
         <h3 style="margin-top:0;">Geometry</h3>
         <div><strong>Rectangle Area:</strong> A = length × width</div>
@@ -7810,9 +7827,17 @@ function openFormulaSheetModal() {
         <div><strong>Distance:</strong> distance = rate × time</div>
         <div><strong>Percent:</strong> part = percent × whole</div>
       </div>
-    `,
-    [{ label: tr("close"), variant: "primary" }]
-  );
+    `;
+
+  box.style.left = "";
+  box.style.top = "";
+  box.style.margin = "";
+  modal.style.display = "flex";
+}
+
+function closeFormulaSheet() {
+  const modal = document.getElementById("formulaSheetModal");
+  if (modal) modal.style.display = "none";
 }
 
 function openForgotPasswordModal() {
@@ -13599,7 +13624,12 @@ document.getElementById("closeCalculatorBtn").onclick = () => {
   closeCalculator();
 };
 
-makeCalculatorDraggable();
+document.getElementById("closeFormulaSheetBtn").onclick = () => {
+  closeFormulaSheet();
+};
+
+makeModalDraggable("calculatorBox", "calculatorHeader");
+makeModalDraggable("formulaSheetBox", "formulaSheetHeader");
 
 const highlighterBtn = document.getElementById("highlighterBtn");
 if (highlighterBtn) {
