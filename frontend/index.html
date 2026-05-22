@@ -1834,8 +1834,12 @@ select {
   margin-left: 252px;
 }
 
+:root {
+  --sticky-topbar-scroll-offset: 82px;
+}
+
 .profileSectionAnchor {
-  scroll-margin-top: 82px;
+  scroll-margin-top: var(--sticky-topbar-scroll-offset);
 }
 
 .profileSectionHighlight {
@@ -2597,6 +2601,10 @@ body.loadingActive {
 }
 
 @media (max-width: 900px) {
+  :root {
+    --sticky-topbar-scroll-offset: 132px;
+  }
+
   .topbar {
     height: auto;
     grid-template-columns: 1fr;
