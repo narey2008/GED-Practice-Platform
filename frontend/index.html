@@ -3595,10 +3595,12 @@ function renderHistorySpecialTypeMarkup(q) {
 function renderReviewCharts(container) {
   if (!container || typeof Chart === "undefined") return;
 
+  destroyReviewCharts(container);
+
   const chartCanvases = container.querySelectorAll("canvas[data-review-chart]");
 
   chartCanvases.forEach((canvas) => {
-    if (!canvas || canvas.dataset.chartRendered === "1") return;
+    if (!canvas) return;
 
     try {
       const raw = decodeURIComponent(canvas.dataset.reviewChart || "");
@@ -3606,7 +3608,7 @@ function renderReviewCharts(container) {
       const themed = updateChartTheme(parsed);
       if (!themed || !themed.type || !themed.data) return;
 
-      new Chart(canvas.getContext("2d"), {
+      const chart = new Chart(canvas.getContext("2d"), {
         ...themed,
         options: {
           responsive: true,
@@ -3620,9 +3622,40 @@ function renderReviewCharts(container) {
         ]
       });
 
-      canvas.dataset.chartRendered = "1";
+      reviewChartInstances.set(canvas, chart);
     } catch (error) {
       console.error("REVIEW CHART RENDER ERROR:", error);
+    }
+  });
+}
+
+const reviewChartInstances = new Map();
+
+function destroyReviewCharts(container) {
+  if (!container || typeof Chart === "undefined") return;
+
+  const chartCanvases = container.querySelectorAll("canvas[data-review-chart]");
+  chartCanvases.forEach((canvas) => {
+    if (!canvas) return;
+
+    const tracked = reviewChartInstances.get(canvas);
+    if (tracked) {
+      try {
+        tracked.destroy();
+      } catch (error) {
+        console.warn("REVIEW CHART DESTROY WARNING:", error);
+      }
+      reviewChartInstances.delete(canvas);
+      return;
+    }
+
+    const existing = Chart.getChart(canvas);
+    if (existing) {
+      try {
+        existing.destroy();
+      } catch (error) {
+        console.warn("REVIEW CHART DESTROY WARNING:", error);
+      }
     }
   });
 }
@@ -6852,6 +6885,7 @@ function showModal(title, bodyHtml, actions = []) {
     }
 
     function closeModal() {
+      destroyReviewCharts(document.getElementById("modalBody"));
       document.getElementById("modalBackdrop").style.display = "none";
     }
 
@@ -12179,9 +12213,8 @@ async function showReview() {
 
 panel.insertAdjacentHTML("beforeend", renderHistoryDetails(state.questions));
 
-renderReviewCharts(panel);
-
   await setView("review");
+  requestAnimationFrame(() => renderReviewCharts(panel));
   await clearSavedProgress();
 
   const reviewMainMenuTopBtn = document.getElementById("reviewMainMenuTopBtn");
@@ -12504,9 +12537,8 @@ async function showLearningComplete() {
   panel.appendChild(div);
 });
 
-      renderReviewCharts(panel);
-
       await setView("practice-results");
+      requestAnimationFrame(() => renderReviewCharts(panel));
       trackGoalActivity({
   type: "practice",
   label: "Practice session",
