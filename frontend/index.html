@@ -13363,24 +13363,64 @@ panel.innerHTML = `
           });
         }
 
+        const testHistoryTabBtn = document.getElementById("testHistoryTabBtn");
+        const practiceHistoryTabBtn = document.getElementById("practiceHistoryTabBtn");
+        const learningHistoryTabBtn = document.getElementById("learningHistoryTabBtn");
+
+        const historyTabs = {
+          tests: { button: testHistoryTabBtn, section: testSection },
+          practice: { button: practiceHistoryTabBtn, section: practiceSection },
+          learning: { button: learningHistoryTabBtn, section: learningSection }
+        };
+
         function showTab(tabName) {
-          testSection.classList.toggle("hidden", tabName !== "tests");
-          practiceSection.classList.toggle("hidden", tabName !== "practice");
-          learningSection.classList.toggle("hidden", tabName !== "learning");
+          Object.entries(historyTabs).forEach(([name, config]) => {
+            const isActive = name === tabName;
+            config.section.classList.toggle("hidden", !isActive);
+            if (config.button) {
+              config.button.setAttribute("aria-expanded", isActive ? "true" : "false");
+            }
+          });
         }
 
-        document.getElementById("testHistoryTabBtn").onclick = () => {
-          showTab("tests");
-        };
+        function collapseHistoryTabs() {
+          Object.values(historyTabs).forEach(({ button, section }) => {
+            section.classList.add("hidden");
+            if (button) {
+              button.setAttribute("aria-expanded", "false");
+            }
+          });
+        }
 
-        document.getElementById("practiceHistoryTabBtn").onclick = () => {
-          showTab("practice");
-        };
-        document.getElementById("learningHistoryTabBtn").onclick = () => {
-          showTab("learning");
-        };
+        function toggleHistoryTab(tabName) {
+          const tabConfig = historyTabs[tabName];
+          if (!tabConfig || !tabConfig.button) return;
+          const isExpanded = tabConfig.button.getAttribute("aria-expanded") === "true";
+          if (isExpanded) {
+            collapseHistoryTabs();
+            return;
+          }
+          showTab(tabName);
+        }
 
-        showTab(defaultTab === "goals" ? "tests" : defaultTab);
+        if (testHistoryTabBtn) {
+          testHistoryTabBtn.onclick = () => toggleHistoryTab("tests");
+        }
+
+        if (practiceHistoryTabBtn) {
+          practiceHistoryTabBtn.onclick = () => toggleHistoryTab("practice");
+        }
+
+        if (learningHistoryTabBtn) {
+          learningHistoryTabBtn.onclick = () => toggleHistoryTab("learning");
+        }
+
+        const initialTab = defaultTab === "goals" ? null : defaultTab;
+        if (initialTab && historyTabs[initialTab]) {
+          showTab(initialTab);
+        } else {
+          collapseHistoryTabs();
+        }
         wireProfileAccountNav();
 
         panel.querySelectorAll(".testHistoryDetailsBtn").forEach((btn) => {
