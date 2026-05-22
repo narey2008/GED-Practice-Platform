@@ -1946,9 +1946,9 @@ select {
 }
 
 .profileGoalsFocusActions {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .profileGoalsFocusActions h3 {
@@ -1960,6 +1960,10 @@ select {
 .profileGoalsFocusActions p {
   margin: 0 0 8px;
   color: var(--muted);
+}
+
+.profileGoalsFocusActions .menuActions {
+  margin-top: 6px;
 }
 
 @media (max-width: 900px) {
@@ -2083,10 +2087,10 @@ select {
 }
 
 .profileGoalEmpty {
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  background: var(--panel-2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
   color: var(--text);
   line-height: 1.65;
 }
@@ -13180,14 +13184,9 @@ panel.innerHTML = `
       <span>Progress Overview</span>
     </button>
 
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSettingsSection">
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSecuritySection">
       <span class="profileAccountNavIcon">🔐</span>
-      <span>Account Settings</span>
-    </button>
-
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileSecuritySection">
-      <span class="profileAccountNavIcon">🛡️</span>
-      <span>Security & Access</span>
+      <span>Account Security & Preferences</span>
     </button>
 
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileHistorySection">
@@ -13284,15 +13283,15 @@ panel.innerHTML = `
   </div>
 </section>
 
-<section id="profileAccountSettingsSection" class="profileContentSection profileSectionAnchor">
+<section id="profileAccountSecuritySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSettingsSectionBody" aria-expanded="false">
-      <h3 class="profileContentSectionTitle">Account Settings</h3>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSecuritySectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Account Security & Preferences</h3>
       <span class="profileSectionToggleIcon">▾</span>
     </button>
   </div>
 
-  <div id="profileAccountSettingsSectionBody" class="profileContentSectionBody hidden">
+  <div id="profileAccountSecuritySectionBody" class="profileContentSectionBody hidden">
     <p>Manage your username, email, password, security, and scoring preference.</p>
 
     <div class="menuActions">
@@ -13302,22 +13301,6 @@ panel.innerHTML = `
       <button id="profileScoringToggleBtn" class="secondaryBtn">
         ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
       </button>
-    </div>
-  </div>
-</section>
-
-<section id="profileSecuritySection" class="profileContentSection profileSectionAnchor">
-  <div class="profileContentSectionHeader">
-    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileSecuritySectionBody" aria-expanded="false">
-      <h3 class="profileContentSectionTitle">Security & Access</h3>
-      <span class="profileSectionToggleIcon">▾</span>
-    </button>
-  </div>
-
-  <div id="profileSecuritySectionBody" class="profileContentSectionBody hidden">
-    <p>Use these options if you need account-access help or need to enable account protection.</p>
-
-    <div class="menuActions">
       <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
 
       ${
@@ -13550,8 +13533,7 @@ panel.innerHTML = `
         wireProfileSectionToggles();
         setProfileSectionExpanded("profileProgressSection", false);
         setProfileSectionExpanded("profileGoalsFocusSection", false);
-        setProfileSectionExpanded("profileAccountSettingsSection", false);
-        setProfileSectionExpanded("profileSecuritySection", false);
+        setProfileSectionExpanded("profileAccountSecuritySection", false);
         setProfileSectionExpanded("profileHistorySection", false);
         setProfileSectionExpanded("profileDangerSection", false);
 
