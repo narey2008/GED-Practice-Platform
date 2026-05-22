@@ -2769,6 +2769,64 @@ body.loadingActive {
     min-height: 110px;
   }
 }
+
+
+    .scrollTopBtn {
+      position: fixed;
+      right: clamp(12px, 2.6vw, 24px);
+      bottom: clamp(18px, 3vw, 28px);
+      z-index: 930;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--card) 88%, var(--primary) 12%);
+      color: var(--text);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    }
+
+    .scrollTopBtn.visible {
+      opacity: 0.9;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .scrollTopBtn:hover,
+    .scrollTopBtn:focus-visible {
+      opacity: 1;
+      outline: none;
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--card) 72%, var(--primary) 28%);
+    }
+
+    body.modal-open .scrollTopBtn,
+    body.calculator-open .scrollTopBtn,
+    body.formula-open .scrollTopBtn {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+@media (max-width: 900px) {
+  .scrollTopBtn {
+    right: 10px;
+    bottom: 12px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
   </style>
 </head>
 <body class="theme-original">
@@ -3174,6 +3232,8 @@ body.loadingActive {
     <div id="profilePanel" class="card reviewWrap hidden"></div>
   </div>
 
+
+  <button id="scrollTopBtn" class="scrollTopBtn" type="button" aria-label="Scroll to top" title="Scroll to top">↑</button>
   <button id="settingsBtn" class="secondaryBtn iconBtn floatingLeft" title="Settings">⚙</button>
   <button id="submitTestBtn" class="primaryBtn floatingRight hidden">Submit Test</button>
 
@@ -3874,6 +3934,8 @@ function openCalculator() {
   if (!modal || !container) return;
 
   modal.style.display = "flex";
+  document.body.classList.add("calculator-open");
+  syncScrollTopButtonVisibility();
 
   container.innerHTML = `
     <div style="display:grid;gap:10px;">
@@ -4069,6 +4131,8 @@ function hideHighlighterTools() {
 function closeCalculator() {
   const modal = document.getElementById("calculatorModal");
   if (modal) modal.style.display = "none";
+  document.body.classList.remove("calculator-open");
+  syncScrollTopButtonVisibility();
 }
 
 function makeModalDraggable(boxId, headerId) {
@@ -6927,8 +6991,10 @@ async function setView(view) {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    syncScrollTopButtonVisibility();
   });
 
+  syncScrollTopButtonVisibility();
 updateTopbarMode();
 renderGoalDock();
 await updateResumeVisibility();
@@ -6968,11 +7034,15 @@ function showModal(title, bodyHtml, actions = []) {
       });
 
       document.getElementById("modalBackdrop").style.display = "flex";
+      document.body.classList.add("modal-open");
+      syncScrollTopButtonVisibility();
     }
 
     function closeModal() {
       destroyReviewCharts(document.getElementById("modalBody"));
       document.getElementById("modalBackdrop").style.display = "none";
+      document.body.classList.remove("modal-open");
+      syncScrollTopButtonVisibility();
     }
 
 function showLoading(title = tr("loading"), text = "") {
@@ -8053,11 +8123,15 @@ function openFormulaSheetModal() {
   box.style.top = "";
   box.style.margin = "";
   modal.style.display = "flex";
+  document.body.classList.add("formula-open");
+  syncScrollTopButtonVisibility();
 }
 
 function closeFormulaSheet() {
   const modal = document.getElementById("formulaSheetModal");
   if (modal) modal.style.display = "none";
+  document.body.classList.remove("formula-open");
+  syncScrollTopButtonVisibility();
 }
 
 function openForgotPasswordModal() {
@@ -14160,6 +14234,36 @@ window.addEventListener("error", async (event) => {
   hideLoading();
 });
 
+
+
+const scrollTopBtn = document.getElementById("scrollTopBtn");
+const SCROLL_TOP_SHOW_THRESHOLD = 320;
+
+function hasOpenBlockingModal() {
+  return (
+    document.getElementById("modalBackdrop")?.style.display === "flex" ||
+    document.getElementById("calculatorModal")?.style.display === "flex" ||
+    document.getElementById("formulaSheetModal")?.style.display === "flex"
+  );
+}
+
+function syncScrollTopButtonVisibility() {
+  if (!scrollTopBtn) return;
+
+  const hiddenInView = ["test", "practice", "practice-example", "learning", "test-tutorial"].includes(state.mode);
+  const showButton = window.scrollY > SCROLL_TOP_SHOW_THRESHOLD && !hiddenInView && !hasOpenBlockingModal();
+  scrollTopBtn.classList.toggle("visible", showButton);
+}
+
+if (scrollTopBtn) {
+  scrollTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+window.addEventListener("scroll", syncScrollTopButtonVisibility, { passive: true });
+window.addEventListener("resize", syncScrollTopButtonVisibility, { passive: true });
+
 window.addEventListener("unhandledrejection", async (event) => {
   const activeModes = ["test", "practice", "practice-example", "learning", "test-tutorial"];
 
@@ -14186,6 +14290,7 @@ renderGoalDock();
       await setView("menu");
       applyLanguage(getSavedLanguage());
       syncLearningSkillDropdown();
+      syncScrollTopButtonVisibility();
 
       const url = new URL(window.location.href);
       const resetToken = url.searchParams.get("resetToken");
