@@ -4727,10 +4727,10 @@ learningModeHelperText: isSpanish
     autoFilledHint: isSpanish
       ? "No cambies esto si ya fue completado correctamente."
       : "Do not change this if it was auto-filled correctly.",
-    otherDetailsLabel: isSpanish ? "Otro" : "Other",
+    otherDetailsLabel: isSpanish ? "Tema adicional" : "Other topic",
     otherDetailsPlaceholder: isSpanish
-      ? "Especifica"
-      : "Specify",
+      ? "Describe el tema"
+      : "Please describe",
 
       termsTitle: isSpanish ? "Términos y Condiciones" : "Terms & Conditions",
 privacyTitle: isSpanish ? "Privacidad y Cookies" : "Privacy & Cookies",
@@ -7193,6 +7193,16 @@ function openSupportContactModal(prefill = {}) {
         <option value="other" ${defaultType === "other" ? "selected" : ""}>Other</option>
       </select>
 
+      <div id="supportOtherTopicWrap" class="hidden">
+        <label for="supportOtherTopic" style="margin-top:12px;">${escapeHtml(supportLabel("otherDetailsLabel", "Other topic"))}</label>
+        <input
+          id="supportOtherTopic"
+          type="text"
+          placeholder="${escapeHtml(supportLabel("otherDetailsPlaceholder", "Please describe"))}"
+          value=""
+        />
+      </div>
+
       <label for="supportSubject" style="margin-top:12px;">Subject</label>
       <input
         id="supportSubject"
@@ -7267,6 +7277,7 @@ function openSupportContactModal(prefill = {}) {
           const originalBtnText = submitBtn?.innerText || "Submit Support Request";
 
           const type = document.getElementById("supportTypeSelect")?.value || "other";
+          const otherTopic = document.getElementById("supportOtherTopic")?.value.trim() || "";
           const subject = document.getElementById("supportSubject")?.value.trim() || "";
           const details = document.getElementById("supportDetails")?.value.trim() || "";
           const pageFeature = document.getElementById("supportPageFeature")?.value.trim() || "";
@@ -7282,6 +7293,14 @@ function openSupportContactModal(prefill = {}) {
           if (statusEl) {
             statusEl.classList.add("hidden");
             statusEl.textContent = "";
+          }
+
+          if (type === "other" && !otherTopic) {
+            if (errorEl) {
+              errorEl.textContent = "Please describe the Other topic.";
+              errorEl.classList.remove("hidden");
+            }
+            return;
           }
 
           if (!subject) {
@@ -7319,7 +7338,17 @@ function openSupportContactModal(prefill = {}) {
 
                 formData.append("type", type);
                 formData.append("subject", subject);
-                formData.append("details", details);
+                const normalizedDetails =
+                  type === "other"
+                    ? `Other topic: ${otherTopic}
+
+${details}`
+                    : details;
+
+                formData.append("details", normalizedDetails);
+                if (type === "other") {
+                  formData.append("otherTopic", otherTopic);
+                }
                 formData.append("pageFeature", pageFeature);
                 formData.append("userStatus", signedInLabel);
                 formData.append("deviceBrowser", deviceBrowser);
@@ -7425,6 +7454,27 @@ function openSupportContactModal(prefill = {}) {
       }
     ]
   );
+
+  const supportTypeSelect = document.getElementById("supportTypeSelect");
+  const supportOtherTopicWrap = document.getElementById("supportOtherTopicWrap");
+  const supportOtherTopicInput = document.getElementById("supportOtherTopic");
+
+  const updateSupportOtherTopicVisibility = () => {
+    const isOther = supportTypeSelect?.value === "other";
+
+    if (supportOtherTopicWrap) {
+      supportOtherTopicWrap.classList.toggle("hidden", !isOther);
+    }
+
+    if (!isOther && supportOtherTopicInput) {
+      supportOtherTopicInput.value = "";
+    }
+  };
+
+  if (supportTypeSelect) {
+    supportTypeSelect.addEventListener("change", updateSupportOtherTopicVisibility);
+    updateSupportOtherTopicVisibility();
+  }
 
   const supportScreenshotInput = document.getElementById("supportScreenshot");
   const supportScreenshotPreview = document.getElementById("supportScreenshotPreview");
