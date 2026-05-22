@@ -2788,7 +2788,6 @@ body.loadingActive {
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
       <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
             <button id="contactBtnTop" class="secondaryBtn">Contact Us</button>
-            <button id="legalBtnTop" class="secondaryBtn">Legal</button>
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
@@ -3122,7 +3121,12 @@ body.loadingActive {
     GED Practice Platform is built for focused GED math practice, progress tracking, and realistic test preparation.
   </div>
 
-  <button id="legalInfoBtn" class="secondaryBtn legalFooterBtn">Legal / About</button>
+  <div class="menuActions" style="justify-content:center; gap:8px; flex-wrap:wrap; margin-top:10px;">
+    <button id="legalTermsFooterBtn" class="secondaryBtn legalFooterBtn">Terms</button>
+    <button id="legalPrivacyFooterBtn" class="secondaryBtn legalFooterBtn">Privacy</button>
+    <button id="legalFaqFooterBtn" class="secondaryBtn legalFooterBtn">FAQ</button>
+    <button id="legalAboutFooterBtn" class="secondaryBtn legalFooterBtn">About Us</button>
+  </div>
 </div>
 
     <div id="testView" class="testCard hidden">
@@ -5651,8 +5655,10 @@ if (languageSubmitTestBtn) {
 const languageLoadingTitle = document.getElementById("loadingTitle");
 const languageLoadingText = document.getElementById("loadingText");
 const languageLoadingSubtext = document.querySelector(".loadingSubtext");
-const languageLegalBtnTop = document.getElementById("legalBtnTop");
-const languageLegalInfoBtn = document.getElementById("legalInfoBtn");
+const languageLegalTermsFooterBtn = document.getElementById("legalTermsFooterBtn");
+const languageLegalPrivacyFooterBtn = document.getElementById("legalPrivacyFooterBtn");
+const languageLegalFaqFooterBtn = document.getElementById("legalFaqFooterBtn");
+const languageLegalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
 
 const languageStartTestBadge = document.getElementById("startTestBadge");
 const languageStartTestHelperText = document.getElementById("startTestHelperText");
@@ -5661,12 +5667,17 @@ const languageStartPracticeHelperText = document.getElementById("startPracticeHe
 const languageLearningModeBadge = document.getElementById("learningModeBadge");
 const languageLearningModeHelperText = document.getElementById("learningModeHelperText");
 
-if (languageLegalBtnTop) {
-  languageLegalBtnTop.textContent = t.legalTopBtn;
+if (languageLegalTermsFooterBtn) {
+  languageLegalTermsFooterBtn.textContent = t.termsShort || "Terms";
 }
-
-if (languageLegalInfoBtn) {
-  languageLegalInfoBtn.textContent = t.legalTopBtn || "Legal / About";
+if (languageLegalPrivacyFooterBtn) {
+  languageLegalPrivacyFooterBtn.textContent = t.privacyShort || "Privacy";
+}
+if (languageLegalFaqFooterBtn) {
+  languageLegalFaqFooterBtn.textContent = t.faqShort || "FAQ";
+}
+if (languageLegalAboutFooterBtn) {
+  languageLegalAboutFooterBtn.textContent = t.aboutShort || "About Us";
 }
 
 if (languageStartTestBadge) {
@@ -13816,14 +13827,24 @@ if (contactBtnTop) {
   contactBtnTop.onclick = () => openSupportContactModal();
 }
 
-const legalBtnTop = document.getElementById("legalBtnTop");
-if (legalBtnTop) {
-  legalBtnTop.onclick = () => openLegalHubModal();
+const legalTermsFooterBtn = document.getElementById("legalTermsFooterBtn");
+if (legalTermsFooterBtn) {
+  legalTermsFooterBtn.onclick = () => openTermsModal();
 }
 
-const legalInfoFooterBtn = document.getElementById("legalInfoBtn");
-if (legalInfoFooterBtn) {
-  legalInfoFooterBtn.onclick = () => openLegalHubModal();
+const legalPrivacyFooterBtn = document.getElementById("legalPrivacyFooterBtn");
+if (legalPrivacyFooterBtn) {
+  legalPrivacyFooterBtn.onclick = () => openPrivacyModal();
+}
+
+const legalFaqFooterBtn = document.getElementById("legalFaqFooterBtn");
+if (legalFaqFooterBtn) {
+  legalFaqFooterBtn.onclick = () => openFaqModal();
+}
+
+const legalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
+if (legalAboutFooterBtn) {
+  legalAboutFooterBtn.onclick = () => openAboutModal();
 }
 
 const supportEmailBtn = document.getElementById("supportEmailBtn");
