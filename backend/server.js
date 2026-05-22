@@ -2051,6 +2051,15 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
     const safeIncorrectCount = Number(incorrectCount);
     const safeExamplesStudied = Number(examplesStudied);
     const safeQuestionsAnswered = Number(questionsAnswered);
+    let safeCompletedAt = new Date();
+
+    if (completedAt !== undefined) {
+      const parsedCompletedAt = new Date(completedAt);
+      if (Number.isNaN(parsedCompletedAt.getTime())) {
+        return res.status(400).json({ error: "Invalid completedAt date." });
+      }
+      safeCompletedAt = parsedCompletedAt;
+    }
 
     if (
       !Number.isFinite(safeTotalQuestions) ||
@@ -2082,7 +2091,7 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
       totalQuestions: safeTotalQuestions,
       detailExamples: safeDetailExamples,
       detailPracticeQuestions: safeDetailPracticeQuestions,
-      completedAt: completedAt ? new Date(completedAt) : new Date()
+      completedAt: safeCompletedAt
     });
 
     return res.json({
