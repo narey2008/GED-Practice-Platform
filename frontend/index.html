@@ -13166,6 +13166,8 @@ panel.innerHTML = `
     </div>
 
       </div>
+
+    <div id="goalsSection"></div>
     </div>
   </div>
 </section>
@@ -13256,14 +13258,12 @@ panel.innerHTML = `
   <div class="profileContentSectionBody">
     <div class="profileHistoryTabs">
     <div class="menuActions">
-      <button id="goalsTabBtn" class="secondaryBtn">🎯 ${tr("goalsTab")}</button>
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
       <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
       <button id="learningHistoryTabBtn" class="secondaryBtn">${tr("learningHistory")}</button>
     </div>
   </div>
 
-    <div id="goalsSection" class="hidden"></div>
     <div id="testHistorySection" class="hidden"></div>
     <div id="practiceHistorySection" class="hidden"></div>
     <div id="learningHistorySection" class="hidden"></div>
@@ -13364,15 +13364,10 @@ panel.innerHTML = `
         }
 
         function showTab(tabName) {
-          goalsSection.classList.toggle("hidden", tabName !== "goals");
           testSection.classList.toggle("hidden", tabName !== "tests");
           practiceSection.classList.toggle("hidden", tabName !== "practice");
           learningSection.classList.toggle("hidden", tabName !== "learning");
         }
-
-        document.getElementById("goalsTabBtn").onclick = () => {
-          showTab("goals");
-        };
 
         document.getElementById("testHistoryTabBtn").onclick = () => {
           showTab("tests");
@@ -13385,7 +13380,7 @@ panel.innerHTML = `
           showTab("learning");
         };
 
-        showTab(defaultTab);
+        showTab(defaultTab === "goals" ? "tests" : defaultTab);
         wireProfileAccountNav();
 
         panel.querySelectorAll(".testHistoryDetailsBtn").forEach((btn) => {
