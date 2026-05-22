@@ -13198,9 +13198,6 @@ panel.innerHTML = `
       <h3 class="profileContentSectionTitle">Progress Overview</h3>
       <span class="profileSectionToggleIcon">▾</span>
     </button>
-    <div class="profileContentSectionText">
-      A quick summary of your full-test and practice activity.
-    </div>
   </div>
 
   <div id="profileProgressSectionBody" class="profileContentSectionBody hidden">
@@ -13235,13 +13232,13 @@ panel.innerHTML = `
 
 <section id="profileGoalsFocusSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Goals & Focus</h3>
-    <div class="profileContentSectionText">
-      Your current target, weakest areas, and recommended next action.
-    </div>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileGoalsFocusSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Goals & Focus</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileGoalsFocusSectionBody" class="profileContentSectionBody hidden">
     <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("currentFocus")}</div>
@@ -13286,9 +13283,6 @@ panel.innerHTML = `
       <h3 class="profileContentSectionTitle">Account Settings</h3>
       <span class="profileSectionToggleIcon">▾</span>
     </button>
-    <div class="profileContentSectionText">
-      Manage username, email, password, and scoring preferences.
-    </div>
   </div>
 
   <div id="profileAccountSettingsSectionBody" class="profileContentSectionBody hidden">
@@ -13316,9 +13310,6 @@ panel.innerHTML = `
       <h3 class="profileContentSectionTitle">Security & Access</h3>
       <span class="profileSectionToggleIcon">▾</span>
     </button>
-    <div class="profileContentSectionText">
-      Account recovery, access help, and protection settings.
-    </div>
   </div>
 
   <div id="profileSecuritySectionBody" class="profileContentSectionBody hidden">
@@ -13345,13 +13336,13 @@ panel.innerHTML = `
 
 <section id="profileHistorySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">History</h3>
-    <div class="profileContentSectionText">
-      Review submitted full tests and completed practice sessions.
-    </div>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileHistorySectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">History</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
   </div>
 
-  <div id="profileHistorySectionBody" class="profileContentSectionBody">
+  <div id="profileHistorySectionBody" class="profileContentSectionBody hidden">
     <div class="profileHistoryTabs">
     <div class="menuActions">
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
@@ -13372,9 +13363,6 @@ panel.innerHTML = `
       <h3 class="profileContentSectionTitle" style="color:#b42318;">Danger Zone</h3>
       <span class="profileSectionToggleIcon" style="color:#b42318;">▾</span>
     </button>
-    <div class="profileContentSectionText">
-      Permanent account actions live here.
-    </div>
   </div>
 
   <div id="profileDangerSectionBody" class="profileContentSectionBody hidden">
@@ -13565,8 +13553,10 @@ panel.innerHTML = `
 
         wireProfileSectionToggles();
         setProfileSectionExpanded("profileProgressSection", false);
+        setProfileSectionExpanded("profileGoalsFocusSection", false);
         setProfileSectionExpanded("profileAccountSettingsSection", false);
         setProfileSectionExpanded("profileSecuritySection", false);
+        setProfileSectionExpanded("profileHistorySection", false);
         setProfileSectionExpanded("profileDangerSection", false);
 
         const initialTab = defaultTab === "goals" ? null : defaultTab;
