@@ -1292,6 +1292,28 @@ select {
       flex-direction: column;
     }
 
+    .questionPromptRow {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .readAloudBtn {
+      width: auto;
+      min-width: 38px;
+      padding: 6px 10px;
+      font-size: 13px;
+      line-height: 1.2;
+      border-radius: 999px;
+      opacity: 0.95;
+    }
+
+    .readAloudBtn[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     #questionText {
   line-height: 1.5;
   margin-bottom: 14px;
@@ -3112,7 +3134,10 @@ body.loadingActive {
 
       <div class="testBody">
        <div class="questionArea">
-  <div id="questionText"></div>
+  <div class="questionPromptRow">
+    <div id="questionText"></div>
+    <button id="readAloudBtn" class="secondaryBtn readAloudBtn" type="button" title="Read question aloud" aria-label="Read question aloud">🔈</button>
+  </div>
   <div id="questionDiagramWrap"></div>
   <div id="questionChartWrap"><canvas id="questionChart"></canvas></div>
 </div>
@@ -10859,6 +10884,7 @@ function renderQuestion() {
   const questionAreaEl = document.querySelector(".questionArea");
   const chartWrapEl = document.getElementById("questionChartWrap");
   const diagramWrapEl = document.getElementById("questionDiagramWrap");
+  stopQuestionSpeech();
 
   if (!state.questions.length) {
     questionTextEl.innerText = tr("chooseDifficultyStart");
@@ -10943,6 +10969,70 @@ questionTextEl.classList.toggle("highlighterMode", !!state.highlighterEnabled);
   renderChart(updateChartTheme(q.chart));
   renderDiagram(q.diagram || null);
   updateStatus();
+}
+
+function getQuestionSpeechText() {
+  const questionTextEl = document.getElementById("questionText");
+  if (!questionTextEl) return "";
+  return String(questionTextEl.innerText || "").trim();
+}
+
+function getReadAloudButtonLabel() {
+  const isSpeaking = !!(window.speechSynthesis && window.speechSynthesis.speaking);
+  return isSpeaking ? "⏹" : "🔈";
+}
+
+function refreshReadAloudButtonState() {
+  const btn = document.getElementById("readAloudBtn");
+  if (!btn) return;
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
+  if (!speechSupported) {
+    btn.disabled = true;
+    btn.textContent = "🔇";
+    btn.title = "Read aloud is unavailable in this browser";
+    btn.setAttribute("aria-label", "Read aloud unavailable in this browser");
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = getReadAloudButtonLabel();
+  btn.title = "Read question aloud";
+  btn.setAttribute("aria-label", window.speechSynthesis.speaking ? "Stop reading question aloud" : "Read question aloud");
+}
+
+function stopQuestionSpeech() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    window.speechSynthesis.cancel();
+  }
+  refreshReadAloudButtonState();
+}
+
+function toggleQuestionSpeech() {
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
+  if (!speechSupported) {
+    showToast("Read Aloud", "Your browser does not support text-to-speech on this page.");
+    refreshReadAloudButtonState();
+    return;
+  }
+
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    stopQuestionSpeech();
+    return;
+  }
+
+  const promptText = getQuestionSpeechText();
+  if (!promptText) {
+    showToast("Read Aloud", "There is no question text to read right now.");
+    refreshReadAloudButtonState();
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(promptText);
+  utterance.onend = refreshReadAloudButtonState;
+  utterance.onerror = refreshReadAloudButtonState;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+  refreshReadAloudButtonState();
 }
 
 function renderAnswerArea(q) {
@@ -13627,6 +13717,16 @@ if (brandHomeBtn) {
     document.getElementById("nextBtn").onclick = async () => {
       await nextQuestion();
     };
+    const readAloudBtn = document.getElementById("readAloudBtn");
+    if (readAloudBtn) {
+      readAloudBtn.onclick = () => {
+        toggleQuestionSpeech();
+      };
+      refreshReadAloudButtonState();
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = () => refreshReadAloudButtonState();
+    }
     document.getElementById("flagBtn").onclick = async () => {
   await toggleFlag();
 };
