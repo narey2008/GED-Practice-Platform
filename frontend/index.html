@@ -3284,6 +3284,68 @@ function formatElapsedMs(ms) {
         .replace(/'/g, "&#39;");
     }
 
+    // Learning history stores prior prompt HTML; sanitize allowlisted tags so tables render without enabling stored XSS.
+    function sanitizeLearningPromptHtml(value) {
+      const raw = String(value ?? "");
+      if (!raw.trim()) return "";
+
+      const allowedTags = new Set([
+        "table", "thead", "tbody", "tr", "th", "td", "caption",
+        "div", "span", "p", "br",
+        "strong", "b", "em", "i", "u",
+        "ul", "ol", "li",
+        "sup", "sub"
+      ]);
+      const blockedTags = new Set(["script", "iframe", "object", "embed", "style", "link", "meta"]);
+      const allowedAttrs = new Set(["class", "aria-label", "colspan", "rowspan", "scope"]);
+      const template = document.createElement("template");
+      template.innerHTML = raw;
+
+      const sanitizeNode = (node) => {
+        const childNodes = Array.from(node.childNodes);
+        childNodes.forEach((child) => {
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            const tag = child.tagName.toLowerCase();
+
+            if (blockedTags.has(tag)) {
+              child.remove();
+              return;
+            }
+
+            if (!allowedTags.has(tag)) {
+              const textNode = document.createTextNode(child.textContent || "");
+              child.replaceWith(textNode);
+              return;
+            }
+
+            Array.from(child.attributes).forEach((attr) => {
+              const name = attr.name.toLowerCase();
+              const valueText = String(attr.value || "").trim().toLowerCase();
+              if (
+                name.startsWith("on") ||
+                name === "style" ||
+                name === "srcdoc" ||
+                !allowedAttrs.has(name) ||
+                valueText.startsWith("javascript:")
+              ) {
+                child.removeAttribute(attr.name);
+              }
+            });
+
+            sanitizeNode(child);
+            return;
+          }
+
+          if (child.nodeType === Node.COMMENT_NODE) {
+            child.remove();
+          }
+        });
+      };
+
+      sanitizeNode(template.content);
+      return template.innerHTML;
+    }
+
     function slugifyQuestionIdPart(value) {
   return String(value ?? "")
     .toLowerCase()
@@ -3762,7 +3824,7 @@ function renderLearningSessionDetails(entry) {
       return `
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Example ${i + 1}</strong></div>
-        <div style="margin-top:8px; line-height:1.6;">${escapeHtml(questionText)}</div>
+        <div style="margin-top:8px; line-height:1.6;">${sanitizeLearningPromptHtml(questionText)}</div>
         ${getReviewVisualMarkup(q, "learningExample", i)}
         ${renderHistorySpecialTypeMarkup(q)}
         ${q.explanation ? `<div style="margin-top:10px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
@@ -3780,7 +3842,7 @@ function renderLearningSessionDetails(entry) {
       return `
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Practice Q${i + 1}</strong></div>
-        <div style="margin-top:8px; line-height:1.6;">${escapeHtml(questionText)}</div>
+        <div style="margin-top:8px; line-height:1.6;">${sanitizeLearningPromptHtml(questionText)}</div>
         ${getReviewVisualMarkup(q, "learningPractice", i)}
         ${renderHistorySpecialTypeMarkup(q)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
