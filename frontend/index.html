@@ -10949,7 +10949,7 @@ function renderAnswerArea(q) {
   const container = document.getElementById("choices");
   container.innerHTML = "";
 
-if (q.example && q.type !== "hotspot") {
+if (q.example && q.type !== "hotspot" && q.type !== "dragdrop") {
   const box = document.createElement("div");
   box.className = "practiceItem";
   box.innerHTML = `
@@ -11003,6 +11003,32 @@ if (q.example && q.type !== "hotspot") {
 
   if (q.type === "dragdrop") {
     container.style.display = "block";
+
+    const isLearningExample = state.mode === "learning" && q.learningPhase === "example";
+    const isReadOnlyExample = !!q.example || isLearningExample;
+
+    if (isReadOnlyExample) {
+      const previewMarkup = renderHistorySpecialTypeMarkup({
+        ...q,
+        userAnswer: Array.isArray(q.userAnswer) ? q.userAnswer : [],
+        answer: q.answer,
+        choices: Array.isArray(q.choices) ? q.choices : []
+      });
+
+      if (previewMarkup) {
+        container.innerHTML = previewMarkup;
+      } else {
+        const fallback = document.createElement("div");
+        fallback.className = "practiceItem";
+        fallback.innerHTML = `
+          <div><strong>Drag/drop model preview unavailable.</strong></div>
+          <div class="muted" style="margin-top:8px;">This example is missing some drag/drop details, so only the text explanation is shown.</div>
+        `;
+        container.appendChild(fallback);
+      }
+
+      return;
+    }
 
     const currentOrder = Array.isArray(q.userAnswer)
       ? [...q.userAnswer]
