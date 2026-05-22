@@ -12206,7 +12206,6 @@ async function showReview() {
 
     <div class="reviewItem">
       <button id="practiceWeakestBtn" class="primaryBtn">${tr("practiceWeakestSkill")}</button>
-      <button id="reviewMenuBtn" class="secondaryBtn">${tr("mainMenuBtn")}</button>
       ${advance && passed && scoringEnabled ? `<button id="advanceBtn" class="secondaryBtn">${tr("nextLevel")}</button>` : ""}
     </div>
   `;
@@ -12231,10 +12230,6 @@ if (practiceWeakestBtn) {
     await startPractice(category, state.difficulty, true);
   };
 }
-
-  document.getElementById("reviewMenuBtn").onclick = () => {
-    goToMainMenu();
-  };
 
   const adv = document.getElementById("advanceBtn");
   if (adv) {
