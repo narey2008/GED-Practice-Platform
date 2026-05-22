@@ -10109,12 +10109,14 @@ function maybeShowFullTestTimeWarnings() {
 
   if (!state.shownOneMinuteWarning && state.timeRemaining <= 60) {
     state.shownOneMinuteWarning = true;
+    state.shownTenMinuteWarning = true;
     showFullTestTimeWarning(1);
     saveProgress().catch((error) => console.error("Failed to save 1-minute warning state", error));
     return;
   }
 
   if (
+    !state.shownOneMinuteWarning &&
     !state.shownTenMinuteWarning &&
     state.timeRemaining <= 10 * 60 &&
     state.timeRemaining > 60
