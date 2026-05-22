@@ -1721,7 +1721,10 @@ select {
 }
 
 .profileDangerZone {
-  border-color: rgba(180, 35, 24, 0.35);
+  border: 1px solid rgba(180, 35, 24, 0.4);
+  border-radius: 12px;
+  background: rgba(180, 35, 24, 0.08);
+  padding: 12px 14px;
 }
 
 .profileDangerZone h3 {
@@ -1729,11 +1732,7 @@ select {
 }
 
 .profileHistoryTabs {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
-  background: var(--panel);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .profileHistoryTabs .menuActions {
@@ -1859,7 +1858,7 @@ select {
 }
 
 .profileContentSectionHeader {
-  padding: 18px 20px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border);
   background:
     linear-gradient(135deg, rgba(21, 62, 117, 0.08), transparent 48%),
@@ -1867,11 +1866,11 @@ select {
 }
 
 .profileContentSectionTitle {
-  margin: 0 0 6px;
-  color: var(--primary);
+  margin: 0;
+  color: #e8eefc;
   font-weight: 900;
-  font-size: calc(22px * var(--font-scale));
-  letter-spacing: -0.02em;
+  font-size: calc(19px * var(--font-scale));
+  letter-spacing: -0.01em;
 }
 
 .profileSectionToggleBtn {
@@ -1887,8 +1886,8 @@ select {
 }
 
 .profileSectionToggleIcon {
-  font-size: 16px;
-  color: var(--muted);
+  font-size: 15px;
+  color: #c9d7f5;
   font-weight: 900;
 }
 
@@ -1900,7 +1899,7 @@ select {
 }
 
 .profileContentSectionBody {
-  padding: 18px 20px;
+  padding: 14px 18px;
 }
 
 .profileContentSection .reviewTop,
@@ -1927,7 +1926,7 @@ select {
 }
 
 .profileContentSection .profileHistoryTabs {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .profileContentSection .reviewStat {
@@ -1947,18 +1946,19 @@ select {
 }
 
 .profileGoalsFocusActions {
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .profileGoalsFocusActions h3 {
-  margin: 0 0 6px;
-  color: var(--primary);
+  margin: 0 0 4px;
+  color: #e8eefc;
+  font-size: calc(16px * var(--font-scale));
 }
 
 .profileGoalsFocusActions p {
-  margin: 0;
+  margin: 0 0 8px;
   color: var(--muted);
 }
 
