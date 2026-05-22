@@ -1874,6 +1874,24 @@ select {
   letter-spacing: -0.02em;
 }
 
+.profileSectionToggleBtn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profileSectionToggleIcon {
+  font-size: 16px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
 .profileContentSectionText {
   color: var(--muted);
   line-height: 1.55;
@@ -12935,6 +12953,9 @@ function wireProfileAccountNav() {
       const section = document.getElementById(targetId);
 
       if (!section) return;
+      if (typeof window.expandProfileSectionIfCollapsed === "function") {
+        window.expandProfileSectionIfCollapsed(targetId);
+      }
 
       navScrollLock = true;
       setActiveProfileNavItem(targetId);
@@ -13173,13 +13194,16 @@ panel.innerHTML = `
 
 <section id="profileProgressSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Progress Overview</h3>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileProgressSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Progress Overview</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
     <div class="profileContentSectionText">
       A quick summary of your full-test and practice activity.
     </div>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileProgressSectionBody" class="profileContentSectionBody hidden">
     <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("testsTaken")}</div>
@@ -13258,13 +13282,16 @@ panel.innerHTML = `
 
 <section id="profileAccountSettingsSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Account Settings</h3>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSettingsSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Account Settings</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
     <div class="profileContentSectionText">
       Manage username, email, password, and scoring preferences.
     </div>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileAccountSettingsSectionBody" class="profileContentSectionBody hidden">
     <div class="profileActionCard">
       <h3>Account Settings</h3>
       <p>Manage your username, email, password, security, and scoring preference.</p>
@@ -13285,13 +13312,16 @@ panel.innerHTML = `
 
 <section id="profileSecuritySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Security & Access</h3>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileSecuritySectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Security & Access</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
     <div class="profileContentSectionText">
       Account recovery, access help, and protection settings.
     </div>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileSecuritySectionBody" class="profileContentSectionBody hidden">
     <div class="profileActionCard">
       <h3>Security & Access</h3>
       <p>Use these options if you need account-access help or need to enable account protection.</p>
@@ -13321,7 +13351,7 @@ panel.innerHTML = `
     </div>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileHistorySectionBody" class="profileContentSectionBody">
     <div class="profileHistoryTabs">
     <div class="menuActions">
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
@@ -13338,13 +13368,16 @@ panel.innerHTML = `
 
 <section id="profileDangerSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle" style="color:#b42318;">Danger Zone</h3>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileDangerSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle" style="color:#b42318;">Danger Zone</h3>
+      <span class="profileSectionToggleIcon" style="color:#b42318;">▾</span>
+    </button>
     <div class="profileContentSectionText">
       Permanent account actions live here.
     </div>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileDangerSectionBody" class="profileContentSectionBody hidden">
     <div class="profileActionCard profileDangerZone">
       <h3>Danger Zone</h3>
       <p>Deleting your account permanently removes your saved account data.</p>
@@ -13500,6 +13533,41 @@ panel.innerHTML = `
         if (learningHistoryTabBtn) {
           learningHistoryTabBtn.onclick = () => toggleHistoryTab("learning");
         }
+
+        function setProfileSectionExpanded(sectionId, expanded) {
+          const section = document.getElementById(sectionId);
+          if (!section) return;
+          const toggleBtn = section.querySelector(".profileSectionToggleBtn");
+          const bodyId = toggleBtn?.dataset.profileCollapseTarget;
+          const body = bodyId ? document.getElementById(bodyId) : null;
+          if (!toggleBtn || !body) return;
+          body.classList.toggle("hidden", !expanded);
+          toggleBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
+          const icon = toggleBtn.querySelector(".profileSectionToggleIcon");
+          if (icon) icon.textContent = expanded ? "▴" : "▾";
+        }
+
+        function wireProfileSectionToggles() {
+          panel.querySelectorAll(".profileSectionToggleBtn").forEach((btn) => {
+            btn.onclick = () => {
+              const section = btn.closest(".profileContentSection");
+              if (!section) return;
+              const sectionId = section.id;
+              const isExpanded = btn.getAttribute("aria-expanded") === "true";
+              setProfileSectionExpanded(sectionId, !isExpanded);
+            };
+          });
+        }
+
+        window.expandProfileSectionIfCollapsed = (sectionId) => {
+          setProfileSectionExpanded(sectionId, true);
+        };
+
+        wireProfileSectionToggles();
+        setProfileSectionExpanded("profileProgressSection", false);
+        setProfileSectionExpanded("profileAccountSettingsSection", false);
+        setProfileSectionExpanded("profileSecuritySection", false);
+        setProfileSectionExpanded("profileDangerSection", false);
 
         const initialTab = defaultTab === "goals" ? null : defaultTab;
         if (initialTab && historyTabs[initialTab]) {
