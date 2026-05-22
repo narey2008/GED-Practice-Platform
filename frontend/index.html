@@ -6644,27 +6644,28 @@ if (goalLauncherBtn) {
   }
 }
 
-    function updateAuthUI() {
-  const signInBtnTop = document.getElementById("signInBtnTop");
-  const guestBtnTop = document.getElementById("guestBtnTop");
-  const logoutBtnTop = document.getElementById("logoutBtnTop");
-  const userSummary = document.getElementById("userSummary");
+	    function updateAuthUI() {
+	  const signInBtnTop = document.getElementById("signInBtnTop");
+	  const guestBtnTop = document.getElementById("guestBtnTop");
+	  const logoutBtnTop = document.getElementById("logoutBtnTop");
+	  const userSummary = document.getElementById("userSummary");
+	  const allowLogoutInCurrentView = state.mode === "menu" || state.mode === "profile";
 
-  if (state.auth.user) {
-    signInBtnTop.classList.add("hidden");
-    guestBtnTop.classList.add("hidden");
-    logoutBtnTop.classList.remove("hidden");
-    userSummary.classList.remove("hidden");
-    userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
+	  if (state.auth.user) {
+	    signInBtnTop.classList.add("hidden");
+	    guestBtnTop.classList.add("hidden");
+	    logoutBtnTop.classList.toggle("hidden", !allowLogoutInCurrentView);
+	    userSummary.classList.remove("hidden");
+	    userSummary.textContent = state.auth.user.displayName || state.auth.user.email;
     userSummary.style.cursor = "pointer";
     userSummary.style.textDecoration = "none";
     userSummary.onmouseover = () => { userSummary.style.textDecoration = "underline"; };
     userSummary.onmouseout = () => { userSummary.style.textDecoration = "none"; };
-  } else if (state.auth.guestMode) {
-    signInBtnTop.classList.add("hidden");
-    guestBtnTop.classList.add("hidden");
-    logoutBtnTop.classList.remove("hidden");
-    userSummary.classList.remove("hidden");
+	  } else if (state.auth.guestMode) {
+	    signInBtnTop.classList.add("hidden");
+	    guestBtnTop.classList.add("hidden");
+	    logoutBtnTop.classList.toggle("hidden", !allowLogoutInCurrentView);
+	    userSummary.classList.remove("hidden");
     userSummary.textContent = tr("guestMode");
     userSummary.style.cursor = "default";
     userSummary.style.textDecoration = "none";
