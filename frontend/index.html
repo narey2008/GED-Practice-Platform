@@ -3271,7 +3271,7 @@ function formatElapsedMs(ms) {
   return `${safeMs.toFixed(1)}ms`;
 }
 
-    function escapeHtml(value) {
+function escapeHtml(value) {
       return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -3279,6 +3279,31 @@ function formatElapsedMs(ms) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
     }
+
+function renderSafeQuestionMarkup(value) {
+  const html = String(value ?? "");
+  if (!html.includes("<")) return escapeHtml(html);
+
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  template.content.querySelectorAll("script, iframe, object, embed, link, style, meta").forEach((el) => el.remove());
+  template.content.querySelectorAll("*").forEach((el) => {
+    Array.from(el.attributes).forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      const valueText = String(attr.value || "");
+      if (name.startsWith("on")) {
+        el.removeAttribute(attr.name);
+        return;
+      }
+      if ((name === "href" || name === "src" || name === "xlink:href") && /^\s*javascript:/i.test(valueText)) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return template.innerHTML;
+}
 
     function slugifyQuestionIdPart(value) {
   return String(value ?? "")
@@ -3717,7 +3742,7 @@ function renderLearningSessionDetails(entry) {
       return `
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Example ${i + 1}</strong></div>
-        <div style="margin-top:8px; line-height:1.6;">${escapeHtml(questionText)}</div>
+        <div style="margin-top:8px; line-height:1.6;">${renderSafeQuestionMarkup(questionText)}</div>
         ${getReviewVisualMarkup(q, "learningExample", i)}
         ${renderHistorySpecialTypeMarkup(q)}
         ${q.explanation ? `<div style="margin-top:10px;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ""}
@@ -3735,7 +3760,7 @@ function renderLearningSessionDetails(entry) {
       return `
       <div class="reviewItem" style="margin-top:10px;">
         <div><strong>Practice Q${i + 1}</strong></div>
-        <div style="margin-top:8px; line-height:1.6;">${escapeHtml(questionText)}</div>
+        <div style="margin-top:8px; line-height:1.6;">${renderSafeQuestionMarkup(questionText)}</div>
         ${getReviewVisualMarkup(q, "learningPractice", i)}
         ${renderHistorySpecialTypeMarkup(q)}
         <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(userAnswer || tr("noAnswerDash"))}</div>
