@@ -12089,7 +12089,7 @@ async function showReview() {
   panel.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
       <h2 class="sectionTitle" style="margin:0;">${tr("testResults")}</h2>
-      <button id="profileMainMenuBtn" class="secondaryBtn" onclick="goToMainMenu()">${tr("mainMenuBtn")}</button>
+      <button id="reviewMainMenuTopBtn" class="secondaryBtn" onclick="goToMainMenu()">${tr("mainMenuBtn")}</button>
     </div>
 
     <div class="reviewTop">
@@ -12169,9 +12169,9 @@ renderReviewCharts(panel);
   await setView("review");
   await clearSavedProgress();
 
-  const profileMainMenuBtn = document.getElementById("profileMainMenuBtn");
-  if (profileMainMenuBtn) {
-    profileMainMenuBtn.onclick = () => {
+  const reviewMainMenuTopBtn = document.getElementById("reviewMainMenuTopBtn");
+  if (reviewMainMenuTopBtn) {
+    reviewMainMenuTopBtn.onclick = () => {
       goToMainMenu();
     };
   }
@@ -13732,6 +13732,19 @@ const supportEmailBtn = document.getElementById("supportEmailBtn");
 if (supportEmailBtn) {
   supportEmailBtn.onclick = () => openSupportContactModal();
 }
+
+const profilePanel = document.getElementById("profilePanel");
+if (profilePanel && !profilePanel.dataset.mainMenuDelegatedBound) {
+  profilePanel.addEventListener("click", (event) => {
+    const menuBtn = event.target.closest("#profileMainMenuBtn");
+    if (!menuBtn) return;
+    console.log("Profile Main Menu clicked");
+    goToMainMenu();
+  });
+  profilePanel.dataset.mainMenuDelegatedBound = "1";
+  console.log("Profile Main Menu button bound");
+}
+
 const knownBugsSupportLink = document.getElementById("knownBugsSupportLink");
 if (knownBugsSupportLink) {
   knownBugsSupportLink.onclick = () => openSupportContactModal();
