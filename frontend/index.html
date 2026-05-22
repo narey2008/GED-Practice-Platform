@@ -6735,6 +6735,24 @@ function syncRecommendedPathDockVisibilityForViewport() {
 }
 
 async function setView(view) {
+  const wasQuestionView =
+    state.mode === "test" ||
+    state.mode === "practice" ||
+    state.mode === "practice-example" ||
+    state.mode === "learning" ||
+    state.mode === "test-tutorial";
+
+  const isQuestionView =
+    view === "test" ||
+    view === "practice" ||
+    view === "practice-example" ||
+    view === "learning" ||
+    view === "test-tutorial";
+
+  if (wasQuestionView && !isQuestionView) {
+    stopQuestionSpeech();
+  }
+
   const mainMenu = document.getElementById("mainMenu");
   const testView = document.getElementById("testView");
   const reviewPanel = document.getElementById("reviewPanel");
@@ -6774,13 +6792,6 @@ async function setView(view) {
     state.mode = "profile";
     if (profilePanel) profilePanel.classList.remove("hidden");
   }
-
-  const isQuestionView =
-    view === "test" ||
-    view === "practice" ||
-    view === "practice-example" ||
-    view === "learning" ||
-    view === "test-tutorial";
 
   if (!isQuestionView) {
     hideHighlighterTools();
