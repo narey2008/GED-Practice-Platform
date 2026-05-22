@@ -1966,6 +1966,27 @@ select {
   margin-top: 6px;
 }
 
+.profileFocusSummary {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+
+.profileFocusSummaryLabel {
+  color: var(--muted);
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+  margin-bottom: 4px;
+}
+
+.profileFocusSummaryText {
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 @media (max-width: 900px) {
   .profileContentSection {
     margin-left: 0;
@@ -13167,6 +13188,11 @@ panel.innerHTML = `
           ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
         </span>
       </div>
+
+      <div class="profileFocusSummary">
+        <div class="profileFocusSummaryLabel">${tr("progressNote")}</div>
+        <div class="profileFocusSummaryText">${encouragement}</div>
+      </div>
 </div>
 </div>
 
@@ -13174,9 +13200,14 @@ panel.innerHTML = `
   <div class="profileAccountNavTitle">Account<br>Management</div>
 
   <div class="profileAccountNavList" aria-label="Profile sections">
-    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileGoalsFocusSection">
+    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileGoalsSection">
       <span class="profileAccountNavIcon">🎯</span>
-      <span>Goals & Focus</span>
+      <span>Goals</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileGoalsFocusSection">
+      <span class="profileAccountNavIcon">🧭</span>
+      <span>Focus Plan</span>
     </button>
 
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileProgressSection">
@@ -13200,6 +13231,19 @@ panel.innerHTML = `
     </button>
   </div>
 </div>
+
+<section id="profileGoalsSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileGoalsSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Goals</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
+  </div>
+
+  <div id="profileGoalsSectionBody" class="profileContentSectionBody hidden">
+    <div id="goalsSection"></div>
+  </div>
+</section>
 
 <section id="profileProgressSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
@@ -13251,24 +13295,16 @@ panel.innerHTML = `
     <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("currentFocus")}</div>
-      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
+      <div class="reviewStatValue" style="font-size:calc(26px * var(--font-scale));">${escapeHtml(translateSkillLabel(currentFocus))}</div>
     </div>
 
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("nextFocus")}</div>
-      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
-    </div>
-
-    <div class="reviewStat" style="grid-column: span 2;">
-      <div class="reviewStatLabel">${tr("progressNote")}</div>
-      <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
+      <div class="reviewStatValue" style="font-size:calc(26px * var(--font-scale));">${escapeHtml(translateSkillLabel(nextFocus))}</div>
     </div>
     </div>
 
     <div class="profileGoalsFocusActions">
-      <h3>Practice Focus</h3>
-      <p>Jump directly into your weakest skill or continue reviewing your progress.</p>
-
       <div class="menuActions">
         ${
           currentFocus !== "—"
@@ -13276,9 +13312,6 @@ panel.innerHTML = `
             : ""
         }
       </div>
-    </div>
-
-    <div id="goalsSection"></div>
     </div>
   </div>
 </section>
@@ -13531,6 +13564,7 @@ panel.innerHTML = `
         };
 
         wireProfileSectionToggles();
+        setProfileSectionExpanded("profileGoalsSection", false);
         setProfileSectionExpanded("profileProgressSection", false);
         setProfileSectionExpanded("profileGoalsFocusSection", false);
         setProfileSectionExpanded("profileAccountSecuritySection", false);
