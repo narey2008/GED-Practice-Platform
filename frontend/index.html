@@ -10105,7 +10105,8 @@ function maybeShowFullTestTimeWarnings() {
     label: tr("submitNow"),
     variant: "secondary",
     onClick: async () => {
-await openReviewBeforeSubmitModal();
+      closeModal();
+      await submitTest();
     }
   });
 
