@@ -43,6 +43,14 @@ const savedProgressSchema = new mongoose.Schema(
     lockedReviewMode: {
       type: Boolean,
       default: false
+    },
+    shownTenMinuteWarning: {
+      type: Boolean,
+      default: false
+    },
+    shownOneMinuteWarning: {
+      type: Boolean,
+      default: false
     }
   },
   {
