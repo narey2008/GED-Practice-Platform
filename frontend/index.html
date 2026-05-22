@@ -11983,42 +11983,7 @@ async function showReview() {
     </div>
   `;
 
-state.questions.forEach((q, i) => {
-  const isAnswered = isQuestionAnswered(q);
-  const isCorrect = answersMatch(q.userAnswer, q.answer);
-
-  let statusLabel = "";
-  if (!isAnswered) {
-    statusLabel = "⚠ Unanswered";
-  } else if (isCorrect) {
-    statusLabel = "✔ Correct";
-  } else {
-    statusLabel = "✖ Incorrect";
-  }
-
-  const userAnswerDisplay = Array.isArray(q.userAnswer)
-    ? q.userAnswer.join(" → ")
-    : String(q.userAnswer ?? "").trim();
-
-  const correctAnswerDisplay = Array.isArray(q.answer)
-    ? q.answer.join(" → ")
-    : String(q.answer ?? "").trim();
-
-  const div = document.createElement("div");
-  div.className = "reviewItem";
-  div.innerHTML = `
-    <div><strong>Q${i + 1}</strong> ${q.flagged ? "🚩" : ""} — ${statusLabel}</div>
-    <div style="margin-top:8px; line-height:1.6;">${q.question || ""}</div>
-    ${getReviewVisualMarkup(q, "testResults", i)}
-    ${renderHistorySpecialTypeMarkup(q)}
-    <div style="margin-top:10px;">${tr("yourAnswer")}: ${escapeHtml(isAnswered ? userAnswerDisplay : tr("noAnswerDash"))}</div>
-    <div>${tr("correct")}: ${escapeHtml(correctAnswerDisplay || tr("noAnswerDash"))}</div>
-    <div>${tr("result")}: <span class="${isCorrect ? "correct" : "incorrect"}">${isCorrect ? tr("correct") : tr("incorrect")}</span></div>
-    ${q.explanation ? `<div class="explanationBox">${escapeHtml(q.explanation)}</div>` : ""}
-  `;
-
-  panel.appendChild(div);
-});
+panel.insertAdjacentHTML("beforeend", renderHistoryDetails(state.questions));
 
 renderReviewCharts(panel);
 
