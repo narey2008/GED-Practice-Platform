@@ -25,6 +25,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const REQUEST_BODY_LIMIT = "1mb";
 const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || process.env.SUPPORT_INBOX || "gedpracticeplatform@gmail.com";
 const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
@@ -62,7 +63,8 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: REQUEST_BODY_LIMIT }));
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -2113,6 +2115,17 @@ app.use("/api", (req, res) => {
 app.use((err, req, res, next) => {
   console.error("EXPRESS ERROR HANDLER:");
   console.error(err);
+
+  if (
+    err &&
+    (err.type === "entity.too.large" || err.status === 413 || err.statusCode === 413)
+  ) {
+    return res.status(413).json({
+      error: "Request payload too large.",
+      code: "PAYLOAD_TOO_LARGE",
+      limit: REQUEST_BODY_LIMIT
+    });
+  }
 
   if (req.originalUrl && req.originalUrl.startsWith("/api/")) {
     return res.status(500).json({
