@@ -2053,7 +2053,7 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
     const safeQuestionsAnswered = Number(questionsAnswered);
     let safeCompletedAt = new Date();
 
-    if (completedAt !== undefined) {
+    if (completedAt !== undefined && completedAt !== null) {
       const parsedCompletedAt = new Date(completedAt);
       if (Number.isNaN(parsedCompletedAt.getTime())) {
         return res.status(400).json({ error: "Invalid completedAt date." });
