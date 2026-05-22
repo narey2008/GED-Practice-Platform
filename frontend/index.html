@@ -13732,6 +13732,19 @@ const supportEmailBtn = document.getElementById("supportEmailBtn");
 if (supportEmailBtn) {
   supportEmailBtn.onclick = () => openSupportContactModal();
 }
+
+const profilePanel = document.getElementById("profilePanel");
+if (profilePanel && !profilePanel.dataset.mainMenuDelegatedBound) {
+  profilePanel.addEventListener("click", (event) => {
+    const menuBtn = event.target.closest("#profileMainMenuBtn");
+    if (!menuBtn) return;
+    console.log("Profile Main Menu clicked");
+    goToMainMenu();
+  });
+  profilePanel.dataset.mainMenuDelegatedBound = "1";
+  console.log("Profile Main Menu button bound");
+}
+
 const knownBugsSupportLink = document.getElementById("knownBugsSupportLink");
 if (knownBugsSupportLink) {
   knownBugsSupportLink.onclick = () => openSupportContactModal();
