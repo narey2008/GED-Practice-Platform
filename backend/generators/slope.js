@@ -126,19 +126,22 @@ function buildSlopeChoices(answer, rise, run, difficulty, p) {
 }
 
 function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridMax }) {
-  const viewWidth = 540;
+  const viewWidth = 570;
   const viewHeight = 390;
 
   const graphLeft = 90;
   const graphTop = 42;
   const graphSize = 300;
+  const graphRight = graphLeft + graphSize;
+  const graphBottom = graphTop + graphSize;
+  const calloutLeft = graphRight + 28;
+  const calloutTop = graphTop + 18;
+  const calloutWidth = 140;
+  const calloutHeight = 168;
   const unit = graphSize / (gridMax - gridMin);
 
   const toSvgX = (x) => graphLeft + (x - gridMin) * unit;
   const toSvgY = (y) => graphTop + (gridMax - y) * unit;
-
-  const xAxisY = toSvgY(0);
-  const yAxisX = toSvgX(0);
 
   const gridLines = [];
   const tickLabels = [];
@@ -172,13 +175,13 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
 
     if (value !== 0 && value % 2 === 0) {
       tickLabels.push(`
-        <text x="${x}" y="${xAxisY + 18}" text-anchor="middle" class="diagramLabel" style="font-size:13px;">
+        <text x="${x}" y="${graphBottom + 21}" text-anchor="middle" class="diagramLabel" style="font-size:13px;">
           ${value}
         </text>
       `);
 
       tickLabels.push(`
-        <text x="${yAxisX - 12}" y="${y + 4}" text-anchor="end" class="diagramLabel" style="font-size:13px;">
+        <text x="${graphLeft - 13}" y="${y + 4}" text-anchor="end" class="diagramLabel" style="font-size:13px;">
           ${value}
         </text>
       `);
@@ -202,10 +205,10 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
   return `
     <svg
       viewBox="0 0 ${viewWidth} ${viewHeight}"
-      width="540"
+      width="570"
       height="390"
       xmlns="http://www.w3.org/2000/svg"
-      style="display:block; margin:0 auto; width:600px; max-width:100%; height:auto;"
+      style="display:block; margin:0 auto; width:630px; max-width:100%; height:auto;"
     >
       <defs>
         <clipPath id="slopeGraphClip">
@@ -227,8 +230,8 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
       ${gridLines.join("")}
       ${tickLabels.join("")}
 
-      <text x="${graphLeft + graphSize + 18}" y="${xAxisY + 5}" class="diagramLabel" style="font-size:15px; font-weight:700;">x</text>
-      <text x="${yAxisX - 4}" y="${graphTop - 14}" class="diagramLabel" style="font-size:15px; font-weight:700;">y</text>
+      <text x="${graphRight + 14}" y="${graphBottom + 21}" class="diagramLabel" style="font-size:15px; font-weight:700;">x</text>
+      <text x="${graphLeft - 13}" y="${graphTop - 14}" text-anchor="middle" class="diagramLabel" style="font-size:15px; font-weight:700;">y</text>
 
       <g clip-path="url(#slopeGraphClip)">
         <line
@@ -264,16 +267,47 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
         />
       </g>
 
-      <circle cx="${pointAX}" cy="${pointAY}" r="6.5" fill="#153e75" stroke="#ffffff" stroke-width="2.25"/>
-      <circle cx="${pointBX}" cy="${pointBY}" r="6.5" fill="#153e75" stroke="#ffffff" stroke-width="2.25"/>
+      <circle cx="${pointAX}" cy="${pointAY}" r="10" fill="#ffffff" stroke="#153e75" stroke-width="2.75"/>
+      <circle cx="${pointBX}" cy="${pointBY}" r="10" fill="#ffffff" stroke="#153e75" stroke-width="2.75"/>
+      <text x="${pointAX}" y="${pointAY + 4}" text-anchor="middle" class="diagramLabel" style="font-size:10px; font-weight:700;">A</text>
+      <text x="${pointBX}" y="${pointBY + 4}" text-anchor="middle" class="diagramLabel" style="font-size:10px; font-weight:700;">B</text>
 
-      <text x="${pointAX - 12}" y="${pointAY - 12}" text-anchor="end" class="diagramLabel" style="font-size:14px; font-weight:700;">
-        A(${x1}, ${y1})
-      </text>
-
-      <text x="${pointBX + 12}" y="${pointBY - 12}" text-anchor="start" class="diagramLabel" style="font-size:14px; font-weight:700;">
-        B(${x2}, ${y2})
-      </text>
+      <g aria-label="Point coordinates and slope triangle values">
+        <rect
+          x="${calloutLeft}"
+          y="${calloutTop}"
+          width="${calloutWidth}"
+          height="${calloutHeight}"
+          rx="9"
+          fill="#f8fafc"
+          stroke="#cbd5e1"
+          stroke-width="1.5"
+        />
+        <text x="${calloutLeft + 12}" y="${calloutTop + 23}" class="diagramLabel" style="font-size:13px; font-weight:700;">Points</text>
+        <text x="${calloutLeft + 12}" y="${calloutTop + 48}" class="diagramLabel" style="font-size:12px;">A = (${x1}, ${y1})</text>
+        <text x="${calloutLeft + 12}" y="${calloutTop + 70}" class="diagramLabel" style="font-size:12px;">B = (${x2}, ${y2})</text>
+        <line
+          x1="${calloutLeft + 12}"
+          y1="${calloutTop + 94}"
+          x2="${calloutLeft + 35}"
+          y2="${calloutTop + 94}"
+          stroke="#d97706"
+          stroke-width="2.5"
+          stroke-dasharray="6,4"
+        />
+        <line
+          x1="${calloutLeft + 35}"
+          y1="${calloutTop + 94}"
+          x2="${calloutLeft + 35}"
+          y2="${calloutTop + 78}"
+          stroke="#d97706"
+          stroke-width="2.5"
+          stroke-dasharray="6,4"
+        />
+        <text x="${calloutLeft + 46}" y="${calloutTop + 91}" class="diagramLabel" style="font-size:12px; font-weight:700;">rise / run</text>
+        <text x="${calloutLeft + 12}" y="${calloutTop + 120}" class="diagramLabel" style="font-size:12px;">run = ${run}</text>
+        <text x="${calloutLeft + 12}" y="${calloutTop + 145}" class="diagramLabel" style="font-size:12px;">rise = ${rise}</text>
+      </g>
     </svg>
   `;
 }
