@@ -1741,9 +1741,9 @@ select {
 
 .profileAccountNav {
   position: sticky;
-  left: 18px;
+  left: 0;
   top: calc(var(--sticky-topbar-scroll-offset) + 10px);
-  width: 230px;
+  width: 100%;
   z-index: 5;
   align-self: flex-start;
   padding: 10px 16px 16px 0;
@@ -1831,8 +1831,11 @@ select {
   color: var(--primary);
 }
 
-.profileAccountNav ~ .profileContentSection {
-  margin-left: 252px;
+.profileAccountLayout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
 :root {
@@ -1849,7 +1852,7 @@ select {
 }
 
 .profileContentSection {
-  margin-left: 252px;
+  margin-left: 0;
   margin-bottom: 22px;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -2045,9 +2048,10 @@ select {
     display: none;
   }
 
-  .profileAccountNav ~ .profileContentSection {
-  margin-left: 0;
-}
+  .profileAccountLayout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 
   .profileFocusGrid {
     grid-template-columns: 1fr;
@@ -13222,11 +13226,17 @@ panel.innerHTML = `
 </div>
 </div>
 
+<div class="profileAccountLayout">
 <div class="profileAccountNav">
   <div class="profileAccountNavTitle">Account<br>Management</div>
 
   <div class="profileAccountNavList" aria-label="Profile sections">
-    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileGoalsSection">
+    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileProgressSection">
+      <span class="profileAccountNavIcon">📊</span>
+      <span>Progress Overview</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileGoalsSection">
       <span class="profileAccountNavIcon">🎯</span>
       <span>Goals</span>
     </button>
@@ -13236,41 +13246,18 @@ panel.innerHTML = `
       <span>Your Focus</span>
     </button>
 
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileProgressSection">
-      <span class="profileAccountNavIcon">📊</span>
-      <span>Progress Overview</span>
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileHistorySection">
+      <span class="profileAccountNavIcon">📚</span>
+      <span>History</span>
     </button>
 
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSecuritySection">
       <span class="profileAccountNavIcon">🔐</span>
       <span>Account Security & Preferences</span>
     </button>
-
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileHistorySection">
-      <span class="profileAccountNavIcon">📚</span>
-      <span>History</span>
-    </button>
-
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileDangerSection">
-      <span class="profileAccountNavIcon">⚠️</span>
-      <span>Danger Zone</span>
-    </button>
   </div>
 </div>
-
-<section id="profileGoalsSection" class="profileContentSection profileSectionAnchor">
-  <div class="profileContentSectionHeader">
-    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileGoalsSectionBody" aria-expanded="false">
-      <h3 class="profileContentSectionTitle">Goals</h3>
-      <span class="profileSectionToggleIcon">▾</span>
-    </button>
-  </div>
-
-  <div id="profileGoalsSectionBody" class="profileContentSectionBody hidden">
-    <div id="goalsSection"></div>
-  </div>
-</section>
-
+<div>
 <section id="profileProgressSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
     <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileProgressSectionBody" aria-expanded="false">
@@ -13306,6 +13293,19 @@ panel.innerHTML = `
       <div class="reviewStatValue">${practiceHistory.length}</div>
     </div>
     </div>
+  </div>
+</section>
+
+<section id="profileGoalsSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileGoalsSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Goals</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
+  </div>
+
+  <div id="profileGoalsSectionBody" class="profileContentSectionBody hidden">
+    <div id="goalsSection"></div>
   </div>
 </section>
 
@@ -13346,6 +13346,29 @@ panel.innerHTML = `
   </div>
 </section>
 
+<section id="profileHistorySection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileHistorySectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">History</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
+  </div>
+
+  <div id="profileHistorySectionBody" class="profileContentSectionBody hidden">
+    <div class="profileHistoryTabs">
+    <div class="menuActions">
+      <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
+      <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
+      <button id="learningHistoryTabBtn" class="secondaryBtn">${tr("learningHistory")}</button>
+    </div>
+  </div>
+
+    <div id="testHistorySection" class="hidden"></div>
+    <div id="practiceHistorySection" class="hidden"></div>
+    <div id="learningHistorySection" class="hidden"></div>
+  </div>
+</section>
+
 <section id="profileAccountSecuritySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
     <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSecuritySectionBody" aria-expanded="false">
@@ -13372,43 +13395,7 @@ panel.innerHTML = `
           : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
       }
     </div>
-  </div>
-</section>
 
-
-
-<section id="profileHistorySection" class="profileContentSection profileSectionAnchor">
-  <div class="profileContentSectionHeader">
-    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileHistorySectionBody" aria-expanded="false">
-      <h3 class="profileContentSectionTitle">History</h3>
-      <span class="profileSectionToggleIcon">▾</span>
-    </button>
-  </div>
-
-  <div id="profileHistorySectionBody" class="profileContentSectionBody hidden">
-    <div class="profileHistoryTabs">
-    <div class="menuActions">
-      <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
-      <button id="practiceHistoryTabBtn" class="secondaryBtn">${tr("practiceHistory")}</button>
-      <button id="learningHistoryTabBtn" class="secondaryBtn">${tr("learningHistory")}</button>
-    </div>
-  </div>
-
-    <div id="testHistorySection" class="hidden"></div>
-    <div id="practiceHistorySection" class="hidden"></div>
-    <div id="learningHistorySection" class="hidden"></div>
-  </div>
-</section>
-
-<section id="profileDangerSection" class="profileContentSection profileSectionAnchor">
-  <div class="profileContentSectionHeader">
-    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileDangerSectionBody" aria-expanded="false">
-      <h3 class="profileContentSectionTitle" style="color:#b42318;">Danger Zone</h3>
-      <span class="profileSectionToggleIcon" style="color:#b42318;">▾</span>
-    </button>
-  </div>
-
-  <div id="profileDangerSectionBody" class="profileContentSectionBody hidden">
     <div class="profileDangerZone">
       <p>Deleting your account permanently removes your saved account data.</p>
 
@@ -13418,6 +13405,8 @@ panel.innerHTML = `
     </div>
   </div>
 </section>
+</div>
+</div>
 `;
 
         const goalsSection = document.getElementById("goalsSection");
@@ -13599,7 +13588,6 @@ panel.innerHTML = `
         setProfileSectionExpanded("profileGoalsFocusSection", false);
         setProfileSectionExpanded("profileAccountSecuritySection", false);
         setProfileSectionExpanded("profileHistorySection", false);
-        setProfileSectionExpanded("profileDangerSection", false);
 
         const initialTab = defaultTab === "goals" ? null : defaultTab;
         if (initialTab && historyTabs[initialTab]) {
