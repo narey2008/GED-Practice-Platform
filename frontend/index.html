@@ -1985,10 +1985,18 @@ select {
 }
 
 .profileFocusValue {
-  font-size: calc(28px * var(--font-scale));
-  line-height: 1.28;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  font-size: calc(24px * var(--font-scale));
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileFocusActionRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .profileFocusSummary {
@@ -2055,6 +2063,17 @@ select {
 
   .profileFocusGrid {
     grid-template-columns: 1fr;
+  }
+
+  .profileFocusActionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .profileFocusValue {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -13322,26 +13341,26 @@ panel.innerHTML = `
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("currentFocus")}</div>
       <div class="reviewStatValue profileFocusValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
-      <div class="menuActions">
-        ${
-          currentFocus !== "—"
-            ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>`
-            : `<button class="secondaryBtn" disabled>${tr("startPractice")}</button>`
-        }
-      </div>
     </div>
 
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("nextFocus")}</div>
       <div class="reviewStatValue profileFocusValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
-      <div class="menuActions">
-        ${
-          nextFocus !== "—"
-            ? `<button id="historyPracticeNextFocusBtn" class="secondaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(nextFocus))}</button>`
-            : `<button id="historyPracticeNextFocusBtn" class="secondaryBtn" disabled>${tr("startPractice")}</button>`
-        }
-      </div>
     </div>
+    </div>
+
+    <div class="profileFocusActionRow">
+      ${
+        currentFocus !== "—"
+          ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>`
+          : `<button class="secondaryBtn" disabled>${tr("startPractice")}</button>`
+      }
+
+      ${
+        nextFocus !== "—"
+          ? `<button id="historyPracticeNextFocusBtn" class="secondaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(nextFocus))}</button>`
+          : `<button id="historyPracticeNextFocusBtn" class="secondaryBtn" disabled>${tr("startPractice")}</button>`
+      }
     </div>
   </div>
 </section>
