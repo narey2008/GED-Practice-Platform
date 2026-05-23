@@ -1721,7 +1721,10 @@ select {
 }
 
 .profileDangerZone {
-  border-color: rgba(180, 35, 24, 0.35);
+  border: 1px solid rgba(180, 35, 24, 0.4);
+  border-radius: 12px;
+  background: rgba(180, 35, 24, 0.08);
+  padding: 12px 14px;
 }
 
 .profileDangerZone h3 {
@@ -1729,11 +1732,7 @@ select {
 }
 
 .profileHistoryTabs {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
-  background: var(--panel);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .profileHistoryTabs .menuActions {
@@ -1741,10 +1740,12 @@ select {
 }
 
 .profileAccountNav {
-  position: absolute;
-  left: 18px;
-  width: 230px;
+  position: sticky;
+  left: 0;
+  top: calc(var(--sticky-topbar-scroll-offset) + 10px);
+  width: 100%;
   z-index: 5;
+  align-self: flex-start;
   padding: 10px 16px 16px 0;
   margin: 0;
   background: transparent;
@@ -1830,8 +1831,11 @@ select {
   color: var(--primary);
 }
 
-.profileAccountNav ~ .profileContentSection {
-  margin-left: 252px;
+.profileAccountLayout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
 }
 
 :root {
@@ -1848,18 +1852,18 @@ select {
 }
 
 .profileContentSection {
-  margin-left: 252px;
-  margin-bottom: 18px;
+  margin-left: 0;
+  margin-bottom: 22px;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--panel);
   color: var(--text);
-  box-shadow: 0 8px 22px rgba(8, 24, 46, 0.12);
+  box-shadow: 0 10px 26px rgba(8, 24, 46, 0.16);
   overflow: hidden;
 }
 
 .profileContentSectionHeader {
-  padding: 18px 20px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border);
   background:
     linear-gradient(135deg, rgba(21, 62, 117, 0.08), transparent 48%),
@@ -1867,11 +1871,29 @@ select {
 }
 
 .profileContentSectionTitle {
-  margin: 0 0 6px;
-  color: var(--primary);
+  margin: 0;
+  color: #e8eefc;
   font-weight: 900;
-  font-size: calc(22px * var(--font-scale));
-  letter-spacing: -0.02em;
+  font-size: calc(19px * var(--font-scale));
+  letter-spacing: -0.01em;
+}
+
+.profileSectionToggleBtn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profileSectionToggleIcon {
+  font-size: 15px;
+  color: #c9d7f5;
+  font-weight: 900;
 }
 
 .profileContentSectionText {
@@ -1882,7 +1904,7 @@ select {
 }
 
 .profileContentSectionBody {
-  padding: 18px 20px;
+  padding: 14px 18px;
 }
 
 .profileContentSection .reviewTop,
@@ -1909,7 +1931,7 @@ select {
 }
 
 .profileContentSection .profileHistoryTabs {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .profileContentSection .reviewStat {
@@ -1929,9 +1951,74 @@ select {
 }
 
 .profileGoalsFocusActions {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.profileGoalsFocusActions h3 {
+  margin: 0 0 4px;
+  color: #e8eefc;
+  font-size: calc(16px * var(--font-scale));
+}
+
+.profileGoalsFocusActions p {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.profileGoalsFocusActions .menuActions {
+  margin-top: 6px;
+}
+
+.profileFocusGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profileFocusGrid .reviewStat {
+  min-height: 106px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.profileFocusValue {
+  font-size: calc(24px * var(--font-scale));
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileFocusActionRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.profileFocusSummary {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+
+.profileFocusSummaryLabel {
+  color: var(--muted);
+  font-weight: 800;
+  font-size: calc(12px * var(--font-scale));
+  margin-bottom: 4px;
+}
+
+.profileFocusSummaryText {
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.5;
 }
 
 @media (max-width: 900px) {
@@ -1970,9 +2057,25 @@ select {
     display: none;
   }
 
-  .profileAccountNav ~ .profileContentSection {
-  margin-left: 0;
-}
+  .profileAccountLayout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .profileFocusGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .profileFocusActionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .profileFocusValue {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 520px) {
@@ -2055,10 +2158,10 @@ select {
 }
 
 .profileGoalEmpty {
-  border: 1px dashed var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  background: var(--panel-2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
   color: var(--text);
   line-height: 1.65;
 }
@@ -12935,6 +13038,9 @@ function wireProfileAccountNav() {
       const section = document.getElementById(targetId);
 
       if (!section) return;
+      if (typeof window.expandProfileSectionIfCollapsed === "function") {
+        window.expandProfileSectionIfCollapsed(targetId);
+      }
 
       navScrollLock = true;
       setActiveProfileNavItem(targetId);
@@ -13132,31 +13238,38 @@ panel.innerHTML = `
           ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
         </span>
       </div>
+
+      <div style="margin-top:8px;">
+        <button id="profileScoringToggleBtn" class="secondaryBtn">
+          ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
+        </button>
+      </div>
+
+      <div class="profileFocusSummary">
+        <div class="profileFocusSummaryLabel">${tr("progressNote")}</div>
+        <div class="profileFocusSummaryText">${encouragement}</div>
+      </div>
 </div>
 </div>
 
+<div class="profileAccountLayout">
 <div class="profileAccountNav">
   <div class="profileAccountNavTitle">Account<br>Management</div>
 
   <div class="profileAccountNavList" aria-label="Profile sections">
-    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileGoalsFocusSection">
-      <span class="profileAccountNavIcon">🎯</span>
-      <span>Goals & Focus</span>
-    </button>
-
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileProgressSection">
+    <button class="profileAccountNavItem active" type="button" data-profile-scroll-target="profileProgressSection">
       <span class="profileAccountNavIcon">📊</span>
       <span>Progress Overview</span>
     </button>
 
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSettingsSection">
-      <span class="profileAccountNavIcon">🔐</span>
-      <span>Account Settings</span>
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileGoalsSection">
+      <span class="profileAccountNavIcon">🎯</span>
+      <span>Goals</span>
     </button>
 
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileSecuritySection">
-      <span class="profileAccountNavIcon">🛡️</span>
-      <span>Security & Access</span>
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileGoalsFocusSection">
+      <span class="profileAccountNavIcon">🧭</span>
+      <span>Your Focus</span>
     </button>
 
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileHistorySection">
@@ -13164,22 +13277,22 @@ panel.innerHTML = `
       <span>History</span>
     </button>
 
-    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileDangerSection">
-      <span class="profileAccountNavIcon">⚠️</span>
-      <span>Danger Zone</span>
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSecuritySection">
+      <span class="profileAccountNavIcon">🔐</span>
+      <span>Account Security</span>
     </button>
   </div>
 </div>
-
+<div>
 <section id="profileProgressSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Progress Overview</h3>
-    <div class="profileContentSectionText">
-      A quick summary of your full-test and practice activity.
-    </div>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileProgressSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Progress Overview</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileProgressSectionBody" class="profileContentSectionBody hidden">
     <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("testsTaken")}</div>
@@ -13209,119 +13322,65 @@ panel.innerHTML = `
   </div>
 </section>
 
-<section id="profileGoalsFocusSection" class="profileContentSection profileSectionAnchor">
+<section id="profileGoalsSection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Goals & Focus</h3>
-    <div class="profileContentSectionText">
-      Your current target, weakest areas, and recommended next action.
-    </div>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileGoalsSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Goals</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
   </div>
 
-  <div class="profileContentSectionBody">
-    <div class="reviewTop">
+  <div id="profileGoalsSectionBody" class="profileContentSectionBody hidden">
+    <div id="goalsSection"></div>
+  </div>
+</section>
+
+<section id="profileGoalsFocusSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileGoalsFocusSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Your Focus</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
+  </div>
+
+  <div id="profileGoalsFocusSectionBody" class="profileContentSectionBody hidden">
+    <div class="reviewTop profileFocusGrid">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("currentFocus")}</div>
-      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
+      <div class="reviewStatValue profileFocusValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
     </div>
 
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("nextFocus")}</div>
-      <div class="reviewStatValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
-    </div>
-
-    <div class="reviewStat" style="grid-column: span 2;">
-      <div class="reviewStatLabel">${tr("progressNote")}</div>
-      <div style="font-size:14px; line-height:1.6; color:var(--text); font-weight:700;">${encouragement}</div>
+      <div class="reviewStatValue profileFocusValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
     </div>
     </div>
 
-    <div class="profileGoalsFocusActions">
-      <div class="profileActionCard">
-        <h3>Practice Focus</h3>
-      <p>Jump directly into your weakest skill or continue reviewing your progress.</p>
+    <div class="profileFocusActionRow">
+      ${
+        currentFocus !== "—"
+          ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>`
+          : `<button class="secondaryBtn" disabled>${tr("startPractice")}</button>`
+      }
 
-      <div class="menuActions">
-        ${
-          currentFocus !== "—"
-            ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>`
-            : ""
-        }
-      </div>
-    </div>
-
-      </div>
-
-    <div id="goalsSection"></div>
+      ${
+        nextFocus !== "—"
+          ? `<button id="historyPracticeNextFocusBtn" class="secondaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(nextFocus))}</button>`
+          : `<button id="historyPracticeNextFocusBtn" class="secondaryBtn" disabled>${tr("startPractice")}</button>`
+      }
     </div>
   </div>
 </section>
-
-<section id="profileAccountSettingsSection" class="profileContentSection profileSectionAnchor">
-  <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Account Settings</h3>
-    <div class="profileContentSectionText">
-      Manage username, email, password, and scoring preferences.
-    </div>
-  </div>
-
-  <div class="profileContentSectionBody">
-    <div class="profileActionCard">
-      <h3>Account Settings</h3>
-      <p>Manage your username, email, password, security, and scoring preference.</p>
-
-      <div class="menuActions">
-        <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
-        <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
-        <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
-        <button id="profileScoringToggleBtn" class="secondaryBtn">
-          ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
-        </button>
-      </div>
-    </div>
-
-    </div>
-  </div>
-</section>
-
-<section id="profileSecuritySection" class="profileContentSection profileSectionAnchor">
-  <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">Security & Access</h3>
-    <div class="profileContentSectionText">
-      Account recovery, access help, and protection settings.
-    </div>
-  </div>
-
-  <div class="profileContentSectionBody">
-    <div class="profileActionCard">
-      <h3>Security & Access</h3>
-      <p>Use these options if you need account-access help or need to enable account protection.</p>
-
-      <div class="menuActions">
-        <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
-
-        ${
-          (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
-            ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
-            : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
-        }
-      </div>
-    </div>
-
-    </div>
-  </div>
-</section>
-
-
 
 <section id="profileHistorySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle">History</h3>
-    <div class="profileContentSectionText">
-      Review submitted full tests and completed practice sessions.
-    </div>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileHistorySectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">History</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
   </div>
 
-  <div class="profileContentSectionBody">
+  <div id="profileHistorySectionBody" class="profileContentSectionBody hidden">
     <div class="profileHistoryTabs">
     <div class="menuActions">
       <button id="testHistoryTabBtn" class="secondaryBtn">${tr("testHistory")}</button>
@@ -13336,25 +13395,34 @@ panel.innerHTML = `
   </div>
 </section>
 
-<section id="profileDangerSection" class="profileContentSection profileSectionAnchor">
+<section id="profileAccountSecuritySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
-    <h3 class="profileContentSectionTitle" style="color:#b42318;">Danger Zone</h3>
-    <div class="profileContentSectionText">
-      Permanent account actions live here.
-    </div>
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSecuritySectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Account Security</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
   </div>
 
-  <div class="profileContentSectionBody">
-    <div class="profileActionCard profileDangerZone">
-      <h3>Danger Zone</h3>
-      <p>Deleting your account permanently removes your saved account data.</p>
+  <div id="profileAccountSecuritySectionBody" class="profileContentSectionBody hidden">
+    <p>Manage your username, email, password, account access, and security options.</p>
 
-      <div class="menuActions">
-        <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
-      </div>
+    <div class="menuActions">
+      <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
+      <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
+      <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+      <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
+      <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
+
+      ${
+        (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
+          ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
+          : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
+      }
     </div>
   </div>
 </section>
+</div>
+</div>
 `;
 
         const goalsSection = document.getElementById("goalsSection");
@@ -13500,6 +13568,42 @@ panel.innerHTML = `
         if (learningHistoryTabBtn) {
           learningHistoryTabBtn.onclick = () => toggleHistoryTab("learning");
         }
+
+        function setProfileSectionExpanded(sectionId, expanded) {
+          const section = document.getElementById(sectionId);
+          if (!section) return;
+          const toggleBtn = section.querySelector(".profileSectionToggleBtn");
+          const bodyId = toggleBtn?.dataset.profileCollapseTarget;
+          const body = bodyId ? document.getElementById(bodyId) : null;
+          if (!toggleBtn || !body) return;
+          body.classList.toggle("hidden", !expanded);
+          toggleBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
+          const icon = toggleBtn.querySelector(".profileSectionToggleIcon");
+          if (icon) icon.textContent = expanded ? "▴" : "▾";
+        }
+
+        function wireProfileSectionToggles() {
+          panel.querySelectorAll(".profileSectionToggleBtn").forEach((btn) => {
+            btn.onclick = () => {
+              const section = btn.closest(".profileContentSection");
+              if (!section) return;
+              const sectionId = section.id;
+              const isExpanded = btn.getAttribute("aria-expanded") === "true";
+              setProfileSectionExpanded(sectionId, !isExpanded);
+            };
+          });
+        }
+
+        window.expandProfileSectionIfCollapsed = (sectionId) => {
+          setProfileSectionExpanded(sectionId, true);
+        };
+
+        wireProfileSectionToggles();
+        setProfileSectionExpanded("profileGoalsSection", false);
+        setProfileSectionExpanded("profileProgressSection", false);
+        setProfileSectionExpanded("profileGoalsFocusSection", false);
+        setProfileSectionExpanded("profileAccountSecuritySection", false);
+        setProfileSectionExpanded("profileHistorySection", false);
 
         const initialTab = defaultTab === "goals" ? null : defaultTab;
         if (initialTab && historyTabs[initialTab]) {
@@ -13685,6 +13789,13 @@ const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
 if (practiceBtn) {
   practiceBtn.onclick = async () => {
     const category = skillToPracticeCategory(currentFocus);
+    await startPractice(category, state.difficulty, true);
+  };
+}
+const nextFocusPracticeBtn = document.getElementById("historyPracticeNextFocusBtn");
+if (nextFocusPracticeBtn && !nextFocusPracticeBtn.disabled) {
+  nextFocusPracticeBtn.onclick = async () => {
+    const category = skillToPracticeCategory(nextFocus);
     await startPractice(category, state.difficulty, true);
   };
 }
