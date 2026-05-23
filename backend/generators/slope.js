@@ -133,7 +133,6 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
   const graphTop = 42;
   const graphSize = 300;
   const graphRight = graphLeft + graphSize;
-  const graphBottom = graphTop + graphSize;
   const calloutLeft = graphRight + 28;
   const calloutTop = graphTop + 18;
   const calloutWidth = 140;
@@ -142,6 +141,9 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
 
   const toSvgX = (x) => graphLeft + (x - gridMin) * unit;
   const toSvgY = (y) => graphTop + (gridMax - y) * unit;
+
+  const xAxisY = toSvgY(0);
+  const yAxisX = toSvgX(0);
 
   const gridLines = [];
   const tickLabels = [];
@@ -174,16 +176,49 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
     `);
 
     if (value !== 0 && value % 2 === 0) {
+      // Keep endpoint badges clear when a labeled tick is next to the same axis.
+      const xTickNeedsOffset =
+        (x1 === value && (y1 === 0 || y1 === -1)) ||
+        (x2 === value && (y2 === 0 || y2 === -1));
+      const yTickNeedsOffset =
+        ((x1 === 0 || x1 === -1) && y1 === value) ||
+        ((x2 === 0 || x2 === -1) && y2 === value);
+      const xTickY = xAxisY + (xTickNeedsOffset ? -17 : 20);
+      const yTickX = yAxisX - (yTickNeedsOffset ? 43 : 14);
+      const labelWidth = value < 0 ? 23 : 17;
+
       tickLabels.push(`
-        <text x="${x}" y="${graphBottom + 21}" text-anchor="middle" class="diagramLabel" style="font-size:13px;">
-          ${value}
-        </text>
+        <g aria-hidden="true">
+          <rect
+            x="${x - labelWidth / 2}"
+            y="${xTickY - 13}"
+            width="${labelWidth}"
+            height="18"
+            rx="4"
+            fill="#ffffff"
+            fill-opacity="0.96"
+          />
+          <text x="${x}" y="${xTickY}" text-anchor="middle" class="diagramLabel" style="font-size:13px;">
+            ${value}
+          </text>
+        </g>
       `);
 
       tickLabels.push(`
-        <text x="${graphLeft - 13}" y="${y + 4}" text-anchor="end" class="diagramLabel" style="font-size:13px;">
-          ${value}
-        </text>
+        <g aria-hidden="true">
+          <rect
+            x="${yTickX - labelWidth - 3}"
+            y="${y - 10}"
+            width="${labelWidth + 6}"
+            height="18"
+            rx="4"
+            fill="#ffffff"
+            fill-opacity="0.96"
+          />
+          <text x="${yTickX}" y="${y + 4}" text-anchor="end" class="diagramLabel" style="font-size:13px;">
+            ${value}
+          </text>
+        </g>
       `);
     }
   }
@@ -228,10 +263,9 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
       />
 
       ${gridLines.join("")}
-      ${tickLabels.join("")}
 
-      <text x="${graphRight + 14}" y="${graphBottom + 21}" class="diagramLabel" style="font-size:15px; font-weight:700;">x</text>
-      <text x="${graphLeft - 13}" y="${graphTop - 14}" text-anchor="middle" class="diagramLabel" style="font-size:15px; font-weight:700;">y</text>
+      <text x="${graphRight + 18}" y="${xAxisY + 5}" class="diagramLabel" style="font-size:15px; font-weight:700;">x</text>
+      <text x="${yAxisX - 4}" y="${graphTop - 14}" class="diagramLabel" style="font-size:15px; font-weight:700;">y</text>
 
       <g clip-path="url(#slopeGraphClip)">
         <line
@@ -266,6 +300,8 @@ function buildCoordinatePlaneDiagram({ x1, y1, x2, y2, rise, run, gridMin, gridM
           opacity="0.75"
         />
       </g>
+
+      ${tickLabels.join("")}
 
       <circle cx="${pointAX}" cy="${pointAY}" r="10" fill="#ffffff" stroke="#153e75" stroke-width="2.75"/>
       <circle cx="${pointBX}" cy="${pointBY}" r="10" fill="#ffffff" stroke="#153e75" stroke-width="2.75"/>
