@@ -1978,10 +1978,11 @@ select {
 }
 
 .profileFocusGrid .reviewStat {
-  min-height: 132px;
+  min-height: 106px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 8px;
 }
 
 .profileFocusValue {
@@ -1996,7 +1997,7 @@ select {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .profileFocusSummary {
@@ -13238,6 +13239,12 @@ panel.innerHTML = `
         </span>
       </div>
 
+      <div style="margin-top:8px;">
+        <button id="profileScoringToggleBtn" class="secondaryBtn">
+          ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
+        </button>
+      </div>
+
       <div class="profileFocusSummary">
         <div class="profileFocusSummaryLabel">${tr("progressNote")}</div>
         <div class="profileFocusSummaryText">${encouragement}</div>
@@ -13272,7 +13279,7 @@ panel.innerHTML = `
 
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSecuritySection">
       <span class="profileAccountNavIcon">🔐</span>
-      <span>Account Security & Preferences</span>
+      <span>Account Security</span>
     </button>
   </div>
 </div>
@@ -13391,7 +13398,7 @@ panel.innerHTML = `
 <section id="profileAccountSecuritySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
     <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSecuritySectionBody" aria-expanded="false">
-      <h3 class="profileContentSectionTitle">Account Security & Preferences</h3>
+      <h3 class="profileContentSectionTitle">Account Security</h3>
       <span class="profileSectionToggleIcon">▾</span>
     </button>
   </div>
@@ -13403,24 +13410,14 @@ panel.innerHTML = `
       <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
       <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
       <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
-      <button id="profileScoringToggleBtn" class="secondaryBtn">
-        ${state.auth.user?.scoringEnabled === false ? "Enable Scoring" : "Disable Scoring"}
-      </button>
       <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
+      <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
 
       ${
         (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
           ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
           : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
       }
-    </div>
-
-    <div class="profileDangerZone">
-      <p>Deleting your account permanently removes your saved account data.</p>
-
-      <div class="menuActions">
-        <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
-      </div>
     </div>
   </div>
 </section>
