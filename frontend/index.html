@@ -1740,10 +1740,12 @@ select {
 }
 
 .profileAccountNav {
-  position: absolute;
+  position: sticky;
   left: 18px;
+  top: calc(var(--sticky-topbar-scroll-offset) + 10px);
   width: 230px;
   z-index: 5;
+  align-self: flex-start;
   padding: 10px 16px 16px 0;
   margin: 0;
   background: transparent;
@@ -1848,12 +1850,12 @@ select {
 
 .profileContentSection {
   margin-left: 252px;
-  margin-bottom: 18px;
+  margin-bottom: 22px;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: var(--panel);
   color: var(--text);
-  box-shadow: 0 8px 22px rgba(8, 24, 46, 0.12);
+  box-shadow: 0 10px 26px rgba(8, 24, 46, 0.16);
   overflow: hidden;
 }
 
@@ -1966,6 +1968,26 @@ select {
   margin-top: 6px;
 }
 
+.profileFocusGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profileFocusGrid .reviewStat {
+  min-height: 132px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.profileFocusValue {
+  font-size: calc(28px * var(--font-scale));
+  line-height: 1.28;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .profileFocusSummary {
   margin-top: 10px;
   padding: 10px 12px;
@@ -2026,6 +2048,10 @@ select {
   .profileAccountNav ~ .profileContentSection {
   margin-left: 0;
 }
+
+  .profileFocusGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 520px) {
@@ -13292,26 +13318,30 @@ panel.innerHTML = `
   </div>
 
   <div id="profileGoalsFocusSectionBody" class="profileContentSectionBody hidden">
-    <div class="reviewTop">
+    <div class="reviewTop profileFocusGrid">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("currentFocus")}</div>
-      <div class="reviewStatValue" style="font-size:calc(26px * var(--font-scale));">${escapeHtml(translateSkillLabel(currentFocus))}</div>
-    </div>
-
-    <div class="reviewStat">
-      <div class="reviewStatLabel">${tr("nextFocus")}</div>
-      <div class="reviewStatValue" style="font-size:calc(26px * var(--font-scale));">${escapeHtml(translateSkillLabel(nextFocus))}</div>
-    </div>
-    </div>
-
-    <div class="profileGoalsFocusActions">
+      <div class="reviewStatValue profileFocusValue">${escapeHtml(translateSkillLabel(currentFocus))}</div>
       <div class="menuActions">
         ${
           currentFocus !== "—"
             ? `<button id="historyPracticeWeakestBtn" class="primaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(currentFocus))}</button>`
-            : ""
+            : `<button class="secondaryBtn" disabled>${tr("startPractice")}</button>`
         }
       </div>
+    </div>
+
+    <div class="reviewStat">
+      <div class="reviewStatLabel">${tr("nextFocus")}</div>
+      <div class="reviewStatValue profileFocusValue">${escapeHtml(translateSkillLabel(nextFocus))}</div>
+      <div class="menuActions">
+        ${
+          nextFocus !== "—"
+            ? `<button id="historyPracticeNextFocusBtn" class="secondaryBtn">${tr("startPractice")} ${escapeHtml(translateSkillLabel(nextFocus))}</button>`
+            : `<button id="historyPracticeNextFocusBtn" class="secondaryBtn" disabled>${tr("startPractice")}</button>`
+        }
+      </div>
+    </div>
     </div>
   </div>
 </section>
@@ -13755,6 +13785,13 @@ const practiceBtn = document.getElementById("historyPracticeWeakestBtn");
 if (practiceBtn) {
   practiceBtn.onclick = async () => {
     const category = skillToPracticeCategory(currentFocus);
+    await startPractice(category, state.difficulty, true);
+  };
+}
+const nextFocusPracticeBtn = document.getElementById("historyPracticeNextFocusBtn");
+if (nextFocusPracticeBtn && !nextFocusPracticeBtn.disabled) {
+  nextFocusPracticeBtn.onclick = async () => {
+    const category = skillToPracticeCategory(nextFocus);
     await startPractice(category, state.difficulty, true);
   };
 }
