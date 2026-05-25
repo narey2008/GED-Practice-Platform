@@ -26,6 +26,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const REQUEST_BODY_LIMIT = "1mb";
+const HISTORY_DEFAULT_LIMIT = 50;
+const HISTORY_MAX_LIMIT = 100;
 const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || process.env.SUPPORT_INBOX || "gedpracticeplatform@gmail.com";
 const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
@@ -144,6 +146,36 @@ function answersMatch(userAnswer, correctAnswer) {
   }
 
   return a === b;
+}
+
+function getHistoryPagination(query = {}) {
+  const requestedLimit = Number.parseInt(query.limit, 10);
+  const requestedSkip = Number.parseInt(query.skip, 10);
+
+  const limit = Number.isFinite(requestedLimit)
+    ? Math.min(HISTORY_MAX_LIMIT, Math.max(1, requestedLimit))
+    : HISTORY_DEFAULT_LIMIT;
+  const skip = Number.isFinite(requestedSkip)
+    ? Math.max(0, requestedSkip)
+    : 0;
+
+  return { limit, skip };
+}
+
+function buildHistoryPagePayload(history, totalCount, pagination, extra = {}) {
+  const safeHistory = Array.isArray(history) ? history : [];
+  const safeTotal = Number.isFinite(totalCount) ? Math.max(0, totalCount) : safeHistory.length;
+  const safeSkip = Number.isFinite(pagination?.skip) ? Math.max(0, pagination.skip) : 0;
+  const safeLimit = Number.isFinite(pagination?.limit) ? Math.max(1, pagination.limit) : HISTORY_DEFAULT_LIMIT;
+
+  return {
+    history: safeHistory,
+    totalCount: safeTotal,
+    limit: safeLimit,
+    skip: safeSkip,
+    hasMore: safeSkip + safeHistory.length < safeTotal,
+    ...extra
+  };
 }
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -1952,11 +1984,45 @@ console.log("Registering /api/test/history route");
 
 app.get("/api/test/history", authMiddleware, async (req, res) => {
   try {
-    const history = await TestHistory.find({ userId: req.auth.userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const pagination = getHistoryPagination(req.query);
+    const userObjectId = mongoose.Types.ObjectId.isValid(req.auth.userId)
+      ? new mongoose.Types.ObjectId(req.auth.userId)
+      : req.auth.userId;
 
-    return res.json({ history });
+    const [history, totalCount, scoreStatsRows] = await Promise.all([
+      TestHistory.find({ userId: req.auth.userId })
+        .sort({ createdAt: -1 })
+        .skip(pagination.skip)
+        .limit(pagination.limit),
+      TestHistory.countDocuments({ userId: req.auth.userId }),
+      TestHistory.aggregate([
+        {
+          $match: {
+            userId: userObjectId,
+            score200: { $type: "number" }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            bestScore: { $max: "$score200" },
+            averageScore: { $avg: "$score200" },
+            scoredCount: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
+
+    const scoreStats = scoreStatsRows[0] || {};
+
+    return res.json(buildHistoryPagePayload(history, totalCount, pagination, {
+      stats: {
+        testsTaken: totalCount,
+        bestScore: Number.isFinite(scoreStats.bestScore) ? scoreStats.bestScore : null,
+        averageScore: Number.isFinite(scoreStats.averageScore) ? Math.round(scoreStats.averageScore) : null,
+        scoredCount: Number(scoreStats.scoredCount) || 0
+      }
+    }));
   } catch (error) {
     console.error("GET HISTORY ERROR:");
     console.error(error);
@@ -2013,11 +2079,16 @@ questions.forEach((q) => {
 
 app.get("/api/practice/history", authMiddleware, async (req, res) => {
   try {
-    const history = await PracticeHistory.find({ userId: req.auth.userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const pagination = getHistoryPagination(req.query);
+    const [history, totalCount] = await Promise.all([
+      PracticeHistory.find({ userId: req.auth.userId })
+        .sort({ createdAt: -1 })
+        .skip(pagination.skip)
+        .limit(pagination.limit),
+      PracticeHistory.countDocuments({ userId: req.auth.userId })
+    ]);
 
-    return res.json({ history });
+    return res.json(buildHistoryPagePayload(history, totalCount, pagination));
   } catch (error) {
     console.error("GET PRACTICE HISTORY ERROR:");
     console.error(error);
@@ -2102,11 +2173,16 @@ app.post("/api/learning/complete", authMiddleware, async (req, res) => {
 
 app.get("/api/learning/history", authMiddleware, async (req, res) => {
   try {
-    const history = await LearningHistory.find({ userId: req.auth.userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const pagination = getHistoryPagination(req.query);
+    const [history, totalCount] = await Promise.all([
+      LearningHistory.find({ userId: req.auth.userId })
+        .sort({ createdAt: -1 })
+        .skip(pagination.skip)
+        .limit(pagination.limit),
+      LearningHistory.countDocuments({ userId: req.auth.userId })
+    ]);
 
-    return res.json({ history });
+    return res.json(buildHistoryPagePayload(history, totalCount, pagination));
   } catch (error) {
     console.error("GET LEARNING HISTORY ERROR:");
     console.error(error);

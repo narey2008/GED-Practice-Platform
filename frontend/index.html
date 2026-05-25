@@ -2961,11 +2961,17 @@ body.loadingActive {
     .localDevToolsPanel.minimized {
       width: min(340px, calc(100vw - 24px));
       height: auto;
+      min-height: 0;
       max-height: none;
     }
 
     .localDevToolsPanel.minimized .devToolsBody {
-      display: none;
+      display: none !important;
+      height: 0;
+      min-height: 0;
+      max-height: 0;
+      padding: 0;
+      overflow: hidden;
     }
 
     .localDevToolsPanel.minimized .devToolsHeader {
@@ -3058,11 +3064,16 @@ body.loadingActive {
       gap: 10px;
       min-height: 0;
       min-width: 0;
+<<<<<<< HEAD
       max-width: 100%;
       overflow-x: auto;
       overflow-y: visible;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
+=======
+      min-height: 0;
+      overscroll-behavior: contain;
+>>>>>>> 52c58df (Fix developer tools layout and history cap)
     }
 
     .devToolsCategoryNav {
@@ -5978,11 +5989,13 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
   let pointerId = null;
   let offsetX = 0;
   let offsetY = 0;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let movedDuringDrag = false;
 
   header.addEventListener("pointerdown", (event) => {
     if (!GED_DEV_IS_LOCALHOST) return;
     if (window.innerWidth <= GED_DEV_PANEL_MOBILE_WIDTH) return;
-    if (panel.classList.contains("minimized")) return;
     if (event.target.closest("button")) return;
     if (event.button !== undefined && event.button !== 0) return;
 
@@ -5991,6 +6004,9 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
     pointerId = event.pointerId;
     offsetX = event.clientX - rect.left;
     offsetY = event.clientY - rect.top;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    movedDuringDrag = false;
 
     panel.style.left = `${rect.left}px`;
     panel.style.top = `${rect.top}px`;
@@ -6009,6 +6025,10 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
     const nextLeft = Math.min(Math.max(margin, event.clientX - offsetX), maxLeft);
     const nextTop = Math.min(Math.max(minTop, event.clientY - offsetY), maxTop);
 
+    if (Math.abs(event.clientX - dragStartX) > 3 || Math.abs(event.clientY - dragStartY) > 3) {
+      movedDuringDrag = true;
+    }
+
     panel.style.left = `${nextLeft}px`;
     panel.style.top = `${nextTop}px`;
     panel.style.right = "auto";
@@ -6018,6 +6038,14 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
     if (!isDragging || event.pointerId !== pointerId) return;
     isDragging = false;
     pointerId = null;
+    if (movedDuringDrag) {
+      panel.dataset.skipNextHeaderClick = "1";
+      window.setTimeout(() => {
+        if (panel.dataset.skipNextHeaderClick === "1") {
+          delete panel.dataset.skipNextHeaderClick;
+        }
+      }, 250);
+    }
   };
 
   header.addEventListener("pointerup", endDrag);
@@ -6105,6 +6133,10 @@ function ensureLocalDevToolsPanel() {
 
   const header = document.getElementById("localDevToolsHeader");
   header.onclick = (event) => {
+    if (panel.dataset.skipNextHeaderClick === "1") {
+      delete panel.dataset.skipNextHeaderClick;
+      return;
+    }
     if (!gedDevPanelMinimized || event.target.closest("button")) return;
     setLocalDevToolsMinimized(false);
   };
@@ -8271,6 +8303,17 @@ function getAverageScore(history) {
   if (!scoredEntries.length) return "—";
   const total = scoredEntries.reduce((sum, entry) => sum + (Number(entry.score200) || 0), 0);
   return Math.round(total / scoredEntries.length);
+}
+
+function getHistoryTotalCount(data, fallbackLength = 0) {
+  const total = Number(data?.totalCount ?? data?.stats?.testsTaken);
+  return Number.isFinite(total) && total >= 0 ? total : fallbackLength;
+}
+
+function getHistoryScoreStat(value, fallback = "\u2014") {
+  if (value === null || value === undefined || value === "") return fallback;
+  const score = Number(value);
+  return Number.isFinite(score) ? Math.round(score) : fallback;
 }
 
 function getChartTheme() {
@@ -17129,7 +17172,7 @@ async function openProfilePanel(defaultTab = "goals") {
 
       try {
         const [testRes, practiceRes, learningRes] = await Promise.all([
-  fetch(`${API_BASE}/api/test/history`, {
+  fetch(`${API_BASE}/api/test/history?limit=50`, {
     headers: { ...getAuthHeaders() }
   }),
   fetch(`${API_BASE}/api/practice/history`, {
@@ -17155,22 +17198,27 @@ async function openProfilePanel(defaultTab = "goals") {
           throw new Error(learningData.error || tr("failedLoadHistory"));
         }
 
-        const testHistory = Array.isArray(testData.history) ? testData.history : [];
+        let testHistory = Array.isArray(testData.history) ? testData.history : [];
         const practiceHistory = Array.isArray(practiceData.history) ? practiceData.history : [];
         const learningHistory = Array.isArray(learningData.history) ? learningData.history : [];
-
-        const bestScore =
-  state.auth.user?.scoringEnabled === false
-    ? "Scoring Off"
-    : (
-        testHistory.length > 0
-          ? Math.max(...testHistory
-              .filter((h) => typeof h.score200 === "number")
-              .map((h) => Number(h.score200) || 0))
-          : "—"
-      );
+        let testTotalCount = getHistoryTotalCount(testData, testHistory.length);
+        const practiceTotalCount = getHistoryTotalCount(practiceData, practiceHistory.length);
+        const learningTotalCount = getHistoryTotalCount(learningData, learningHistory.length);
+        const testStats = testData?.stats || {};
+        const loadedScoredScores = testHistory
+          .filter((h) => typeof h.score200 === "number")
+          .map((h) => Number(h.score200) || 0);
 
         const averageScore = getAverageScore(testHistory);
+        const profileBestScore = state.auth.user?.scoringEnabled === false
+          ? "Scoring Off"
+          : getHistoryScoreStat(
+              testStats.bestScore,
+              loadedScoredScores.length ? Math.max(...loadedScoredScores) : "\u2014"
+            );
+        const profileAverageScore = state.auth.user?.scoringEnabled === false
+          ? "Scoring Off"
+          : getHistoryScoreStat(testStats.averageScore, averageScore);
 
         const skillStats = getHistorySkillStats(testHistory);
         const currentFocus = skillStats.length > 0 ? skillStats[0].skill : "—";
@@ -17273,7 +17321,7 @@ panel.innerHTML = `
     <div class="reviewTop">
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("testsTaken")}</div>
-      <div class="reviewStatValue">${testHistory.length}</div>
+      <div class="reviewStatValue">${testTotalCount}</div>
     </div>
 
     ${
@@ -17282,18 +17330,18 @@ panel.innerHTML = `
         : `
           <div class="reviewStat">
             <div class="reviewStatLabel">${tr("bestScore")}</div>
-            <div class="reviewStatValue">${bestScore}</div>
+            <div class="reviewStatValue">${profileBestScore}</div>
           </div>
           <div class="reviewStat">
             <div class="reviewStatLabel">${tr("averageScore")}</div>
-            <div class="reviewStatValue">${averageScore}</div>
+            <div class="reviewStatValue">${profileAverageScore}</div>
           </div>
         `
     }
 
     <div class="reviewStat">
       <div class="reviewStatLabel">${tr("practiceSessions")}</div>
-      <div class="reviewStatValue">${practiceHistory.length}</div>
+      <div class="reviewStatValue">${practiceTotalCount}</div>
     </div>
     </div>
   </div>
@@ -17412,6 +17460,12 @@ panel.innerHTML = `
           wireProfileGoalsSectionControls();
         }
 
+        let testHistoryLoadingMore = false;
+
+        function renderTestHistorySection() {
+          if (!testSection) return;
+          testSection.innerHTML = "";
+
         if (!testHistory.length) {
           testSection.innerHTML = `
             <div class="reviewItem">${tr("noTestHistory")}</div>
@@ -17422,7 +17476,7 @@ panel.innerHTML = `
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
-              <div><strong>${tr("testLabel")} ${testHistory.length - index}</strong></div>
+              <div><strong>${tr("testLabel")} ${Math.max(1, testTotalCount - index)}</strong></div>
               <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
               <div>${tr("difficulty")}: ${escapeHtml(translateDifficultyLabel(entry.difficulty))}</div>
               <div>${tr("score")}: ${
@@ -17442,6 +17496,77 @@ panel.innerHTML = `
           });
         }
 
+          if (testHistory.length < testTotalCount) {
+            const loadMoreItem = document.createElement("div");
+            loadMoreItem.className = "reviewItem";
+            loadMoreItem.innerHTML = `
+              <div>${testHistory.length} of ${testTotalCount} tests shown.</div>
+              <div style="margin-top:12px;">
+                <button id="testHistoryLoadMoreBtn" class="secondaryBtn" type="button">Load more tests</button>
+              </div>
+            `;
+            testSection.appendChild(loadMoreItem);
+          }
+        }
+
+        async function loadMoreTestHistory() {
+          if (testHistoryLoadingMore || testHistory.length >= testTotalCount) return;
+          testHistoryLoadingMore = true;
+          const loadMoreBtn = document.getElementById("testHistoryLoadMoreBtn");
+          if (loadMoreBtn) {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = "Loading...";
+          }
+
+          try {
+            const params = new URLSearchParams({
+              limit: "50",
+              skip: String(testHistory.length)
+            });
+            const res = await fetch(`${API_BASE}/api/test/history?${params.toString()}`, {
+              headers: { ...getAuthHeaders() }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || tr("failedLoadHistory"));
+
+            const nextHistory = Array.isArray(data.history) ? data.history : [];
+            testHistory = testHistory.concat(nextHistory);
+            testTotalCount = getHistoryTotalCount(data, testTotalCount);
+            renderTestHistorySection();
+          } catch (error) {
+            showModal("Error", error.message || tr("failedLoadHistory"), [
+              { label: tr("close"), variant: "primary" }
+            ]);
+          } finally {
+            testHistoryLoadingMore = false;
+          }
+        }
+
+        renderTestHistorySection();
+
+        if (testSection) {
+          testSection.onclick = async (event) => {
+            const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+            if (!target) return;
+
+            const detailsBtn = target.closest(".testHistoryDetailsBtn");
+            if (detailsBtn && testSection.contains(detailsBtn)) {
+              const index = Number(detailsBtn.getAttribute("data-index"));
+              const entry = testHistory[index];
+              showModal("Test Details", `<div id="testDetailsModalBody">${renderHistoryDetails(entry?.questions || [])}</div>`, [
+                { label: tr("close"), variant: "secondary", onClick: closeModal }
+              ]);
+              renderReviewCharts(document.getElementById("testDetailsModalBody"));
+              return;
+            }
+
+            const loadMoreBtn = target.closest("#testHistoryLoadMoreBtn");
+            if (loadMoreBtn && testSection.contains(loadMoreBtn)) {
+              await loadMoreTestHistory();
+            }
+          };
+        }
+
         if (!practiceHistory.length) {
           practiceSection.innerHTML = `
             <div class="reviewItem">${tr("noPracticeHistory")}</div>
@@ -17452,7 +17577,7 @@ panel.innerHTML = `
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
-              <div><strong>${tr("practiceLabel")} ${practiceHistory.length - index}</strong></div>
+              <div><strong>${tr("practiceLabel")} ${Math.max(1, practiceTotalCount - index)}</strong></div>
               <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
               <div>${tr("skill")}: ${escapeHtml(translateSkillLabel(entry.skill || "Mixed Practice"))}</div>
               <div>${tr("difficulty")}: ${escapeHtml(translateDifficultyLabel(entry.difficulty))}</div>
@@ -17478,7 +17603,7 @@ panel.innerHTML = `
             const item = document.createElement("div");
             item.className = "reviewItem";
             item.innerHTML = `
-              <div><strong>Learning Session ${learningHistory.length - index}</strong></div>
+              <div><strong>Learning Session ${Math.max(1, learningTotalCount - index)}</strong></div>
               <div style="margin-top:8px;">${tr("date")}: ${escapeHtml(completedDate)}</div>
               <div>${tr("skill")}: ${escapeHtml(translateSkillLabel(entry.skill || "Learning Mode"))}</div>
               <div>Subskill: ${escapeHtml(translateSkillLabel(entry.subskill || "—"))}</div>
@@ -17589,17 +17714,6 @@ panel.innerHTML = `
           collapseHistoryTabs();
         }
         wireProfileAccountNav();
-
-        panel.querySelectorAll(".testHistoryDetailsBtn").forEach((btn) => {
-          btn.onclick = () => {
-            const index = Number(btn.getAttribute("data-index"));
-            const entry = testHistory[index];
-            showModal("Test Details", `<div id="testDetailsModalBody">${renderHistoryDetails(entry?.questions || [])}</div>`, [
-              { label: tr("close"), variant: "secondary", onClick: closeModal }
-            ]);
-            renderReviewCharts(document.getElementById("testDetailsModalBody"));
-          };
-        });
 
         panel.querySelectorAll(".practiceHistoryDetailsBtn").forEach((btn) => {
           btn.onclick = () => {
