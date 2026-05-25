@@ -2941,7 +2941,7 @@ body.loadingActive {
       position: fixed;
       top: 72px;
       right: 16px;
-      width: min(430px, calc(100vw - 24px));
+      width: min(760px, calc(100vw - 24px));
       height: min(720px, calc(100dvh - 88px));
       max-height: calc(100dvh - 88px);
       background: var(--card);
@@ -2957,13 +2957,18 @@ body.loadingActive {
     }
 
     .localDevToolsPanel.minimized {
-      width: min(360px, calc(100vw - 24px));
+      width: min(340px, calc(100vw - 24px));
       height: auto;
       max-height: none;
     }
 
     .localDevToolsPanel.minimized .devToolsBody {
       display: none;
+    }
+
+    .localDevToolsPanel.minimized .devToolsHeader {
+      border-bottom: 0;
+      cursor: pointer;
     }
 
     .devToolsHeader {
@@ -3032,17 +3037,34 @@ body.loadingActive {
       margin-top: 10px;
     }
 
+    .devToolsShell {
+      display: grid;
+      grid-template-columns: 158px minmax(0, 1fr);
+      gap: 10px;
+      min-height: 100%;
+    }
+
+    .devToolsContent {
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      min-width: 0;
+    }
+
     .devToolsCategoryNav {
       display: flex;
+      flex-direction: column;
       gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 2px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      max-height: 100%;
+      padding-right: 2px;
       scrollbar-gutter: stable;
     }
 
     .devToolsCategoryBtn {
       flex: 0 0 auto;
-      width: auto;
+      width: 100%;
       padding: 8px 10px;
       border: 1px solid var(--border);
       border-radius: 7px;
@@ -3050,6 +3072,7 @@ body.loadingActive {
       color: var(--text);
       font-size: 12px;
       font-weight: 800;
+      text-align: left;
       cursor: pointer;
     }
 
@@ -3057,6 +3080,7 @@ body.loadingActive {
       background: var(--primary);
       border-color: var(--primary);
       color: var(--button-text);
+      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--button-text) 80%, transparent);
     }
 
     .devToolsCategoryPanel.hidden {
@@ -3078,6 +3102,7 @@ body.loadingActive {
       border-radius: 8px;
       background: var(--panel);
       overflow: hidden;
+      min-width: 0;
     }
 
     .devToolsSectionTitle {
@@ -3369,15 +3394,36 @@ body.loadingActive {
         max-height: calc(100dvh - 82px);
       }
 
+      .localDevToolsPanel.minimized {
+        height: auto;
+        max-height: none;
+      }
+
       .devToolsHeader {
         cursor: default;
       }
 
+      .localDevToolsPanel.minimized .devToolsHeader {
+        cursor: pointer;
+      }
+
+      .devToolsShell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
       .devToolsCategoryNav {
+        flex-direction: row;
         gap: 5px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        max-height: none;
+        padding-right: 0;
+        padding-bottom: 2px;
       }
 
       .devToolsCategoryBtn {
+        width: auto;
+        min-width: max-content;
         padding: 8px 9px;
       }
 
@@ -4282,6 +4328,11 @@ function normalizeDevTag(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function isSupportedLocalDevTypeFilter(typeKey) {
+  const key = String(typeKey || "").trim();
+  return !key || Object.prototype.hasOwnProperty.call(GED_DEV_QUESTION_TYPE_PRESETS, key);
+}
+
 function questionMatchesDevSkill(question, skill, subskill) {
   const selected = normalizeDevTag(subskill || skill);
   if (!selected) return true;
@@ -4302,6 +4353,7 @@ function questionMatchesDevSkill(question, skill, subskill) {
 
 function questionMatchesLocalDevType(question, typeKey) {
   if (!typeKey) return true;
+  if (!isSupportedLocalDevTypeFilter(typeKey)) return false;
 
   if (typeKey === "chart") {
     return !!(question?.chart && question.chart.type && question.chart.data);
@@ -4649,6 +4701,7 @@ function buildLocalDevCategoryNavHtml() {
       type="button"
       data-dev-category="${escapeHtml(category.key)}"
       aria-pressed="${category.key === gedDevActiveCategory ? "true" : "false"}"
+      aria-current="${category.key === gedDevActiveCategory ? "page" : "false"}"
     >${escapeHtml(category.label)}</button>
   `).join("");
 }
@@ -4665,11 +4718,17 @@ function setActiveLocalDevToolsCategory(category) {
     const isActive = btn.dataset.devCategory === gedDevActiveCategory;
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+    btn.setAttribute("aria-current", isActive ? "page" : "false");
   });
 
   document.querySelectorAll("[data-dev-category-panel]").forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.devCategoryPanel !== gedDevActiveCategory);
   });
+
+  const panel = document.getElementById("localDevToolsPanel");
+  if (gedDevActiveCategory === "preview" && gedDevPreviewQuestions.length && !panel?.classList.contains("minimized")) {
+    requestAnimationFrame(renderLocalDevPreviewResults);
+  }
 }
 
 function resetLocalDevToolsPosition() {
@@ -4678,6 +4737,35 @@ function resetLocalDevToolsPosition() {
   panel.style.left = "";
   panel.style.top = "";
   panel.style.right = "";
+}
+
+function setLocalDevToolsMinimized(isMinimized) {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const wasMinimized = gedDevPanelMinimized;
+  gedDevPanelMinimized = !!isMinimized;
+
+  const panel = document.getElementById("localDevToolsPanel");
+  if (panel) {
+    panel.classList.toggle("minimized", gedDevPanelMinimized);
+    panel.setAttribute("aria-expanded", gedDevPanelMinimized ? "false" : "true");
+  }
+
+  const minimizeBtn = document.getElementById("devToolsMinimizeBtn");
+  if (minimizeBtn) {
+    minimizeBtn.textContent = gedDevPanelMinimized ? "Open" : "_";
+    minimizeBtn.title = gedDevPanelMinimized ? "Open panel" : "Minimize panel";
+    minimizeBtn.setAttribute("aria-label", gedDevPanelMinimized ? "Open Developer Tools panel" : "Minimize Developer Tools panel");
+  }
+
+  const headerSub = document.getElementById("devToolsHeaderSub");
+  if (headerSub) {
+    headerSub.textContent = gedDevPanelMinimized ? "Click to open local-only menu" : "Local-only mod menu";
+  }
+
+  if (wasMinimized && !gedDevPanelMinimized && gedDevActiveCategory === "preview" && gedDevPreviewQuestions.length) {
+    requestAnimationFrame(renderLocalDevPreviewResults);
+  }
 }
 
 function clampLocalDevToolsPanelToViewport() {
@@ -4714,6 +4802,7 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
   header.addEventListener("pointerdown", (event) => {
     if (!GED_DEV_IS_LOCALHOST) return;
     if (window.innerWidth <= GED_DEV_PANEL_MOBILE_WIDTH) return;
+    if (panel.classList.contains("minimized")) return;
     if (event.target.closest("button")) return;
     if (event.button !== undefined && event.button !== 0) return;
 
@@ -4789,11 +4878,11 @@ function ensureLocalDevToolsPanel() {
     <div id="localDevToolsHeader" class="devToolsHeader">
       <div class="devToolsHeaderText">
         <div class="devToolsHeaderTitle">Developer Tools v2</div>
-        <div class="devToolsHeaderSub">Local-only mod menu</div>
+        <div id="devToolsHeaderSub" class="devToolsHeaderSub">Local-only mod menu</div>
       </div>
       <div class="devToolsHeaderActions">
         <button id="devToolsResetPositionBtn" class="devToolIconBtn" type="button" title="Reset panel position">Reset</button>
-        <button id="devToolsMinimizeBtn" class="devToolIconBtn" type="button" title="Minimize panel">_</button>
+        <button id="devToolsMinimizeBtn" class="devToolIconBtn" type="button" title="Minimize panel" aria-label="Minimize Developer Tools panel">_</button>
         <button id="devToolsCloseBtn" class="devToolIconBtn" type="button" title="Close panel">x</button>
       </div>
     </div>
@@ -4808,9 +4897,7 @@ function ensureLocalDevToolsPanel() {
   };
 
   document.getElementById("devToolsMinimizeBtn").onclick = () => {
-    gedDevPanelMinimized = !gedDevPanelMinimized;
-    panel.classList.toggle("minimized", gedDevPanelMinimized);
-    document.getElementById("devToolsMinimizeBtn").textContent = gedDevPanelMinimized ? "+" : "_";
+    setLocalDevToolsMinimized(!gedDevPanelMinimized);
   };
 
   document.getElementById("devToolsResetPositionBtn").onclick = () => {
@@ -4818,7 +4905,14 @@ function ensureLocalDevToolsPanel() {
     setDevToolsStatus("Developer Tools position reset.");
   };
 
-  makeLocalDevToolsPanelDraggable(panel, document.getElementById("localDevToolsHeader"));
+  const header = document.getElementById("localDevToolsHeader");
+  header.onclick = (event) => {
+    if (!gedDevPanelMinimized || event.target.closest("button")) return;
+    setLocalDevToolsMinimized(false);
+  };
+
+  makeLocalDevToolsPanelDraggable(panel, header);
+  setLocalDevToolsMinimized(gedDevPanelMinimized);
   return panel;
 }
 
@@ -4855,13 +4949,15 @@ function renderLocalDevToolsPanel() {
   `).join("");
 
   body.innerHTML = `
-    <nav class="devToolsCategoryNav" aria-label="Developer tool categories">
-      ${buildLocalDevCategoryNavHtml()}
-    </nav>
+    <div class="devToolsShell">
+      <nav class="devToolsCategoryNav" aria-label="Developer tool categories">
+        ${buildLocalDevCategoryNavHtml()}
+      </nav>
 
-    <div id="devToolsStatus" class="devToolStatus" role="status" aria-live="polite"></div>
+      <div class="devToolsContent">
+        <div id="devToolsStatus" class="devToolStatus" role="status" aria-live="polite"></div>
 
-    <section class="${getLocalDevCategoryPanelClass("overview")}" data-dev-category-panel="overview">
+        <section class="${getLocalDevCategoryPanelClass("overview")}" data-dev-category-panel="overview">
       <h3 class="devToolsSectionTitle">Overview</h3>
       <div class="devToolsSectionBody">
         <div class="devToolsNotice">
@@ -4870,9 +4966,9 @@ function renderLocalDevToolsPanel() {
         </div>
         <div id="devOverviewMeta" class="devToolMetaGrid">${buildLocalDevOverviewHtml()}</div>
       </div>
-    </section>
+        </section>
 
-    <section class="${getLocalDevCategoryPanelClass("question")}" data-dev-category-panel="question">
+        <section class="${getLocalDevCategoryPanelClass("question")}" data-dev-category-panel="question">
       <h3 class="devToolsSectionTitle">Question Tools</h3>
       <div class="devToolsSectionBody">
         <div class="devToolStack">
@@ -4912,9 +5008,9 @@ function renderLocalDevToolsPanel() {
           <button id="devGenerateSkillQuestionBtn" class="secondaryBtn" type="button" ${questionToolsAvailable ? "" : "disabled"}>${questionToolsAvailable ? "Generate Dev Question" : disabledText}</button>
         </div>
       </div>
-    </section>
+        </section>
 
-    <section class="${getLocalDevCategoryPanelClass("preview")}" data-dev-category-panel="preview">
+        <section class="${getLocalDevCategoryPanelClass("preview")}" data-dev-category-panel="preview">
       <h3 class="devToolsSectionTitle">Question Preview Lab</h3>
       <div class="devToolsSectionBody">
         <div class="devToolsNotice">
@@ -4956,9 +5052,9 @@ function renderLocalDevToolsPanel() {
 
         <div id="devPreviewResults" class="devPreviewResults">${buildLocalDevPreviewResultsHtml()}</div>
       </div>
-    </section>
+        </section>
 
-    <section class="${getLocalDevCategoryPanelClass("state")}" data-dev-category-panel="state">
+        <section class="${getLocalDevCategoryPanelClass("state")}" data-dev-category-panel="state">
       <h3 class="devToolsSectionTitle">Test State</h3>
       <div class="devToolsSectionBody">
         <div class="devToolRow">
@@ -5006,9 +5102,9 @@ function renderLocalDevToolsPanel() {
           </div>
         </div>
       </div>
-    </section>
+        </section>
 
-    <section class="${getLocalDevCategoryPanelClass("flow")}" data-dev-category-panel="flow">
+        <section class="${getLocalDevCategoryPanelClass("flow")}" data-dev-category-panel="flow">
       <h3 class="devToolsSectionTitle">Flow / UI</h3>
       <div class="devToolsSectionBody">
         <div class="devToolButtonGrid">
@@ -5023,9 +5119,9 @@ function renderLocalDevToolsPanel() {
           <button id="devMainMenuBtn" class="secondaryBtn" type="button">Return to Main Menu</button>
         </div>
       </div>
-    </section>
+        </section>
 
-    <section class="${getLocalDevCategoryPanelClass("errors")}" data-dev-category-panel="errors">
+        <section class="${getLocalDevCategoryPanelClass("errors")}" data-dev-category-panel="errors">
       <h3 class="devToolsSectionTitle">Error Feed</h3>
       <div class="devToolsSectionBody">
         <div class="devToolRow">
@@ -5039,13 +5135,15 @@ function renderLocalDevToolsPanel() {
         </div>
         <div id="devErrorFeed" class="devErrorFeed">${buildLocalDevErrorFeedHtml()}</div>
       </div>
-    </section>
+        </section>
+      </div>
+    </div>
   `;
 
   wireLocalDevToolsPanel();
   setActiveLocalDevToolsCategory(gedDevActiveCategory);
-  panel.classList.toggle("minimized", gedDevPanelMinimized);
-  renderLocalDevPreviewResults();
+  setLocalDevToolsMinimized(gedDevPanelMinimized);
+  if (!gedDevPanelMinimized && gedDevActiveCategory === "preview") renderLocalDevPreviewResults();
 }
 
 function refreshLocalDevToolsPanel() {
@@ -5150,16 +5248,25 @@ function wireLocalDevToolsPanel() {
   if (generatePreviewBtn) {
     generatePreviewBtn.onclick = async () => {
       const originalText = generatePreviewBtn.textContent;
-      const requestedCount = getLocalDevPreviewCount(document.getElementById("devPreviewCountInput")?.value || 5);
+      const countInput = document.getElementById("devPreviewCountInput");
+      const requestedCount = getLocalDevPreviewCount(countInput?.value || 5);
       const typeSelect = document.getElementById("devPreviewTypeSelect");
       const typeKey = typeSelect?.value || "";
       const typeLabel = typeKey ? (GED_DEV_QUESTION_TYPE_PRESETS[typeKey]?.label || typeKey) : "Any";
+      if (countInput) countInput.value = String(requestedCount);
 
       generatePreviewBtn.disabled = true;
       generatePreviewBtn.textContent = "Generating...";
       setDevToolsStatus(`Generating ${requestedCount} preview question${requestedCount === 1 ? "" : "s"} (${typeLabel})...`);
 
       try {
+        if (!isSupportedLocalDevTypeFilter(typeKey)) {
+          gedDevPreviewQuestions = [];
+          renderLocalDevPreviewResults();
+          setDevToolsStatus(`Question Preview Lab does not support the "${typeLabel}" type filter. Choose Any or one of the listed local filters.`, true);
+          return;
+        }
+
         const questions = await fetchLocalDevPreviewQuestions({
           skill: previewSkillSelect?.value || "",
           subskill: previewSubskillSelect?.value || "",
@@ -5172,9 +5279,9 @@ function wireLocalDevToolsPanel() {
         renderLocalDevPreviewResults();
 
         if (!questions.length) {
-          setDevToolsStatus("No preview questions matched those filters. Try a broader skill, Any type, or another difficulty.", true);
+          setDevToolsStatus("No preview questions matched that skill/subskill, difficulty, and type. Try Any type, a broader skill, or another difficulty. Nothing was saved.", true);
         } else if (questions.length < requestedCount) {
-          setDevToolsStatus(`Generated ${questions.length}/${requestedCount} preview questions. No more matching coverage was found for those filters.`, true);
+          setDevToolsStatus(`Generated ${questions.length}/${requestedCount} preview questions. The remaining requested slots did not match those filters after safe local attempts. Nothing was saved.`, true);
         } else {
           setDevToolsStatus(`Generated ${questions.length} preview question${questions.length === 1 ? "" : "s"}.`);
         }
@@ -5402,13 +5509,15 @@ function wireLocalDevToolsPanel() {
   }
 }
 
-function openLocalDevToolsPanel() {
+function openLocalDevToolsPanel(options = {}) {
   if (!GED_DEV_IS_LOCALHOST) return;
 
   const panel = ensureLocalDevToolsPanel();
   if (!panel) return;
+  const shouldOpenMinimized = !options || options.minimized !== false;
 
   panel.classList.remove("hidden");
+  setLocalDevToolsMinimized(shouldOpenMinimized);
   document.getElementById("devToolsBtn")?.setAttribute("aria-expanded", "true");
   renderLocalDevToolsPanel();
   clampLocalDevToolsPanelToViewport();
@@ -5428,7 +5537,7 @@ function initLocalDevToolsEntryPoint() {
 
   devToolsBtn.classList.remove("hidden");
   devToolsBtn.setAttribute("aria-expanded", "false");
-  devToolsBtn.onclick = openLocalDevToolsPanel;
+  devToolsBtn.onclick = () => openLocalDevToolsPanel({ minimized: true });
 }
 
 function buildLocalDevPracticeUrl(skill, difficulty, count = 12) {
@@ -5486,6 +5595,7 @@ async function fetchLocalDevPreviewQuestions(options = {}) {
   const difficulty = String(options.difficulty || getDefaultDevDifficulty()).trim() || "GED-Level";
   const typeKey = String(options.typeKey || "").trim();
   const requestedCount = getLocalDevPreviewCount(options.count);
+  if (!isSupportedLocalDevTypeFilter(typeKey)) return [];
   const requestSkill = selectedSubskill || selectedSkill || "Solving Equations and Inequalities";
   const previewQuestions = [];
   const maxAttempts = typeKey ? 8 : 1;
