@@ -2954,6 +2954,7 @@ body.loadingActive {
       flex-direction: column;
       min-height: 0;
       overflow: hidden;
+      overscroll-behavior: contain;
     }
 
     .localDevToolsPanel.minimized {
@@ -3060,6 +3061,8 @@ body.loadingActive {
       max-height: 100%;
       padding-right: 2px;
       scrollbar-gutter: stable;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
 
     .devToolsCategoryBtn {
@@ -3238,6 +3241,8 @@ body.loadingActive {
       gap: 7px;
       max-height: 220px;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
 
     .devErrorItem {
@@ -3283,6 +3288,9 @@ body.loadingActive {
       max-height: 440px;
       overflow-y: auto;
       padding-right: 2px;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
     }
 
     .devPreviewEmpty {
@@ -3339,6 +3347,7 @@ body.loadingActive {
       border-radius: 8px;
       background: var(--panel);
       overflow-x: auto;
+      overscroll-behavior: contain;
     }
 
     .devPreviewPrompt table {
@@ -3377,11 +3386,99 @@ body.loadingActive {
 
     .devPreviewVisual {
       overflow-x: auto;
+      overscroll-behavior: contain;
     }
 
     .devPreviewChartWrap {
       min-height: 220px;
       position: relative;
+    }
+
+    .devHealthSummaryGrid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .devHealthSummaryItem {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      min-width: 0;
+    }
+
+    .devHealthSummaryValue {
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .devHealthResultsWrap {
+      max-height: 440px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+    }
+
+    .devHealthTable {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .devHealthTable th,
+    .devHealthTable td {
+      padding: 7px 8px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .devHealthTable th {
+      color: var(--muted);
+      font-weight: 800;
+      background: var(--panel);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .devHealthTable tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .devHealthStatus {
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .devHealthStatusPass {
+      color: #146c2e;
+    }
+
+    .devHealthStatusNo {
+      color: #8a5a00;
+    }
+
+    .devHealthStatusFailed {
+      color: #8f1d15;
+    }
+
+    .devHealthEmpty {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 8px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: var(--card);
     }
 
     @media (max-width: 680px) {
@@ -3430,6 +3527,10 @@ body.loadingActive {
       .devToolRow {
         align-items: stretch;
         flex-direction: column;
+      }
+
+      .devHealthSummaryGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .devToolActions {
@@ -4094,15 +4195,22 @@ const GED_DEV_TOOL_CATEGORIES = [
   { key: "overview", label: "Overview" },
   { key: "question", label: "Question Tools" },
   { key: "preview", label: "Question Preview Lab" },
+  { key: "health", label: "Generator Health" },
   { key: "state", label: "Test State" },
   { key: "flow", label: "Flow / UI" },
   { key: "errors", label: "Error Feed" }
 ];
+const GED_DEV_HEALTH_DIFFICULTIES = ["Easy", "Medium", "GED-Level"];
+const GED_DEV_HEALTH_QUESTIONS_PER_COMBO = 2;
+const GED_DEV_HEALTH_MAX_REQUESTS = 72;
 let gedDevShowQuestionId = false;
 let gedDevPanelMinimized = false;
 let gedDevActiveCategory = "overview";
 let gedDevClientErrors = [];
 let gedDevPreviewQuestions = [];
+let gedDevHealthResults = [];
+let gedDevHealthRunning = false;
+let gedDevHealthAbortController = null;
 
 function updateDevQuestionIdLabel() {
   const labelEl = document.getElementById("devQuestionIdLabel");
@@ -4385,10 +4493,33 @@ function buildDevDifficultyOptions(selectedValue = getDefaultDevDifficulty()) {
     .join("");
 }
 
+function buildDevHealthDifficultyOptions(selectedValue = "All") {
+  const options = [
+    { value: "All", label: "All" },
+    ...GED_DEV_HEALTH_DIFFICULTIES.map((difficulty) => ({ value: difficulty, label: difficulty }))
+  ];
+
+  return options
+    .map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === selectedValue ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
 function buildDevSkillOptions(selectedValue = "Solving Equations and Inequalities") {
   return Object.keys(GED_DEV_SKILL_SUBSKILLS)
     .map((skill) => `<option value="${escapeHtml(skill)}" ${skill === selectedValue ? "selected" : ""}>${escapeHtml(skill)}</option>`)
     .join("");
+}
+
+function buildDevHealthSkillOptions(selectedValue = "") {
+  const options = [
+    `<option value="" ${selectedValue ? "" : "selected"}>All skills</option>`
+  ];
+
+  Object.keys(GED_DEV_SKILL_SUBSKILLS).forEach((skill) => {
+    options.push(`<option value="${escapeHtml(skill)}" ${skill === selectedValue ? "selected" : ""}>${escapeHtml(skill)}</option>`);
+  });
+
+  return options.join("");
 }
 
 function buildDevSubskillOptions(skill, selectedValue = "") {
@@ -4614,6 +4745,104 @@ function renderLocalDevPreviewResults() {
   });
 }
 
+function getLocalDevHealthSummary() {
+  return gedDevHealthResults.reduce((summary, result) => {
+    summary.total += 1;
+    if (result.status === "pass") summary.passed += 1;
+    else if (result.status === "no questions") summary.noQuestions += 1;
+    else if (result.status === "failed") summary.failed += 1;
+    return summary;
+  }, {
+    total: 0,
+    passed: 0,
+    noQuestions: 0,
+    failed: 0
+  });
+}
+
+function buildLocalDevHealthSummaryHtml() {
+  const summary = getLocalDevHealthSummary();
+  const items = [
+    ["Total checked", summary.total],
+    ["Passed", summary.passed],
+    ["No questions", summary.noQuestions],
+    ["Failed", summary.failed]
+  ];
+
+  return `
+    <div class="devHealthSummaryGrid">
+      ${items.map(([label, value]) => `
+        <div class="devHealthSummaryItem">
+          <div class="devHealthSummaryValue">${escapeHtml(value)}</div>
+          <div class="devToolHelp">${escapeHtml(label)}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function formatLocalDevHealthTypes(types) {
+  if (!Array.isArray(types) || !types.length) return "n/a";
+  return types.map((type) => String(type || "").trim()).filter(Boolean).join(", ") || "n/a";
+}
+
+function getLocalDevHealthStatusClass(status) {
+  if (status === "pass") return "devHealthStatusPass";
+  if (status === "no questions") return "devHealthStatusNo";
+  if (status === "failed") return "devHealthStatusFailed";
+  return "";
+}
+
+function buildLocalDevHealthResultsHtml() {
+  if (!gedDevHealthResults.length) {
+    return `
+      ${buildLocalDevHealthSummaryHtml()}
+      <div class="devHealthEmpty">
+        No health sweep results yet. Run a sweep to check broad skills, or choose a skill to include its subskills.
+      </div>
+    `;
+  }
+
+  return `
+    ${buildLocalDevHealthSummaryHtml()}
+    <div class="devHealthResultsWrap">
+      <table class="devHealthTable">
+        <thead>
+          <tr>
+            <th>Skill</th>
+            <th>Subskill</th>
+            <th>Difficulty</th>
+            <th>Status</th>
+            <th>Returned</th>
+            <th>Types</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${gedDevHealthResults.map((result) => `
+            <tr>
+              <td>${escapeHtml(result.skill || "n/a")}</td>
+              <td>${escapeHtml(result.subskill || "Any")}</td>
+              <td>${escapeHtml(result.difficulty || "n/a")}</td>
+              <td><span class="devHealthStatus ${getLocalDevHealthStatusClass(result.status)}">${escapeHtml(result.status || "unknown")}</span></td>
+              <td>${escapeHtml(result.returnedCount ?? 0)}</td>
+              <td>${escapeHtml(formatLocalDevHealthTypes(result.types))}</td>
+              <td>${escapeHtml(result.error || "n/a")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderLocalDevHealthResults() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+  const results = document.getElementById("devHealthResults");
+  if (!results) return;
+  results.innerHTML = buildLocalDevHealthResultsHtml();
+}
+
 function formatDevMetaValue(value) {
   const text = String(value ?? "").trim();
   return text || "Not available";
@@ -4728,6 +4957,10 @@ function setActiveLocalDevToolsCategory(category) {
   const panel = document.getElementById("localDevToolsPanel");
   if (gedDevActiveCategory === "preview" && gedDevPreviewQuestions.length && !panel?.classList.contains("minimized")) {
     requestAnimationFrame(renderLocalDevPreviewResults);
+  }
+
+  if (gedDevActiveCategory === "health" && !panel?.classList.contains("minimized")) {
+    requestAnimationFrame(renderLocalDevHealthResults);
   }
 }
 
@@ -4845,22 +5078,84 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
   window.addEventListener("resize", clampLocalDevToolsPanelToViewport, { passive: true });
 }
 
-function wireLocalDevToolsBodyScroll(body) {
-  if (!GED_DEV_IS_LOCALHOST || !body || body.dataset.scrollBound === "1") return;
-  body.dataset.scrollBound = "1";
+function getLocalDevWheelDeltaY(event) {
+  let deltaY = Number(event.deltaY) || 0;
 
-  body.addEventListener("wheel", (event) => {
-    if (!body.contains(event.target)) return;
-    if (body.scrollHeight <= body.clientHeight) return;
+  if (event.deltaMode === 1) {
+    deltaY *= 16;
+  } else if (event.deltaMode === 2) {
+    deltaY *= Math.max(1, window.innerHeight * 0.8);
+  }
 
-    const beforeTop = body.scrollTop;
-    const deltaY = Number(event.deltaY) || 0;
+  return deltaY;
+}
 
-    requestAnimationFrame(() => {
-      if (body.scrollTop !== beforeTop) return;
-      body.scrollTop = beforeTop + deltaY;
-    });
-  }, { passive: true });
+function getLocalDevScrollableAncestors(target, panel) {
+  const containers = [];
+  const body = panel.querySelector("#devToolsBody");
+  let node = target instanceof Element ? target : target?.parentElement;
+
+  while (node && node !== panel) {
+    if (node instanceof HTMLElement) {
+      const style = window.getComputedStyle(node);
+      const canScrollY = /auto|scroll|overlay/i.test(style.overflowY || "");
+
+      if (canScrollY && node.scrollHeight > node.clientHeight + 1) {
+        containers.push(node);
+      }
+    }
+
+    node = node.parentElement;
+  }
+
+  if (
+    body instanceof HTMLElement &&
+    !containers.includes(body) &&
+    body.scrollHeight > body.clientHeight + 1
+  ) {
+    containers.push(body);
+  }
+
+  return containers;
+}
+
+function applyLocalDevWheelDelta(containers, deltaY) {
+  let remaining = deltaY;
+  let moved = false;
+
+  containers.forEach((container) => {
+    if (Math.abs(remaining) < 0.5) return;
+
+    const beforeTop = container.scrollTop;
+    const maxTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    const nextTop = Math.min(maxTop, Math.max(0, beforeTop + remaining));
+
+    if (nextTop === beforeTop) return;
+
+    container.scrollTop = nextTop;
+    remaining -= nextTop - beforeTop;
+    moved = true;
+  });
+
+  return moved;
+}
+
+function wireLocalDevToolsScrollContainment(panel) {
+  if (!GED_DEV_IS_LOCALHOST || !panel || panel.dataset.scrollBound === "1") return;
+  panel.dataset.scrollBound = "1";
+
+  panel.addEventListener("wheel", (event) => {
+    if (!panel.contains(event.target)) return;
+    if (panel.classList.contains("hidden") || panel.classList.contains("minimized")) return;
+
+    const deltaY = getLocalDevWheelDeltaY(event);
+    const deltaX = Number(event.deltaX) || 0;
+
+    if (!deltaY || Math.abs(deltaY) < Math.abs(deltaX)) return;
+
+    event.preventDefault();
+    applyLocalDevWheelDelta(getLocalDevScrollableAncestors(event.target, panel), deltaY);
+  }, { passive: false });
 }
 
 function ensureLocalDevToolsPanel() {
@@ -4889,7 +5184,7 @@ function ensureLocalDevToolsPanel() {
     <div id="devToolsBody" class="devToolsBody"></div>
   `;
   document.body.appendChild(panel);
-  wireLocalDevToolsBodyScroll(document.getElementById("devToolsBody"));
+  wireLocalDevToolsScrollContainment(panel);
 
   document.getElementById("devToolsCloseBtn").onclick = () => {
     panel.classList.add("hidden");
@@ -4939,6 +5234,8 @@ function renderLocalDevToolsPanel() {
   const previewDifficulty = document.getElementById("devPreviewDifficultySelect")?.value || selectedDifficulty;
   const previewType = document.getElementById("devPreviewTypeSelect")?.value || "";
   const previewCount = getLocalDevPreviewCount(document.getElementById("devPreviewCountInput")?.value || 5);
+  const healthDifficulty = document.getElementById("devHealthDifficultySelect")?.value || "All";
+  const healthSkill = document.getElementById("devHealthSkillSelect")?.value || "";
   const hasActiveQuestionSet = hasLocalDevActiveQuestionSet();
   const currentQuestionNumber = hasActiveQuestionSet ? state.currentIndex + 1 : 1;
   const totalQuestions = Array.isArray(state.questions) ? state.questions.length : 0;
@@ -5051,6 +5348,37 @@ function renderLocalDevToolsPanel() {
         </div>
 
         <div id="devPreviewResults" class="devPreviewResults">${buildLocalDevPreviewResultsHtml()}</div>
+      </div>
+        </section>
+
+        <section class="${getLocalDevCategoryPanelClass("health")}" data-dev-category-panel="health">
+      <h3 class="devToolsSectionTitle">Generator Health</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolsNotice">
+          Local-only and read-only. Reuses the existing practice generation API with ${GED_DEV_HEALTH_QUESTIONS_PER_COMBO}
+          questions per check, stores results in memory only, and does not start a session or save progress/history.
+          All skills checks broad categories; choose a skill to include its subskills.
+        </div>
+
+        <div class="devPreviewControlGrid">
+          <label class="devPreviewControl" for="devHealthDifficultySelect">
+            <span>Difficulty</span>
+            <select id="devHealthDifficultySelect" class="devToolSelect" ${gedDevHealthRunning ? "disabled" : ""}>${buildDevHealthDifficultyOptions(healthDifficulty)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devHealthSkillSelect">
+            <span>Skill</span>
+            <select id="devHealthSkillSelect" class="devToolSelect" ${gedDevHealthRunning ? "disabled" : ""}>${buildDevHealthSkillOptions(healthSkill)}</select>
+          </label>
+        </div>
+
+        <div class="devToolActions">
+          <button id="devRunHealthSweepBtn" class="secondaryBtn" type="button" ${gedDevHealthRunning ? "disabled" : ""}>${gedDevHealthRunning ? "Running..." : "Run Health Sweep"}</button>
+          <button id="devStopHealthSweepBtn" class="secondaryBtn" type="button" ${gedDevHealthRunning ? "" : "disabled"}>Stop</button>
+          <button id="devClearHealthBtn" class="secondaryBtn" type="button" ${gedDevHealthRunning ? "disabled" : ""}>Clear Results</button>
+        </div>
+
+        <div id="devHealthResults">${buildLocalDevHealthResultsHtml()}</div>
       </div>
         </section>
 
@@ -5306,6 +5634,21 @@ function wireLocalDevToolsPanel() {
     };
   }
 
+  const runHealthBtn = document.getElementById("devRunHealthSweepBtn");
+  if (runHealthBtn) {
+    runHealthBtn.onclick = runLocalDevHealthSweep;
+  }
+
+  const stopHealthBtn = document.getElementById("devStopHealthSweepBtn");
+  if (stopHealthBtn) {
+    stopHealthBtn.onclick = cancelLocalDevHealthSweep;
+  }
+
+  const clearHealthBtn = document.getElementById("devClearHealthBtn");
+  if (clearHealthBtn) {
+    clearHealthBtn.onclick = clearLocalDevHealthResults;
+  }
+
   const generateSkillBtn = document.getElementById("devGenerateSkillQuestionBtn");
   if (generateSkillBtn && hasLocalDevHelper("__GED_DEV_GENERATE_QUESTION")) {
     generateSkillBtn.onclick = async () => {
@@ -5548,6 +5891,183 @@ function buildLocalDevPracticeUrl(skill, difficulty, count = 12) {
   });
 
   return `${API_BASE}/api/practice?${params.toString()}`;
+}
+
+function getLocalDevHealthDifficulties(selectedValue) {
+  return selectedValue === "All" || !selectedValue
+    ? GED_DEV_HEALTH_DIFFICULTIES
+    : GED_DEV_HEALTH_DIFFICULTIES.filter((difficulty) => difficulty === selectedValue);
+}
+
+function buildLocalDevHealthSweepPlan(skillFilter, difficultyFilter) {
+  const selectedSkill = String(skillFilter || "").trim();
+  const difficulties = getLocalDevHealthDifficulties(difficultyFilter);
+  const skills = selectedSkill ? [selectedSkill] : Object.keys(GED_DEV_SKILL_SUBSKILLS);
+  const combos = [];
+
+  skills.forEach((skill) => {
+    difficulties.forEach((difficulty) => {
+      combos.push({ skill, subskill: "", difficulty });
+    });
+
+    if (!selectedSkill) return;
+
+    (GED_DEV_SKILL_SUBSKILLS[skill] || []).forEach((subskill) => {
+      difficulties.forEach((difficulty) => {
+        combos.push({ skill, subskill, difficulty });
+      });
+    });
+  });
+
+  const limitedCombos = combos.slice(0, GED_DEV_HEALTH_MAX_REQUESTS);
+  return {
+    combos: limitedCombos,
+    totalCombos: combos.length,
+    truncated: limitedCombos.length < combos.length
+  };
+}
+
+function setLocalDevHealthControlsRunning(isRunning) {
+  const runBtn = document.getElementById("devRunHealthSweepBtn");
+  const stopBtn = document.getElementById("devStopHealthSweepBtn");
+  const clearBtn = document.getElementById("devClearHealthBtn");
+  const skillSelect = document.getElementById("devHealthSkillSelect");
+  const difficultySelect = document.getElementById("devHealthDifficultySelect");
+
+  if (runBtn) {
+    runBtn.disabled = !!isRunning;
+    runBtn.textContent = isRunning ? "Running..." : "Run Health Sweep";
+  }
+
+  if (stopBtn) stopBtn.disabled = !isRunning;
+  if (clearBtn) clearBtn.disabled = !!isRunning;
+  if (skillSelect) skillSelect.disabled = !!isRunning;
+  if (difficultySelect) difficultySelect.disabled = !!isRunning;
+}
+
+async function fetchLocalDevHealthCombo(combo, signal) {
+  const requestSkill = combo.subskill || combo.skill;
+  const res = await fetch(
+    buildLocalDevPracticeUrl(requestSkill, combo.difficulty, GED_DEV_HEALTH_QUESTIONS_PER_COMBO),
+    { signal }
+  );
+
+  if (!res.ok) {
+    let message = `${res.status} ${res.statusText}`.trim();
+
+    try {
+      const data = await res.json();
+      if (data?.error) message = data.error;
+    } catch (error) {
+      // Keep the HTTP status message when the response body is not JSON.
+    }
+
+    throw new Error(message || "Practice generation failed.");
+  }
+
+  const data = await res.json();
+  const generated = Array.isArray(data.questions) ? data.questions : [];
+  const matched = generated.filter((question) => questionMatchesDevSkill(question, combo.skill, combo.subskill));
+  const types = [...new Set(
+    matched
+      .map((question) => String(question?.type || "").trim())
+      .filter(Boolean)
+  )];
+
+  if (!matched.length) {
+    return {
+      ...combo,
+      status: "no questions",
+      returnedCount: 0,
+      types,
+      error: generated.length ? `API returned ${generated.length}, but none matched requested tags.` : ""
+    };
+  }
+
+  return {
+    ...combo,
+    status: "pass",
+    returnedCount: matched.length,
+    types,
+    error: ""
+  };
+}
+
+function cancelLocalDevHealthSweep() {
+  if (!GED_DEV_IS_LOCALHOST || !gedDevHealthRunning || !gedDevHealthAbortController) return;
+  gedDevHealthAbortController.abort();
+}
+
+function clearLocalDevHealthResults() {
+  if (!GED_DEV_IS_LOCALHOST || gedDevHealthRunning) return;
+  gedDevHealthResults = [];
+  renderLocalDevHealthResults();
+  setDevToolsStatus("Generator Health results cleared.");
+}
+
+async function runLocalDevHealthSweep() {
+  if (!GED_DEV_IS_LOCALHOST || gedDevHealthRunning) return;
+
+  const skillFilter = document.getElementById("devHealthSkillSelect")?.value || "";
+  const difficultyFilter = document.getElementById("devHealthDifficultySelect")?.value || "All";
+  const plan = buildLocalDevHealthSweepPlan(skillFilter, difficultyFilter);
+
+  if (!plan.combos.length) {
+    setDevToolsStatus("No Generator Health combinations were available for those filters.", true);
+    return;
+  }
+
+  gedDevHealthResults = [];
+  renderLocalDevHealthResults();
+  gedDevHealthRunning = true;
+  gedDevHealthAbortController = new AbortController();
+  setLocalDevHealthControlsRunning(true);
+
+  const limitText = plan.truncated ? ` Limited to ${plan.combos.length}/${plan.totalCombos} combinations.` : "";
+  setDevToolsStatus(`Running Generator Health sweep: 0/${plan.combos.length}.${limitText}`);
+
+  let stopped = false;
+
+  try {
+    for (let index = 0; index < plan.combos.length; index += 1) {
+      const combo = plan.combos[index];
+      const progress = `${index + 1}/${plan.combos.length}`;
+      setDevToolsStatus(`Running Generator Health sweep: ${progress} (${combo.subskill || combo.skill}, ${combo.difficulty})...${limitText}`);
+
+      try {
+        const result = await fetchLocalDevHealthCombo(combo, gedDevHealthAbortController.signal);
+        gedDevHealthResults.push(result);
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          stopped = true;
+          break;
+        }
+
+        gedDevHealthResults.push({
+          ...combo,
+          status: "failed",
+          returnedCount: 0,
+          types: [],
+          error: sanitizeDevErrorText(error?.message || error || "Generation failed.")
+        });
+      }
+
+      renderLocalDevHealthResults();
+    }
+  } finally {
+    gedDevHealthRunning = false;
+    gedDevHealthAbortController = null;
+    setLocalDevHealthControlsRunning(false);
+    renderLocalDevHealthResults();
+  }
+
+  const summary = getLocalDevHealthSummary();
+  if (stopped) {
+    setDevToolsStatus(`Generator Health sweep stopped after ${summary.total}/${plan.combos.length} checks. Nothing was saved.`, true);
+    return;
+  }
+
+  setDevToolsStatus(`Generator Health complete: ${summary.passed} passed, ${summary.noQuestions} no questions, ${summary.failed} failed. Nothing was saved.`);
 }
 
 async function fetchLocalDevQuestion(options = {}) {
