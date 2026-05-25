@@ -2937,6 +2937,344 @@ body.loadingActive {
       pointer-events: none !important;
     }
 
+    .localDevToolsPanel {
+      position: fixed;
+      top: 72px;
+      right: 16px;
+      width: min(430px, calc(100vw - 24px));
+      height: min(720px, calc(100dvh - 88px));
+      max-height: calc(100dvh - 88px);
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.22);
+      z-index: 940;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .localDevToolsPanel.minimized {
+      width: min(360px, calc(100vw - 24px));
+      height: auto;
+      max-height: none;
+    }
+
+    .localDevToolsPanel.minimized .devToolsBody {
+      display: none;
+    }
+
+    .devToolsHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex: 0 0 auto;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--border);
+      cursor: move;
+      user-select: none;
+    }
+
+    .devToolsHeaderText {
+      min-width: 0;
+    }
+
+    .devToolsHeaderTitle {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .devToolsHeaderSub {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+      margin-top: 2px;
+    }
+
+    .devToolsHeaderActions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .devToolIconBtn {
+      width: auto;
+      min-width: 30px;
+      min-height: 30px;
+      padding: 4px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .devToolsBody {
+      display: block;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 10px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+    }
+
+    .devToolsBody > * + * {
+      margin-top: 10px;
+    }
+
+    .devToolsCategoryNav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-gutter: stable;
+    }
+
+    .devToolsCategoryBtn {
+      flex: 0 0 auto;
+      width: auto;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .devToolsCategoryBtn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--button-text);
+    }
+
+    .devToolsCategoryPanel.hidden {
+      display: none;
+    }
+
+    .devToolsNotice {
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .devToolsSection {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .devToolsSectionTitle {
+      margin: 0;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .devToolsSectionBody {
+      display: grid;
+      gap: 8px;
+      padding: 9px;
+    }
+
+    .devToolRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .devToolStack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .devToolText {
+      flex: 1 1 180px;
+      min-width: 130px;
+    }
+
+    .devToolTitle {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .devToolHelp {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .devToolActions,
+    .devToolButtonGrid {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .devToolButtonGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-content: stretch;
+    }
+
+    .devToolButtonGrid button {
+      width: 100%;
+    }
+
+    .devToolInput,
+    .devToolSelect {
+      width: 128px;
+      max-width: 100%;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .devToolSelect {
+      width: 100%;
+    }
+
+    .devToolStatus {
+      min-height: 18px;
+      padding: 8px 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .devToolStatus:empty {
+      display: none;
+    }
+
+    .devToolStatus.devToolStatusError {
+      color: #8f1d15;
+      border-color: color-mix(in srgb, #8f1d15 45%, var(--border));
+    }
+
+    .devToolMetaGrid {
+      display: grid;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .devToolMetaItem {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    }
+
+    .devToolMetaItem:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .devToolMetaLabel {
+      color: var(--muted);
+      flex: 0 0 auto;
+    }
+
+    .devToolMetaValue {
+      min-width: 0;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .devErrorFeed {
+      display: grid;
+      gap: 7px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .devErrorItem {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .devErrorMessage {
+      margin: 4px 0;
+      overflow-wrap: anywhere;
+      font-weight: 700;
+    }
+
+    .devErrorEmpty {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 680px) {
+      .localDevToolsPanel {
+        left: 8px !important;
+        right: 8px !important;
+        top: 66px !important;
+        width: auto;
+        height: calc(100dvh - 82px);
+        max-height: calc(100dvh - 82px);
+      }
+
+      .devToolsHeader {
+        cursor: default;
+      }
+
+      .devToolsCategoryNav {
+        gap: 5px;
+      }
+
+      .devToolsCategoryBtn {
+        padding: 8px 9px;
+      }
+
+      .devToolRow {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .devToolActions {
+        justify-content: flex-start;
+      }
+
+      .devToolButtonGrid {
+        grid-template-columns: 1fr;
+      }
+
+      .devToolInput {
+        width: 100%;
+      }
+    }
+
 @media (max-width: 900px) {
   .scrollTopBtn {
     right: 10px;
@@ -2968,6 +3306,7 @@ body.loadingActive {
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
       <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
             <button id="contactBtnTop" class="secondaryBtn">Contact Us</button>
+      <button id="devToolsBtn" class="secondaryBtn hidden" type="button" title="Local-only developer tools">Developer Tools</button>
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
@@ -3411,8 +3750,8 @@ const GED_GOAL_KEY = "ged_practice_active_goal";
 const GED_GOAL_ACTIVITY_KEY = "ged_practice_goal_activity";
 let goalDockDismissed = false;
     const API_BASE =
-      window.location.hostname === "localhost"
-        ? "http://localhost:3000"
+      ["localhost", "127.0.0.1"].includes(window.location.hostname)
+        ? `http://${window.location.hostname}:3000`
         : "https://api.gedpracticeplatform.com";
 
 let state = {
@@ -3574,15 +3913,27 @@ function buildCurrentQuestionReportId(question, index, mode) {
 
 const GED_DEV_LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
 const GED_DEV_IS_LOCALHOST = GED_DEV_LOCAL_HOSTNAMES.has(window.location.hostname);
+const GED_DEV_ACTIVE_QUESTION_MODES = new Set(["test", "practice", "learning", "practice-example", "test-tutorial"]);
+const GED_DEV_PANEL_MOBILE_WIDTH = 680;
+const GED_DEV_CLIENT_ERROR_LIMIT = 12;
+const GED_DEV_TOOL_CATEGORIES = [
+  { key: "overview", label: "Overview" },
+  { key: "question", label: "Question Tools" },
+  { key: "state", label: "Test State" },
+  { key: "flow", label: "Flow / UI" },
+  { key: "errors", label: "Error Feed" }
+];
 let gedDevShowQuestionId = false;
+let gedDevPanelMinimized = false;
+let gedDevActiveCategory = "overview";
+let gedDevClientErrors = [];
 
 function updateDevQuestionIdLabel() {
   const labelEl = document.getElementById("devQuestionIdLabel");
   if (!labelEl) return;
 
-  const activeModes = new Set(["test", "practice", "learning", "practice-example", "test-tutorial"]);
   const hasQuestion = Array.isArray(state.questions) && state.questions.length > 0 && state.questions[state.currentIndex];
-  const canShow = GED_DEV_IS_LOCALHOST && gedDevShowQuestionId && activeModes.has(state.mode) && hasQuestion;
+  const canShow = GED_DEV_IS_LOCALHOST && gedDevShowQuestionId && GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) && hasQuestion;
 
   if (!canShow) {
     labelEl.classList.add("hidden");
@@ -3593,6 +3944,1238 @@ function updateDevQuestionIdLabel() {
   const qid = buildCurrentQuestionReportId(current, state.currentIndex, state.mode);
   labelEl.textContent = `Question ID: ${qid}`;
   labelEl.classList.remove("hidden");
+}
+
+function hasLocalDevHelper(helperName) {
+  return GED_DEV_IS_LOCALHOST && typeof window[helperName] === "function";
+}
+
+function hasLocalDevActiveQuestionSet() {
+  return (
+    GED_DEV_IS_LOCALHOST &&
+    GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) &&
+    Array.isArray(state.questions) &&
+    state.questions.length > 0
+  );
+}
+
+function getCurrentDevQuestion() {
+  if (!Array.isArray(state.questions) || !state.questions.length) return null;
+  return state.questions[state.currentIndex] || null;
+}
+
+function getCurrentDevQuestionId() {
+  const current = getCurrentDevQuestion();
+  if (!current) return "";
+  return buildCurrentQuestionReportId(current, state.currentIndex, state.mode);
+}
+
+function sanitizeDevErrorText(value) {
+  return String(value ?? "")
+    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[redacted-token]")
+    .replace(/bearer\s+[A-Za-z0-9._-]+/gi, "Bearer [redacted]")
+    .replace(/\b(token|password|secret|authorization)\s*[:=]\s*["']?[^"'\s,;]+/gi, "$1=[redacted]")
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[redacted-email]")
+    .slice(0, 500);
+}
+
+function recordLocalDevClientError(kind, message) {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const entry = {
+    kind: sanitizeDevErrorText(kind || "error"),
+    timestamp: new Date().toISOString(),
+    message: sanitizeDevErrorText(message || "Unknown client error") || "Unknown client error",
+    mode: sanitizeDevErrorText(state.mode || "unknown"),
+    questionId: sanitizeDevErrorText(getCurrentDevQuestionId() || "none"),
+    userAgent: sanitizeDevErrorText(navigator.userAgent || "unknown").slice(0, 220)
+  };
+
+  gedDevClientErrors = [entry, ...gedDevClientErrors].slice(0, GED_DEV_CLIENT_ERROR_LIMIT);
+  renderLocalDevErrorFeed();
+}
+
+function setupLocalDevClientErrorCapture() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const previousOnError = window.onerror;
+  window.onerror = function gedDevWindowOnError(message, source, line, column, error) {
+    recordLocalDevClientError("window.onerror", error?.message || message || "Window error");
+
+    if (typeof previousOnError === "function") {
+      return previousOnError.apply(window, arguments);
+    }
+
+    return false;
+  };
+
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    const message = reason instanceof Error ? reason.message : String(reason || "Unhandled promise rejection");
+    recordLocalDevClientError("unhandledrejection", message);
+  });
+}
+
+setupLocalDevClientErrorCapture();
+
+function setDevToolsStatus(message, isError = false) {
+  if (!GED_DEV_IS_LOCALHOST) return;
+  const statusEl = document.getElementById("devToolsStatus");
+  if (!statusEl) return;
+  statusEl.textContent = message || "";
+  statusEl.classList.toggle("devToolStatusError", !!isError);
+}
+
+function canUseFullTestTimerDevTool() {
+  return GED_DEV_IS_LOCALHOST && state.mode === "test" && Array.isArray(state.questions) && state.questions.length > 0;
+}
+
+function canUseFullTestScoreDevTool() {
+  return (
+    GED_DEV_IS_LOCALHOST &&
+    state.mode === "test" &&
+    Array.isArray(state.questions) &&
+    state.questions.length > 0 &&
+    !state.lockedReviewMode &&
+    !state.isPaused
+  );
+}
+
+const GED_DEV_SKILL_SUBSKILLS = {
+  "Fractions, Decimals, and Percents": [
+    "Fractions",
+    "Decimals",
+    "Percent",
+    "Percent of a Number",
+    "Percent Discount",
+    "Percent of a Total",
+    "Comparing Percents"
+  ],
+  "Ratios, Proportions, and Percent Change": [
+    "Percent",
+    "Percent Change",
+    "Percent Increase",
+    "Percent Decrease",
+    "Finding Percent Increase",
+    "Percent Discount",
+    "Percent of a Total",
+    "Comparing Percents"
+  ],
+  "Area, Perimeter, Surface Area, and Volume": [
+    "Geometry",
+    "Rectangle Area",
+    "Rectangle Perimeter",
+    "Triangle Area",
+    "Area Cost Problems",
+    "Volume",
+    "Surface Area"
+  ],
+  "Lines, Angles, and Coordinate Plane": [
+    "Slope",
+    "Slope From Graph",
+    "Number Line",
+    "Integer Number Line",
+    "Opposites on a Number Line",
+    "Temperature Number Line",
+    "Decimal Number Line",
+    "Fraction Number Line",
+    "Inequality Number Line"
+  ],
+  "Data Tables and Graph Interpretation": [
+    "Bar Graph",
+    "Bar Graph Greatest Value",
+    "Bar Graph Least Value",
+    "Bar Graph Difference",
+    "Bar Graph Total",
+    "Bar Graph Interpretation",
+    "Data Table",
+    "Data Table Totals",
+    "Data Table Greatest Value",
+    "Data Table Least Value",
+    "Data Table Difference",
+    "Line Graph",
+    "Line Graph Change",
+    "Line Graph Greatest Value",
+    "Line Graph Least Value",
+    "Line Graph Difference",
+    "Scatter Plot",
+    "Scatter Plot Correlation",
+    "Graphs + Computation",
+    "Graph Totals",
+    "Graph Difference"
+  ],
+  "Mean, Median, and Probability": [
+    "Probability",
+    "Spinner Probability",
+    "Marble Probability",
+    "Number Cube Probability",
+    "Average",
+    "Median",
+    "Data + Average"
+  ],
+  "Solving Equations and Inequalities": [
+    "Algebra",
+    "Linear Equations",
+    "Solving Equations and Inequalities",
+    "Expressions and Order of Operations",
+    "Expression Substitution",
+    "Expression Word Problems",
+    "Simplifying Expressions",
+    "Combining Like Terms",
+    "Distributive Property",
+    "Variables on Both Sides",
+    "Equation Word Problems",
+    "Equation Steps",
+    "Two-Step Equations"
+  ],
+  "Linear Equations and Slope": [
+    "Linear Equations",
+    "Two-Step Equations",
+    "Variables on Both Sides",
+    "Equation Word Problems",
+    "Slope",
+    "Slope From Graph"
+  ]
+};
+
+const GED_DEV_QUESTION_TYPE_PRESETS = {
+  multiple: { label: "Multiple Choice", skill: "Solving Equations and Inequalities" },
+  fill: { label: "Fill-in-the-Blank", skill: "Solving Equations and Inequalities" },
+  dragdrop: { label: "Drag & Drop", skill: "Solving Equations and Inequalities" },
+  hotspot: { label: "Hotspot", skill: "Number Line" },
+  chart: { label: "Chart/Graph", skill: "Data Tables and Graph Interpretation" },
+  table: { label: "Table/Data", skill: "Data Tables and Graph Interpretation" },
+  geometry: { label: "Geometry Visual", skill: "Geometry" }
+};
+
+function normalizeDevTag(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function questionMatchesDevSkill(question, skill, subskill) {
+  const selected = normalizeDevTag(subskill || skill);
+  if (!selected) return true;
+
+  const tags = [
+    question?.skill,
+    question?.subskill,
+    question?.topic
+  ].map(normalizeDevTag);
+
+  if (!subskill && GED_DEV_SKILL_SUBSKILLS[skill]) {
+    const allowed = new Set([skill, ...GED_DEV_SKILL_SUBSKILLS[skill]].map(normalizeDevTag));
+    return tags.some((tag) => allowed.has(tag));
+  }
+
+  return tags.includes(selected);
+}
+
+function questionMatchesLocalDevType(question, typeKey) {
+  if (!typeKey) return true;
+
+  if (typeKey === "chart") {
+    return !!(question?.chart && question.chart.type && question.chart.data);
+  }
+
+  if (typeKey === "table") {
+    return normalizeDevTag(question?.skill) === "data table" || /<table[\s>]/i.test(String(question?.question || ""));
+  }
+
+  if (typeKey === "geometry") {
+    return normalizeDevTag(question?.skill) === "geometry" || !!question?.diagram;
+  }
+
+  return normalizeDevTag(question?.type) === normalizeDevTag(typeKey);
+}
+
+function getDefaultDevDifficulty() {
+  return (
+    state.difficulty ||
+    document.getElementById("practiceDifficultySelect")?.value ||
+    document.getElementById("difficultySelect")?.value ||
+    "GED-Level"
+  );
+}
+
+function buildDevDifficultyOptions(selectedValue = getDefaultDevDifficulty()) {
+  return ["Easy", "Medium", "GED-Level"]
+    .map((difficulty) => `<option value="${escapeHtml(difficulty)}" ${difficulty === selectedValue ? "selected" : ""}>${escapeHtml(difficulty)}</option>`)
+    .join("");
+}
+
+function buildDevSkillOptions(selectedValue = "Solving Equations and Inequalities") {
+  return Object.keys(GED_DEV_SKILL_SUBSKILLS)
+    .map((skill) => `<option value="${escapeHtml(skill)}" ${skill === selectedValue ? "selected" : ""}>${escapeHtml(skill)}</option>`)
+    .join("");
+}
+
+function buildDevSubskillOptions(skill, selectedValue = "") {
+  const subskills = GED_DEV_SKILL_SUBSKILLS[skill] || [];
+  const options = [`<option value="">Any subskill</option>`];
+
+  subskills.forEach((subskill) => {
+    options.push(`<option value="${escapeHtml(subskill)}" ${subskill === selectedValue ? "selected" : ""}>${escapeHtml(subskill)}</option>`);
+  });
+
+  return options.join("");
+}
+
+function formatDevMetaValue(value) {
+  const text = String(value ?? "").trim();
+  return text || "Not available";
+}
+
+function buildLocalDevMetaRows(rows) {
+  return rows.map(([label, value]) => `
+    <div class="devToolMetaItem">
+      <span class="devToolMetaLabel">${escapeHtml(label)}</span>
+      <span class="devToolMetaValue">${escapeHtml(formatDevMetaValue(value))}</span>
+    </div>
+  `).join("");
+}
+
+function buildLocalDevOverviewHtml() {
+  const total = Array.isArray(state.questions) ? state.questions.length : 0;
+  const current = getCurrentDevQuestion();
+  const indexText = total && current ? `${state.currentIndex + 1} / ${total}` : "No active question";
+
+  return buildLocalDevMetaRows([
+    ["Local-only", GED_DEV_IS_LOCALHOST ? "Active on localhost" : "Disabled"],
+    ["Host", window.location.hostname || "unknown"],
+    ["Current mode/view", state.mode || "unknown"],
+    ["Current question", indexText],
+    ["Current Question ID", getCurrentDevQuestionId() || "None"]
+  ]);
+}
+
+function buildLocalDevQuestionMetaHtml() {
+  const current = getCurrentDevQuestion();
+  const total = Array.isArray(state.questions) ? state.questions.length : 0;
+  const indexText = total && current ? `${state.currentIndex + 1} / ${total}` : "No active question";
+
+  if (!current) {
+    return buildLocalDevMetaRows([
+      ["Current question", "None"],
+      ["Mode", state.mode || "unknown"]
+    ]);
+  }
+
+  const source = current.generator || current.source || current.devSource || current.topic || "";
+
+  return buildLocalDevMetaRows([
+    ["Question ID", getCurrentDevQuestionId()],
+    ["skill", current.skill],
+    ["subskill", current.subskill],
+    ["type", current.type],
+    ["difficulty", current.difficulty || state.difficulty],
+    ["generator/source", source],
+    ["index / total", indexText]
+  ]);
+}
+
+function buildLocalDevErrorFeedHtml() {
+  if (!gedDevClientErrors.length) {
+    return `<div class="devErrorEmpty">No local client errors captured.</div>`;
+  }
+
+  return gedDevClientErrors.map((entry) => `
+    <div class="devErrorItem">
+      <div><strong>${escapeHtml(entry.kind)}</strong> at ${escapeHtml(entry.timestamp)}</div>
+      <div class="devErrorMessage">${escapeHtml(entry.message)}</div>
+      <div class="devToolHelp">mode: ${escapeHtml(entry.mode)} | question: ${escapeHtml(entry.questionId)}</div>
+      <div class="devToolHelp">ua: ${escapeHtml(entry.userAgent)}</div>
+    </div>
+  `).join("");
+}
+
+function renderLocalDevErrorFeed() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+  const feed = document.getElementById("devErrorFeed");
+  if (!feed) return;
+  feed.innerHTML = buildLocalDevErrorFeedHtml();
+}
+
+function normalizeLocalDevToolsCategory(category) {
+  const key = String(category || "").trim();
+  return GED_DEV_TOOL_CATEGORIES.some((item) => item.key === key) ? key : "overview";
+}
+
+function buildLocalDevCategoryNavHtml() {
+  return GED_DEV_TOOL_CATEGORIES.map((category) => `
+    <button
+      class="devToolsCategoryBtn ${category.key === gedDevActiveCategory ? "active" : ""}"
+      type="button"
+      data-dev-category="${escapeHtml(category.key)}"
+      aria-pressed="${category.key === gedDevActiveCategory ? "true" : "false"}"
+    >${escapeHtml(category.label)}</button>
+  `).join("");
+}
+
+function getLocalDevCategoryPanelClass(category) {
+  return `devToolsSection devToolsCategoryPanel${category === gedDevActiveCategory ? "" : " hidden"}`;
+}
+
+function setActiveLocalDevToolsCategory(category) {
+  if (!GED_DEV_IS_LOCALHOST) return;
+  gedDevActiveCategory = normalizeLocalDevToolsCategory(category);
+
+  document.querySelectorAll("[data-dev-category]").forEach((btn) => {
+    const isActive = btn.dataset.devCategory === gedDevActiveCategory;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  document.querySelectorAll("[data-dev-category-panel]").forEach((panel) => {
+    panel.classList.toggle("hidden", panel.dataset.devCategoryPanel !== gedDevActiveCategory);
+  });
+}
+
+function resetLocalDevToolsPosition() {
+  const panel = document.getElementById("localDevToolsPanel");
+  if (!panel) return;
+  panel.style.left = "";
+  panel.style.top = "";
+  panel.style.right = "";
+}
+
+function clampLocalDevToolsPanelToViewport() {
+  const panel = document.getElementById("localDevToolsPanel");
+  if (!panel || panel.classList.contains("hidden")) return;
+
+  if (window.innerWidth <= GED_DEV_PANEL_MOBILE_WIDTH) {
+    resetLocalDevToolsPosition();
+    return;
+  }
+
+  const rect = panel.getBoundingClientRect();
+  const margin = 8;
+  const minTop = 64;
+  const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+  const maxTop = Math.max(minTop, window.innerHeight - rect.height - margin);
+  const nextLeft = Math.min(Math.max(margin, rect.left), maxLeft);
+  const nextTop = Math.min(Math.max(minTop, rect.top), maxTop);
+
+  panel.style.left = `${nextLeft}px`;
+  panel.style.top = `${nextTop}px`;
+  panel.style.right = "auto";
+}
+
+function makeLocalDevToolsPanelDraggable(panel, header) {
+  if (!GED_DEV_IS_LOCALHOST || !panel || !header || panel.dataset.dragBound === "1") return;
+  panel.dataset.dragBound = "1";
+
+  let isDragging = false;
+  let pointerId = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  header.addEventListener("pointerdown", (event) => {
+    if (!GED_DEV_IS_LOCALHOST) return;
+    if (window.innerWidth <= GED_DEV_PANEL_MOBILE_WIDTH) return;
+    if (event.target.closest("button")) return;
+    if (event.button !== undefined && event.button !== 0) return;
+
+    const rect = panel.getBoundingClientRect();
+    isDragging = true;
+    pointerId = event.pointerId;
+    offsetX = event.clientX - rect.left;
+    offsetY = event.clientY - rect.top;
+
+    panel.style.left = `${rect.left}px`;
+    panel.style.top = `${rect.top}px`;
+    panel.style.right = "auto";
+    header.setPointerCapture(pointerId);
+    event.preventDefault();
+  });
+
+  header.addEventListener("pointermove", (event) => {
+    if (!isDragging || event.pointerId !== pointerId) return;
+
+    const margin = 8;
+    const minTop = 64;
+    const maxLeft = Math.max(margin, window.innerWidth - panel.offsetWidth - margin);
+    const maxTop = Math.max(minTop, window.innerHeight - panel.offsetHeight - margin);
+    const nextLeft = Math.min(Math.max(margin, event.clientX - offsetX), maxLeft);
+    const nextTop = Math.min(Math.max(minTop, event.clientY - offsetY), maxTop);
+
+    panel.style.left = `${nextLeft}px`;
+    panel.style.top = `${nextTop}px`;
+    panel.style.right = "auto";
+  });
+
+  const endDrag = (event) => {
+    if (!isDragging || event.pointerId !== pointerId) return;
+    isDragging = false;
+    pointerId = null;
+  };
+
+  header.addEventListener("pointerup", endDrag);
+  header.addEventListener("pointercancel", endDrag);
+  window.addEventListener("resize", clampLocalDevToolsPanelToViewport, { passive: true });
+}
+
+function wireLocalDevToolsBodyScroll(body) {
+  if (!GED_DEV_IS_LOCALHOST || !body || body.dataset.scrollBound === "1") return;
+  body.dataset.scrollBound = "1";
+
+  body.addEventListener("wheel", (event) => {
+    if (!body.contains(event.target)) return;
+    if (body.scrollHeight <= body.clientHeight) return;
+
+    const beforeTop = body.scrollTop;
+    const deltaY = Number(event.deltaY) || 0;
+
+    requestAnimationFrame(() => {
+      if (body.scrollTop !== beforeTop) return;
+      body.scrollTop = beforeTop + deltaY;
+    });
+  }, { passive: true });
+}
+
+function ensureLocalDevToolsPanel() {
+  if (!GED_DEV_IS_LOCALHOST) return null;
+
+  let panel = document.getElementById("localDevToolsPanel");
+  if (panel) return panel;
+
+  panel = document.createElement("div");
+  panel.id = "localDevToolsPanel";
+  panel.className = "localDevToolsPanel hidden";
+  panel.setAttribute("role", "region");
+  panel.setAttribute("aria-label", "Local Developer Tools");
+  panel.innerHTML = `
+    <div id="localDevToolsHeader" class="devToolsHeader">
+      <div class="devToolsHeaderText">
+        <div class="devToolsHeaderTitle">Developer Tools v2</div>
+        <div class="devToolsHeaderSub">Local-only mod menu</div>
+      </div>
+      <div class="devToolsHeaderActions">
+        <button id="devToolsResetPositionBtn" class="devToolIconBtn" type="button" title="Reset panel position">Reset</button>
+        <button id="devToolsMinimizeBtn" class="devToolIconBtn" type="button" title="Minimize panel">_</button>
+        <button id="devToolsCloseBtn" class="devToolIconBtn" type="button" title="Close panel">x</button>
+      </div>
+    </div>
+    <div id="devToolsBody" class="devToolsBody"></div>
+  `;
+  document.body.appendChild(panel);
+  wireLocalDevToolsBodyScroll(document.getElementById("devToolsBody"));
+
+  document.getElementById("devToolsCloseBtn").onclick = () => {
+    panel.classList.add("hidden");
+    document.getElementById("devToolsBtn")?.setAttribute("aria-expanded", "false");
+  };
+
+  document.getElementById("devToolsMinimizeBtn").onclick = () => {
+    gedDevPanelMinimized = !gedDevPanelMinimized;
+    panel.classList.toggle("minimized", gedDevPanelMinimized);
+    document.getElementById("devToolsMinimizeBtn").textContent = gedDevPanelMinimized ? "+" : "_";
+  };
+
+  document.getElementById("devToolsResetPositionBtn").onclick = () => {
+    resetLocalDevToolsPosition();
+    setDevToolsStatus("Developer Tools position reset.");
+  };
+
+  makeLocalDevToolsPanelDraggable(panel, document.getElementById("localDevToolsHeader"));
+  return panel;
+}
+
+function renderLocalDevToolsPanel() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const panel = ensureLocalDevToolsPanel();
+  const body = document.getElementById("devToolsBody");
+  if (!panel || !body) return;
+
+  gedDevActiveCategory = normalizeLocalDevToolsCategory(gedDevActiveCategory);
+
+  const questionIdAvailable = hasLocalDevHelper("__GED_DEV_SHOW_QUESTION_ID");
+  const questionToolsAvailable = hasLocalDevHelper("__GED_DEV_GENERATE_QUESTION");
+  const timerAvailable = hasLocalDevHelper("__GED_DEV_SET_TIMER_SECONDS");
+  const timeoutAvailable = hasLocalDevHelper("__GED_DEV_OPEN_TIMEOUT_MODAL");
+  const scoreAvailable = hasLocalDevHelper("__GED_DEV_FORCE_TEST_SCORE");
+  const disabledText = "Unavailable";
+  const selectedSkill = document.getElementById("devSkillSelect")?.value || "Solving Equations and Inequalities";
+  const selectedSubskill = document.getElementById("devSubskillSelect")?.value || "";
+  const selectedDifficulty = document.getElementById("devDifficultySelect")?.value || getDefaultDevDifficulty();
+  const hasActiveQuestionSet = hasLocalDevActiveQuestionSet();
+  const currentQuestionNumber = hasActiveQuestionSet ? state.currentIndex + 1 : 1;
+  const totalQuestions = Array.isArray(state.questions) ? state.questions.length : 0;
+  const forceTypeButtons = Object.entries(GED_DEV_QUESTION_TYPE_PRESETS).map(([key, preset]) => `
+    <button class="secondaryBtn devForceTypeBtn" type="button" data-dev-type="${escapeHtml(key)}" ${questionToolsAvailable ? "" : "disabled"}>
+      ${questionToolsAvailable ? escapeHtml(preset.label) : disabledText}
+    </button>
+  `).join("");
+
+  body.innerHTML = `
+    <nav class="devToolsCategoryNav" aria-label="Developer tool categories">
+      ${buildLocalDevCategoryNavHtml()}
+    </nav>
+
+    <div id="devToolsStatus" class="devToolStatus" role="status" aria-live="polite"></div>
+
+    <section class="${getLocalDevCategoryPanelClass("overview")}" data-dev-category-panel="overview">
+      <h3 class="devToolsSectionTitle">Overview</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolsNotice">
+          <strong>Local-only:</strong> visible and active only on localhost or 127.0.0.1.
+          No developer login, password, auth bypass, or backend error reporting is added.
+        </div>
+        <div id="devOverviewMeta" class="devToolMetaGrid">${buildLocalDevOverviewHtml()}</div>
+      </div>
+    </section>
+
+    <section class="${getLocalDevCategoryPanelClass("question")}" data-dev-category-panel="question">
+      <h3 class="devToolsSectionTitle">Question Tools</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolStack">
+          <div>
+            <div class="devToolTitle">Current Question Metadata Inspector</div>
+            <div class="devToolHelp">Shows local-only metadata for the active question.</div>
+          </div>
+          <div id="devQuestionMeta" class="devToolMetaGrid">${buildLocalDevQuestionMetaHtml()}</div>
+        </div>
+
+        <div class="devToolRow">
+          <div class="devToolText">
+            <div class="devToolTitle">Question ID label</div>
+            <div class="devToolHelp">Uses the existing local Question ID helper.</div>
+          </div>
+          <div class="devToolActions">
+            <button id="devToggleQuestionIdBtn" class="secondaryBtn" type="button" ${questionIdAvailable ? "" : "disabled"}>${questionIdAvailable ? (gedDevShowQuestionId ? "Hide ID" : "Show ID") : disabledText}</button>
+          </div>
+        </div>
+
+        <div class="devToolStack">
+          <div>
+            <div class="devToolTitle">Force question type</div>
+            <div class="devToolHelp">Generates through the existing practice API, then filters locally for the requested shape.</div>
+          </div>
+          <div class="devToolButtonGrid">${forceTypeButtons}</div>
+        </div>
+
+        <div class="devToolStack">
+          <div>
+            <div class="devToolTitle">Force skill / subskill / difficulty</div>
+            <div class="devToolHelp">Uses tags aligned with backend/generators/testBuilder.js.</div>
+          </div>
+          <select id="devSkillSelect" class="devToolSelect" aria-label="Developer skill">${buildDevSkillOptions(selectedSkill)}</select>
+          <select id="devSubskillSelect" class="devToolSelect" aria-label="Developer subskill">${buildDevSubskillOptions(selectedSkill, selectedSubskill)}</select>
+          <select id="devDifficultySelect" class="devToolSelect" aria-label="Developer difficulty">${buildDevDifficultyOptions(selectedDifficulty)}</select>
+          <button id="devGenerateSkillQuestionBtn" class="secondaryBtn" type="button" ${questionToolsAvailable ? "" : "disabled"}>${questionToolsAvailable ? "Generate Dev Question" : disabledText}</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="${getLocalDevCategoryPanelClass("state")}" data-dev-category-panel="state">
+      <h3 class="devToolsSectionTitle">Test State</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolRow">
+          <div class="devToolText">
+            <div class="devToolTitle">Set Timer Seconds</div>
+            <div class="devToolHelp">Set the active full-test timer to exact seconds.</div>
+          </div>
+          <div class="devToolActions">
+            <input id="devTimerSecondsInput" class="devToolInput" type="number" min="0" step="1" value="${Math.max(0, Math.floor(Number(state.timeRemaining) || 0))}" aria-label="Timer seconds" ${timerAvailable ? "" : "disabled"} />
+            <button id="devSetTimerSecondsBtn" class="secondaryBtn" type="button" ${timerAvailable ? "" : "disabled"}>${timerAvailable ? "Set Seconds" : disabledText}</button>
+            <button id="devAddFiveMinutesBtn" class="secondaryBtn" type="button" ${timerAvailable ? "" : "disabled"}>${timerAvailable ? "Add 5 Minutes" : disabledText}</button>
+          </div>
+        </div>
+
+        <div class="devToolRow">
+          <div class="devToolText">
+            <div class="devToolTitle">Trigger Timeout Modal</div>
+            <div class="devToolHelp">Open the normal full-test timeout flow.</div>
+          </div>
+          <div class="devToolActions">
+            <button id="devOpenTimeoutModalBtn" class="secondaryBtn" type="button" ${timeoutAvailable ? "" : "disabled"}>${timeoutAvailable ? "Open Timeout" : disabledText}</button>
+          </div>
+        </div>
+
+        <div class="devToolRow">
+          <div class="devToolText">
+            <div class="devToolTitle">Jump to Question Number</div>
+            <div class="devToolHelp">Move within the active question set without resetting answers or timers.</div>
+          </div>
+          <div class="devToolActions">
+            <input id="devJumpQuestionInput" class="devToolInput" type="number" min="1" max="${Math.max(1, totalQuestions)}" step="1" value="${currentQuestionNumber}" aria-label="Jump to question number" ${hasActiveQuestionSet ? "" : "disabled"} />
+            <button id="devJumpQuestionBtn" class="secondaryBtn" type="button" ${hasActiveQuestionSet ? "" : "disabled"}>Jump</button>
+          </div>
+        </div>
+
+        <div class="devToolStack">
+          <div>
+            <div class="devToolTitle">Force test outcome</div>
+            <div class="devToolHelp">Marks answers in memory, then submits through the normal test results/history flow.</div>
+          </div>
+          <div class="devToolButtonGrid">
+            <button class="secondaryBtn devForceScoreBtn" type="button" data-dev-score="100" ${scoreAvailable ? "" : "disabled"}>Force 100%</button>
+            <button class="secondaryBtn devForceScoreBtn" type="button" data-dev-score="50" ${scoreAvailable ? "" : "disabled"}>Force 50%</button>
+            <button class="secondaryBtn devForceScoreBtn" type="button" data-dev-score="0" ${scoreAvailable ? "" : "disabled"}>Force 0%</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="${getLocalDevCategoryPanelClass("flow")}" data-dev-category-panel="flow">
+      <h3 class="devToolsSectionTitle">Flow / UI</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolButtonGrid">
+          <button id="devOpenProfileBtn" class="secondaryBtn" type="button">Open Profile</button>
+          <button id="devOpenSupportBtn" class="secondaryBtn" type="button">Open Support / Contact</button>
+          <button id="devReportQuestionBtn" class="secondaryBtn" type="button">Open Report Question</button>
+          <button id="devFormulaSheetBtn" class="secondaryBtn" type="button">Open Formula Sheet</button>
+          <button id="devCalculatorBtn" class="secondaryBtn" type="button">Open Calculator</button>
+          <button class="secondaryBtn devThemeBtn" type="button" data-dev-theme="Dark Mode">Theme: Dark</button>
+          <button class="secondaryBtn devThemeBtn" type="button" data-dev-theme="Light Mode">Theme: Light</button>
+          <button class="secondaryBtn devThemeBtn" type="button" data-dev-theme="Original Mode">Theme: Original</button>
+          <button id="devMainMenuBtn" class="secondaryBtn" type="button">Return to Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="${getLocalDevCategoryPanelClass("errors")}" data-dev-category-panel="errors">
+      <h3 class="devToolsSectionTitle">Error Feed</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolRow">
+          <div class="devToolText">
+            <div class="devToolTitle">Local client error feed</div>
+            <div class="devToolHelp">Latest window.onerror and unhandledrejection entries. In-memory only; nothing is sent to the backend.</div>
+          </div>
+          <div class="devToolActions">
+            <button id="devClearErrorsBtn" class="secondaryBtn" type="button">Clear Errors</button>
+          </div>
+        </div>
+        <div id="devErrorFeed" class="devErrorFeed">${buildLocalDevErrorFeedHtml()}</div>
+      </div>
+    </section>
+  `;
+
+  wireLocalDevToolsPanel();
+  setActiveLocalDevToolsCategory(gedDevActiveCategory);
+  panel.classList.toggle("minimized", gedDevPanelMinimized);
+}
+
+function refreshLocalDevToolsPanel() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const panel = document.getElementById("localDevToolsPanel");
+  if (!panel || panel.classList.contains("hidden")) return;
+
+  const overview = document.getElementById("devOverviewMeta");
+  if (overview) overview.innerHTML = buildLocalDevOverviewHtml();
+
+  const meta = document.getElementById("devQuestionMeta");
+  if (meta) meta.innerHTML = buildLocalDevQuestionMetaHtml();
+
+  const questionIdBtn = document.getElementById("devToggleQuestionIdBtn");
+  if (questionIdBtn && hasLocalDevHelper("__GED_DEV_SHOW_QUESTION_ID")) {
+    questionIdBtn.textContent = gedDevShowQuestionId ? "Hide ID" : "Show ID";
+  }
+
+  const timerInput = document.getElementById("devTimerSecondsInput");
+  if (timerInput && document.activeElement !== timerInput) {
+    timerInput.value = String(Math.max(0, Math.floor(Number(state.timeRemaining) || 0)));
+  }
+
+  const hasActiveQuestionSet = hasLocalDevActiveQuestionSet();
+  const totalQuestions = Array.isArray(state.questions) ? state.questions.length : 0;
+  const jumpInput = document.getElementById("devJumpQuestionInput");
+  if (jumpInput) {
+    jumpInput.disabled = !hasActiveQuestionSet;
+    jumpInput.max = String(Math.max(1, totalQuestions));
+    if (document.activeElement !== jumpInput) {
+      jumpInput.value = String(hasActiveQuestionSet ? state.currentIndex + 1 : 1);
+    }
+  }
+
+  const jumpBtn = document.getElementById("devJumpQuestionBtn");
+  if (jumpBtn) jumpBtn.disabled = !hasActiveQuestionSet;
+
+  setActiveLocalDevToolsCategory(gedDevActiveCategory);
+  renderLocalDevErrorFeed();
+}
+
+function wireLocalDevToolsPanel() {
+  document.querySelectorAll("[data-dev-category]").forEach((btn) => {
+    btn.onclick = () => setActiveLocalDevToolsCategory(btn.dataset.devCategory);
+  });
+
+  const questionIdBtn = document.getElementById("devToggleQuestionIdBtn");
+  if (questionIdBtn && hasLocalDevHelper("__GED_DEV_SHOW_QUESTION_ID")) {
+    questionIdBtn.onclick = () => {
+      const enabled = window.__GED_DEV_SHOW_QUESTION_ID(!gedDevShowQuestionId);
+      questionIdBtn.textContent = enabled ? "Hide ID" : "Show ID";
+      setDevToolsStatus(`Question ID label ${enabled ? "shown" : "hidden"}.`);
+    };
+  }
+
+  document.querySelectorAll(".devForceTypeBtn").forEach((btn) => {
+    btn.onclick = async () => {
+      const typeKey = btn.dataset.devType || "";
+      const label = GED_DEV_QUESTION_TYPE_PRESETS[typeKey]?.label || typeKey || "question";
+      const originalText = btn.textContent;
+
+      btn.disabled = true;
+      btn.textContent = "Generating...";
+      setDevToolsStatus(`Generating ${label}...`);
+
+      try {
+        const loaded = await window.__GED_DEV_FORCE_QUESTION_TYPE(typeKey, {
+          difficulty: document.getElementById("devDifficultySelect")?.value || getDefaultDevDifficulty()
+        });
+        setDevToolsStatus(
+          loaded ? `${label} loaded.` : `${label} could not be generated safely.`,
+          !loaded
+        );
+      } catch (error) {
+        recordLocalDevClientError("dev-question", error?.message || error);
+        setDevToolsStatus(error?.message || "Could not generate that question.", true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    };
+  });
+
+  const skillSelect = document.getElementById("devSkillSelect");
+  const subskillSelect = document.getElementById("devSubskillSelect");
+  if (skillSelect && subskillSelect) {
+    skillSelect.onchange = () => {
+      subskillSelect.innerHTML = buildDevSubskillOptions(skillSelect.value);
+    };
+  }
+
+  const generateSkillBtn = document.getElementById("devGenerateSkillQuestionBtn");
+  if (generateSkillBtn && hasLocalDevHelper("__GED_DEV_GENERATE_QUESTION")) {
+    generateSkillBtn.onclick = async () => {
+      const originalText = generateSkillBtn.textContent;
+      generateSkillBtn.disabled = true;
+      generateSkillBtn.textContent = "Generating...";
+      setDevToolsStatus("Generating dev question...");
+
+      try {
+        const loaded = await window.__GED_DEV_GENERATE_QUESTION({
+          skill: skillSelect?.value || "",
+          subskill: subskillSelect?.value || "",
+          difficulty: document.getElementById("devDifficultySelect")?.value || getDefaultDevDifficulty()
+        });
+        setDevToolsStatus(loaded ? "Dev question loaded." : "No matching dev question was generated.", !loaded);
+      } catch (error) {
+        recordLocalDevClientError("dev-skill-question", error?.message || error);
+        setDevToolsStatus(error?.message || "Could not generate that dev question.", true);
+      } finally {
+        generateSkillBtn.disabled = false;
+        generateSkillBtn.textContent = originalText;
+      }
+    };
+  }
+
+  const timerAvailable = hasLocalDevHelper("__GED_DEV_SET_TIMER_SECONDS");
+  const timerInput = document.getElementById("devTimerSecondsInput");
+  const setTimerBtn = document.getElementById("devSetTimerSecondsBtn");
+  if (timerInput && setTimerBtn && timerAvailable) {
+    setTimerBtn.onclick = () => {
+      if (!canUseFullTestTimerDevTool()) {
+        setDevToolsStatus("Start a full test before changing the timer.", true);
+        return;
+      }
+
+      const seconds = Number(timerInput.value);
+      if (!Number.isFinite(seconds) || seconds < 0) {
+        setDevToolsStatus("Enter a valid non-negative number of seconds.", true);
+        return;
+      }
+
+      const safeSeconds = Math.floor(seconds);
+      window.__GED_DEV_SET_TIMER_SECONDS(safeSeconds);
+      timerInput.value = String(safeSeconds);
+      setDevToolsStatus(`Timer set to ${safeSeconds} seconds.`);
+    };
+  }
+
+  const addFiveBtn = document.getElementById("devAddFiveMinutesBtn");
+  if (addFiveBtn && timerAvailable) {
+    addFiveBtn.onclick = () => {
+      if (!canUseFullTestTimerDevTool()) {
+        setDevToolsStatus("Start a full test before adding time.", true);
+        return;
+      }
+
+      const nextSeconds = Math.max(0, Math.floor(Number(state.timeRemaining) || 0)) + 5 * 60;
+      window.__GED_DEV_SET_TIMER_SECONDS(nextSeconds);
+      if (timerInput) timerInput.value = String(nextSeconds);
+      setDevToolsStatus("Added 5 minutes to the timer.");
+    };
+  }
+
+  const timeoutBtn = document.getElementById("devOpenTimeoutModalBtn");
+  if (timeoutBtn && hasLocalDevHelper("__GED_DEV_OPEN_TIMEOUT_MODAL")) {
+    timeoutBtn.onclick = async () => {
+      if (!canUseFullTestTimerDevTool()) {
+        setDevToolsStatus("Start a full test before opening the timeout flow.", true);
+        return;
+      }
+
+      const opened = await window.__GED_DEV_OPEN_TIMEOUT_MODAL();
+      setDevToolsStatus(opened ? "Timeout modal opened." : "Timeout flow is unavailable.", !opened);
+    };
+  }
+
+  const jumpBtn = document.getElementById("devJumpQuestionBtn");
+  const jumpInput = document.getElementById("devJumpQuestionInput");
+  if (jumpBtn && jumpInput) {
+    const runJump = async () => {
+      await jumpToLocalDevQuestionNumber(jumpInput.value);
+    };
+
+    jumpBtn.onclick = runJump;
+    jumpInput.onkeydown = (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      runJump();
+    };
+  }
+
+  document.querySelectorAll(".devForceScoreBtn").forEach((btn) => {
+    btn.onclick = async () => {
+      const targetPercent = Number(btn.dataset.devScore);
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Submitting...";
+
+      try {
+        const loaded = await window.__GED_DEV_FORCE_TEST_SCORE(targetPercent);
+        setDevToolsStatus(
+          loaded ? `Forced ${targetPercent}% outcome through normal submit flow.` : "Start an active, unpaused full test first.",
+          !loaded
+        );
+      } catch (error) {
+        recordLocalDevClientError("dev-score", error?.message || error);
+        setDevToolsStatus(error?.message || "Could not force test outcome.", true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    };
+  });
+
+  const profileBtn = document.getElementById("devOpenProfileBtn");
+  if (profileBtn) {
+    profileBtn.onclick = async () => {
+      if (!state.auth.user || !state.auth.token) {
+        setDevToolsStatus("Profile uses normal auth. Sign in first to open it.", true);
+        return;
+      }
+
+      await openProfilePanel();
+      setDevToolsStatus("Profile opened.");
+    };
+  }
+
+  const supportBtn = document.getElementById("devOpenSupportBtn");
+  if (supportBtn) {
+    supportBtn.onclick = () => {
+      openSupportContactModal();
+      setDevToolsStatus("Support / Contact opened.");
+    };
+  }
+
+  const reportBtn = document.getElementById("devReportQuestionBtn");
+  if (reportBtn) {
+    reportBtn.onclick = async () => {
+      if (!getCurrentDevQuestion()) {
+        setDevToolsStatus("Start a question session before reporting a question.", true);
+        return;
+      }
+
+      await reportCurrentQuestion();
+      setDevToolsStatus("Report Question opened.");
+    };
+  }
+
+  const formulaBtn = document.getElementById("devFormulaSheetBtn");
+  if (formulaBtn) {
+    formulaBtn.onclick = () => {
+      if (state.isPaused) {
+        setDevToolsStatus("Resume the test before opening the formula sheet.", true);
+        return;
+      }
+
+      openFormulaSheetModal();
+      setDevToolsStatus("Formula Sheet opened.");
+    };
+  }
+
+  const calculatorBtn = document.getElementById("devCalculatorBtn");
+  if (calculatorBtn) {
+    calculatorBtn.onclick = () => {
+      if (state.isPaused || state.lockedReviewMode) {
+        setDevToolsStatus("Calculator follows normal paused/review restrictions.", true);
+        return;
+      }
+
+      openCalculator();
+      setDevToolsStatus("Calculator opened.");
+    };
+  }
+
+  document.querySelectorAll(".devThemeBtn").forEach((btn) => {
+    btn.onclick = () => {
+      const theme = btn.dataset.devTheme || "Original Mode";
+      applyTheme(theme);
+      if (Array.isArray(state.questions) && state.questions.length) {
+        renderQuestion();
+      }
+      setDevToolsStatus(`Theme switched to ${theme}.`);
+    };
+  });
+
+  const mainMenuBtn = document.getElementById("devMainMenuBtn");
+  if (mainMenuBtn) {
+    mainMenuBtn.onclick = () => {
+      goToMainMenu();
+      setDevToolsStatus("Returned to Main Menu.");
+    };
+  }
+
+  const clearErrorsBtn = document.getElementById("devClearErrorsBtn");
+  if (clearErrorsBtn) {
+    clearErrorsBtn.onclick = () => {
+      gedDevClientErrors = [];
+      renderLocalDevErrorFeed();
+      setDevToolsStatus("Local client error feed cleared.");
+    };
+  }
+}
+
+function openLocalDevToolsPanel() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const panel = ensureLocalDevToolsPanel();
+  if (!panel) return;
+
+  panel.classList.remove("hidden");
+  document.getElementById("devToolsBtn")?.setAttribute("aria-expanded", "true");
+  renderLocalDevToolsPanel();
+  clampLocalDevToolsPanelToViewport();
+  refreshLocalDevToolsPanel();
+}
+
+function initLocalDevToolsEntryPoint() {
+  const devToolsBtn = document.getElementById("devToolsBtn");
+  if (!devToolsBtn) return;
+
+  if (!GED_DEV_IS_LOCALHOST) {
+    devToolsBtn.classList.add("hidden");
+    devToolsBtn.onclick = null;
+    document.getElementById("localDevToolsPanel")?.remove();
+    return;
+  }
+
+  devToolsBtn.classList.remove("hidden");
+  devToolsBtn.setAttribute("aria-expanded", "false");
+  devToolsBtn.onclick = openLocalDevToolsPanel;
+}
+
+function buildLocalDevPracticeUrl(skill, difficulty, count = 12) {
+  const params = new URLSearchParams({
+    count: String(count),
+    difficulty: difficulty || "GED-Level",
+    skill: getPracticeApiSkill(skill || "")
+  });
+
+  return `${API_BASE}/api/practice?${params.toString()}`;
+}
+
+async function fetchLocalDevQuestion(options = {}) {
+  if (!GED_DEV_IS_LOCALHOST) return null;
+
+  const typeKey = String(options.typeKey || "").trim();
+  const preset = GED_DEV_QUESTION_TYPE_PRESETS[typeKey] || null;
+  const selectedSkill = String(options.skill || "").trim();
+  const selectedSubskill = String(options.subskill || "").trim();
+  const difficulty = String(options.difficulty || getDefaultDevDifficulty()).trim() || "GED-Level";
+  const requestSkill = selectedSubskill || selectedSkill || preset?.skill || "Solving Equations and Inequalities";
+  const label = preset?.label || selectedSubskill || selectedSkill || "dev question";
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const res = await fetch(buildLocalDevPracticeUrl(requestSkill, difficulty, 12));
+    if (!res.ok) {
+      throw new Error(`Dev question generation failed: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    const generated = Array.isArray(data.questions) ? data.questions : [];
+    const candidates = generated.map((question) => ({
+      ...question,
+      userAnswer: null,
+      flagged: false,
+      devSource: `local-dev practice API: ${label}`
+    }));
+
+    const match = candidates.find((question) => (
+      questionMatchesDevSkill(question, selectedSkill || preset?.skill || "", selectedSubskill) &&
+      questionMatchesLocalDevType(question, typeKey)
+    ));
+
+    if (match) return match;
+  }
+
+  return null;
+}
+
+async function loadLocalDevQuestion(question) {
+  if (!GED_DEV_IS_LOCALHOST || !question) return false;
+
+  const prepared = {
+    ...question,
+    id: question.id ?? `dev-${Date.now()}`,
+    userAnswer: null,
+    flagged: false,
+    hotspotTouched: false,
+    devSource: question.devSource || question.source || "local-dev"
+  };
+
+  if (hasLocalDevActiveQuestionSet()) {
+    state.questions[state.currentIndex] = prepared;
+  } else {
+    stopTimer();
+    state.mode = "practice";
+    state.questions = [prepared];
+    state.currentIndex = 0;
+    state.practiceMeta = {
+      skill: prepared.subskill || prepared.skill || "Local Dev Question",
+      difficulty: prepared.difficulty || state.difficulty || "GED-Level"
+    };
+    state.learningMeta = null;
+    state.overtimeUsed = false;
+    state.timeoutMode = false;
+    state.lockedReviewMode = false;
+    state.navigatorVisible = false;
+    state.isPaused = false;
+    state.idleSeconds = 0;
+    state.autoPaused = false;
+    await setView("test");
+  }
+
+  renderQuestion();
+  updateStatus();
+  refreshLocalDevToolsPanel();
+  return true;
+}
+
+async function generateAndLoadLocalDevQuestion(options = {}) {
+  if (!GED_DEV_IS_LOCALHOST) return false;
+
+  const question = await fetchLocalDevQuestion(options);
+  if (!question) return false;
+
+  return await loadLocalDevQuestion(question);
+}
+
+function cloneDevAnswerValue(value) {
+  return Array.isArray(value) ? [...value] : value;
+}
+
+function buildDevIncorrectAnswer(question) {
+  const correct = question?.answer;
+
+  if (question?.type === "dragdrop") {
+    const correctItems = Array.isArray(correct)
+      ? [...correct]
+      : String(correct ?? "").split("|").map((item) => item.trim()).filter(Boolean);
+    const reversed = [...correctItems].reverse();
+
+    if (reversed.length && !answersMatch(reversed, correct)) {
+      return reversed;
+    }
+
+    return ["__ged_dev_wrong__"];
+  }
+
+  if (question?.type === "hotspot") {
+    const values = Array.isArray(question.hotspot?.values) ? question.hotspot.values : [];
+    const alternate = values.find((value) => !answersMatch(value, correct));
+    if (alternate !== undefined) return alternate;
+
+    const numericCorrect = Number(correct);
+    return Number.isFinite(numericCorrect) ? numericCorrect + 1 : "__ged_dev_wrong__";
+  }
+
+  if (Array.isArray(question?.choices)) {
+    const wrongChoice = question.choices.find((choice) => !answersMatch(choice, correct));
+    if (wrongChoice !== undefined) return wrongChoice;
+  }
+
+  const numericCorrect = Number(correct);
+  if (Number.isFinite(numericCorrect)) return numericCorrect + 999;
+
+  return "__ged_dev_wrong__";
+}
+
+function markDevQuestionAnswer(question, shouldBeCorrect) {
+  if (!question) return;
+
+  if (shouldBeCorrect) {
+    question.userAnswer = cloneDevAnswerValue(question.answer);
+    if (question.type === "hotspot") question.hotspotTouched = true;
+    return;
+  }
+
+  question.userAnswer = buildDevIncorrectAnswer(question);
+  if (question.type === "hotspot") question.hotspotTouched = true;
+
+  if (answersMatch(question.userAnswer, question.answer)) {
+    question.userAnswer = question.type === "dragdrop" ? ["__ged_dev_wrong_final__"] : "__ged_dev_wrong_final__";
+  }
+}
+
+async function forceLocalDevTestScore(targetPercent) {
+  if (!canUseFullTestScoreDevTool()) return false;
+
+  const total = state.questions.length;
+  const safePercent = Math.max(0, Math.min(100, Number(targetPercent)));
+  const targetCorrect = safePercent >= 100
+    ? total
+    : safePercent <= 0
+    ? 0
+    : Math.round(total * (safePercent / 100));
+
+  state.questions.forEach((question, index) => {
+    markDevQuestionAnswer(question, index < targetCorrect);
+  });
+
+  state.currentIndex = 0;
+  renderQuestion();
+  updateStatus();
+  await submitTest();
+  return true;
+}
+
+async function jumpToLocalDevQuestionNumber(rawNumber) {
+  if (!GED_DEV_IS_LOCALHOST) return false;
+
+  const total = Array.isArray(state.questions) ? state.questions.length : 0;
+  if (!GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) || !total) {
+    setDevToolsStatus("Start a question session before jumping.", true);
+    return false;
+  }
+
+  const rawText = String(rawNumber ?? "").trim();
+  const target = Number(rawText);
+  if (!rawText || !Number.isInteger(target) || target < 1 || target > total) {
+    setDevToolsStatus(`Enter a question number from 1 to ${total}.`, true);
+    return false;
+  }
+
+  state.currentIndex = target - 1;
+  renderQuestion();
+  updateStatus();
+  await saveProgress();
+  refreshLocalDevToolsPanel();
+  setDevToolsStatus(`Jumped to question ${target} of ${total}.`);
+  return true;
 }
 
 function normalizeComparableAnswer(value) {
@@ -10834,6 +12417,7 @@ if (clearHighlightsBtn) {
   }
 
   updateAuthUI();
+  refreshLocalDevToolsPanel();
 }
 
 function buildTutorialQuestions() {
@@ -14057,48 +15641,42 @@ window.addEventListener("resize", () => {
       console.log("GED dev timer helper available: __GED_DEV_SET_TIMER_SECONDS(seconds)");
     })();
 
-
-    (function setupLocalDevHotspotZeroHelper() {
+    (function setupLocalDevTimeoutHelper() {
       if (!GED_DEV_IS_LOCALHOST) return;
 
-      const buildHotspotZeroFixture = () => ({
-        skill: "Number Line",
-        subskill: "Dev Hotspot Zero",
-        topic: "Local developer hotspot zero fixture",
-        difficulty: "GED-Level",
-        type: "hotspot",
-        question: "DEV: Click the point on the number line that represents 0.",
-        answer: "0",
-        userAnswer: null,
-        hotspotTouched: false,
-        hotspot: {
-          type: "numberLine",
-          min: -5,
-          max: 5,
-          step: 1,
-          target: 0,
-          values: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5],
-          tickLabels: { "0": "0" }
-        },
-        explanation: "0 is at the origin on the number line."
-      });
-
-      window.__GED_DEV_FORCE_HOTSPOT_ZERO = function __GED_DEV_FORCE_HOTSPOT_ZERO() {
-        const activeModes = new Set(["test", "practice", "learning", "practice-example", "test-tutorial"]);
-        if (!activeModes.has(state.mode) || !Array.isArray(state.questions) || !state.questions.length) {
-          console.warn("Start a test, practice, or learning session first, then run __GED_DEV_FORCE_HOTSPOT_ZERO().");
+      window.__GED_DEV_OPEN_TIMEOUT_MODAL = async function __GED_DEV_OPEN_TIMEOUT_MODAL() {
+        if (state.mode !== "test" || !Array.isArray(state.questions) || !state.questions.length) {
+          console.warn("GED dev timeout helper only works during an active full test.");
           return false;
         }
 
-        state.questions[state.currentIndex] = buildHotspotZeroFixture();
-        renderQuestion();
-        updateStatus();
-        updateDevQuestionIdLabel();
-        console.log("Loaded local hotspot-zero fixture into the current question.");
+        await handleTimeExpired();
         return true;
       };
 
-      console.log("GED dev helper available: __GED_DEV_FORCE_HOTSPOT_ZERO()");
+      console.log("GED dev helper available: __GED_DEV_OPEN_TIMEOUT_MODAL()");
+    })();
+
+    (function setupLocalDevQuestionHelpers() {
+      if (!GED_DEV_IS_LOCALHOST) return;
+
+      window.__GED_DEV_GENERATE_QUESTION = async function __GED_DEV_GENERATE_QUESTION(options = {}) {
+        return await generateAndLoadLocalDevQuestion(options);
+      };
+
+      window.__GED_DEV_FORCE_QUESTION_TYPE = async function __GED_DEV_FORCE_QUESTION_TYPE(typeKey, options = {}) {
+        return await generateAndLoadLocalDevQuestion({ ...options, typeKey });
+      };
+
+      window.__GED_DEV_FORCE_HOTSPOT_QUESTION = async function __GED_DEV_FORCE_HOTSPOT_QUESTION(options = {}) {
+        return await generateAndLoadLocalDevQuestion({ ...options, typeKey: "hotspot" });
+      };
+
+      window.__GED_DEV_FORCE_TEST_SCORE = async function __GED_DEV_FORCE_TEST_SCORE(targetPercent) {
+        return await forceLocalDevTestScore(targetPercent);
+      };
+
+      console.log("GED dev helpers available: __GED_DEV_GENERATE_QUESTION(options), __GED_DEV_FORCE_QUESTION_TYPE(typeKey, options), __GED_DEV_FORCE_HOTSPOT_QUESTION(options), __GED_DEV_FORCE_TEST_SCORE(percent)");
     })();
 
     (function setupLocalDevQuestionIdHelper() {
@@ -14113,6 +15691,8 @@ window.addEventListener("resize", () => {
 
       console.log("GED local dev helper available: window.__GED_DEV_SHOW_QUESTION_ID(true|false)");
     })();
+
+    initLocalDevToolsEntryPoint();
 
     const startPracticeBtn = document.getElementById("startPracticeBtn");
     if (startPracticeBtn) {
