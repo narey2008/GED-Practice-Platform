@@ -3235,6 +3235,130 @@ body.loadingActive {
       font-size: 12px;
     }
 
+    .devPreviewControlGrid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .devPreviewControl {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .devPreviewControl .devToolInput {
+      width: 100%;
+    }
+
+    .devPreviewResults {
+      display: grid;
+      gap: 9px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .devPreviewEmpty {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      padding: 8px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: var(--card);
+    }
+
+    .devPreviewCard {
+      display: grid;
+      gap: 8px;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .devPreviewCardHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 800;
+    }
+
+    .devPreviewQuestionId {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .devPreviewMetaGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .devPreviewMetaGrid strong {
+      color: var(--text);
+    }
+
+    .devPreviewPrompt {
+      padding: 8px;
+      border-radius: 8px;
+      background: var(--panel);
+      overflow-x: auto;
+    }
+
+    .devPreviewPrompt table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+    }
+
+    .devPreviewPrompt th,
+    .devPreviewPrompt td {
+      border: 1px solid var(--border);
+      padding: 6px;
+      text-align: left;
+    }
+
+    .devPreviewChoices {
+      display: grid;
+      gap: 4px;
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .devPreviewAnswer {
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .devPreviewAnswer strong {
+      color: var(--text);
+    }
+
+    .devPreviewVisualBlock {
+      display: grid;
+      gap: 8px;
+    }
+
+    .devPreviewVisual {
+      overflow-x: auto;
+    }
+
+    .devPreviewChartWrap {
+      min-height: 220px;
+      position: relative;
+    }
+
     @media (max-width: 680px) {
       .localDevToolsPanel {
         left: 8px !important;
@@ -3272,6 +3396,10 @@ body.loadingActive {
 
       .devToolInput {
         width: 100%;
+      }
+
+      .devPreviewMetaGrid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -3919,6 +4047,7 @@ const GED_DEV_CLIENT_ERROR_LIMIT = 12;
 const GED_DEV_TOOL_CATEGORIES = [
   { key: "overview", label: "Overview" },
   { key: "question", label: "Question Tools" },
+  { key: "preview", label: "Question Preview Lab" },
   { key: "state", label: "Test State" },
   { key: "flow", label: "Flow / UI" },
   { key: "errors", label: "Error Feed" }
@@ -3927,6 +4056,7 @@ let gedDevShowQuestionId = false;
 let gedDevPanelMinimized = false;
 let gedDevActiveCategory = "overview";
 let gedDevClientErrors = [];
+let gedDevPreviewQuestions = [];
 
 function updateDevQuestionIdLabel() {
   const labelEl = document.getElementById("devQuestionIdLabel");
@@ -4220,6 +4350,218 @@ function buildDevSubskillOptions(skill, selectedValue = "") {
   return options.join("");
 }
 
+function buildLocalDevPreviewTypeOptions(selectedValue = "") {
+  const options = [
+    { key: "", label: "Any" },
+    ...Object.entries(GED_DEV_QUESTION_TYPE_PRESETS).map(([key, preset]) => ({
+      key,
+      label: preset.label
+    }))
+  ];
+
+  return options.map((option) => `
+    <option value="${escapeHtml(option.key)}" ${option.key === selectedValue ? "selected" : ""}>
+      ${escapeHtml(option.label)}
+    </option>
+  `).join("");
+}
+
+function getLocalDevPreviewCount(rawValue) {
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed)) return 5;
+  return Math.max(1, Math.min(20, Math.floor(parsed)));
+}
+
+function formatLocalDevPreviewAnswerValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item ?? "")).join(" | ");
+  }
+
+  if (value && typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch (error) {
+      return String(value);
+    }
+  }
+
+  const text = String(value ?? "").trim();
+  return text || "Not available";
+}
+
+function formatLocalDevPreviewPromptHtml(value) {
+  const raw = String(value ?? "");
+  if (!raw.trim()) return `<span class="muted">Question text unavailable.</span>`;
+
+  if (/<[a-z][\s\S]*>/i.test(raw)) {
+    return sanitizeLearningPromptHtml(raw) || escapeHtml(raw);
+  }
+
+  return escapeHtml(raw).replace(/\n/g, "<br>");
+}
+
+function sanitizeLocalDevPreviewVisualMarkup(value) {
+  const raw = String(value ?? "");
+  if (!raw.trim()) return "";
+
+  const allowedTags = new Set([
+    "svg", "g", "path", "line", "rect", "circle", "ellipse", "polygon", "polyline",
+    "text", "tspan", "defs", "marker",
+    "table", "thead", "tbody", "tr", "th", "td", "caption",
+    "div", "span", "p", "br", "strong", "b", "em", "i", "u", "sup", "sub"
+  ]);
+  const allowedAttrs = new Set([
+    "class", "role", "aria-label", "aria-hidden", "viewbox", "xmlns",
+    "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry",
+    "width", "height", "d", "points", "fill", "stroke", "stroke-width",
+    "stroke-linecap", "stroke-linejoin", "text-anchor", "dominant-baseline",
+    "transform", "opacity", "fill-opacity", "stroke-dasharray",
+    "font-size", "font-weight", "colspan", "rowspan", "scope"
+  ]);
+  const template = document.createElement("template");
+  template.innerHTML = raw;
+
+  const sanitizeNode = (node) => {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const tag = child.tagName.toLowerCase();
+
+        if (!allowedTags.has(tag)) {
+          const textNode = document.createTextNode(child.textContent || "");
+          child.replaceWith(textNode);
+          return;
+        }
+
+        Array.from(child.attributes).forEach((attr) => {
+          const name = attr.name.toLowerCase();
+          const valueText = String(attr.value || "").trim().toLowerCase();
+          if (
+            name.startsWith("on") ||
+            name === "style" ||
+            name === "href" ||
+            name === "src" ||
+            name === "srcdoc" ||
+            !allowedAttrs.has(name) ||
+            valueText.startsWith("javascript:")
+          ) {
+            child.removeAttribute(attr.name);
+          }
+        });
+
+        sanitizeNode(child);
+        return;
+      }
+
+      if (child.nodeType === Node.COMMENT_NODE) {
+        child.remove();
+      }
+    });
+  };
+
+  sanitizeNode(template.content);
+  return template.innerHTML;
+}
+
+function buildLocalDevPreviewChoicesHtml(question) {
+  const choices = Array.isArray(question?.choices) ? question.choices : [];
+  if (!choices.length) return "";
+
+  return `
+    <div>
+      <div class="devToolHelp">${question?.type === "dragdrop" ? "Drag/drop items" : "Answer choices"}</div>
+      <ol class="devPreviewChoices">
+        ${choices.map((choice) => `<li>${escapeHtml(formatLocalDevPreviewAnswerValue(choice))}</li>`).join("")}
+      </ol>
+    </div>
+  `;
+}
+
+function buildLocalDevPreviewVisualHtml(question, index) {
+  if (!question) return "";
+
+  let html = "";
+
+  if (question.diagram) {
+    html += `
+      <div class="generatedVisualCard devPreviewVisual">
+        ${sanitizeLocalDevPreviewVisualMarkup(question.diagram)}
+      </div>
+    `;
+  }
+
+  if (question.type === "hotspot" && question.hotspot) {
+    html += `
+      <div class="devPreviewVisual">
+        ${renderHistorySpecialTypeMarkup({ ...question, userAnswer: "" })}
+      </div>
+    `;
+  }
+
+  if (question.chart && question.chart.type && question.chart.data) {
+    const chartId = `dev_preview_chart_${index}`;
+    const encoded = encodeURIComponent(JSON.stringify(question.chart));
+    html += `
+      <div class="questionChartWrap devPreviewChartWrap">
+        <canvas id="${escapeHtml(chartId)}" data-review-chart="${escapeHtml(encoded)}"></canvas>
+      </div>
+    `;
+  }
+
+  return html ? `<div class="devPreviewVisualBlock">${html}</div>` : "";
+}
+
+function buildLocalDevPreviewCardHtml(question, index) {
+  const reportId = buildCurrentQuestionReportId(question, index, "preview");
+
+  return `
+    <div class="devPreviewCard">
+      <div class="devPreviewCardHeader">
+        <span>Question ${index + 1}</span>
+        <span class="devPreviewQuestionId">${escapeHtml(reportId)}</span>
+      </div>
+      <div class="devPreviewMetaGrid">
+        <span>Skill: <strong>${escapeHtml(formatDevMetaValue(question.skill))}</strong></span>
+        <span>Subskill: <strong>${escapeHtml(formatDevMetaValue(question.subskill))}</strong></span>
+        <span>Type: <strong>${escapeHtml(formatDevMetaValue(question.type))}</strong></span>
+        <span>Difficulty: <strong>${escapeHtml(formatDevMetaValue(question.difficulty))}</strong></span>
+      </div>
+      <div class="devPreviewPrompt">${formatLocalDevPreviewPromptHtml(question.question)}</div>
+      ${buildLocalDevPreviewChoicesHtml(question)}
+      <div class="devPreviewAnswer">Correct answer: <strong>${escapeHtml(formatLocalDevPreviewAnswerValue(question.answer))}</strong></div>
+      ${buildLocalDevPreviewVisualHtml(question, index)}
+    </div>
+  `;
+}
+
+function buildLocalDevPreviewResultsHtml() {
+  if (!gedDevPreviewQuestions.length) {
+    return `
+      <div class="devPreviewEmpty">
+        No preview questions generated yet. Choose filters, then use Generate Preview.
+      </div>
+    `;
+  }
+
+  return gedDevPreviewQuestions.map(buildLocalDevPreviewCardHtml).join("");
+}
+
+function renderLocalDevPreviewResults() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const results = document.getElementById("devPreviewResults");
+  if (!results) return;
+
+  destroyReviewCharts(results);
+  results.innerHTML = buildLocalDevPreviewResultsHtml();
+
+  requestAnimationFrame(() => {
+    renderReviewCharts(results);
+    results.querySelectorAll(".generatedVisualCard, .devPreviewVisual").forEach((wrap) => {
+      normalizeGeneratedVisualPalette(wrap);
+    });
+  });
+}
+
 function formatDevMetaValue(value) {
   const text = String(value ?? "").trim();
   return text || "Not available";
@@ -4498,6 +4840,11 @@ function renderLocalDevToolsPanel() {
   const selectedSkill = document.getElementById("devSkillSelect")?.value || "Solving Equations and Inequalities";
   const selectedSubskill = document.getElementById("devSubskillSelect")?.value || "";
   const selectedDifficulty = document.getElementById("devDifficultySelect")?.value || getDefaultDevDifficulty();
+  const previewSkill = document.getElementById("devPreviewSkillSelect")?.value || selectedSkill;
+  const previewSubskill = document.getElementById("devPreviewSubskillSelect")?.value || "";
+  const previewDifficulty = document.getElementById("devPreviewDifficultySelect")?.value || selectedDifficulty;
+  const previewType = document.getElementById("devPreviewTypeSelect")?.value || "";
+  const previewCount = getLocalDevPreviewCount(document.getElementById("devPreviewCountInput")?.value || 5);
   const hasActiveQuestionSet = hasLocalDevActiveQuestionSet();
   const currentQuestionNumber = hasActiveQuestionSet ? state.currentIndex + 1 : 1;
   const totalQuestions = Array.isArray(state.questions) ? state.questions.length : 0;
@@ -4564,6 +4911,50 @@ function renderLocalDevToolsPanel() {
           <select id="devDifficultySelect" class="devToolSelect" aria-label="Developer difficulty">${buildDevDifficultyOptions(selectedDifficulty)}</select>
           <button id="devGenerateSkillQuestionBtn" class="secondaryBtn" type="button" ${questionToolsAvailable ? "" : "disabled"}>${questionToolsAvailable ? "Generate Dev Question" : disabledText}</button>
         </div>
+      </div>
+    </section>
+
+    <section class="${getLocalDevCategoryPanelClass("preview")}" data-dev-category-panel="preview">
+      <h3 class="devToolsSectionTitle">Question Preview Lab</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolsNotice">
+          Local-only and read-only. Generates through the existing practice API, stores results in memory only,
+          and does not start a session or save progress/history.
+        </div>
+
+        <div class="devPreviewControlGrid">
+          <label class="devPreviewControl" for="devPreviewSkillSelect">
+            <span>Skill</span>
+            <select id="devPreviewSkillSelect" class="devToolSelect">${buildDevSkillOptions(previewSkill)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devPreviewSubskillSelect">
+            <span>Subskill</span>
+            <select id="devPreviewSubskillSelect" class="devToolSelect">${buildDevSubskillOptions(previewSkill, previewSubskill)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devPreviewDifficultySelect">
+            <span>Difficulty</span>
+            <select id="devPreviewDifficultySelect" class="devToolSelect">${buildDevDifficultyOptions(previewDifficulty)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devPreviewTypeSelect">
+            <span>Question type</span>
+            <select id="devPreviewTypeSelect" class="devToolSelect">${buildLocalDevPreviewTypeOptions(previewType)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devPreviewCountInput">
+            <span>Count</span>
+            <input id="devPreviewCountInput" class="devToolInput" type="number" min="1" max="20" step="1" value="${previewCount}" />
+          </label>
+        </div>
+
+        <div class="devToolActions">
+          <button id="devGeneratePreviewBtn" class="secondaryBtn" type="button">Generate Preview</button>
+          <button id="devClearPreviewBtn" class="secondaryBtn" type="button">Clear Preview</button>
+        </div>
+
+        <div id="devPreviewResults" class="devPreviewResults">${buildLocalDevPreviewResultsHtml()}</div>
       </div>
     </section>
 
@@ -4654,6 +5045,7 @@ function renderLocalDevToolsPanel() {
   wireLocalDevToolsPanel();
   setActiveLocalDevToolsCategory(gedDevActiveCategory);
   panel.classList.toggle("minimized", gedDevPanelMinimized);
+  renderLocalDevPreviewResults();
 }
 
 function refreshLocalDevToolsPanel() {
@@ -4743,6 +5135,67 @@ function wireLocalDevToolsPanel() {
   if (skillSelect && subskillSelect) {
     skillSelect.onchange = () => {
       subskillSelect.innerHTML = buildDevSubskillOptions(skillSelect.value);
+    };
+  }
+
+  const previewSkillSelect = document.getElementById("devPreviewSkillSelect");
+  const previewSubskillSelect = document.getElementById("devPreviewSubskillSelect");
+  if (previewSkillSelect && previewSubskillSelect) {
+    previewSkillSelect.onchange = () => {
+      previewSubskillSelect.innerHTML = buildDevSubskillOptions(previewSkillSelect.value);
+    };
+  }
+
+  const generatePreviewBtn = document.getElementById("devGeneratePreviewBtn");
+  if (generatePreviewBtn) {
+    generatePreviewBtn.onclick = async () => {
+      const originalText = generatePreviewBtn.textContent;
+      const requestedCount = getLocalDevPreviewCount(document.getElementById("devPreviewCountInput")?.value || 5);
+      const typeSelect = document.getElementById("devPreviewTypeSelect");
+      const typeKey = typeSelect?.value || "";
+      const typeLabel = typeKey ? (GED_DEV_QUESTION_TYPE_PRESETS[typeKey]?.label || typeKey) : "Any";
+
+      generatePreviewBtn.disabled = true;
+      generatePreviewBtn.textContent = "Generating...";
+      setDevToolsStatus(`Generating ${requestedCount} preview question${requestedCount === 1 ? "" : "s"} (${typeLabel})...`);
+
+      try {
+        const questions = await fetchLocalDevPreviewQuestions({
+          skill: previewSkillSelect?.value || "",
+          subskill: previewSubskillSelect?.value || "",
+          difficulty: document.getElementById("devPreviewDifficultySelect")?.value || getDefaultDevDifficulty(),
+          typeKey,
+          count: requestedCount
+        });
+
+        gedDevPreviewQuestions = questions;
+        renderLocalDevPreviewResults();
+
+        if (!questions.length) {
+          setDevToolsStatus("No preview questions matched those filters. Try a broader skill, Any type, or another difficulty.", true);
+        } else if (questions.length < requestedCount) {
+          setDevToolsStatus(`Generated ${questions.length}/${requestedCount} preview questions. No more matching coverage was found for those filters.`, true);
+        } else {
+          setDevToolsStatus(`Generated ${questions.length} preview question${questions.length === 1 ? "" : "s"}.`);
+        }
+      } catch (error) {
+        recordLocalDevClientError("preview-lab", error?.message || error);
+        setDevToolsStatus(error?.message || "Question Preview Lab could not generate questions.", true);
+      } finally {
+        generatePreviewBtn.disabled = false;
+        generatePreviewBtn.textContent = originalText;
+      }
+    };
+  }
+
+  const clearPreviewBtn = document.getElementById("devClearPreviewBtn");
+  if (clearPreviewBtn) {
+    clearPreviewBtn.onclick = () => {
+      const results = document.getElementById("devPreviewResults");
+      if (results) destroyReviewCharts(results);
+      gedDevPreviewQuestions = [];
+      renderLocalDevPreviewResults();
+      setDevToolsStatus("Question Preview Lab cleared.");
     };
   }
 
@@ -5023,6 +5476,50 @@ async function fetchLocalDevQuestion(options = {}) {
   }
 
   return null;
+}
+
+async function fetchLocalDevPreviewQuestions(options = {}) {
+  if (!GED_DEV_IS_LOCALHOST) return [];
+
+  const selectedSkill = String(options.skill || "").trim();
+  const selectedSubskill = String(options.subskill || "").trim();
+  const difficulty = String(options.difficulty || getDefaultDevDifficulty()).trim() || "GED-Level";
+  const typeKey = String(options.typeKey || "").trim();
+  const requestedCount = getLocalDevPreviewCount(options.count);
+  const requestSkill = selectedSubskill || selectedSkill || "Solving Equations and Inequalities";
+  const previewQuestions = [];
+  const maxAttempts = typeKey ? 8 : 1;
+
+  for (let attempt = 0; attempt < maxAttempts && previewQuestions.length < requestedCount; attempt += 1) {
+    const batchCount = typeKey ? Math.min(30, Math.max(12, requestedCount * 2)) : requestedCount;
+    const res = await fetch(buildLocalDevPracticeUrl(requestSkill, difficulty, batchCount));
+
+    if (!res.ok) {
+      throw new Error(`Question Preview Lab generation failed: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    const generated = Array.isArray(data.questions) ? data.questions : [];
+
+    generated.forEach((question) => {
+      if (previewQuestions.length >= requestedCount) return;
+
+      const prepared = {
+        ...question,
+        userAnswer: null,
+        flagged: false,
+        hotspotTouched: false,
+        devSource: "local-dev preview lab"
+      };
+
+      if (!questionMatchesDevSkill(prepared, selectedSkill, selectedSubskill)) return;
+      if (!questionMatchesLocalDevType(prepared, typeKey)) return;
+
+      previewQuestions.push(prepared);
+    });
+  }
+
+  return previewQuestions;
 }
 
 async function loadLocalDevQuestion(question) {
