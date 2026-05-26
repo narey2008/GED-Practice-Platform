@@ -159,6 +159,7 @@ function areaCostStepOrdering() {
 }
 
 module.exports = function generateDragDrop(options = {}) {
+  const difficulty = options.difficulty || "GED-Level";
   const bank = [
     fractionOrdering,
     decimalOrdering,
@@ -168,5 +169,10 @@ module.exports = function generateDragDrop(options = {}) {
     areaCostStepOrdering
   ];
 
-  return bank[rand(0, bank.length - 1)]();
+  const question = bank[rand(0, bank.length - 1)]();
+
+  return {
+    ...question,
+    difficulty
+  };
 };
