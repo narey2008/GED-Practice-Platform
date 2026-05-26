@@ -8437,16 +8437,16 @@ function openLegalHubModal() {
   const legalAboutBtn = document.getElementById("legalAboutBtn");
 
   if (legalTermsBtn) {
-    legalTermsBtn.onclick = () => openTermsModal();
+    legalTermsBtn.onclick = () => navigateToCoreRoute("/terms");
   }
   if (legalPrivacyBtn) {
-    legalPrivacyBtn.onclick = () => openPrivacyModal();
+    legalPrivacyBtn.onclick = () => navigateToCoreRoute("/privacy");
   }
   if (legalFaqBtn) {
     legalFaqBtn.onclick = () => openFaqModal();
   }
   if (legalAboutBtn) {
-    legalAboutBtn.onclick = () => openAboutModal();
+    legalAboutBtn.onclick = () => navigateToCoreRoute("/about");
   }
 }
 
@@ -9738,6 +9738,260 @@ function scrollToMainMenuPanel(panelId) {
   }, 1200);
 }
 
+const CORE_CLIENT_ROUTES = new Set([
+  "/",
+  "/home",
+  "/profile",
+  "/practice",
+  "/learning",
+  "/history",
+  "/support",
+  "/legal",
+  "/terms",
+  "/privacy",
+  "/about"
+]);
+
+const CORE_MODAL_ROUTES = new Set([
+  "/support",
+  "/legal",
+  "/terms",
+  "/privacy",
+  "/about"
+]);
+
+const MAIN_MENU_PANEL_ROUTES = {
+  startPracticePanel: "/practice",
+  learningModePanel: "/learning"
+};
+
+let applyingClientRoute = false;
+let currentClientRoute = "/";
+
+function normalizeClientRoutePath(pathname = window.location.pathname) {
+  let path = pathname || "/";
+
+  try {
+    path = new URL(path, window.location.origin).pathname;
+  } catch (error) {
+    path = window.location.pathname || "/";
+  }
+
+  path = path.replace(/\/+$/, "") || "/";
+  path = path.toLowerCase();
+
+  return CORE_CLIENT_ROUTES.has(path) ? path : null;
+}
+
+function isActiveQuestionSession() {
+  const startInFlight = Object.values(startFlowInFlight || {}).some(Boolean);
+
+  return (
+    startInFlight ||
+    (
+      ["test", "practice", "practice-example", "learning", "test-tutorial"].includes(state.mode) &&
+      Array.isArray(state.questions) &&
+      state.questions.length > 0
+    )
+  );
+}
+
+function setCoreRoute(path, options = {}) {
+  const route = normalizeClientRoutePath(path);
+  if (!route) return false;
+
+  currentClientRoute = route;
+
+  const targetUrl = route;
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+  if (currentUrl === targetUrl) {
+    window.history.replaceState({ gedClientRoute: route }, document.title, targetUrl);
+    return true;
+  }
+
+  if (options.replace) {
+    window.history.replaceState({ gedClientRoute: route }, document.title, targetUrl);
+  } else {
+    window.history.pushState({ gedClientRoute: route }, document.title, targetUrl);
+  }
+
+  return true;
+}
+
+function showActiveRouteBlockedModal() {
+  showModal(
+    tr("returnToMainMenu"),
+    "<p>Use the Main Menu button before opening this page so your current activity is not interrupted.</p>",
+    [{ label: tr("close"), variant: "primary" }]
+  );
+}
+
+function showRouteAuthRequiredModal(routeLabel) {
+  showModal(
+    tr("signInRequired"),
+    `<p>${escapeHtml(routeLabel)} is available for signed-in accounts. Sign in or create an account to view saved progress.</p>`,
+    [
+      { label: tr("cancel"), variant: "secondary" },
+      {
+        label: tr("signIn"),
+        variant: "secondary",
+        keepOpen: true,
+        onClick: () => {
+          closeModal();
+          setTimeout(() => openAuthModal("signin"), 0);
+        }
+      },
+      {
+        label: tr("createAccount"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: () => {
+          closeModal();
+          setTimeout(() => openAuthModal("register"), 0);
+        }
+      }
+    ]
+  );
+}
+
+function canOpenSignedInRoute() {
+  return !!state.auth.user && !!state.auth.token && !state.auth.guestMode;
+}
+
+function scheduleMainMenuPanelScroll(panelId) {
+  if (!panelId) return;
+  setTimeout(() => scrollToMainMenuPanel(panelId), 80);
+}
+
+function scheduleProfileHistoryScroll() {
+  setTimeout(() => {
+    const section = document.getElementById("profileHistorySection");
+    if (!section) return;
+
+    if (typeof window.expandProfileSectionIfCollapsed === "function") {
+      window.expandProfileSectionIfCollapsed("profileHistorySection");
+    }
+
+    setActiveProfileNavItem("profileHistorySection");
+    highlightProfileSection(section);
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }, 120);
+}
+
+async function openMenuRoute(panelId = null) {
+  closeModal();
+  await setView("menu");
+  scheduleMainMenuPanelScroll(panelId);
+}
+
+async function openProfileRoute() {
+  if (!canOpenSignedInRoute()) {
+    await openMenuRoute();
+    showRouteAuthRequiredModal("Profile");
+    return;
+  }
+
+  closeModal();
+  await openProfilePanel();
+}
+
+async function openHistoryRoute() {
+  if (!canOpenSignedInRoute()) {
+    await openMenuRoute();
+    showRouteAuthRequiredModal("History");
+    return;
+  }
+
+  closeModal();
+  await openProfilePanel("tests");
+  scheduleProfileHistoryScroll();
+}
+
+async function applyClientRoute(path, options = {}) {
+  const route = normalizeClientRoutePath(path);
+  if (!route) return false;
+
+  if (isActiveQuestionSession() && !CORE_MODAL_ROUTES.has(route)) {
+    showActiveRouteBlockedModal();
+    return false;
+  }
+
+  applyingClientRoute = true;
+
+  try {
+    currentClientRoute = route;
+
+    if (route === "/" || route === "/home") {
+      await openMenuRoute();
+    } else if (route === "/practice") {
+      await openMenuRoute("startPracticePanel");
+    } else if (route === "/learning") {
+      await openMenuRoute("learningModePanel");
+    } else if (route === "/profile") {
+      await openProfileRoute();
+    } else if (route === "/history") {
+      await openHistoryRoute();
+    } else if (route === "/support") {
+      if (!isActiveQuestionSession()) {
+        await openMenuRoute("supportPanel");
+      }
+      openSupportContactModal();
+    } else if (route === "/legal") {
+      if (!isActiveQuestionSession()) {
+        await openMenuRoute("legalPanel");
+      }
+      openLegalHubModal();
+    } else if (route === "/terms") {
+      if (!isActiveQuestionSession()) {
+        await openMenuRoute("legalPanel");
+      }
+      openTermsModal();
+    } else if (route === "/privacy") {
+      if (!isActiveQuestionSession()) {
+        await openMenuRoute("legalPanel");
+      }
+      openPrivacyModal();
+    } else if (route === "/about") {
+      if (!isActiveQuestionSession()) {
+        await openMenuRoute("legalPanel");
+      }
+      openAboutModal();
+    }
+
+    return true;
+  } finally {
+    applyingClientRoute = false;
+  }
+}
+
+async function navigateToCoreRoute(path, options = {}) {
+  const route = normalizeClientRoutePath(path);
+  if (!route) return false;
+
+  if (isActiveQuestionSession() && !CORE_MODAL_ROUTES.has(route)) {
+    showActiveRouteBlockedModal();
+    return false;
+  }
+
+  setCoreRoute(route, { replace: !!options.replace });
+  return await applyClientRoute(route, options);
+}
+
+async function applyCurrentClientRoute(options = {}) {
+  const route = normalizeClientRoutePath(window.location.pathname);
+  if (!route) return false;
+
+  if (options.replace) {
+    setCoreRoute(route, { replace: true });
+  }
+
+  return await applyClientRoute(route, options);
+}
+
 function handleMenuPillActivation(event) {
   const pill = event.target.closest(".clickableMenuPill");
   if (!pill) return;
@@ -9748,11 +10002,22 @@ function handleMenuPillActivation(event) {
   event.preventDefault();
 
   const targetId = pill.dataset.scrollTarget;
+  const route = MAIN_MENU_PANEL_ROUTES[targetId];
+
+  if (route) {
+    navigateToCoreRoute(route);
+    return;
+  }
+
   scrollToMainMenuPanel(targetId);
 }
 
 document.addEventListener("click", handleMenuPillActivation);
 document.addEventListener("keydown", handleMenuPillActivation);
+
+window.addEventListener("popstate", () => {
+  applyCurrentClientRoute({ fromPopState: true });
+});
 
 function getSavedGoal() {
   try {
@@ -13958,6 +14223,9 @@ footer.appendChild(submitBtn);
         onClick: async () => {
           stopTimer();
           await setView("menu");
+          if (!applyingClientRoute) {
+            setCoreRoute("/", { replace: false });
+          }
         }
       }
     ]
@@ -17680,6 +17948,9 @@ async function handleEmailVerificationFromUrl() {
 
   renderChart(null);
   setView("menu");
+  if (!applyingClientRoute) {
+    setCoreRoute("/", { replace: false });
+  }
 }
 
 window.addEventListener("resize", () => {
@@ -17839,17 +18110,17 @@ window.addEventListener("resize", () => {
         document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
 const contactBtnTop = document.getElementById("contactBtnTop");
 if (contactBtnTop) {
-  contactBtnTop.onclick = () => openSupportContactModal();
+  contactBtnTop.onclick = () => navigateToCoreRoute("/support");
 }
 
 const legalTermsFooterBtn = document.getElementById("legalTermsFooterBtn");
 if (legalTermsFooterBtn) {
-  legalTermsFooterBtn.onclick = () => openTermsModal();
+  legalTermsFooterBtn.onclick = () => navigateToCoreRoute("/terms");
 }
 
 const legalPrivacyFooterBtn = document.getElementById("legalPrivacyFooterBtn");
 if (legalPrivacyFooterBtn) {
-  legalPrivacyFooterBtn.onclick = () => openPrivacyModal();
+  legalPrivacyFooterBtn.onclick = () => navigateToCoreRoute("/privacy");
 }
 
 const legalFaqFooterBtn = document.getElementById("legalFaqFooterBtn");
@@ -17859,12 +18130,12 @@ if (legalFaqFooterBtn) {
 
 const legalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
 if (legalAboutFooterBtn) {
-  legalAboutFooterBtn.onclick = () => openAboutModal();
+  legalAboutFooterBtn.onclick = () => navigateToCoreRoute("/about");
 }
 
 const supportEmailBtn = document.getElementById("supportEmailBtn");
 if (supportEmailBtn) {
-  supportEmailBtn.onclick = () => openSupportContactModal();
+  supportEmailBtn.onclick = () => navigateToCoreRoute("/support");
 }
 
 const profilePanel = document.getElementById("profilePanel");
@@ -17881,11 +18152,11 @@ if (profilePanel && !profilePanel.dataset.mainMenuDelegatedBound) {
 
 const knownBugsSupportLink = document.getElementById("knownBugsSupportLink");
 if (knownBugsSupportLink) {
-  knownBugsSupportLink.onclick = () => openSupportContactModal();
+  knownBugsSupportLink.onclick = () => navigateToCoreRoute("/support");
 }
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {
-        await openProfilePanel();
+        await navigateToCoreRoute("/profile");
       }
     };
     document.getElementById("guestBtnTop").onclick = () => continueAsGuest(false);
@@ -18129,7 +18400,10 @@ renderGoalDock();
 
       if (resetToken && resetEmail) {
         openResetPasswordModal(resetEmail, resetToken);
+        return;
       }
+
+      await applyCurrentClientRoute({ replace: true });
     })();
   </script>
 </body>

@@ -2146,7 +2146,21 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
-app.get("/", (req, res) => {
+const clientRoutes = [
+  "/",
+  "/home",
+  "/profile",
+  "/practice",
+  "/learning",
+  "/history",
+  "/support",
+  "/legal",
+  "/terms",
+  "/privacy",
+  "/about"
+];
+
+app.get(clientRoutes, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
