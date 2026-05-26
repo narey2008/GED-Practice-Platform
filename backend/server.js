@@ -1860,12 +1860,7 @@ app.get("/api/practice", (req, res) => {
     const count = Math.max(1, Math.min(30, requested));
     const difficulty = req.query.difficulty || "GED-Level";
 const rawSkill = req.query.skill || "";
-
-const practiceSkillAliases = {
-  "Area, Perimeter, Surface Area, and Volume": "Geometry"
-};
-
-const skill = practiceSkillAliases[rawSkill] || rawSkill;
+const skill = rawSkill;
 
 const questions = buildTest({ count, difficulty, skill });
     res.json({ questions });

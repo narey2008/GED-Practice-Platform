@@ -102,13 +102,10 @@ const BROAD_CATEGORY_ALLOWED_TAGS = {
 ],
 
 "Solving Equations and Inequalities": [
-  "Algebra",
   "Linear Equations",
-  "Solving Equations and Inequalities",
   "Expressions and Order of Operations",
   "Expression Substitution",
   "Expression Word Problems",
-  "Simplifying Expressions",
   "Combining Like Terms",
   "Distributive Property",
   "Variables on Both Sides",
@@ -152,18 +149,46 @@ function isBroadPracticeCategory(selectedSkill) {
   return BROAD_PRACTICE_CATEGORIES.has(selectedSkill);
 }
 
+function getSelectionTags(selectedSkill) {
+  const tags = [selectedSkill];
+
+  if (isBroadPracticeCategory(selectedSkill)) {
+    tags.push(...(BROAD_CATEGORY_ALLOWED_TAGS[selectedSkill] || []));
+  }
+
+  return new Set(tags.map(normalizePracticeTag).filter(Boolean));
+}
+
+function entryTypeMatchesSelection(entry, type, selectedSkill) {
+  if (!entry.types.includes(type)) return false;
+
+  const typeTags = entry.typeTags && entry.typeTags[type];
+  if (!selectedSkill || !Array.isArray(typeTags) || !typeTags.length) return true;
+
+  const selectedTags = getSelectionTags(selectedSkill);
+  return typeTags.some((tag) => selectedTags.has(normalizePracticeTag(tag)));
+}
+
+function getEntryTypesForSelection(entry, selectedSkill) {
+  return (entry.types || []).filter((type) =>
+    entryTypeMatchesSelection(entry, type, selectedSkill)
+  );
+}
+
 const generatorCatalog = [
   {
     name: "algebra",
     fn: algebra,
     skills: ["Algebra"],
     types: ["multiple", "fill"],
+    typeTags: {
+      fill: ["Algebra", "Expressions and Order of Operations", "Expression Substitution"]
+    },
     categoryTags: ["Expressions and Order of Operations", "Solving Equations and Inequalities"],
 subskillTags: [
   "Expressions and Order of Operations",
   "Expression Substitution",
   "Expression Word Problems",
-  "Simplifying Expressions",
   "Combining Like Terms",
   "Distributive Property"
 ]
@@ -218,7 +243,10 @@ subskillTags: [
     fn: linearEquations,
     skills: ["Linear Equations"],
     types: ["multiple", "fill"],
-    categoryTags: ["Solving Equations and Inequalities"],
+    typeTags: {
+      fill: ["Linear Equations", "Two-Step Equations", "Variables on Both Sides"]
+    },
+    categoryTags: ["Solving Equations and Inequalities", "Linear Equations and Slope"],
 subskillTags: [
   "Linear Equations",
   "Two-Step Equations",
@@ -245,6 +273,9 @@ subskillTags: [
     fn: percent,
     skills: ["Percent"],
     types: ["multiple", "fill"],
+    typeTags: {
+      fill: ["Percent", "Percent of a Number", "Percent Discount"]
+    },
     categoryTags: ["Fractions, Decimals, and Percents", "Ratios, Proportions, and Percent Change"],
     subskillTags: [
       "Percent",
@@ -304,8 +335,11 @@ subskillTags: [
   {
     name: "multiStep",
     fn: multiStep,
-    skills: ["Percent", "Graphs + Computation", "Geometry + Cost", "Data + Average"],
+    skills: ["Percent", "Graphs + Computation", "Geometry", "Geometry + Cost", "Data + Average"],
     types: ["multiple", "fill"],
+    typeTags: {
+      fill: ["Percent", "Percent of a Total"]
+    },
     categoryTags: [
       "Fractions, Decimals, and Percents",
       "Ratios, Proportions, and Percent Change",
@@ -463,7 +497,7 @@ function generateFromEntries(entries, difficulty, desiredType = null, selectedSk
   if (!entries.length) return null;
 
   const filtered = desiredType
-    ? entries.filter((entry) => entry.types.includes(desiredType))
+    ? entries.filter((entry) => entryTypeMatchesSelection(entry, desiredType, selectedSkill))
     : entries;
 
   const usable = filtered.length ? filtered : entries;
@@ -513,7 +547,7 @@ function buildTest(options = {}) {
   const isFullTest = count >= 40;
 
   const availableTypes = new Set(
-    pool.flatMap((entry) => entry.types)
+    pool.flatMap((entry) => getEntryTypesForSelection(entry, skill))
   );
 
   const targetFillCount =

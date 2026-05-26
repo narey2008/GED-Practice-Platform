@@ -4483,13 +4483,10 @@ const GED_DEV_SKILL_SUBSKILLS = {
     "Data + Average"
   ],
   "Solving Equations and Inequalities": [
-    "Algebra",
     "Linear Equations",
-    "Solving Equations and Inequalities",
     "Expressions and Order of Operations",
     "Expression Substitution",
     "Expression Word Problems",
-    "Simplifying Expressions",
     "Combining Like Terms",
     "Distributive Property",
     "Variables on Both Sides",
@@ -13809,11 +13806,7 @@ async function beginRealTestAfterTutorial() {
 function getPracticeApiSkill(skill) {
   const selectedSkill = String(skill || "").trim();
 
-  const apiSkillAliases = {
-    "Area, Perimeter, Surface Area, and Volume": "Geometry"
-  };
-
-  return apiSkillAliases[selectedSkill] || selectedSkill;
+  return selectedSkill;
 }
 async function startLearningMode(skill, difficulty, fromPractice = false) {
   const flowStartedAt = performance.now();
