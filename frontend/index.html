@@ -3471,6 +3471,139 @@ body.loadingActive {
       position: relative;
     }
 
+    .devToolResults {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    #devHealthResults,
+    #devContractResults {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolResultCard {
+      display: grid;
+      gap: 8px;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-size: 12px;
+      line-height: 1.4;
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .devToolResultHeader {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolResultTitle {
+      min-width: 0;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .devToolResultActions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolResultMeta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 10px;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolResultMetaItem {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolResultLabel {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.25;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .devToolResultValue {
+      display: block;
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .devToolResultMessage {
+      padding: 8px;
+      border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+      border-radius: 8px;
+      background: var(--panel);
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .devToolDetails {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolDetails summary {
+      cursor: pointer;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .devToolDetailsBody {
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 10px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      overflow-y: visible;
+      overscroll-behavior: contain;
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
     .devHealthSummaryGrid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -3491,50 +3624,6 @@ body.loadingActive {
       font-size: 17px;
       font-weight: 800;
       line-height: 1.15;
-    }
-
-    .devHealthResultsWrap {
-      max-height: none;
-      max-width: 100%;
-      overflow-x: auto;
-      overflow-y: hidden;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--card);
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-gutter: stable;
-    }
-
-    .devHealthTable {
-      width: 100%;
-      min-width: 720px;
-      max-width: none;
-      border-collapse: collapse;
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    .devHealthTable th,
-    .devHealthTable td {
-      padding: 7px 8px;
-      border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
-      text-align: left;
-      vertical-align: top;
-      overflow-wrap: anywhere;
-    }
-
-    .devHealthTable th {
-      color: var(--muted);
-      font-weight: 800;
-      background: var(--panel);
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    .devHealthTable tr:last-child td {
-      border-bottom: 0;
     }
 
     .devHealthStatus {
@@ -3616,6 +3705,10 @@ body.loadingActive {
 
       .devHealthSummaryGrid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .devToolResultMeta {
+        grid-template-columns: 1fr;
       }
 
       .devToolActions {
@@ -4281,6 +4374,7 @@ const GED_DEV_TOOL_CATEGORIES = [
   { key: "question", label: "Question Tools" },
   { key: "preview", label: "Question Preview Lab" },
   { key: "health", label: "Generator Health" },
+  { key: "contract", label: "Coverage Contract" },
   { key: "state", label: "Test State" },
   { key: "flow", label: "Flow / UI" },
   { key: "errors", label: "Error Feed" }
@@ -4288,6 +4382,10 @@ const GED_DEV_TOOL_CATEGORIES = [
 const GED_DEV_HEALTH_DIFFICULTIES = ["Easy", "Medium", "GED-Level"];
 const GED_DEV_HEALTH_QUESTIONS_PER_COMBO = 2;
 const GED_DEV_HEALTH_MAX_REQUESTS = 72;
+const GED_DEV_CONTRACT_DEFAULT_SAMPLES = 3;
+const GED_DEV_CONTRACT_MAX_SAMPLES = 10;
+const GED_DEV_CONTRACT_MAX_COMBOS = 90;
+const GED_DEV_CONTRACT_MAX_ATTEMPTS = 3;
 let gedDevShowQuestionId = false;
 let gedDevPanelMinimized = false;
 let gedDevActiveCategory = "overview";
@@ -4296,6 +4394,9 @@ let gedDevPreviewQuestions = [];
 let gedDevHealthResults = [];
 let gedDevHealthRunning = false;
 let gedDevHealthAbortController = null;
+let gedDevContractResults = [];
+let gedDevContractRunning = false;
+let gedDevContractAbortController = null;
 
 function updateDevQuestionIdLabel() {
   const labelEl = document.getElementById("devQuestionIdLabel");
@@ -4512,6 +4613,17 @@ const GED_DEV_QUESTION_TYPE_PRESETS = {
   chart: { label: "Chart/Graph", skill: "Data Tables and Graph Interpretation" },
   table: { label: "Table/Data", skill: "Data Tables and Graph Interpretation" },
   geometry: { label: "Geometry Visual", skill: "Geometry" }
+};
+
+const GED_DEV_CONTRACT_CATEGORY_ALIASES = {
+  "Fractions, Decimals, and Percents": ["Percent", "Algebra"],
+  "Ratios, Proportions, and Percent Change": ["Percent", "Percent Change"],
+  "Area, Perimeter, Surface Area, and Volume": ["Geometry", "Geometry + Cost"],
+  "Lines, Angles, and Coordinate Plane": ["Slope", "Number Line"],
+  "Data Tables and Graph Interpretation": ["Bar Graph", "Line Graph", "Data Table", "Scatter Plot", "Graphs + Computation"],
+  "Mean, Median, and Probability": ["Probability", "Data + Average", "Average", "Median"],
+  "Solving Equations and Inequalities": ["Algebra", "Linear Equations"],
+  "Linear Equations and Slope": ["Linear Equations", "Slope"]
 };
 
 function normalizeDevTag(value) {
@@ -4827,6 +4939,755 @@ function renderLocalDevPreviewResults() {
   });
 }
 
+function getLocalDevContractSamples(rawValue) {
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed)) return GED_DEV_CONTRACT_DEFAULT_SAMPLES;
+  return Math.max(1, Math.min(GED_DEV_CONTRACT_MAX_SAMPLES, Math.floor(parsed)));
+}
+
+function buildDevContractDifficultyOptions(selectedValue = "All") {
+  const options = [
+    { value: "All", label: "All" },
+    ...GED_DEV_HEALTH_DIFFICULTIES.map((difficulty) => ({ value: difficulty, label: difficulty }))
+  ];
+
+  return options
+    .map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === selectedValue ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
+function buildDevContractSkillOptions(selectedValue = "") {
+  const options = [`<option value="" ${selectedValue ? "" : "selected"}>All</option>`];
+
+  Object.keys(GED_DEV_SKILL_SUBSKILLS).forEach((skill) => {
+    options.push(`<option value="${escapeHtml(skill)}" ${skill === selectedValue ? "selected" : ""}>${escapeHtml(skill)}</option>`);
+  });
+
+  return options.join("");
+}
+
+function buildDevContractSubskillOptions(skill, selectedValue = "") {
+  const subskills = GED_DEV_SKILL_SUBSKILLS[skill] || [];
+  const options = [`<option value="" ${selectedValue ? "" : "selected"}>All</option>`];
+
+  subskills.forEach((subskill) => {
+    options.push(`<option value="${escapeHtml(subskill)}" ${subskill === selectedValue ? "selected" : ""}>${escapeHtml(subskill)}</option>`);
+  });
+
+  return options.join("");
+}
+
+function getLocalDevContractDifficulties(selectedValue) {
+  return selectedValue === "All" || !selectedValue
+    ? GED_DEV_HEALTH_DIFFICULTIES
+    : GED_DEV_HEALTH_DIFFICULTIES.filter((difficulty) => difficulty === selectedValue);
+}
+
+function getLocalDevContractTypeLabel(typeKey) {
+  return typeKey ? (GED_DEV_QUESTION_TYPE_PRESETS[typeKey]?.label || typeKey) : "Any";
+}
+
+function normalizeLocalDevContractType(value) {
+  return normalizeDevTag(value).replace(/[^a-z0-9]+/g, "");
+}
+
+function getLocalDevContractQuestionTags(question) {
+  return [
+    question?.skill,
+    question?.subskill,
+    question?.topic
+  ].map(normalizeDevTag).filter(Boolean);
+}
+
+function getLocalDevContractSearchText(question) {
+  return [
+    ...getLocalDevContractQuestionTags(question),
+    String(question?.question || "").replace(/<[^>]*>/g, " ")
+  ].join(" ").toLowerCase();
+}
+
+function getLocalDevContractAllowedTags(skill, subskill) {
+  const selectedSkill = String(skill || "").trim();
+  const selectedSubskill = String(subskill || "").trim();
+  const allowed = new Set();
+
+  if (selectedSubskill) {
+    allowed.add(normalizeDevTag(selectedSubskill));
+  } else if (selectedSkill) {
+    allowed.add(normalizeDevTag(selectedSkill));
+    (GED_DEV_SKILL_SUBSKILLS[selectedSkill] || []).forEach((tag) => allowed.add(normalizeDevTag(tag)));
+    (GED_DEV_CONTRACT_CATEGORY_ALIASES[selectedSkill] || []).forEach((tag) => allowed.add(normalizeDevTag(tag)));
+  }
+
+  return allowed;
+}
+
+function questionMatchesLocalDevContractSkill(question, skill, subskill) {
+  const allowed = getLocalDevContractAllowedTags(skill, subskill);
+  if (!allowed.size) return true;
+
+  return getLocalDevContractQuestionTags(question).some((tag) => allowed.has(tag));
+}
+
+function questionMatchesLocalDevContractType(question, typeKey) {
+  if (!typeKey) return true;
+  if (!isSupportedLocalDevTypeFilter(typeKey)) return false;
+
+  const normalizedType = normalizeLocalDevContractType(question?.type);
+
+  if (typeKey === "multiple") {
+    return ["multiple", "multiplechoice", "mc"].includes(normalizedType);
+  }
+
+  if (typeKey === "fill") {
+    return ["fill", "fillblank", "fillintheblank"].includes(normalizedType);
+  }
+
+  if (typeKey === "dragdrop") {
+    return ["dragdrop", "draganddrop"].includes(normalizedType);
+  }
+
+  if (typeKey === "hotspot") {
+    return normalizedType === "hotspot" || !!question?.hotspot;
+  }
+
+  if (typeKey === "chart") {
+    const text = getLocalDevContractSearchText(question);
+    return !!(question?.chart && question.chart.type && question.chart.data) ||
+      /\b(chart|graphs?|plot|scatter|slope)\b/.test(text);
+  }
+
+  if (typeKey === "table") {
+    const text = getLocalDevContractSearchText(question);
+    return normalizeDevTag(question?.skill) === "data table" ||
+      /<table[\s>]/i.test(String(question?.question || "")) ||
+      /\b(data table|table|data|average|median)\b/.test(text);
+  }
+
+  return questionMatchesLocalDevType(question, typeKey);
+}
+
+function hasLocalDevContractKnownType(question) {
+  const normalizedType = normalizeLocalDevContractType(question?.type);
+  return ["multiple", "multiplechoice", "mc", "fill", "fillblank", "fillintheblank", "dragdrop", "draganddrop", "hotspot"].includes(normalizedType);
+}
+
+function isLocalDevContractMissingAnswer(value) {
+  if (Array.isArray(value)) return value.length === 0;
+  if (value === undefined || value === null) return true;
+  return String(value).trim() === "";
+}
+
+function formatLocalDevContractMetadata(question) {
+  if (!question) return "n/a";
+  return [
+    question.skill || "skill n/a",
+    question.subskill || "subskill n/a",
+    question.type || "type n/a"
+  ].join(" / ");
+}
+
+function evaluateLocalDevContractQuestion(question, combo, index) {
+  const issues = [];
+  const reportId = buildCurrentQuestionReportId(question, index, "contract");
+  const skillMatches = questionMatchesLocalDevContractSkill(question, combo.skill, combo.subskill);
+  const typeMatches = questionMatchesLocalDevContractType(question, combo.typeKey);
+  const typeLabel = getLocalDevContractTypeLabel(combo.typeKey);
+
+  if (!skillMatches) {
+    issues.push({
+      kind: combo.subskill ? "wrong-subskill" : "off-category",
+      message: combo.subskill
+        ? `Expected subskill ${combo.subskill}; got ${formatLocalDevContractMetadata(question)}.`
+        : `Expected category ${combo.skill || "All"}; got ${formatLocalDevContractMetadata(question)}.`
+    });
+  }
+
+  if (combo.typeKey && !typeMatches) {
+    issues.push({
+      kind: "wrong-type",
+      message: `Expected ${typeLabel}; got ${formatLocalDevContractMetadata(question)}.`
+    });
+  }
+
+  if (!String(question?.skill || "").trim()) {
+    issues.push({ kind: "metadata", message: "Missing skill metadata." });
+  }
+
+  if (combo.subskill && !String(question?.subskill || "").trim()) {
+    issues.push({ kind: "metadata", message: "Missing subskill metadata for focused generation." });
+  }
+
+  if (!String(question?.type || "").trim()) {
+    issues.push({ kind: "metadata", message: "Missing type metadata." });
+  } else if (!hasLocalDevContractKnownType(question)) {
+    issues.push({ kind: "metadata", message: `Unknown type metadata: ${question.type}.` });
+  }
+
+  if (isLocalDevContractMissingAnswer(question?.answer)) {
+    issues.push({ kind: "metadata", message: "Missing correct answer." });
+  }
+
+  const promptText = String(question?.question || "").replace(/<[^>]*>/g, " ").trim();
+  if (!promptText || promptText === "Question unavailable.") {
+    issues.push({ kind: "metadata", message: "Missing prompt/question text." });
+  }
+
+  if (question?.difficulty && combo.difficulty && question.difficulty !== combo.difficulty) {
+    issues.push({
+      kind: "metadata",
+      message: `Difficulty metadata mismatch: requested ${combo.difficulty}, got ${question.difficulty}.`
+    });
+  }
+
+  return {
+    reportId,
+    metadata: formatLocalDevContractMetadata(question),
+    issues
+  };
+}
+
+function getLocalDevContractStatusFromIssues(generatedCount, checkedCount, issueKinds) {
+  if (!generatedCount) return "No Questions";
+  if (issueKinds.some((kind) => kind === "off-category" || kind === "wrong-subskill")) return "Off-Category";
+  if (issueKinds.includes("wrong-type")) return "Wrong Type";
+  if (issueKinds.includes("metadata")) return "Metadata Warning";
+  if (!checkedCount) return "No Questions";
+  return "Pass";
+}
+
+function buildLocalDevContractResult(combo, generated, checked, extraIssues = []) {
+  const questionChecks = checked.map((question, index) =>
+    evaluateLocalDevContractQuestion(question, combo, index)
+  );
+  const issues = [
+    ...extraIssues,
+    ...questionChecks.flatMap((check) => check.issues)
+  ];
+  const issueKinds = issues.map((issue) => issue.kind);
+  const firstIssueCheck = questionChecks.find((check) => check.issues.length);
+  const firstCheck = firstIssueCheck || questionChecks[0] || null;
+  const status = getLocalDevContractStatusFromIssues(generated.length, checked.length, issueKinds);
+
+  return {
+    ...combo,
+    typeLabel: getLocalDevContractTypeLabel(combo.typeKey),
+    status,
+    returnedCount: generated.length,
+    checkedCount: checked.length,
+    issueCount: issues.length,
+    exampleId: firstCheck?.reportId || "",
+    exampleMetadata: firstCheck?.metadata || (generated[0] ? formatLocalDevContractMetadata(generated[0]) : "n/a"),
+    issueMessage: issues.map((issue) => issue.message).filter(Boolean).slice(0, 3).join(" | "),
+    issues
+  };
+}
+
+function buildLocalDevContractFailedResult(combo, error) {
+  const message = sanitizeDevErrorText(error?.message || error || "Generation failed.");
+  return {
+    ...combo,
+    typeLabel: getLocalDevContractTypeLabel(combo.typeKey),
+    status: "Failed",
+    returnedCount: 0,
+    checkedCount: 0,
+    issueCount: 1,
+    exampleId: "",
+    exampleMetadata: "n/a",
+    issueMessage: message,
+    issues: [{ kind: "failed", message }]
+  };
+}
+
+function buildLocalDevContractSweepPlan(skillFilter, subskillFilter, difficultyFilter, typeKey) {
+  const selectedSkill = String(skillFilter || "").trim();
+  const selectedSubskill = selectedSkill ? String(subskillFilter || "").trim() : "";
+  const difficulties = getLocalDevContractDifficulties(difficultyFilter);
+  const skills = selectedSkill ? [selectedSkill] : Object.keys(GED_DEV_SKILL_SUBSKILLS);
+  const combos = [];
+
+  skills.forEach((skill) => {
+    const subskills = selectedSkill
+      ? (selectedSubskill ? [selectedSubskill] : ["", ...(GED_DEV_SKILL_SUBSKILLS[skill] || [])])
+      : [""];
+
+    subskills.forEach((subskill) => {
+      difficulties.forEach((difficulty) => {
+        combos.push({ skill, subskill, difficulty, typeKey });
+      });
+    });
+  });
+
+  const limitedCombos = combos.slice(0, GED_DEV_CONTRACT_MAX_COMBOS);
+  return {
+    combos: limitedCombos,
+    totalCombos: combos.length,
+    truncated: limitedCombos.length < combos.length
+  };
+}
+
+async function fetchLocalDevContractCombo(combo, samples, signal) {
+  const requestSkill = combo.subskill || combo.skill;
+  const generated = [];
+  const maxAttempts = combo.typeKey ? GED_DEV_CONTRACT_MAX_ATTEMPTS : 1;
+  const batchCount = combo.typeKey
+    ? Math.min(30, Math.max(samples, samples * 4))
+    : samples;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const res = await fetch(buildLocalDevPracticeUrl(requestSkill, combo.difficulty, batchCount), { signal });
+
+    if (!res.ok) {
+      let message = `${res.status} ${res.statusText}`.trim();
+
+      try {
+        const data = await res.json();
+        if (data?.error) message = data.error;
+      } catch (error) {
+        // Keep the HTTP status message when the response body is not JSON.
+      }
+
+      throw new Error(message || "Practice generation failed.");
+    }
+
+    const data = await res.json();
+    const batch = Array.isArray(data.questions) ? data.questions : [];
+    generated.push(...batch);
+
+    const skillMatches = generated.filter((question) =>
+      questionMatchesLocalDevContractSkill(question, combo.skill, combo.subskill)
+    );
+    const typeMatches = combo.typeKey
+      ? skillMatches.filter((question) => questionMatchesLocalDevContractType(question, combo.typeKey))
+      : skillMatches;
+
+    if (typeMatches.length >= samples || (!combo.typeKey && skillMatches.length)) break;
+  }
+
+  if (!generated.length) {
+    return buildLocalDevContractResult(combo, [], [], [
+      { kind: "metadata", message: "No questions were returned by the practice API." }
+    ]);
+  }
+
+  const skillMatches = generated.filter((question) =>
+    questionMatchesLocalDevContractSkill(question, combo.skill, combo.subskill)
+  );
+
+  if (!skillMatches.length) {
+    return buildLocalDevContractResult(combo, generated, generated.slice(0, samples));
+  }
+
+  const typeMatches = combo.typeKey
+    ? skillMatches.filter((question) => questionMatchesLocalDevContractType(question, combo.typeKey))
+    : skillMatches;
+
+  const checked = typeMatches.slice(0, samples);
+  const extraIssues = [];
+
+  if (combo.typeKey && !checked.length) {
+    return buildLocalDevContractResult(combo, generated, skillMatches.slice(0, samples));
+  }
+
+  if (checked.length < samples) {
+    extraIssues.push({
+      kind: "metadata",
+      message: `Only checked ${checked.length}/${samples} requested sample${samples === 1 ? "" : "s"} for this combo.`
+    });
+  }
+
+  return buildLocalDevContractResult(combo, generated, checked, extraIssues);
+}
+
+function getLocalDevContractSummary() {
+  return gedDevContractResults.reduce((summary, result) => {
+    summary.total += 1;
+    summary.generatedChecked += Number(result.checkedCount) || 0;
+
+    if (result.status === "Pass") summary.passed += 1;
+    else if (result.status === "No Questions") summary.noQuestions += 1;
+    else if (result.status === "Off-Category") summary.offCategory += 1;
+    else if (result.status === "Wrong Type") summary.wrongType += 1;
+    else if (result.status === "Metadata Warning") summary.metadataWarning += 1;
+    else if (result.status === "Failed") summary.failed += 1;
+
+    return summary;
+  }, {
+    total: 0,
+    generatedChecked: 0,
+    passed: 0,
+    noQuestions: 0,
+    offCategory: 0,
+    wrongType: 0,
+    metadataWarning: 0,
+    failed: 0
+  });
+}
+
+function buildLocalDevContractSummaryHtml() {
+  const summary = getLocalDevContractSummary();
+  const items = [
+    ["Combos checked", summary.total],
+    ["Questions checked", summary.generatedChecked],
+    ["Pass", summary.passed],
+    ["No Questions", summary.noQuestions],
+    ["Off-Category", summary.offCategory],
+    ["Wrong Type", summary.wrongType],
+    ["Metadata Warning", summary.metadataWarning],
+    ["Failed", summary.failed]
+  ];
+
+  return `
+    <div class="devHealthSummaryGrid">
+      ${items.map(([label, value]) => `
+        <div class="devHealthSummaryItem">
+          <div class="devHealthSummaryValue">${escapeHtml(value)}</div>
+          <div class="devToolHelp">${escapeHtml(label)}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function getLocalDevContractStatusClass(status) {
+  if (status === "Pass") return "devHealthStatusPass";
+  if (status === "No Questions" || status === "Metadata Warning") return "devHealthStatusNo";
+  if (status === "Off-Category" || status === "Wrong Type" || status === "Failed") return "devHealthStatusFailed";
+  return "";
+}
+
+function getLocalDevReviewQueueHandler() {
+  const handlerNames = [
+    "__GED_DEV_ADD_TO_REVIEW_QUEUE",
+    "addLocalDevReviewQueueItem",
+    "addDevReviewQueueItem"
+  ];
+
+  for (const name of handlerNames) {
+    if (typeof window[name] === "function") return window[name];
+  }
+
+  return null;
+}
+
+function hasLocalDevReviewQueue() {
+  return GED_DEV_IS_LOCALHOST && !!getLocalDevReviewQueueHandler();
+}
+
+function getLocalDevContractReviewActionHtml(result, index) {
+  if (!hasLocalDevReviewQueue() || result.status === "Pass") return "";
+  return `<button class="secondaryBtn devContractReviewBtn" type="button" data-contract-index="${escapeHtml(index)}">Add to Review Queue</button>`;
+}
+
+function buildLocalDevResultMetaHtml(items) {
+  return `
+    <div class="devToolResultMeta">
+      ${items.map(([label, value]) => `
+        <div class="devToolResultMetaItem">
+          <span class="devToolResultLabel">${escapeHtml(label)}</span>
+          <span class="devToolResultValue">${escapeHtml(value)}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function buildLocalDevResultDetailsHtml(summary, detailsText) {
+  const text = String(detailsText ?? "").trim();
+  if (!text) return "";
+
+  return `
+    <details class="devToolDetails">
+      <summary>${escapeHtml(summary)}</summary>
+      <div class="devToolDetailsBody">${escapeHtml(text)}</div>
+    </details>
+  `;
+}
+
+function buildLocalDevContractIssueDetailsText(result) {
+  if (!Array.isArray(result?.issues) || !result.issues.length) return "";
+
+  return result.issues.map((issue, issueIndex) => {
+    const kind = String(issue?.kind || "issue").trim();
+    const message = String(issue?.message || "No issue message provided.").trim();
+    return `${issueIndex + 1}. [${kind}] ${message}`;
+  }).join("\n");
+}
+
+function buildLocalDevContractResultCardHtml(result, index) {
+  const status = result.status || "Unknown";
+  const reviewAction = getLocalDevContractReviewActionHtml(result, index);
+  const issueDetails = buildLocalDevContractIssueDetailsText(result);
+  const issueCount = Number(result.issueCount) || 0;
+  const issueMessage = result.issueMessage || (issueCount ? "Review issue details." : "No issues.");
+  const requestedTitle = `${result.skill || "All"}${result.subskill ? ` / ${result.subskill}` : ""}`;
+
+  return `
+    <div class="devToolResultCard">
+      <div class="devToolResultHeader">
+        <div class="devToolResultTitle">${escapeHtml(requestedTitle)}</div>
+        <div class="devToolResultActions">
+          <span class="devHealthStatus ${getLocalDevContractStatusClass(status)}">${escapeHtml(status)}</span>
+          ${reviewAction}
+        </div>
+      </div>
+      ${buildLocalDevResultMetaHtml([
+        ["Skill requested", result.skill || "All"],
+        ["Subskill requested", result.subskill || "All"],
+        ["Difficulty", result.difficulty || "n/a"],
+        ["Type requested", result.typeLabel || "Any"],
+        ["Returned", result.returnedCount ?? 0],
+        ["Issues", issueCount],
+        ["Example ID / metadata", result.exampleId || result.exampleMetadata || "n/a"]
+      ])}
+      <div class="devToolResultMessage">${escapeHtml(issueMessage)}</div>
+      ${buildLocalDevResultDetailsHtml(`${issueCount} issue detail${issueCount === 1 ? "" : "s"}`, issueDetails)}
+    </div>
+  `;
+}
+
+function buildLocalDevContractResultsHtml() {
+  if (!gedDevContractResults.length) {
+    return `
+      ${buildLocalDevContractSummaryHtml()}
+      <div class="devHealthEmpty">
+        No Coverage Contract results yet. Choose filters, then run a local contract check.
+      </div>
+    `;
+  }
+
+  return `
+    ${buildLocalDevContractSummaryHtml()}
+    <div class="devToolResults">
+      ${gedDevContractResults.map(buildLocalDevContractResultCardHtml).join("")}
+    </div>
+  `;
+}
+
+function renderLocalDevContractResults() {
+  if (!GED_DEV_IS_LOCALHOST) return;
+  const results = document.getElementById("devContractResults");
+  if (!results) return;
+  results.innerHTML = buildLocalDevContractResultsHtml();
+  results.querySelectorAll(".devContractReviewBtn").forEach((btn) => {
+    btn.onclick = () => addLocalDevContractResultToReviewQueue(Number(btn.dataset.contractIndex));
+  });
+}
+
+function setLocalDevContractControlsRunning(isRunning) {
+  const runBtn = document.getElementById("devRunContractBtn");
+  const stopBtn = document.getElementById("devStopContractBtn");
+  const clearBtn = document.getElementById("devClearContractBtn");
+  const exportBtn = document.getElementById("devExportContractBtn");
+  const copyBtn = document.getElementById("devCopyContractSummaryBtn");
+  const controls = [
+    "devContractDifficultySelect",
+    "devContractSkillSelect",
+    "devContractSubskillSelect",
+    "devContractTypeSelect",
+    "devContractSamplesInput"
+  ].map((id) => document.getElementById(id)).filter(Boolean);
+
+  if (runBtn) {
+    runBtn.disabled = !!isRunning;
+    runBtn.textContent = isRunning ? "Running..." : "Run Contract Check";
+  }
+
+  if (stopBtn) stopBtn.disabled = !isRunning;
+  if (clearBtn) clearBtn.disabled = !!isRunning;
+  if (exportBtn) exportBtn.disabled = !!isRunning || !gedDevContractResults.length;
+  if (copyBtn) copyBtn.disabled = !!isRunning || !gedDevContractResults.length;
+
+  controls.forEach((control) => {
+    control.disabled = !!isRunning || (control.id === "devContractSubskillSelect" && !document.getElementById("devContractSkillSelect")?.value);
+  });
+}
+
+function cancelLocalDevContractCheck() {
+  if (!GED_DEV_IS_LOCALHOST || !gedDevContractRunning || !gedDevContractAbortController) return;
+  gedDevContractAbortController.abort();
+}
+
+function clearLocalDevContractResults() {
+  if (!GED_DEV_IS_LOCALHOST || gedDevContractRunning) return;
+  gedDevContractResults = [];
+  renderLocalDevContractResults();
+  setLocalDevContractControlsRunning(false);
+  setDevToolsStatus("Coverage Contract results cleared.");
+}
+
+function getLocalDevContractSummaryText() {
+  const summary = getLocalDevContractSummary();
+  return [
+    "Coverage Contract Summary",
+    `Total combos checked: ${summary.total}`,
+    `Total generated questions checked: ${summary.generatedChecked}`,
+    `Pass count: ${summary.passed}`,
+    `No question count: ${summary.noQuestions}`,
+    `Off-category count: ${summary.offCategory}`,
+    `Wrong type count: ${summary.wrongType}`,
+    `Metadata warning count: ${summary.metadataWarning}`,
+    `Failed count: ${summary.failed}`
+  ].join("\n");
+}
+
+async function copyLocalDevContractSummary() {
+  if (!GED_DEV_IS_LOCALHOST || !gedDevContractResults.length) return;
+  const text = getLocalDevContractSummaryText();
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "readonly");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    setDevToolsStatus("Coverage Contract summary copied.");
+  } catch (error) {
+    setDevToolsStatus("Coverage Contract summary could not be copied.", true);
+  }
+}
+
+function getLocalDevContractExportPayload() {
+  return {
+    exportedAt: new Date().toISOString(),
+    localOnly: true,
+    summary: getLocalDevContractSummary(),
+    results: gedDevContractResults.map((result) => ({
+      skill: result.skill,
+      subskill: result.subskill,
+      difficulty: result.difficulty,
+      typeRequested: result.typeLabel,
+      status: result.status,
+      returnedCount: result.returnedCount,
+      checkedCount: result.checkedCount,
+      issueCount: result.issueCount,
+      exampleId: result.exampleId,
+      exampleMetadata: result.exampleMetadata,
+      issueMessage: result.issueMessage,
+      issues: (result.issues || []).map((issue) => ({
+        kind: issue.kind,
+        message: issue.message
+      }))
+    }))
+  };
+}
+
+function exportLocalDevContractResults() {
+  if (!GED_DEV_IS_LOCALHOST || !gedDevContractResults.length) return;
+
+  const payload = getLocalDevContractExportPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  link.href = url;
+  link.download = `ged-coverage-contract-${timestamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setDevToolsStatus("Coverage Contract JSON exported. No results were stored by the app.");
+}
+
+function addLocalDevContractResultToReviewQueue(index) {
+  if (!GED_DEV_IS_LOCALHOST) return;
+
+  const handler = getLocalDevReviewQueueHandler();
+  const result = gedDevContractResults[index];
+  if (!handler || !result) {
+    setDevToolsStatus("No local Review Queue hook is available for Coverage Contract.", true);
+    return;
+  }
+
+  handler({
+    source: "coverage-contract",
+    skill: result.skill,
+    subskill: result.subskill,
+    difficulty: result.difficulty,
+    typeRequested: result.typeLabel,
+    status: result.status,
+    issueMessage: result.issueMessage,
+    exampleId: result.exampleId,
+    exampleMetadata: result.exampleMetadata
+  });
+  setDevToolsStatus("Coverage Contract result added to Review Queue.");
+}
+
+async function runLocalDevContractCheck() {
+  if (!GED_DEV_IS_LOCALHOST || gedDevContractRunning) return;
+
+  const difficultyFilter = document.getElementById("devContractDifficultySelect")?.value || "All";
+  const skillFilter = document.getElementById("devContractSkillSelect")?.value || "";
+  const subskillFilter = document.getElementById("devContractSubskillSelect")?.value || "";
+  const typeKey = document.getElementById("devContractTypeSelect")?.value || "";
+  const samples = getLocalDevContractSamples(document.getElementById("devContractSamplesInput")?.value || GED_DEV_CONTRACT_DEFAULT_SAMPLES);
+  const samplesInput = document.getElementById("devContractSamplesInput");
+  if (samplesInput) samplesInput.value = String(samples);
+
+  const plan = buildLocalDevContractSweepPlan(skillFilter, subskillFilter, difficultyFilter, typeKey);
+
+  if (!plan.combos.length) {
+    setDevToolsStatus("No Coverage Contract combinations were available for those filters.", true);
+    return;
+  }
+
+  gedDevContractResults = [];
+  renderLocalDevContractResults();
+  gedDevContractRunning = true;
+  gedDevContractAbortController = new AbortController();
+  setLocalDevContractControlsRunning(true);
+
+  const limitText = plan.truncated ? ` Limited to ${plan.combos.length}/${plan.totalCombos} combinations.` : "";
+  setDevToolsStatus(`Running Coverage Contract: 0/${plan.combos.length}.${limitText}`);
+
+  let stopped = false;
+
+  try {
+    for (let index = 0; index < plan.combos.length; index += 1) {
+      const combo = plan.combos[index];
+      const progress = `${index + 1}/${plan.combos.length}`;
+      setDevToolsStatus(`Running Coverage Contract: ${progress} (${combo.subskill || combo.skill}, ${combo.difficulty}, ${getLocalDevContractTypeLabel(combo.typeKey)}).${limitText}`);
+
+      try {
+        const result = await fetchLocalDevContractCombo(combo, samples, gedDevContractAbortController.signal);
+        gedDevContractResults.push(result);
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          stopped = true;
+          break;
+        }
+
+        gedDevContractResults.push(buildLocalDevContractFailedResult(combo, error));
+      }
+
+      renderLocalDevContractResults();
+    }
+  } finally {
+    gedDevContractRunning = false;
+    gedDevContractAbortController = null;
+    setLocalDevContractControlsRunning(false);
+    renderLocalDevContractResults();
+  }
+
+  const summary = getLocalDevContractSummary();
+  if (stopped) {
+    setDevToolsStatus(`Coverage Contract stopped after ${summary.total}/${plan.combos.length} checks. Nothing was saved.`, true);
+    return;
+  }
+
+  setDevToolsStatus(`Coverage Contract complete: ${summary.passed} pass, ${summary.offCategory} off-category, ${summary.wrongType} wrong type, ${summary.metadataWarning} metadata warning, ${summary.failed} failed. Nothing was saved.`);
+}
+
 function getLocalDevHealthSummary() {
   return gedDevHealthResults.reduce((summary, result) => {
     summary.total += 1;
@@ -4875,6 +5736,31 @@ function getLocalDevHealthStatusClass(status) {
   return "";
 }
 
+function buildLocalDevHealthResultCardHtml(result) {
+  const status = result.status || "unknown";
+  const errorText = result.error || (status === "pass" ? "Generation returned questions for this combination." : "No error details.");
+
+  return `
+    <div class="devToolResultCard">
+      <div class="devToolResultHeader">
+        <div class="devToolResultTitle">${escapeHtml(result.skill || "n/a")}</div>
+        <div class="devToolResultActions">
+          <span class="devHealthStatus ${getLocalDevHealthStatusClass(status)}">${escapeHtml(status)}</span>
+        </div>
+      </div>
+      ${buildLocalDevResultMetaHtml([
+        ["Skill", result.skill || "n/a"],
+        ["Subskill", result.subskill || "Any"],
+        ["Difficulty", result.difficulty || "n/a"],
+        ["Returned", result.returnedCount ?? 0],
+        ["Types", formatLocalDevHealthTypes(result.types)]
+      ])}
+      <div class="devToolResultMessage">${escapeHtml(errorText)}</div>
+      ${result.error ? buildLocalDevResultDetailsHtml("Error details", result.error) : ""}
+    </div>
+  `;
+}
+
 function buildLocalDevHealthResultsHtml() {
   if (!gedDevHealthResults.length) {
     return `
@@ -4887,33 +5773,8 @@ function buildLocalDevHealthResultsHtml() {
 
   return `
     ${buildLocalDevHealthSummaryHtml()}
-    <div class="devHealthResultsWrap">
-      <table class="devHealthTable">
-        <thead>
-          <tr>
-            <th>Skill</th>
-            <th>Subskill</th>
-            <th>Difficulty</th>
-            <th>Status</th>
-            <th>Returned</th>
-            <th>Types</th>
-            <th>Error</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${gedDevHealthResults.map((result) => `
-            <tr>
-              <td>${escapeHtml(result.skill || "n/a")}</td>
-              <td>${escapeHtml(result.subskill || "Any")}</td>
-              <td>${escapeHtml(result.difficulty || "n/a")}</td>
-              <td><span class="devHealthStatus ${getLocalDevHealthStatusClass(result.status)}">${escapeHtml(result.status || "unknown")}</span></td>
-              <td>${escapeHtml(result.returnedCount ?? 0)}</td>
-              <td>${escapeHtml(formatLocalDevHealthTypes(result.types))}</td>
-              <td>${escapeHtml(result.error || "n/a")}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
+    <div class="devToolResults">
+      ${gedDevHealthResults.map(buildLocalDevHealthResultCardHtml).join("")}
     </div>
   `;
 }
@@ -5043,6 +5904,10 @@ function setActiveLocalDevToolsCategory(category) {
 
   if (gedDevActiveCategory === "health" && !panel?.classList.contains("minimized")) {
     requestAnimationFrame(renderLocalDevHealthResults);
+  }
+
+  if (gedDevActiveCategory === "contract" && !panel?.classList.contains("minimized")) {
+    requestAnimationFrame(renderLocalDevContractResults);
   }
 }
 
@@ -5274,6 +6139,11 @@ function renderLocalDevToolsPanel() {
   const previewCount = getLocalDevPreviewCount(document.getElementById("devPreviewCountInput")?.value || 5);
   const healthDifficulty = document.getElementById("devHealthDifficultySelect")?.value || "All";
   const healthSkill = document.getElementById("devHealthSkillSelect")?.value || "";
+  const contractDifficulty = document.getElementById("devContractDifficultySelect")?.value || "All";
+  const contractSkill = document.getElementById("devContractSkillSelect")?.value || "";
+  const contractSubskill = document.getElementById("devContractSubskillSelect")?.value || "";
+  const contractType = document.getElementById("devContractTypeSelect")?.value || "";
+  const contractSamples = getLocalDevContractSamples(document.getElementById("devContractSamplesInput")?.value || GED_DEV_CONTRACT_DEFAULT_SAMPLES);
   const hasActiveQuestionSet = hasLocalDevActiveQuestionSet();
   const currentQuestionNumber = hasActiveQuestionSet ? state.currentIndex + 1 : 1;
   const totalQuestions = Array.isArray(state.questions) ? state.questions.length : 0;
@@ -5420,6 +6290,53 @@ function renderLocalDevToolsPanel() {
       </div>
         </section>
 
+        <section class="${getLocalDevCategoryPanelClass("contract")}" data-dev-category-panel="contract">
+      <h3 class="devToolsSectionTitle">Coverage Contract</h3>
+      <div class="devToolsSectionBody">
+        <div class="devToolsNotice">
+          Local-only and read-only. Reuses /api/practice, checks generated metadata in memory, and does not start
+          sessions, save progress/history, or write user data.
+        </div>
+
+        <div class="devPreviewControlGrid">
+          <label class="devPreviewControl" for="devContractDifficultySelect">
+            <span>Difficulty</span>
+            <select id="devContractDifficultySelect" class="devToolSelect" ${gedDevContractRunning ? "disabled" : ""}>${buildDevContractDifficultyOptions(contractDifficulty)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devContractSkillSelect">
+            <span>Skill</span>
+            <select id="devContractSkillSelect" class="devToolSelect" ${gedDevContractRunning ? "disabled" : ""}>${buildDevContractSkillOptions(contractSkill)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devContractSubskillSelect">
+            <span>Subskill</span>
+            <select id="devContractSubskillSelect" class="devToolSelect" ${gedDevContractRunning || !contractSkill ? "disabled" : ""}>${buildDevContractSubskillOptions(contractSkill, contractSubskill)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devContractTypeSelect">
+            <span>Question type</span>
+            <select id="devContractTypeSelect" class="devToolSelect" ${gedDevContractRunning ? "disabled" : ""}>${buildLocalDevPreviewTypeOptions(contractType)}</select>
+          </label>
+
+          <label class="devPreviewControl" for="devContractSamplesInput">
+            <span>Samples per combo</span>
+            <input id="devContractSamplesInput" class="devToolInput" type="number" min="1" max="${GED_DEV_CONTRACT_MAX_SAMPLES}" step="1" value="${contractSamples}" ${gedDevContractRunning ? "disabled" : ""} />
+          </label>
+        </div>
+
+        <div class="devToolActions">
+          <button id="devRunContractBtn" class="secondaryBtn" type="button" ${gedDevContractRunning ? "disabled" : ""}>${gedDevContractRunning ? "Running..." : "Run Contract Check"}</button>
+          <button id="devStopContractBtn" class="secondaryBtn" type="button" ${gedDevContractRunning ? "" : "disabled"}>Stop Check</button>
+          <button id="devClearContractBtn" class="secondaryBtn" type="button" ${gedDevContractRunning ? "disabled" : ""}>Clear Results</button>
+          <button id="devExportContractBtn" class="secondaryBtn" type="button" ${gedDevContractRunning || !gedDevContractResults.length ? "disabled" : ""}>Export Results JSON</button>
+          <button id="devCopyContractSummaryBtn" class="secondaryBtn" type="button" ${gedDevContractRunning || !gedDevContractResults.length ? "disabled" : ""}>Copy Summary</button>
+        </div>
+
+        <div id="devContractResults">${buildLocalDevContractResultsHtml()}</div>
+      </div>
+        </section>
+
         <section class="${getLocalDevCategoryPanelClass("state")}" data-dev-category-panel="state">
       <h3 class="devToolsSectionTitle">Test State</h3>
       <div class="devToolsSectionBody">
@@ -5510,6 +6427,7 @@ function renderLocalDevToolsPanel() {
   setActiveLocalDevToolsCategory(gedDevActiveCategory);
   setLocalDevToolsMinimized(gedDevPanelMinimized);
   if (!gedDevPanelMinimized && gedDevActiveCategory === "preview") renderLocalDevPreviewResults();
+  if (!gedDevPanelMinimized && gedDevActiveCategory === "contract") renderLocalDevContractResults();
 }
 
 function refreshLocalDevToolsPanel() {
@@ -5686,6 +6604,44 @@ function wireLocalDevToolsPanel() {
   if (clearHealthBtn) {
     clearHealthBtn.onclick = clearLocalDevHealthResults;
   }
+
+  const contractSkillSelect = document.getElementById("devContractSkillSelect");
+  const contractSubskillSelect = document.getElementById("devContractSubskillSelect");
+  if (contractSkillSelect && contractSubskillSelect) {
+    contractSkillSelect.onchange = () => {
+      contractSubskillSelect.innerHTML = buildDevContractSubskillOptions(contractSkillSelect.value);
+      contractSubskillSelect.disabled = !contractSkillSelect.value || gedDevContractRunning;
+    };
+  }
+
+  const runContractBtn = document.getElementById("devRunContractBtn");
+  if (runContractBtn) {
+    runContractBtn.onclick = runLocalDevContractCheck;
+  }
+
+  const stopContractBtn = document.getElementById("devStopContractBtn");
+  if (stopContractBtn) {
+    stopContractBtn.onclick = cancelLocalDevContractCheck;
+  }
+
+  const clearContractBtn = document.getElementById("devClearContractBtn");
+  if (clearContractBtn) {
+    clearContractBtn.onclick = clearLocalDevContractResults;
+  }
+
+  const exportContractBtn = document.getElementById("devExportContractBtn");
+  if (exportContractBtn) {
+    exportContractBtn.onclick = exportLocalDevContractResults;
+  }
+
+  const copyContractSummaryBtn = document.getElementById("devCopyContractSummaryBtn");
+  if (copyContractSummaryBtn) {
+    copyContractSummaryBtn.onclick = copyLocalDevContractSummary;
+  }
+
+  document.querySelectorAll(".devContractReviewBtn").forEach((btn) => {
+    btn.onclick = () => addLocalDevContractResultToReviewQueue(Number(btn.dataset.contractIndex));
+  });
 
   const generateSkillBtn = document.getElementById("devGenerateSkillQuestionBtn");
   if (generateSkillBtn && hasLocalDevHelper("__GED_DEV_GENERATE_QUESTION")) {
