@@ -1229,43 +1229,6 @@ body.theme-light .brandTagline {
   font-size: calc(13px * var(--font-scale));
 }
 
-.testerDeveloperAccessList {
-  margin: 10px 0 0 20px;
-  padding: 0;
-}
-
-.testerDeveloperAccessList li {
-  margin: 8px 0;
-}
-
-.testerDeveloperAccessAction {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.testerDeveloperSoonBadge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--panel-2);
-  color: var(--muted);
-  border: 1px solid var(--border);
-  font-size: calc(12px * var(--font-scale));
-  font-weight: 700;
-}
-
-.testerDeveloperAccessNote {
-  margin-top: 12px;
-  font-size: calc(13px * var(--font-scale));
-}
-
     label {
   display: block;
   font-weight: 700;
@@ -2974,15 +2937,15 @@ body.loadingActive {
       position: fixed;
       top: 72px;
       right: 16px;
-      width: min(760px, calc(100vw - 24px));
+      width: min(980px, calc(100vw - 24px));
       max-width: calc(100vw - 24px);
-      height: min(720px, calc(100dvh - 88px));
+      height: min(760px, calc(100dvh - 88px));
       max-height: calc(100dvh - 88px);
       background: var(--card);
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 8px;
-      box-shadow: 0 18px 42px rgba(0,0,0,0.22);
+      box-shadow: 0 22px 58px rgba(0,0,0,0.24);
       z-index: 940;
       display: flex;
       flex-direction: column;
@@ -2992,7 +2955,7 @@ body.loadingActive {
     }
 
     .localDevToolsPanel.minimized {
-      width: min(340px, calc(100vw - 24px));
+      width: min(390px, calc(100vw - 24px));
       height: auto;
       min-height: 0;
       max-height: none;
@@ -3017,29 +2980,60 @@ body.loadingActive {
       align-items: center;
       justify-content: space-between;
       flex: 0 0 auto;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--panel-2);
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--card);
       border-bottom: 1px solid var(--border);
-      cursor: move;
+      cursor: grab;
       user-select: none;
     }
 
+    .devToolsHeader:active {
+      cursor: grabbing;
+    }
+
     .devToolsHeaderText {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .devToolsHeaderTop {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
       min-width: 0;
     }
 
     .devToolsHeaderTitle {
-      font-size: 13px;
-      font-weight: 800;
+      font-size: 16px;
+      font-weight: 900;
       line-height: 1.15;
+      color: var(--text);
+    }
+
+    .devToolsHeaderBadge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
     }
 
     .devToolsHeaderSub {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.25;
-      margin-top: 2px;
+      margin-top: 0;
+      overflow-wrap: anywhere;
     }
 
     .devToolsHeaderActions {
@@ -3052,14 +3046,21 @@ body.loadingActive {
     .devToolIconBtn {
       width: auto;
       min-width: 30px;
-      min-height: 30px;
-      padding: 4px 8px;
-      border-radius: 7px;
+      min-height: 32px;
+      padding: 5px 10px;
+      border-radius: 6px;
       border: 1px solid var(--border);
-      background: var(--card);
+      background: var(--panel);
       color: var(--text);
       font-weight: 800;
+      font-size: 12px;
       cursor: pointer;
+    }
+
+    .devToolIconBtn:hover,
+    .devToolIconBtn:focus-visible {
+      border-color: var(--primary);
+      outline: none;
     }
 
     .devToolsBody {
@@ -3067,7 +3068,8 @@ body.loadingActive {
       flex: 1 1 auto;
       min-height: 0;
       min-width: 0;
-      padding: 10px;
+      padding: 12px;
+      background: color-mix(in srgb, var(--panel) 58%, var(--card) 42%);
       overflow-x: hidden;
       overflow-y: auto;
       overscroll-behavior: contain;
@@ -3082,8 +3084,8 @@ body.loadingActive {
 
     .devToolsShell {
       display: grid;
-      grid-template-columns: 158px minmax(0, 1fr);
-      gap: 10px;
+      grid-template-columns: 200px minmax(0, 1fr);
+      gap: 12px;
       align-items: start;
       min-height: 100%;
       min-width: 0;
@@ -3094,11 +3096,11 @@ body.loadingActive {
     .devToolsContent {
       display: grid;
       align-content: start;
-      gap: 10px;
+      gap: 12px;
       min-height: 0;
       min-width: 0;
       max-width: 100%;
-      overflow-x: auto;
+      overflow-x: hidden;
       overflow-y: visible;
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
@@ -3107,36 +3109,56 @@ body.loadingActive {
     .devToolsCategoryNav {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+      position: sticky;
+      top: 0;
       min-height: 0;
       min-width: 0;
       overflow-x: hidden;
-      overflow-y: visible;
-      max-height: none;
-      padding-right: 2px;
+      overflow-y: auto;
+      max-height: calc(100dvh - 130px);
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
+    }
+
+    .devToolsNavHeading {
+      padding: 0 2px 8px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
 
     .devToolsCategoryBtn {
       flex: 0 0 auto;
       width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--panel);
-      color: var(--text);
+      padding: 10px 11px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
       font-size: 12px;
       font-weight: 800;
       text-align: left;
       cursor: pointer;
     }
 
+    .devToolsCategoryBtn:hover,
+    .devToolsCategoryBtn:focus-visible {
+      background: var(--panel);
+      color: var(--text);
+      outline: none;
+    }
+
     .devToolsCategoryBtn.active {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: var(--button-text);
-      box-shadow: inset 3px 0 0 color-mix(in srgb, var(--button-text) 80%, transparent);
+      background: color-mix(in srgb, var(--primary) 14%, var(--card) 86%);
+      color: var(--text);
+      box-shadow: inset 3px 0 0 var(--primary);
     }
 
     .devToolsCategoryPanel.hidden {
@@ -3144,10 +3166,10 @@ body.loadingActive {
     }
 
     .devToolsNotice {
-      padding: 9px 10px;
+      padding: 10px 11px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: var(--panel);
+      background: color-mix(in srgb, var(--panel) 76%, var(--card) 24%);
       color: var(--muted);
       font-size: 12px;
       line-height: 1.4;
@@ -3159,7 +3181,7 @@ body.loadingActive {
     .devToolsSection {
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: var(--panel);
+      background: var(--card);
       overflow: hidden;
       min-width: 0;
       max-width: 100%;
@@ -3167,18 +3189,65 @@ body.loadingActive {
 
     .devToolsSectionTitle {
       margin: 0;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
+      padding: 13px 14px 8px;
+      border-bottom: 0;
+      font-size: 14px;
       letter-spacing: 0;
-      text-transform: uppercase;
-      color: var(--muted);
+      text-transform: none;
+      color: var(--text);
+      line-height: 1.25;
     }
 
     .devToolsSectionBody {
       display: grid;
+      gap: 10px;
+      padding: 0 14px 14px;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolsOverviewGrid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
-      padding: 9px;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .devToolsSummaryCard {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .devToolsSummaryLabel {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .devToolsSummaryValue {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .devToolsDeveloperNote {
+      display: grid;
+      gap: 4px;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
       min-width: 0;
       max-width: 100%;
     }
@@ -3774,10 +3843,22 @@ body.loadingActive {
 
       .devToolsHeader {
         cursor: default;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
       }
 
       .localDevToolsPanel.minimized .devToolsHeader {
         cursor: pointer;
+      }
+
+      .devToolsHeader:active {
+        cursor: default;
+      }
+
+      .devToolsHeaderActions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
       }
 
       .devToolsShell {
@@ -3788,17 +3869,25 @@ body.loadingActive {
       .devToolsCategoryNav {
         flex-direction: row;
         gap: 5px;
+        position: static;
         overflow-x: auto;
         overflow-y: hidden;
         max-height: none;
-        padding-right: 0;
-        padding-bottom: 2px;
+        padding: 8px;
+      }
+
+      .devToolsNavHeading {
+        display: none;
       }
 
       .devToolsCategoryBtn {
         width: auto;
         min-width: max-content;
         padding: 8px 9px;
+      }
+
+      .devToolsOverviewGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .devToolRow {
@@ -3862,7 +3951,7 @@ body.loadingActive {
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
       <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
             <button id="contactBtnTop" class="secondaryBtn">Contact Us</button>
-      <button id="devToolsBtn" class="secondaryBtn hidden" type="button" title="Local-only developer tools">Developer Tools</button>
+      <button id="devToolsBtn" class="secondaryBtn hidden" type="button" title="Open local-only Platform QA Dashboard">Platform QA Dashboard</button>
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
@@ -3933,12 +4022,13 @@ body.loadingActive {
   <div class="page">
 
 
+    <!-- TODO: Move readiness notes behind future tester/developer access and split tester review notes from deeper developer implementation notes. -->
     <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
       <div class="knownBugsTitle">Known Bugs / In Progress</div>
       <ul class="knownBugsList">
         <li>Auditing GED math skill and subskill coverage against textbook-style practice.</li>
         <li>Expanding weak question areas such as ratios, proportions, inequalities, lines, angles, fractions, and decimals.</li>
-        <li>Planning developer/admin testing tools for safer local and production checks.</li>
+        <li>Improving platform readiness checks before broader release.</li>
       </ul>
       <div class="knownBugsNote">
         <span id="knownBugsNotePrefix">See something confusing or broken? Use </span><button id="knownBugsSupportLink" type="button" class="knownBugsInlineLink">Support / Contact</button><span id="knownBugsNoteSuffix"> to report it.</span>
@@ -4193,7 +4283,6 @@ body.loadingActive {
     <button id="legalPrivacyFooterBtn" class="secondaryBtn legalFooterBtn">Privacy</button>
     <button id="legalFaqFooterBtn" class="secondaryBtn legalFooterBtn">FAQ</button>
     <button id="legalAboutFooterBtn" class="secondaryBtn legalFooterBtn">About Us</button>
-    <button id="testerDeveloperAccessFooterBtn" class="secondaryBtn legalFooterBtn">Tester / Developer Access</button>
   </div>
 </div>
 
@@ -4521,23 +4610,23 @@ const GED_DEV_DEPLOY_QA_SECTIONS = [
     ]
   },
   {
-    title: "Developer/admin safety",
+    title: "Dashboard safety",
     items: [
-      { id: "safety_devtools_localhost", label: "Developer Tools visible on localhost" },
-      { id: "safety_devtools_production", label: "Developer Tools hidden on non-localhost / production" },
+      { id: "safety_devtools_localhost", label: "Platform QA Dashboard visible on localhost" },
+      { id: "safety_devtools_production", label: "Platform QA Dashboard hidden on non-localhost / production" },
       { id: "safety_generator_health", label: "Generator Health runs locally" },
       { id: "safety_coverage_contract", label: "Coverage Contract runs locally" },
       { id: "safety_question_preview", label: "Question Preview Lab runs locally" },
-      { id: "safety_no_real_history", label: "Developer Tools do not save real history/progress" }
+      { id: "safety_no_real_history", label: "Dashboard tools do not save real history/progress" }
     ]
   },
   {
-    title: "Visual/theme",
+    title: "Accessibility / contrast",
     items: [
-      { id: "visual_dark", label: "Dark mode readable" },
-      { id: "visual_light", label: "Light mode readable" },
-      { id: "visual_original", label: "Original/default mode readable" },
-      { id: "visual_mobile", label: "Mobile/narrow width usable" },
+      { id: "visual_dark", label: "Dark mode contrast readable" },
+      { id: "visual_light", label: "Light mode contrast readable" },
+      { id: "visual_original", label: "Original/default mode contrast readable" },
+      { id: "visual_mobile", label: "Mobile/narrow width layout usable" },
       { id: "visual_graph", label: "Graph question readable" },
       { id: "visual_table", label: "Table question readable" },
       { id: "visual_hotspot", label: "Hotspot usable" },
@@ -6203,6 +6292,29 @@ function buildLocalDevMetaRows(rows) {
   `).join("");
 }
 
+function buildLocalDevOverviewCardsHtml() {
+  const total = Array.isArray(state.questions) ? state.questions.length : 0;
+  const current = getCurrentDevQuestion();
+  const questionSet = total && current ? `${state.currentIndex + 1} of ${total}` : "No active set";
+  const items = [
+    ["Access", GED_DEV_IS_LOCALHOST ? "Local enabled" : "Disabled"],
+    ["Host", window.location.hostname || "unknown"],
+    ["Active view", state.mode || "unknown"],
+    ["Errors", `${gedDevClientErrors.length} captured`],
+    ["Question set", questionSet],
+    ["Preview results", String(gedDevPreviewQuestions.length || 0)],
+    ["Health results", String(gedDevHealthResults.length || 0)],
+    ["Contract results", String(gedDevContractResults.length || 0)]
+  ];
+
+  return items.map(([label, value]) => `
+    <div class="devToolsSummaryCard">
+      <div class="devToolsSummaryLabel">${escapeHtml(label)}</div>
+      <div class="devToolsSummaryValue">${escapeHtml(value)}</div>
+    </div>
+  `).join("");
+}
+
 function buildLocalDevOverviewHtml() {
   const total = Array.isArray(state.questions) ? state.questions.length : 0;
   const current = getCurrentDevQuestion();
@@ -6260,8 +6372,9 @@ function buildLocalDevErrorFeedHtml() {
 function renderLocalDevErrorFeed() {
   if (!GED_DEV_IS_LOCALHOST) return;
   const feed = document.getElementById("devErrorFeed");
-  if (!feed) return;
-  feed.innerHTML = buildLocalDevErrorFeedHtml();
+  if (feed) feed.innerHTML = buildLocalDevErrorFeedHtml();
+  const overviewCards = document.getElementById("devOverviewCards");
+  if (overviewCards) overviewCards.innerHTML = buildLocalDevOverviewCardsHtml();
 }
 
 function normalizeLocalDevToolsCategory(category) {
@@ -6336,14 +6449,14 @@ function setLocalDevToolsMinimized(isMinimized) {
 
   const minimizeBtn = document.getElementById("devToolsMinimizeBtn");
   if (minimizeBtn) {
-    minimizeBtn.textContent = gedDevPanelMinimized ? "Open" : "_";
+    minimizeBtn.textContent = gedDevPanelMinimized ? "Open" : "Minimize";
     minimizeBtn.title = gedDevPanelMinimized ? "Open panel" : "Minimize panel";
-    minimizeBtn.setAttribute("aria-label", gedDevPanelMinimized ? "Open Developer Tools panel" : "Minimize Developer Tools panel");
+    minimizeBtn.setAttribute("aria-label", gedDevPanelMinimized ? "Open Platform QA Dashboard panel" : "Minimize Platform QA Dashboard panel");
   }
 
   const headerSub = document.getElementById("devToolsHeaderSub");
   if (headerSub) {
-    headerSub.textContent = gedDevPanelMinimized ? "Click to open local-only menu" : "Local-only mod menu";
+    headerSub.textContent = gedDevPanelMinimized ? "Click to expand the local QA dashboard." : "Local testing workspace for localhost and 127.0.0.1.";
   }
 
   if (wasMinimized && !gedDevPanelMinimized && gedDevActiveCategory === "preview" && gedDevPreviewQuestions.length) {
@@ -6491,17 +6604,20 @@ function ensureLocalDevToolsPanel() {
   panel.id = "localDevToolsPanel";
   panel.className = "localDevToolsPanel hidden";
   panel.setAttribute("role", "region");
-  panel.setAttribute("aria-label", "Local Developer Tools");
+  panel.setAttribute("aria-label", "Local Platform QA Dashboard");
   panel.innerHTML = `
     <div id="localDevToolsHeader" class="devToolsHeader">
       <div class="devToolsHeaderText">
-        <div class="devToolsHeaderTitle">Developer Tools v2</div>
-        <div id="devToolsHeaderSub" class="devToolsHeaderSub">Local-only mod menu</div>
+        <div class="devToolsHeaderTop">
+          <div class="devToolsHeaderTitle">Platform QA Dashboard</div>
+          <span class="devToolsHeaderBadge">Local only</span>
+        </div>
+        <div id="devToolsHeaderSub" class="devToolsHeaderSub">Local testing workspace for localhost and 127.0.0.1.</div>
       </div>
       <div class="devToolsHeaderActions">
         <button id="devToolsResetPositionBtn" class="devToolIconBtn" type="button" title="Reset panel position">Reset</button>
-        <button id="devToolsMinimizeBtn" class="devToolIconBtn" type="button" title="Minimize panel" aria-label="Minimize Developer Tools panel">_</button>
-        <button id="devToolsCloseBtn" class="devToolIconBtn" type="button" title="Close panel">x</button>
+        <button id="devToolsMinimizeBtn" class="devToolIconBtn" type="button" title="Minimize panel" aria-label="Minimize Platform QA Dashboard panel">Minimize</button>
+        <button id="devToolsCloseBtn" class="devToolIconBtn" type="button" title="Close panel">Close</button>
       </div>
     </div>
     <div id="devToolsBody" class="devToolsBody"></div>
@@ -6520,7 +6636,7 @@ function ensureLocalDevToolsPanel() {
 
   document.getElementById("devToolsResetPositionBtn").onclick = () => {
     resetLocalDevToolsPosition();
-    setDevToolsStatus("Developer Tools position reset.");
+    setDevToolsStatus("Platform QA Dashboard position reset.");
   };
 
   const header = document.getElementById("localDevToolsHeader");
@@ -6579,7 +6695,8 @@ function renderLocalDevToolsPanel() {
 
   body.innerHTML = `
     <div class="devToolsShell">
-      <nav class="devToolsCategoryNav" aria-label="Developer tool categories">
+      <nav class="devToolsCategoryNav" aria-label="Platform QA dashboard sections">
+        <div class="devToolsNavHeading">Dashboard</div>
         ${buildLocalDevCategoryNavHtml()}
       </nav>
 
@@ -6589,11 +6706,16 @@ function renderLocalDevToolsPanel() {
         <section class="${getLocalDevCategoryPanelClass("overview")}" data-dev-category-panel="overview">
       <h3 class="devToolsSectionTitle">Overview</h3>
       <div class="devToolsSectionBody">
+        <div id="devOverviewCards" class="devToolsOverviewGrid">${buildLocalDevOverviewCardsHtml()}</div>
         <div class="devToolsNotice">
           <strong>Local-only:</strong> visible and active only on localhost or 127.0.0.1.
           No developer login, password, auth bypass, or backend error reporting is added.
         </div>
         <div id="devOverviewMeta" class="devToolMetaGrid">${buildLocalDevOverviewHtml()}</div>
+        <div class="devToolsDeveloperNote">
+          <div class="devToolTitle">Developer Notes</div>
+          <div class="devToolHelp">Future tester/developer access should be granted silently to approved Google accounts. Keep this dashboard out of public navigation.</div>
+        </div>
       </div>
         </section>
 
@@ -6631,10 +6753,10 @@ function renderLocalDevToolsPanel() {
             <div class="devToolTitle">Force skill / subskill / difficulty</div>
             <div class="devToolHelp">Uses tags aligned with backend/generators/testBuilder.js.</div>
           </div>
-          <select id="devSkillSelect" class="devToolSelect" aria-label="Developer skill">${buildDevSkillOptions(selectedSkill)}</select>
-          <select id="devSubskillSelect" class="devToolSelect" aria-label="Developer subskill">${buildDevSubskillOptions(selectedSkill, selectedSubskill)}</select>
-          <select id="devDifficultySelect" class="devToolSelect" aria-label="Developer difficulty">${buildDevDifficultyOptions(selectedDifficulty)}</select>
-          <button id="devGenerateSkillQuestionBtn" class="secondaryBtn" type="button" ${questionToolsAvailable ? "" : "disabled"}>${questionToolsAvailable ? "Generate Dev Question" : disabledText}</button>
+          <select id="devSkillSelect" class="devToolSelect" aria-label="QA skill">${buildDevSkillOptions(selectedSkill)}</select>
+          <select id="devSubskillSelect" class="devToolSelect" aria-label="QA subskill">${buildDevSubskillOptions(selectedSkill, selectedSubskill)}</select>
+          <select id="devDifficultySelect" class="devToolSelect" aria-label="QA difficulty">${buildDevDifficultyOptions(selectedDifficulty)}</select>
+          <button id="devGenerateSkillQuestionBtn" class="secondaryBtn" type="button" ${questionToolsAvailable ? "" : "disabled"}>${questionToolsAvailable ? "Generate QA Question" : disabledText}</button>
         </div>
       </div>
         </section>
@@ -6870,6 +6992,9 @@ function refreshLocalDevToolsPanel() {
 
   const overview = document.getElementById("devOverviewMeta");
   if (overview) overview.innerHTML = buildLocalDevOverviewHtml();
+
+  const overviewCards = document.getElementById("devOverviewCards");
+  if (overviewCards) overviewCards.innerHTML = buildLocalDevOverviewCardsHtml();
 
   const meta = document.getElementById("devQuestionMeta");
   if (meta) meta.innerHTML = buildLocalDevQuestionMetaHtml();
@@ -7116,7 +7241,7 @@ function wireLocalDevToolsPanel() {
       const originalText = generateSkillBtn.textContent;
       generateSkillBtn.disabled = true;
       generateSkillBtn.textContent = "Generating...";
-      setDevToolsStatus("Generating dev question...");
+      setDevToolsStatus("Generating QA question...");
 
       try {
         const loaded = await window.__GED_DEV_GENERATE_QUESTION({
@@ -7124,10 +7249,10 @@ function wireLocalDevToolsPanel() {
           subskill: subskillSelect?.value || "",
           difficulty: document.getElementById("devDifficultySelect")?.value || getDefaultDevDifficulty()
         });
-        setDevToolsStatus(loaded ? "Dev question loaded." : "No matching dev question was generated.", !loaded);
+        setDevToolsStatus(loaded ? "QA question loaded." : "No matching QA question was generated.", !loaded);
       } catch (error) {
         recordLocalDevClientError("dev-skill-question", error?.message || error);
-        setDevToolsStatus(error?.message || "Could not generate that dev question.", true);
+        setDevToolsStatus(error?.message || "Could not generate that QA question.", true);
       } finally {
         generateSkillBtn.disabled = false;
         generateSkillBtn.textContent = originalText;
@@ -7340,8 +7465,10 @@ function initLocalDevToolsEntryPoint() {
   }
 
   devToolsBtn.classList.remove("hidden");
+  devToolsBtn.textContent = "Platform QA Dashboard";
+  devToolsBtn.title = "Open local-only Platform QA Dashboard";
   devToolsBtn.setAttribute("aria-expanded", "false");
-  devToolsBtn.onclick = () => openLocalDevToolsPanel({ minimized: true });
+  devToolsBtn.onclick = () => openLocalDevToolsPanel({ minimized: false });
 }
 
 function buildLocalDevPracticeUrl(skill, difficulty, count = 12) {
@@ -7540,12 +7667,12 @@ async function fetchLocalDevQuestion(options = {}) {
   const selectedSubskill = String(options.subskill || "").trim();
   const difficulty = String(options.difficulty || getDefaultDevDifficulty()).trim() || "GED-Level";
   const requestSkill = selectedSubskill || selectedSkill || preset?.skill || "Solving Equations and Inequalities";
-  const label = preset?.label || selectedSubskill || selectedSkill || "dev question";
+  const label = preset?.label || selectedSubskill || selectedSkill || "QA question";
 
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const res = await fetch(buildLocalDevPracticeUrl(requestSkill, difficulty, 12));
     if (!res.ok) {
-      throw new Error(`Dev question generation failed: ${res.status} ${res.statusText}`);
+      throw new Error(`QA question generation failed: ${res.status} ${res.statusText}`);
     }
 
     const data = await res.json();
@@ -8928,26 +9055,6 @@ function openLegalHubModal() {
   }
 }
 
-function openTesterDeveloperAccessModal() {
-  showModal(
-    tr("testerDeveloperAccessTitle"),
-    `
-      <p>${escapeHtml(tr("testerDeveloperAccessIntro"))}</p>
-      <ul class="testerDeveloperAccessList">
-        <li>${escapeHtml(tr("testerDeveloperAccessEmails"))}</li>
-        <li>${escapeHtml(tr("testerDeveloperAccessTesterRole"))}</li>
-        <li>${escapeHtml(tr("testerDeveloperAccessDeveloperRole"))}</li>
-      </ul>
-      <div class="testerDeveloperAccessAction">
-        <button class="primaryBtn" type="button" disabled aria-disabled="true">${escapeHtml(tr("continueWithGoogle"))}</button>
-        <span class="testerDeveloperSoonBadge">${escapeHtml(tr("comingSoon"))}</span>
-      </div>
-      <div class="muted testerDeveloperAccessNote">${escapeHtml(tr("testerDeveloperAccessPlaceholderNote"))}</div>
-    `,
-    [{ label: tr("cancel"), variant: "secondary" }]
-  );
-}
-
     function getSavedTheme() {
       return localStorage.getItem(LIGHTING_KEY) || "Original Mode";
     }
@@ -8995,7 +9102,7 @@ startLearning: isSpanish ? "Comenzar aprendizaje" : "Start Learning",
 knownBugsTitle: isSpanish ? "Errores conocidos / En progreso" : "Known Bugs / In Progress",
 knownBugsItem1: isSpanish ? "Se está auditando la cobertura de habilidades y subhabilidades de matemáticas GED contra práctica estilo libro de texto." : "Auditing GED math skill and subskill coverage against textbook-style practice.",
 knownBugsItem2: isSpanish ? "Se están ampliando áreas débiles de preguntas como razones, proporciones, desigualdades, rectas, ángulos, fracciones y decimales." : "Expanding weak question areas such as ratios, proportions, inequalities, lines, angles, fractions, and decimals.",
-knownBugsItem3: isSpanish ? "Se están planificando herramientas de prueba para desarrolladores/administradores para realizar verificaciones locales y de producción con mayor seguridad." : "Planning developer/admin testing tools for safer local and production checks.",
+knownBugsItem3: isSpanish ? "Se están mejorando las verificaciones de preparación de la plataforma antes de un lanzamiento más amplio." : "Improving platform readiness checks before broader release.",
 knownBugsNotePrefix: isSpanish ? "¿Ves algo confuso o con fallas? Usa" : "See something confusing or broken? Use",
 knownBugsSupportLink: isSpanish ? "Soporte / Contacto" : "Support / Contact",
 knownBugsNoteSuffix: isSpanish ? "para reportarlo." : "to report it.",
@@ -9206,25 +9313,6 @@ termsShort: isSpanish ? "Términos" : "Terms",
 privacyShort: isSpanish ? "Privacidad" : "Privacy",
 faqShort: isSpanish ? "FAQ" : "FAQ",
 aboutShort: isSpanish ? "Sobre Nosotros" : "About Us",
-
-testerDeveloperAccessTitle: "Tester / Developer Access",
-testerDeveloperAccessIntro: isSpanish
-  ? "El inicio de sesion con Google para testers y desarrolladores aprobados estara disponible pronto."
-  : "Google sign-in for approved testers and developers is coming soon.",
-testerDeveloperAccessEmails: isSpanish
-  ? "El acceso estara limitado a correos electronicos aprobados."
-  : "Access will be limited to approved emails.",
-testerDeveloperAccessTesterRole: isSpanish
-  ? "El acceso de tester es para revisores de colegios/programas y verificaciones de preparacion de IT."
-  : "Tester access is for college/program reviewers and IT readiness checks.",
-testerDeveloperAccessDeveloperRole: isSpanish
-  ? "El acceso de developer es para herramientas mas profundas de QA y pruebas de produccion."
-  : "Developer access is for deeper QA and production testing tools.",
-testerDeveloperAccessPlaceholderNote: isSpanish
-  ? "Este marcador de posicion no solicita contrasenas, no inicia el flujo normal de cuenta GED y no desbloquea Developer Tools."
-  : "This placeholder does not ask for passwords, start the normal GED account flow, or unlock Developer Tools.",
-continueWithGoogle: isSpanish ? "Continuar con Google" : "Continue with Google",
-comingSoon: isSpanish ? "Proximamente" : "Coming soon",
 
 legalIntro: isSpanish
   ? "Estas páginas explican cómo funciona GED Practice Platform y qué esperar al usarla."
@@ -10124,7 +10212,6 @@ const languageLegalTermsFooterBtn = document.getElementById("legalTermsFooterBtn
 const languageLegalPrivacyFooterBtn = document.getElementById("legalPrivacyFooterBtn");
 const languageLegalFaqFooterBtn = document.getElementById("legalFaqFooterBtn");
 const languageLegalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
-const languageTesterDeveloperAccessFooterBtn = document.getElementById("testerDeveloperAccessFooterBtn");
 
 const languageStartTestBadge = document.getElementById("startTestBadge");
 const languageStartTestHelperText = document.getElementById("startTestHelperText");
@@ -10144,9 +10231,6 @@ if (languageLegalFaqFooterBtn) {
 }
 if (languageLegalAboutFooterBtn) {
   languageLegalAboutFooterBtn.textContent = t.aboutShort || "About Us";
-}
-if (languageTesterDeveloperAccessFooterBtn) {
-  languageTesterDeveloperAccessFooterBtn.textContent = t.testerDeveloperAccessTitle || "Tester / Developer Access";
 }
 
 if (languageStartTestBadge) {
@@ -10258,8 +10342,7 @@ const CORE_CLIENT_ROUTES = new Set([
   "/legal",
   "/terms",
   "/privacy",
-  "/about",
-  "/access"
+  "/about"
 ]);
 
 const CORE_MODAL_ROUTES = new Set([
@@ -10267,8 +10350,7 @@ const CORE_MODAL_ROUTES = new Set([
   "/legal",
   "/terms",
   "/privacy",
-  "/about",
-  "/access"
+  "/about"
 ]);
 
 const MAIN_MENU_PANEL_ROUTES = {
@@ -10471,11 +10553,6 @@ async function applyClientRoute(path, options = {}) {
         await openMenuRoute("legalPanel");
       }
       openAboutModal();
-    } else if (route === "/access") {
-      if (!isActiveQuestionSession()) {
-        await openMenuRoute("legalPanel");
-      }
-      openTesterDeveloperAccessModal();
     }
 
     return true;
@@ -18784,11 +18861,6 @@ if (legalFaqFooterBtn) {
 const legalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
 if (legalAboutFooterBtn) {
   legalAboutFooterBtn.onclick = () => navigateToCoreRoute("/about");
-}
-
-const testerDeveloperAccessFooterBtn = document.getElementById("testerDeveloperAccessFooterBtn");
-if (testerDeveloperAccessFooterBtn) {
-  testerDeveloperAccessFooterBtn.onclick = () => navigateToCoreRoute("/access");
 }
 
 const supportEmailBtn = document.getElementById("supportEmailBtn");
