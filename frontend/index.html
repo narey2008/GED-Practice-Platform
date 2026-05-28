@@ -14672,7 +14672,9 @@ footer.appendChild(submitBtn);
       {
         label: tr("returnBtn"),
         variant: "primary",
+        keepOpen: true,
         onClick: async () => {
+          closeModal();
           stopTimer();
           await setView("menu");
           if (!applyingClientRoute) {
