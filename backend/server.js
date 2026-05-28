@@ -28,8 +28,8 @@ const PORT = process.env.PORT || 3000;
 const REQUEST_BODY_LIMIT = "1mb";
 const HISTORY_DEFAULT_LIMIT = 50;
 const HISTORY_MAX_LIMIT = 100;
-const SUPPORT_INBOX = process.env.SUPPORT_EMAIL || process.env.SUPPORT_INBOX || "gedpracticeplatform@gmail.com";
-const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "";
+const EMAIL_FROM = process.env.EMAIL_FROM || "";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 for (const key of requiredEnv) {
@@ -182,8 +182,8 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 console.log("EMAIL CONFIG BOOT CHECK:", {
   resendConfigured: !!process.env.RESEND_API_KEY,
-  emailFromConfigured: !!process.env.EMAIL_FROM,
-  supportEmailConfigured: !!process.env.SUPPORT_EMAIL,
+  emailFromConfigured: !!EMAIL_FROM,
+  supportEmailConfigured: !!SUPPORT_EMAIL,
   appBaseUrlConfigured: !!process.env.APP_BASE_URL,
   emailClientConfigured: !!resend
 });
@@ -195,6 +195,10 @@ if (!resend) {
 async function sendEmail({ to, subject, html, text }) {
   if (!resend) {
     throw new Error("Email system is not configured.");
+  }
+
+  if (!EMAIL_FROM) {
+    throw new Error("Email sender is not configured.");
   }
 
   try {
@@ -448,8 +452,12 @@ async function sendSupportTicketEmail({ ticket }) {
 
   const submittedAt = new Date(ticket.createdAt || Date.now()).toISOString();
 
+  if (!SUPPORT_EMAIL) {
+    throw new Error("Support inbox is not configured.");
+  }
+
   await sendEmail({
-        to: SUPPORT_INBOX,
+        to: SUPPORT_EMAIL,
     subject: `[Support Ticket] ${ticket.subject}`,
     text: `
 New GED Practice Platform support ticket
@@ -636,9 +644,9 @@ app.get("/api/debug/email-config", (req, res) => {
     ok: true,
     version: "email-diagnostics-resend-v1-2026-05-15",
     resendConfigured: !!process.env.RESEND_API_KEY,
-    emailFromConfigured: !!process.env.EMAIL_FROM,
-    supportEmailConfigured: !!process.env.SUPPORT_EMAIL,
-    supportInbox: SUPPORT_INBOX || null,
+    emailFromConfigured: !!EMAIL_FROM,
+    supportEmailConfigured: !!SUPPORT_EMAIL,
+    supportInbox: SUPPORT_EMAIL || null,
     appBaseUrl: process.env.APP_BASE_URL || null,
     emailClientConfigured: !!resend
   });
@@ -1765,7 +1773,7 @@ app.post("/api/support/ticket", upload.single("screenshot"), async (req, res) =>
       );
     } catch (error) {
       console.error("SUPPORT TICKET DELIVERY ERROR:", {
-        recipient: SUPPORT_INBOX,
+        recipient: SUPPORT_EMAIL || null,
         code: error?.code || error?.name || null,
         message: error?.message || "Unknown support delivery error"
       });
