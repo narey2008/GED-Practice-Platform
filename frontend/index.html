@@ -1229,6 +1229,43 @@ body.theme-light .brandTagline {
   font-size: calc(13px * var(--font-scale));
 }
 
+.testerDeveloperAccessList {
+  margin: 10px 0 0 20px;
+  padding: 0;
+}
+
+.testerDeveloperAccessList li {
+  margin: 8px 0;
+}
+
+.testerDeveloperAccessAction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.testerDeveloperSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  font-size: calc(12px * var(--font-scale));
+  font-weight: 700;
+}
+
+.testerDeveloperAccessNote {
+  margin-top: 12px;
+  font-size: calc(13px * var(--font-scale));
+}
+
     label {
   display: block;
   font-weight: 700;
@@ -4156,6 +4193,7 @@ body.loadingActive {
     <button id="legalPrivacyFooterBtn" class="secondaryBtn legalFooterBtn">Privacy</button>
     <button id="legalFaqFooterBtn" class="secondaryBtn legalFooterBtn">FAQ</button>
     <button id="legalAboutFooterBtn" class="secondaryBtn legalFooterBtn">About Us</button>
+    <button id="testerDeveloperAccessFooterBtn" class="secondaryBtn legalFooterBtn">Tester / Developer Access</button>
   </div>
 </div>
 
@@ -8890,6 +8928,26 @@ function openLegalHubModal() {
   }
 }
 
+function openTesterDeveloperAccessModal() {
+  showModal(
+    tr("testerDeveloperAccessTitle"),
+    `
+      <p>${escapeHtml(tr("testerDeveloperAccessIntro"))}</p>
+      <ul class="testerDeveloperAccessList">
+        <li>${escapeHtml(tr("testerDeveloperAccessEmails"))}</li>
+        <li>${escapeHtml(tr("testerDeveloperAccessTesterRole"))}</li>
+        <li>${escapeHtml(tr("testerDeveloperAccessDeveloperRole"))}</li>
+      </ul>
+      <div class="testerDeveloperAccessAction">
+        <button class="primaryBtn" type="button" disabled aria-disabled="true">${escapeHtml(tr("continueWithGoogle"))}</button>
+        <span class="testerDeveloperSoonBadge">${escapeHtml(tr("comingSoon"))}</span>
+      </div>
+      <div class="muted testerDeveloperAccessNote">${escapeHtml(tr("testerDeveloperAccessPlaceholderNote"))}</div>
+    `,
+    [{ label: tr("cancel"), variant: "secondary" }]
+  );
+}
+
     function getSavedTheme() {
       return localStorage.getItem(LIGHTING_KEY) || "Original Mode";
     }
@@ -9148,6 +9206,25 @@ termsShort: isSpanish ? "Términos" : "Terms",
 privacyShort: isSpanish ? "Privacidad" : "Privacy",
 faqShort: isSpanish ? "FAQ" : "FAQ",
 aboutShort: isSpanish ? "Sobre Nosotros" : "About Us",
+
+testerDeveloperAccessTitle: "Tester / Developer Access",
+testerDeveloperAccessIntro: isSpanish
+  ? "El inicio de sesion con Google para testers y desarrolladores aprobados estara disponible pronto."
+  : "Google sign-in for approved testers and developers is coming soon.",
+testerDeveloperAccessEmails: isSpanish
+  ? "El acceso estara limitado a correos electronicos aprobados."
+  : "Access will be limited to approved emails.",
+testerDeveloperAccessTesterRole: isSpanish
+  ? "El acceso de tester es para revisores de colegios/programas y verificaciones de preparacion de IT."
+  : "Tester access is for college/program reviewers and IT readiness checks.",
+testerDeveloperAccessDeveloperRole: isSpanish
+  ? "El acceso de developer es para herramientas mas profundas de QA y pruebas de produccion."
+  : "Developer access is for deeper QA and production testing tools.",
+testerDeveloperAccessPlaceholderNote: isSpanish
+  ? "Este marcador de posicion no solicita contrasenas, no inicia el flujo normal de cuenta GED y no desbloquea Developer Tools."
+  : "This placeholder does not ask for passwords, start the normal GED account flow, or unlock Developer Tools.",
+continueWithGoogle: isSpanish ? "Continuar con Google" : "Continue with Google",
+comingSoon: isSpanish ? "Proximamente" : "Coming soon",
 
 legalIntro: isSpanish
   ? "Estas páginas explican cómo funciona GED Practice Platform y qué esperar al usarla."
@@ -10047,6 +10124,7 @@ const languageLegalTermsFooterBtn = document.getElementById("legalTermsFooterBtn
 const languageLegalPrivacyFooterBtn = document.getElementById("legalPrivacyFooterBtn");
 const languageLegalFaqFooterBtn = document.getElementById("legalFaqFooterBtn");
 const languageLegalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
+const languageTesterDeveloperAccessFooterBtn = document.getElementById("testerDeveloperAccessFooterBtn");
 
 const languageStartTestBadge = document.getElementById("startTestBadge");
 const languageStartTestHelperText = document.getElementById("startTestHelperText");
@@ -10066,6 +10144,9 @@ if (languageLegalFaqFooterBtn) {
 }
 if (languageLegalAboutFooterBtn) {
   languageLegalAboutFooterBtn.textContent = t.aboutShort || "About Us";
+}
+if (languageTesterDeveloperAccessFooterBtn) {
+  languageTesterDeveloperAccessFooterBtn.textContent = t.testerDeveloperAccessTitle || "Tester / Developer Access";
 }
 
 if (languageStartTestBadge) {
@@ -10177,7 +10258,8 @@ const CORE_CLIENT_ROUTES = new Set([
   "/legal",
   "/terms",
   "/privacy",
-  "/about"
+  "/about",
+  "/access"
 ]);
 
 const CORE_MODAL_ROUTES = new Set([
@@ -10185,7 +10267,8 @@ const CORE_MODAL_ROUTES = new Set([
   "/legal",
   "/terms",
   "/privacy",
-  "/about"
+  "/about",
+  "/access"
 ]);
 
 const MAIN_MENU_PANEL_ROUTES = {
@@ -10388,6 +10471,11 @@ async function applyClientRoute(path, options = {}) {
         await openMenuRoute("legalPanel");
       }
       openAboutModal();
+    } else if (route === "/access") {
+      if (!isActiveQuestionSession()) {
+        await openMenuRoute("legalPanel");
+      }
+      openTesterDeveloperAccessModal();
     }
 
     return true;
@@ -18696,6 +18784,11 @@ if (legalFaqFooterBtn) {
 const legalAboutFooterBtn = document.getElementById("legalAboutFooterBtn");
 if (legalAboutFooterBtn) {
   legalAboutFooterBtn.onclick = () => navigateToCoreRoute("/about");
+}
+
+const testerDeveloperAccessFooterBtn = document.getElementById("testerDeveloperAccessFooterBtn");
+if (testerDeveloperAccessFooterBtn) {
+  testerDeveloperAccessFooterBtn.onclick = () => navigateToCoreRoute("/access");
 }
 
 const supportEmailBtn = document.getElementById("supportEmailBtn");
