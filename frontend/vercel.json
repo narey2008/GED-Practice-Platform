@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/home/", "destination": "/index.html" },
+    { "source": "/profile", "destination": "/index.html" },
+    { "source": "/profile/", "destination": "/index.html" },
+    { "source": "/practice", "destination": "/index.html" },
+    { "source": "/practice/", "destination": "/index.html" },
+    { "source": "/learning", "destination": "/index.html" },
+    { "source": "/learning/", "destination": "/index.html" },
+    { "source": "/history", "destination": "/index.html" },
+    { "source": "/history/", "destination": "/index.html" },
+    { "source": "/support", "destination": "/index.html" },
+    { "source": "/support/", "destination": "/index.html" },
+    { "source": "/legal", "destination": "/index.html" },
+    { "source": "/legal/", "destination": "/index.html" },
+    { "source": "/terms", "destination": "/index.html" },
+    { "source": "/terms/", "destination": "/index.html" },
+    { "source": "/privacy", "destination": "/index.html" },
+    { "source": "/privacy/", "destination": "/index.html" },
+    { "source": "/about", "destination": "/index.html" },
+    { "source": "/about/", "destination": "/index.html" }
+  ]
+}
