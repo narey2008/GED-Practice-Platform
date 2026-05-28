@@ -1142,56 +1142,6 @@ body.theme-light .brandTagline {
   font-size: calc(13px * var(--font-scale));
 }
 
-
-.knownBugsBlock {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--panel-2) 78%, transparent);
-}
-
-.knownBugsTitle {
-  font-size: calc(13px * var(--font-scale));
-  font-weight: 900;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-
-.knownBugsList {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--muted);
-  font-size: calc(12px * var(--font-scale));
-  line-height: 1.45;
-}
-
-.knownBugsNote {
-  margin-top: 8px;
-  font-size: calc(12px * var(--font-scale));
-  color: var(--muted);
-}
-.knownBugsInlineLink {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0 2px;
-  color: #93c5fd;
-  text-decoration: underline;
-  cursor: pointer;
-  font: inherit;
-}
-.knownBugsInlineLink:hover,
-.knownBugsInlineLink:focus-visible {
-  color: #bfdbfe;
-}
-
-
-.knownBugsBanner {
-  max-width: 980px;
-  margin: 12px auto 12px;
-}
-
 @media (max-width: 900px) {
   .welcomeFeatureGrid {
     grid-template-columns: 1fr;
@@ -3287,6 +3237,16 @@ body.loadingActive {
       overflow-wrap: anywhere;
     }
 
+    .devToolList {
+      display: grid;
+      gap: 4px;
+      margin: 4px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
     .devToolActions,
     .devToolButtonGrid {
       display: flex;
@@ -4020,21 +3980,6 @@ body.loadingActive {
     </section>
 
   <div class="page">
-
-
-    <!-- TODO: Move readiness notes behind future tester/developer access and split tester review notes from deeper developer implementation notes. -->
-    <div id="mainMenuKnownBugs" class="knownBugsBlock knownBugsBanner" aria-label="Known Bugs and In Progress">
-      <div class="knownBugsTitle">Known Bugs / In Progress</div>
-      <ul class="knownBugsList">
-        <li>Auditing GED math skill and subskill coverage against textbook-style practice.</li>
-        <li>Expanding weak question areas such as ratios, proportions, inequalities, lines, angles, fractions, and decimals.</li>
-        <li>Improving platform readiness checks before broader release.</li>
-      </ul>
-      <div class="knownBugsNote">
-        <span id="knownBugsNotePrefix">See something confusing or broken? Use </span><button id="knownBugsSupportLink" type="button" class="knownBugsInlineLink">Support / Contact</button><span id="knownBugsNoteSuffix"> to report it.</span>
-      </div>
-    </div>
-
 
 
     <div id="mainMenu" class="card menuWrap">
@@ -6713,6 +6658,15 @@ function renderLocalDevToolsPanel() {
         </div>
         <div id="devOverviewMeta" class="devToolMetaGrid">${buildLocalDevOverviewHtml()}</div>
         <div class="devToolsDeveloperNote">
+          <div class="devToolTitle">Internal QA Notes</div>
+          <ul class="devToolList">
+            <li>Auditing GED math skill and subskill coverage against textbook-style practice.</li>
+            <li>Expanding weak question areas such as ratios, proportions, inequalities, lines, angles, fractions, and decimals.</li>
+            <li>Planning tester/developer access with Google OAuth and role-based access later.</li>
+            <li>Known Bugs / In Progress visibility should become tester/developer-only after access roles exist.</li>
+          </ul>
+        </div>
+        <div class="devToolsDeveloperNote">
           <div class="devToolTitle">Developer Notes</div>
           <div class="devToolHelp">Future tester/developer access should be granted silently to approved Google accounts. Keep this dashboard out of public navigation.</div>
         </div>
@@ -9099,13 +9053,6 @@ menuPillPractice: isSpanish ? "Práctica por habilidad" : "Skill-specific practi
 menuPillLearning: isSpanish ? "Modo de aprendizaje guiado" : "Guided Learning Mode",
 learningModeTitle: isSpanish ? "Modo de aprendizaje" : "Learning Mode",
 startLearning: isSpanish ? "Comenzar aprendizaje" : "Start Learning",
-knownBugsTitle: isSpanish ? "Errores conocidos / En progreso" : "Known Bugs / In Progress",
-knownBugsItem1: isSpanish ? "Se está auditando la cobertura de habilidades y subhabilidades de matemáticas GED contra práctica estilo libro de texto." : "Auditing GED math skill and subskill coverage against textbook-style practice.",
-knownBugsItem2: isSpanish ? "Se están ampliando áreas débiles de preguntas como razones, proporciones, desigualdades, rectas, ángulos, fracciones y decimales." : "Expanding weak question areas such as ratios, proportions, inequalities, lines, angles, fractions, and decimals.",
-knownBugsItem3: isSpanish ? "Se están mejorando las verificaciones de preparación de la plataforma antes de un lanzamiento más amplio." : "Improving platform readiness checks before broader release.",
-knownBugsNotePrefix: isSpanish ? "¿Ves algo confuso o con fallas? Usa" : "See something confusing or broken? Use",
-knownBugsSupportLink: isSpanish ? "Soporte / Contacto" : "Support / Contact",
-knownBugsNoteSuffix: isSpanish ? "para reportarlo." : "to report it.",
 setGoal: isSpanish ? "Establecer meta" : "Set Goal",
 goalIdeas: isSpanish ? "Ideas de metas" : "Goal Ideas",
 myGedGoal: isSpanish ? "Mi meta GED" : "My GED Goal",
@@ -10266,21 +10213,6 @@ const languageLearningModePanel = document.getElementById("learningModePanel");
 if (languageLearningModePanel) {
   const learningModeTitle = languageLearningModePanel.querySelector("h3");
   if (learningModeTitle) learningModeTitle.textContent = t.learningModeTitle || "Learning Mode";
-}
-const knownBugsBlock = document.getElementById("mainMenuKnownBugs");
-if (knownBugsBlock) {
-  const knownBugsTitle = knownBugsBlock.querySelector(".knownBugsTitle");
-  const knownBugsItems = knownBugsBlock.querySelectorAll(".knownBugsList li");
-  const knownBugsNotePrefix = knownBugsBlock.querySelector("#knownBugsNotePrefix");
-  const knownBugsSupportLink = knownBugsBlock.querySelector("#knownBugsSupportLink");
-  const knownBugsNoteSuffix = knownBugsBlock.querySelector("#knownBugsNoteSuffix");
-  if (knownBugsTitle) knownBugsTitle.textContent = t.knownBugsTitle;
-  if (knownBugsItems[0]) knownBugsItems[0].textContent = t.knownBugsItem1;
-  if (knownBugsItems[1]) knownBugsItems[1].textContent = t.knownBugsItem2;
-  if (knownBugsItems[2]) knownBugsItems[2].textContent = t.knownBugsItem3;
-  if (knownBugsNotePrefix) knownBugsNotePrefix.textContent = `${t.knownBugsNotePrefix} `;
-  if (knownBugsSupportLink) knownBugsSupportLink.textContent = t.knownBugsSupportLink;
-  if (knownBugsNoteSuffix) knownBugsNoteSuffix.textContent = ` ${t.knownBugsNoteSuffix}`;
 }
 const languageEditGoalBtn = document.getElementById("editGoalBtn");
 const languageGoalIdeasBtn = document.getElementById("goalIdeasBtn");
@@ -11667,11 +11599,9 @@ async function setView(view) {
   const reviewPanel = document.getElementById("reviewPanel");
   const practicePanel = document.getElementById("practicePanel");
   const profilePanel = document.getElementById("profilePanel");
-  const mainMenuKnownBugs = document.getElementById("mainMenuKnownBugs");
   const mainMenuRecommendedPath = document.getElementById("mainMenuRecommendedPathDock");
 
   if (mainMenu) mainMenu.classList.add("hidden");
-  if (mainMenuKnownBugs) mainMenuKnownBugs.classList.add("hidden");
   if (mainMenuRecommendedPath) mainMenuRecommendedPath.classList.add("hidden");
   if (testView) testView.classList.add("hidden");
   if (reviewPanel) reviewPanel.classList.add("hidden");
@@ -11681,7 +11611,6 @@ async function setView(view) {
   if (view === "menu") {
     state.mode = "menu";
     if (mainMenu) mainMenu.classList.remove("hidden");
-    if (mainMenuKnownBugs) mainMenuKnownBugs.classList.remove("hidden");
     syncRecommendedPathDockVisibilityForViewport();
   } else if (
     view === "test" ||
@@ -18880,10 +18809,6 @@ if (profilePanel && !profilePanel.dataset.mainMenuDelegatedBound) {
   console.log("Profile Main Menu button bound");
 }
 
-const knownBugsSupportLink = document.getElementById("knownBugsSupportLink");
-if (knownBugsSupportLink) {
-  knownBugsSupportLink.onclick = () => navigateToCoreRoute("/support");
-}
     document.getElementById("userSummary").onclick = async () => {
       if (state.auth.user) {
         await navigateToCoreRoute("/profile");
