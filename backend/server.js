@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const https = require("https");
 const { Resend } = require("resend");
 
 const buildTest = require("./generators/testBuilder");
@@ -30,6 +31,10 @@ const HISTORY_DEFAULT_LIMIT = 50;
 const HISTORY_MAX_LIMIT = 100;
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";
+const GOOGLE_OAUTH_STATE_COOKIE = "ged_google_oauth_state";
+const GOOGLE_OAUTH_STATE_MAX_AGE_SECONDS = 10 * 60;
+const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 for (const key of requiredEnv) {
@@ -70,6 +75,44 @@ app.use(express.urlencoded({ extended: true, limit: REQUEST_BODY_LIMIT }));
 app.use(express.static(path.join(__dirname, "../frontend")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+function normalizeEmailAddress(email) {
+  return typeof email === "string" ? email.trim().toLowerCase() : "";
+}
+
+function parseEmailAllowlist(value) {
+  return new Set(
+    String(value || "")
+      .split(",")
+      .map((email) => normalizeEmailAddress(email))
+      .filter(Boolean)
+  );
+}
+
+function getAccessRoleForEmail(email) {
+  const normalizedEmail = normalizeEmailAddress(email);
+  if (!normalizedEmail) return "user";
+
+  const developerEmails = parseEmailAllowlist(process.env.DEVELOPER_ALLOWED_EMAILS);
+  if (developerEmails.has(normalizedEmail)) return "developer";
+
+  const testerEmails = parseEmailAllowlist(process.env.TESTER_ALLOWED_EMAILS);
+  if (testerEmails.has(normalizedEmail)) return "tester";
+
+  return "user";
+}
+
+function getAccessRoleForUser(user) {
+  const providers = Array.isArray(user.authProviders) ? user.authProviders : [];
+  const hasGoogleIdentity = !!user.googleId || providers.includes("google");
+  return hasGoogleIdentity ? getAccessRoleForEmail(user.email) : "user";
+}
+
+function getGoogleOAuthMissingConfigKeys() {
+  return ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_REDIRECT_URI"].filter(
+    (key) => !String(process.env[key] || "").trim()
+  );
+}
+
 function createToken(user) {
   return jwt.sign(
     {
@@ -82,10 +125,14 @@ function createToken(user) {
 }
 
 function sanitizeUser(user) {
+  const accessRole = getAccessRoleForUser(user);
+
   return {
     id: user._id.toString(),
     email: user.email,
     displayName: user.displayName,
+    role: accessRole,
+    accessRole,
     scoringEnabled: user.scoringEnabled !== false,
     scoringPreferenceChosen: user.scoringPreferenceChosen === true,
     emailVerified: !!user.emailVerified,
@@ -96,6 +143,294 @@ function sanitizeUser(user) {
       user.pendingVerifiedActionExpiresAt > new Date(),
     createdAt: user.createdAt
   };
+}
+
+function hashOAuthState(state) {
+  return crypto.createHash("sha256").update(String(state || "")).digest("hex");
+}
+
+function timingSafeStringEqual(a, b) {
+  const aBuffer = Buffer.from(String(a || ""));
+  const bBuffer = Buffer.from(String(b || ""));
+  return aBuffer.length === bBuffer.length && crypto.timingSafeEqual(aBuffer, bBuffer);
+}
+
+function getCookieValue(req, name) {
+  const cookieHeader = req.headers.cookie || "";
+  const prefix = `${name}=`;
+  const cookie = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+
+  if (!cookie) return "";
+
+  try {
+    return decodeURIComponent(cookie.slice(prefix.length));
+  } catch (error) {
+    return "";
+  }
+}
+
+function shouldUseSecureGoogleOAuthCookie() {
+  try {
+    return new URL(process.env.GOOGLE_OAUTH_REDIRECT_URI || "").protocol === "https:";
+  } catch (error) {
+    return process.env.NODE_ENV === "production";
+  }
+}
+
+function serializeCookie(name, value, options = {}) {
+  const parts = [`${name}=${encodeURIComponent(value || "")}`];
+
+  if (options.maxAgeSeconds !== undefined) {
+    parts.push(`Max-Age=${Number(options.maxAgeSeconds) || 0}`);
+  }
+
+  parts.push(`Path=${options.path || "/"}`);
+  parts.push(`SameSite=${options.sameSite || "Lax"}`);
+
+  if (options.httpOnly !== false) parts.push("HttpOnly");
+  if (options.secure) parts.push("Secure");
+  if (options.expires) parts.push(`Expires=${options.expires.toUTCString()}`);
+
+  return parts.join("; ");
+}
+
+function setGoogleOAuthStateCookie(res, state) {
+  res.setHeader(
+    "Set-Cookie",
+    serializeCookie(GOOGLE_OAUTH_STATE_COOKIE, hashOAuthState(state), {
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: shouldUseSecureGoogleOAuthCookie(),
+      path: "/api/auth/google",
+      maxAgeSeconds: GOOGLE_OAUTH_STATE_MAX_AGE_SECONDS
+    })
+  );
+}
+
+function clearGoogleOAuthStateCookie(res) {
+  res.setHeader(
+    "Set-Cookie",
+    serializeCookie(GOOGLE_OAUTH_STATE_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: shouldUseSecureGoogleOAuthCookie(),
+      path: "/api/auth/google",
+      maxAgeSeconds: 0,
+      expires: new Date(0)
+    })
+  );
+}
+
+function getFrontendRedirectBase(req) {
+  const appBaseUrl = String(process.env.APP_BASE_URL || "").trim();
+  if (appBaseUrl) return appBaseUrl;
+
+  const referer = req.get("referer") || "";
+  if (referer) {
+    try {
+      const refererOrigin = new URL(referer).origin;
+      if (allowedOrigins.includes(refererOrigin)) return refererOrigin;
+    } catch (error) {}
+  }
+
+  const forwardedProto = String(req.get("x-forwarded-proto") || "")
+    .split(",")[0]
+    .trim();
+  const protocol = forwardedProto || req.protocol || "http";
+  return `${protocol}://${req.get("host") || `localhost:${PORT}`}`;
+}
+
+function buildOAuthFrontendRedirectUrl(req, hashValues) {
+  let redirectUrl;
+  try {
+    redirectUrl = new URL(getFrontendRedirectBase(req));
+  } catch (error) {
+    redirectUrl = new URL(`http://localhost:${PORT}`);
+  }
+
+  redirectUrl.pathname = "/";
+  redirectUrl.search = "";
+  redirectUrl.hash = new URLSearchParams(hashValues).toString();
+  return redirectUrl.toString();
+}
+
+function redirectWithGoogleOAuthError(req, res, code, message) {
+  return res.redirect(
+    buildOAuthFrontendRedirectUrl(req, {
+      oauthProvider: "google",
+      oauthError: code,
+      oauthMessage: message
+    })
+  );
+}
+
+function requestJson(method, url, body = "", headers = {}) {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(url);
+    const req = https.request(
+      {
+        method,
+        protocol: parsedUrl.protocol,
+        hostname: parsedUrl.hostname,
+        path: `${parsedUrl.pathname}${parsedUrl.search}`,
+        headers,
+        timeout: 10000
+      },
+      (res) => {
+        let responseBody = "";
+
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => {
+          responseBody += chunk;
+          if (responseBody.length > 1024 * 1024) {
+            req.destroy(new Error("Google OAuth response was too large."));
+          }
+        });
+
+        res.on("end", () => {
+          let parsedBody = null;
+          if (responseBody) {
+            try {
+              parsedBody = JSON.parse(responseBody);
+            } catch (error) {
+              return reject(new Error("Google OAuth returned an invalid JSON response."));
+            }
+          }
+
+          return resolve({
+            statusCode: res.statusCode || 0,
+            body: parsedBody || {}
+          });
+        });
+      }
+    );
+
+    req.on("timeout", () => {
+      req.destroy(new Error("Google OAuth request timed out."));
+    });
+
+    req.on("error", reject);
+
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+async function exchangeGoogleAuthorizationCode(code) {
+  const formBody = new URLSearchParams({
+    code,
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    client_secret: process.env.GOOGLE_CLIENT_SECRET,
+    redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URI,
+    grant_type: "authorization_code"
+  }).toString();
+
+  const response = await requestJson("POST", GOOGLE_TOKEN_URL, formBody, {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Content-Length": Buffer.byteLength(formBody)
+  });
+
+  if (response.statusCode < 200 || response.statusCode >= 300 || !response.body.id_token) {
+    throw new Error("Google OAuth token exchange failed.");
+  }
+
+  return response.body;
+}
+
+async function verifyGoogleIdentity(idToken) {
+  const tokenInfoUrl = `${GOOGLE_TOKENINFO_URL}?${new URLSearchParams({ id_token: idToken }).toString()}`;
+  const response = await requestJson("GET", tokenInfoUrl);
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw new Error("Google identity verification failed.");
+  }
+
+  const profile = response.body || {};
+  const email = normalizeEmailAddress(profile.email);
+  const emailVerified = profile.email_verified === true || profile.email_verified === "true";
+
+  if (profile.aud !== process.env.GOOGLE_CLIENT_ID) {
+    throw new Error("Google identity audience did not match this app.");
+  }
+
+  if (!profile.sub || !email) {
+    throw new Error("Google identity response was missing required account details.");
+  }
+
+  if (!emailVerified) {
+    throw new Error("Google email must be verified before signing in.");
+  }
+
+  return {
+    googleId: String(profile.sub),
+    email,
+    displayName: String(profile.name || profile.given_name || email.split("@")[0] || "GED User")
+      .trim()
+      .slice(0, 60)
+  };
+}
+
+async function findOrCreateGoogleUser(googleProfile) {
+  const now = new Date();
+  const accessRole = getAccessRoleForEmail(googleProfile.email);
+  let user = await User.findOne({ email: googleProfile.email });
+
+  if (!user && googleProfile.googleId) {
+    user = await User.findOne({ googleId: googleProfile.googleId });
+  }
+
+  if (user && normalizeEmailAddress(user.email) !== googleProfile.email) {
+    const emailOwner = await User.findOne({ email: googleProfile.email });
+    if (emailOwner && emailOwner._id.toString() !== user._id.toString()) {
+      throw new Error("A GED account already exists for this Google email.");
+    }
+    user.email = googleProfile.email;
+  }
+
+  if (user) {
+    if (user.googleId && user.googleId !== googleProfile.googleId) {
+      throw new Error("This GED account is already linked to a different Google account.");
+    }
+
+    const authProviders = new Set(Array.isArray(user.authProviders) ? user.authProviders : []);
+    authProviders.add("google");
+
+    user.googleId = googleProfile.googleId;
+    user.authProviders = Array.from(authProviders);
+    user.emailVerified = true;
+    user.emailVerificationTokenHash = null;
+    user.emailVerificationExpiresAt = null;
+    user.previousEmailVerificationTokenHash = null;
+    user.previousEmailVerificationExpiresAt = null;
+    user.googleEmailVerifiedAt = now;
+    user.lastGoogleSignInAt = now;
+    user.accessRole = accessRole;
+
+    if (!user.displayName) {
+      user.displayName = googleProfile.displayName;
+    }
+
+    await user.save();
+    return user;
+  }
+
+  const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
+
+  return await User.create({
+    email: googleProfile.email,
+    displayName: googleProfile.displayName,
+    passwordHash,
+    emailVerified: true,
+    twoFactorEnabled: false,
+    googleId: googleProfile.googleId,
+    authProviders: ["google"],
+    googleEmailVerifiedAt: now,
+    lastGoogleSignInAt: now,
+    accessRole
+  });
 }
 
 function normalizeComparableAnswer(value) {
@@ -675,6 +1010,103 @@ app.get("/api/debug-support-ticket-version", (req, res) => {
     supportTicketRouteExpected: true,
     timestamp: new Date().toISOString()
   });
+});
+
+app.get("/api/auth/google/start", (req, res) => {
+  const missingConfig = getGoogleOAuthMissingConfigKeys();
+  if (missingConfig.length) {
+    console.warn("Google OAuth start blocked by missing config:", missingConfig.join(", "));
+    return redirectWithGoogleOAuthError(
+      req,
+      res,
+      "google_config_missing",
+      "Google sign-in is not configured yet. Please contact support."
+    );
+  }
+
+  const state = crypto.randomBytes(32).toString("hex");
+  setGoogleOAuthStateCookie(res, state);
+
+  const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  authUrl.searchParams.set("client_id", process.env.GOOGLE_CLIENT_ID);
+  authUrl.searchParams.set("redirect_uri", process.env.GOOGLE_OAUTH_REDIRECT_URI);
+  authUrl.searchParams.set("response_type", "code");
+  authUrl.searchParams.set("scope", "openid email profile");
+  authUrl.searchParams.set("state", state);
+  authUrl.searchParams.set("prompt", "select_account");
+
+  return res.redirect(authUrl.toString());
+});
+
+app.get("/api/auth/google/callback", async (req, res) => {
+  clearGoogleOAuthStateCookie(res);
+
+  const missingConfig = getGoogleOAuthMissingConfigKeys();
+  if (missingConfig.length) {
+    console.warn("Google OAuth callback blocked by missing config:", missingConfig.join(", "));
+    return redirectWithGoogleOAuthError(
+      req,
+      res,
+      "google_config_missing",
+      "Google sign-in is not configured yet. Please contact support."
+    );
+  }
+
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  const expectedStateHash = getCookieValue(req, GOOGLE_OAUTH_STATE_COOKIE);
+  const returnedStateHash = hashOAuthState(state);
+
+  if (!state || !expectedStateHash || !timingSafeStringEqual(returnedStateHash, expectedStateHash)) {
+    return redirectWithGoogleOAuthError(
+      req,
+      res,
+      "google_state_invalid",
+      "Google sign-in could not be verified. Please try again."
+    );
+  }
+
+  const googleError = typeof req.query.error === "string" ? req.query.error : "";
+  if (googleError) {
+    return redirectWithGoogleOAuthError(
+      req,
+      res,
+      "google_denied",
+      "Google sign-in was canceled or denied."
+    );
+  }
+
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  if (!code) {
+    return redirectWithGoogleOAuthError(
+      req,
+      res,
+      "google_code_missing",
+      "Google sign-in did not return an authorization code."
+    );
+  }
+
+  try {
+    const tokens = await exchangeGoogleAuthorizationCode(code);
+    const googleProfile = await verifyGoogleIdentity(tokens.id_token);
+    const user = await findOrCreateGoogleUser(googleProfile);
+    const token = createToken(user);
+
+    return res.redirect(
+      buildOAuthFrontendRedirectUrl(req, {
+        oauthProvider: "google",
+        oauthToken: token
+      })
+    );
+  } catch (error) {
+    console.error("GOOGLE OAUTH CALLBACK ERROR:");
+    console.error(error.message || "Google OAuth sign-in failed.");
+    return redirectWithGoogleOAuthError(
+      req,
+      res,
+      "google_signin_failed",
+      error.message || "Google sign-in failed. Please try again."
+    );
+  }
 });
 
 app.post("/api/auth/register", async (req, res) => {

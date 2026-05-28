@@ -3911,7 +3911,7 @@ body.loadingActive {
       <button id="signInBtnTop" class="secondaryBtn">Sign In</button>
       <button id="guestBtnTop" class="secondaryBtn">Continue as Guest</button>
             <button id="contactBtnTop" class="secondaryBtn">Contact Us</button>
-      <button id="devToolsBtn" class="secondaryBtn hidden" type="button" title="Open local-only Platform QA Dashboard">Platform QA Dashboard</button>
+      <button id="devToolsBtn" class="secondaryBtn hidden" type="button" title="Open Platform QA Dashboard">Platform QA Dashboard</button>
       <button id="logoutBtnTop" class="secondaryBtn hidden">Log Out</button>
       <button id="globalMenuBtn" class="secondaryBtn hidden">Main Menu</button>
     </div>
@@ -4496,6 +4496,24 @@ function buildCurrentQuestionReportId(question, index, mode) {
 
 const GED_DEV_LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
 const GED_DEV_IS_LOCALHOST = GED_DEV_LOCAL_HOSTNAMES.has(window.location.hostname);
+function getAuthAccessRole() {
+  return String(state.auth.user?.accessRole || state.auth.user?.role || "user").toLowerCase();
+}
+
+function hasDeveloperAccessRole() {
+  return getAuthAccessRole() === "developer";
+}
+
+function hasQaDashboardAccess() {
+  return GED_DEV_IS_LOCALHOST || hasDeveloperAccessRole();
+}
+
+function getQaDashboardAccessLabel() {
+  if (GED_DEV_IS_LOCALHOST) return "Localhost";
+  if (hasDeveloperAccessRole()) return "Developer";
+  return "Disabled";
+}
+
 const GED_DEV_ACTIVE_QUESTION_MODES = new Set(["test", "practice", "learning", "practice-example", "test-tutorial"]);
 const GED_DEV_PANEL_MOBILE_WIDTH = 680;
 const GED_DEV_CLIENT_ERROR_LIMIT = 12;
@@ -4603,7 +4621,7 @@ function updateDevQuestionIdLabel() {
   if (!labelEl) return;
 
   const hasQuestion = Array.isArray(state.questions) && state.questions.length > 0 && state.questions[state.currentIndex];
-  const canShow = GED_DEV_IS_LOCALHOST && gedDevShowQuestionId && GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) && hasQuestion;
+  const canShow = hasQaDashboardAccess() && gedDevShowQuestionId && GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) && hasQuestion;
 
   if (!canShow) {
     labelEl.classList.add("hidden");
@@ -4617,12 +4635,12 @@ function updateDevQuestionIdLabel() {
 }
 
 function hasLocalDevHelper(helperName) {
-  return GED_DEV_IS_LOCALHOST && typeof window[helperName] === "function";
+  return hasQaDashboardAccess() && typeof window[helperName] === "function";
 }
 
 function hasLocalDevActiveQuestionSet() {
   return (
-    GED_DEV_IS_LOCALHOST &&
+    hasQaDashboardAccess() &&
     GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) &&
     Array.isArray(state.questions) &&
     state.questions.length > 0
@@ -4650,7 +4668,7 @@ function sanitizeDevErrorText(value) {
 }
 
 function recordLocalDevClientError(kind, message) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const entry = {
     kind: sanitizeDevErrorText(kind || "error"),
@@ -4666,7 +4684,7 @@ function recordLocalDevClientError(kind, message) {
 }
 
 function setupLocalDevClientErrorCapture() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const previousOnError = window.onerror;
   window.onerror = function gedDevWindowOnError(message, source, line, column, error) {
@@ -4689,7 +4707,7 @@ function setupLocalDevClientErrorCapture() {
 setupLocalDevClientErrorCapture();
 
 function setDevToolsStatus(message, isError = false) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
   const statusEl = document.getElementById("devToolsStatus");
   if (!statusEl) return;
   statusEl.textContent = message || "";
@@ -4705,7 +4723,7 @@ function getLocalDevDeployQaItemIds() {
 }
 
 function getLocalDevDeployQaState() {
-  if (!GED_DEV_IS_LOCALHOST) return {};
+  if (!hasQaDashboardAccess()) return {};
 
   try {
     const parsed = JSON.parse(localStorage.getItem(GED_DEV_DEPLOY_QA_STORAGE_KEY) || "{}");
@@ -4723,7 +4741,7 @@ function getLocalDevDeployQaState() {
 }
 
 function saveLocalDevDeployQaState(stateById) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   try {
     const safeState = {};
@@ -4760,7 +4778,7 @@ function updateLocalDevDeployQaSummary() {
 }
 
 function markLocalDevDeployQaUnchecked() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   saveLocalDevDeployQaState({});
   document.querySelectorAll(".devDeployQaCheckbox").forEach((checkbox) => {
@@ -4771,7 +4789,7 @@ function markLocalDevDeployQaUnchecked() {
 }
 
 function clearLocalDevDeployQaChecklist() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   try {
     localStorage.removeItem(GED_DEV_DEPLOY_QA_STORAGE_KEY);
@@ -4787,7 +4805,7 @@ function clearLocalDevDeployQaChecklist() {
 }
 
 function setLocalDevDeployQaItemChecked(itemId, checked) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const stateById = getLocalDevDeployQaState();
   if (checked) {
@@ -4827,7 +4845,7 @@ function getLocalDevDeployQaMarkdown() {
 }
 
 async function copyLocalDevDeployQaSummary() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
   const text = getLocalDevDeployQaMarkdown();
 
   try {
@@ -4853,7 +4871,7 @@ async function copyLocalDevDeployQaSummary() {
 }
 
 function exportLocalDevDeployQaMarkdown() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const blob = new Blob([getLocalDevDeployQaMarkdown()], { type: "text/markdown" });
   const url = URL.createObjectURL(blob);
@@ -4934,12 +4952,12 @@ function buildLocalDevDeployQaChecklistHtml() {
 }
 
 function canUseFullTestTimerDevTool() {
-  return GED_DEV_IS_LOCALHOST && state.mode === "test" && Array.isArray(state.questions) && state.questions.length > 0;
+  return hasQaDashboardAccess() && state.mode === "test" && Array.isArray(state.questions) && state.questions.length > 0;
 }
 
 function canUseFullTestScoreDevTool() {
   return (
-    GED_DEV_IS_LOCALHOST &&
+    hasQaDashboardAccess() &&
     state.mode === "test" &&
     Array.isArray(state.questions) &&
     state.questions.length > 0 &&
@@ -5360,7 +5378,7 @@ function buildLocalDevPreviewResultsHtml() {
 }
 
 function renderLocalDevPreviewResults() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const results = document.getElementById("devPreviewResults");
   if (!results) return;
@@ -5808,7 +5826,7 @@ function getLocalDevReviewQueueHandler() {
 }
 
 function hasLocalDevReviewQueue() {
-  return GED_DEV_IS_LOCALHOST && !!getLocalDevReviewQueueHandler();
+  return hasQaDashboardAccess() && !!getLocalDevReviewQueueHandler();
 }
 
 function getLocalDevContractReviewActionHtml(result, index) {
@@ -5902,7 +5920,7 @@ function buildLocalDevContractResultsHtml() {
 }
 
 function renderLocalDevContractResults() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
   const results = document.getElementById("devContractResults");
   if (!results) return;
   results.innerHTML = buildLocalDevContractResultsHtml();
@@ -5941,12 +5959,12 @@ function setLocalDevContractControlsRunning(isRunning) {
 }
 
 function cancelLocalDevContractCheck() {
-  if (!GED_DEV_IS_LOCALHOST || !gedDevContractRunning || !gedDevContractAbortController) return;
+  if (!hasQaDashboardAccess() || !gedDevContractRunning || !gedDevContractAbortController) return;
   gedDevContractAbortController.abort();
 }
 
 function clearLocalDevContractResults() {
-  if (!GED_DEV_IS_LOCALHOST || gedDevContractRunning) return;
+  if (!hasQaDashboardAccess() || gedDevContractRunning) return;
   gedDevContractResults = [];
   renderLocalDevContractResults();
   setLocalDevContractControlsRunning(false);
@@ -5969,7 +5987,7 @@ function getLocalDevContractSummaryText() {
 }
 
 async function copyLocalDevContractSummary() {
-  if (!GED_DEV_IS_LOCALHOST || !gedDevContractResults.length) return;
+  if (!hasQaDashboardAccess() || !gedDevContractResults.length) return;
   const text = getLocalDevContractSummaryText();
 
   try {
@@ -6019,7 +6037,7 @@ function getLocalDevContractExportPayload() {
 }
 
 function exportLocalDevContractResults() {
-  if (!GED_DEV_IS_LOCALHOST || !gedDevContractResults.length) return;
+  if (!hasQaDashboardAccess() || !gedDevContractResults.length) return;
 
   const payload = getLocalDevContractExportPayload();
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -6037,7 +6055,7 @@ function exportLocalDevContractResults() {
 }
 
 function addLocalDevContractResultToReviewQueue(index) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const handler = getLocalDevReviewQueueHandler();
   const result = gedDevContractResults[index];
@@ -6061,7 +6079,7 @@ function addLocalDevContractResultToReviewQueue(index) {
 }
 
 async function runLocalDevContractCheck() {
-  if (!GED_DEV_IS_LOCALHOST || gedDevContractRunning) return;
+  if (!hasQaDashboardAccess() || gedDevContractRunning) return;
 
   const difficultyFilter = document.getElementById("devContractDifficultySelect")?.value || "All";
   const skillFilter = document.getElementById("devContractSkillSelect")?.value || "";
@@ -6217,7 +6235,7 @@ function buildLocalDevHealthResultsHtml() {
 }
 
 function renderLocalDevHealthResults() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
   const results = document.getElementById("devHealthResults");
   if (!results) return;
   results.innerHTML = buildLocalDevHealthResultsHtml();
@@ -6242,7 +6260,7 @@ function buildLocalDevOverviewCardsHtml() {
   const current = getCurrentDevQuestion();
   const questionSet = total && current ? `${state.currentIndex + 1} of ${total}` : "No active set";
   const items = [
-    ["Access", GED_DEV_IS_LOCALHOST ? "Local enabled" : "Disabled"],
+    ["Access", getQaDashboardAccessLabel()],
     ["Host", window.location.hostname || "unknown"],
     ["Active view", state.mode || "unknown"],
     ["Errors", `${gedDevClientErrors.length} captured`],
@@ -6266,7 +6284,7 @@ function buildLocalDevOverviewHtml() {
   const indexText = total && current ? `${state.currentIndex + 1} / ${total}` : "No active question";
 
   return buildLocalDevMetaRows([
-    ["Local-only", GED_DEV_IS_LOCALHOST ? "Active on localhost" : "Disabled"],
+    ["Dashboard access", getQaDashboardAccessLabel()],
     ["Host", window.location.hostname || "unknown"],
     ["Current mode/view", state.mode || "unknown"],
     ["Current question", indexText],
@@ -6315,7 +6333,7 @@ function buildLocalDevErrorFeedHtml() {
 }
 
 function renderLocalDevErrorFeed() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
   const feed = document.getElementById("devErrorFeed");
   if (feed) feed.innerHTML = buildLocalDevErrorFeedHtml();
   const overviewCards = document.getElementById("devOverviewCards");
@@ -6344,7 +6362,7 @@ function getLocalDevCategoryPanelClass(category) {
 }
 
 function setActiveLocalDevToolsCategory(category) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
   gedDevActiveCategory = normalizeLocalDevToolsCategory(category);
 
   document.querySelectorAll("[data-dev-category]").forEach((btn) => {
@@ -6381,7 +6399,7 @@ function resetLocalDevToolsPosition() {
 }
 
 function setLocalDevToolsMinimized(isMinimized) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const wasMinimized = gedDevPanelMinimized;
   gedDevPanelMinimized = !!isMinimized;
@@ -6432,7 +6450,7 @@ function clampLocalDevToolsPanelToViewport() {
 }
 
 function makeLocalDevToolsPanelDraggable(panel, header) {
-  if (!GED_DEV_IS_LOCALHOST || !panel || !header || panel.dataset.dragBound === "1") return;
+  if (!hasQaDashboardAccess() || !panel || !header || panel.dataset.dragBound === "1") return;
   panel.dataset.dragBound = "1";
 
   let isDragging = false;
@@ -6444,7 +6462,7 @@ function makeLocalDevToolsPanelDraggable(panel, header) {
   let movedDuringDrag = false;
 
   header.addEventListener("pointerdown", (event) => {
-    if (!GED_DEV_IS_LOCALHOST) return;
+    if (!hasQaDashboardAccess()) return;
     if (window.innerWidth <= GED_DEV_PANEL_MOBILE_WIDTH) return;
     if (event.target.closest("button")) return;
     if (event.button !== undefined && event.button !== 0) return;
@@ -6516,7 +6534,7 @@ function getLocalDevWheelDeltaY(event) {
 }
 
 function wireLocalDevToolsScrollContainment(panel) {
-  if (!GED_DEV_IS_LOCALHOST || !panel || panel.dataset.scrollBound === "1") return;
+  if (!hasQaDashboardAccess() || !panel || panel.dataset.scrollBound === "1") return;
   panel.dataset.scrollBound = "1";
 
   panel.addEventListener("wheel", (event) => {
@@ -6540,7 +6558,7 @@ function wireLocalDevToolsScrollContainment(panel) {
 }
 
 function ensureLocalDevToolsPanel() {
-  if (!GED_DEV_IS_LOCALHOST) return null;
+  if (!hasQaDashboardAccess()) return null;
 
   let panel = document.getElementById("localDevToolsPanel");
   if (panel) return panel;
@@ -6600,7 +6618,7 @@ function ensureLocalDevToolsPanel() {
 }
 
 function renderLocalDevToolsPanel() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const panel = ensureLocalDevToolsPanel();
   const body = document.getElementById("devToolsBody");
@@ -6653,8 +6671,8 @@ function renderLocalDevToolsPanel() {
       <div class="devToolsSectionBody">
         <div id="devOverviewCards" class="devToolsOverviewGrid">${buildLocalDevOverviewCardsHtml()}</div>
         <div class="devToolsNotice">
-          <strong>Local-only:</strong> visible and active only on localhost or 127.0.0.1.
-          No developer login, password, auth bypass, or backend error reporting is added.
+          <strong>Access-controlled:</strong> visible on localhost or for approved developer Google accounts.
+          No shared password, public developer link, auth bypass, or destructive production admin tool is added.
         </div>
         <div id="devOverviewMeta" class="devToolMetaGrid">${buildLocalDevOverviewHtml()}</div>
         <div class="devToolsDeveloperNote">
@@ -6662,13 +6680,13 @@ function renderLocalDevToolsPanel() {
           <ul class="devToolList">
             <li>Auditing GED math skill and subskill coverage against textbook-style practice.</li>
             <li>Expanding weak question areas such as ratios, proportions, inequalities, lines, angles, fractions, and decimals.</li>
-            <li>Planning tester/developer access with Google OAuth and role-based access later.</li>
-            <li>Known Bugs / In Progress visibility should become tester/developer-only after access roles exist.</li>
+            <li>Tester and developer access is granted silently through approved Google accounts.</li>
+            <li>Tester-safe production dashboard views can be split out in a future focused pass.</li>
           </ul>
         </div>
         <div class="devToolsDeveloperNote">
           <div class="devToolTitle">Developer Notes</div>
-          <div class="devToolHelp">Future tester/developer access should be granted silently to approved Google accounts. Keep this dashboard out of public navigation.</div>
+          <div class="devToolHelp">Keep this dashboard out of public navigation; production access requires the server-returned developer role.</div>
         </div>
       </div>
         </section>
@@ -6939,7 +6957,7 @@ function renderLocalDevToolsPanel() {
 }
 
 function refreshLocalDevToolsPanel() {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const panel = document.getElementById("localDevToolsPanel");
   if (!panel || panel.classList.contains("hidden")) return;
@@ -7392,8 +7410,82 @@ function wireLocalDevToolsPanel() {
   }
 }
 
+function installGedDeveloperHelpers() {
+  if (!hasQaDashboardAccess()) return;
+
+  window.__GED_DEV_SET_TIMER_SECONDS = function __GED_DEV_SET_TIMER_SECONDS(seconds) {
+    if (state.mode !== "test" || !state.questions.length) {
+      console.warn("GED dev timer helper only works during an active full test.");
+      return;
+    }
+
+    const parsedSeconds = Number(seconds);
+    if (!Number.isFinite(parsedSeconds)) {
+      console.warn("Please provide a finite number of seconds.");
+      return;
+    }
+
+    state.timeRemaining = Math.max(0, Math.floor(parsedSeconds));
+    maybeShowFullTestTimeWarnings();
+    updateStatus();
+  };
+
+  window.__GED_DEV_OPEN_TIMEOUT_MODAL = async function __GED_DEV_OPEN_TIMEOUT_MODAL() {
+    if (state.mode !== "test" || !Array.isArray(state.questions) || !state.questions.length) {
+      console.warn("GED dev timeout helper only works during an active full test.");
+      return false;
+    }
+
+    await handleTimeExpired();
+    return true;
+  };
+
+  window.__GED_DEV_GENERATE_QUESTION = async function __GED_DEV_GENERATE_QUESTION(options = {}) {
+    return await generateAndLoadLocalDevQuestion(options);
+  };
+
+  window.__GED_DEV_FORCE_QUESTION_TYPE = async function __GED_DEV_FORCE_QUESTION_TYPE(typeKey, options = {}) {
+    return await generateAndLoadLocalDevQuestion({ ...options, typeKey });
+  };
+
+  window.__GED_DEV_FORCE_HOTSPOT_QUESTION = async function __GED_DEV_FORCE_HOTSPOT_QUESTION(options = {}) {
+    return await generateAndLoadLocalDevQuestion({ ...options, typeKey: "hotspot" });
+  };
+
+  window.__GED_DEV_FORCE_TEST_SCORE = async function __GED_DEV_FORCE_TEST_SCORE(targetPercent) {
+    return await forceLocalDevTestScore(targetPercent);
+  };
+
+  window.__GED_DEV_SHOW_QUESTION_ID = function __GED_DEV_SHOW_QUESTION_ID(enabled) {
+    gedDevShowQuestionId = !!enabled;
+    updateDevQuestionIdLabel();
+    console.log(`GED dev question ID label ${gedDevShowQuestionId ? "enabled" : "disabled"}.`);
+    return gedDevShowQuestionId;
+  };
+}
+
+function clearGedDeveloperHelpers() {
+  if (GED_DEV_IS_LOCALHOST) return;
+
+  [
+    "__GED_DEV_SET_TIMER_SECONDS",
+    "__GED_DEV_OPEN_TIMEOUT_MODAL",
+    "__GED_DEV_GENERATE_QUESTION",
+    "__GED_DEV_FORCE_QUESTION_TYPE",
+    "__GED_DEV_FORCE_HOTSPOT_QUESTION",
+    "__GED_DEV_FORCE_TEST_SCORE",
+    "__GED_DEV_SHOW_QUESTION_ID"
+  ].forEach((helperName) => {
+    try {
+      delete window[helperName];
+    } catch (error) {
+      window[helperName] = undefined;
+    }
+  });
+}
+
 function openLocalDevToolsPanel(options = {}) {
-  if (!GED_DEV_IS_LOCALHOST) return;
+  if (!hasQaDashboardAccess()) return;
 
   const panel = ensureLocalDevToolsPanel();
   if (!panel) return;
@@ -7411,16 +7503,18 @@ function initLocalDevToolsEntryPoint() {
   const devToolsBtn = document.getElementById("devToolsBtn");
   if (!devToolsBtn) return;
 
-  if (!GED_DEV_IS_LOCALHOST) {
+  if (!hasQaDashboardAccess()) {
     devToolsBtn.classList.add("hidden");
     devToolsBtn.onclick = null;
     document.getElementById("localDevToolsPanel")?.remove();
+    clearGedDeveloperHelpers();
     return;
   }
 
+  installGedDeveloperHelpers();
   devToolsBtn.classList.remove("hidden");
   devToolsBtn.textContent = "Platform QA Dashboard";
-  devToolsBtn.title = "Open local-only Platform QA Dashboard";
+  devToolsBtn.title = "Open Platform QA Dashboard";
   devToolsBtn.setAttribute("aria-expanded", "false");
   devToolsBtn.onclick = () => openLocalDevToolsPanel({ minimized: false });
 }
@@ -7536,19 +7630,19 @@ async function fetchLocalDevHealthCombo(combo, signal) {
 }
 
 function cancelLocalDevHealthSweep() {
-  if (!GED_DEV_IS_LOCALHOST || !gedDevHealthRunning || !gedDevHealthAbortController) return;
+  if (!hasQaDashboardAccess() || !gedDevHealthRunning || !gedDevHealthAbortController) return;
   gedDevHealthAbortController.abort();
 }
 
 function clearLocalDevHealthResults() {
-  if (!GED_DEV_IS_LOCALHOST || gedDevHealthRunning) return;
+  if (!hasQaDashboardAccess() || gedDevHealthRunning) return;
   gedDevHealthResults = [];
   renderLocalDevHealthResults();
   setDevToolsStatus("Generator Health results cleared.");
 }
 
 async function runLocalDevHealthSweep() {
-  if (!GED_DEV_IS_LOCALHOST || gedDevHealthRunning) return;
+  if (!hasQaDashboardAccess() || gedDevHealthRunning) return;
 
   const skillFilter = document.getElementById("devHealthSkillSelect")?.value || "";
   const difficultyFilter = document.getElementById("devHealthDifficultySelect")?.value || "All";
@@ -7613,7 +7707,7 @@ async function runLocalDevHealthSweep() {
 }
 
 async function fetchLocalDevQuestion(options = {}) {
-  if (!GED_DEV_IS_LOCALHOST) return null;
+  if (!hasQaDashboardAccess()) return null;
 
   const typeKey = String(options.typeKey || "").trim();
   const preset = GED_DEV_QUESTION_TYPE_PRESETS[typeKey] || null;
@@ -7650,7 +7744,7 @@ async function fetchLocalDevQuestion(options = {}) {
 }
 
 async function fetchLocalDevPreviewQuestions(options = {}) {
-  if (!GED_DEV_IS_LOCALHOST) return [];
+  if (!hasQaDashboardAccess()) return [];
 
   const selectedSkill = String(options.skill || "").trim();
   const selectedSubskill = String(options.subskill || "").trim();
@@ -7695,7 +7789,7 @@ async function fetchLocalDevPreviewQuestions(options = {}) {
 }
 
 async function loadLocalDevQuestion(question) {
-  if (!GED_DEV_IS_LOCALHOST || !question) return false;
+  if (!hasQaDashboardAccess() || !question) return false;
 
   const prepared = {
     ...question,
@@ -7735,7 +7829,7 @@ async function loadLocalDevQuestion(question) {
 }
 
 async function generateAndLoadLocalDevQuestion(options = {}) {
-  if (!GED_DEV_IS_LOCALHOST) return false;
+  if (!hasQaDashboardAccess()) return false;
 
   const question = await fetchLocalDevQuestion(options);
   if (!question) return false;
@@ -7823,7 +7917,7 @@ async function forceLocalDevTestScore(targetPercent) {
 }
 
 async function jumpToLocalDevQuestionNumber(rawNumber) {
-  if (!GED_DEV_IS_LOCALHOST) return false;
+  if (!hasQaDashboardAccess()) return false;
 
   const total = Array.isArray(state.questions) ? state.questions.length : 0;
   if (!GED_DEV_ACTIVE_QUESTION_MODES.has(state.mode) || !total) {
@@ -11443,6 +11537,8 @@ if (goalLauncherBtn) {
     userSummary.onmouseover = null;
     userSummary.onmouseout = null;
   }
+
+  initLocalDevToolsEntryPoint();
 }
 
     async function loadCurrentUser() {
@@ -11469,6 +11565,65 @@ if (goalLauncherBtn) {
 
       updateAuthUI();
     }
+
+function consumeGoogleOAuthReturnFromUrl() {
+  const rawHash = window.location.hash || "";
+  if (!rawHash || !rawHash.includes("oauth")) return null;
+
+  const hashParams = new URLSearchParams(rawHash.replace(/^#/, ""));
+  const provider = hashParams.get("oauthProvider") || "";
+  const token = hashParams.get("oauthToken") || "";
+  const error = hashParams.get("oauthError") || "";
+  const message = hashParams.get("oauthMessage") || "";
+
+  if (provider !== "google" && !token && !error) return null;
+
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.hash = "";
+  window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search);
+
+  if (token) {
+    setAuthToken(token);
+    state.auth.user = null;
+    setGuestMode(false);
+    return { success: true };
+  }
+
+  return {
+    success: false,
+    message: message || "Google sign-in could not be completed. Please try again."
+  };
+}
+
+function showGoogleOAuthReturnResult(result) {
+  if (!result) return;
+
+  if (result.success && state.auth.user) {
+    showToast(
+      tr("signedIn"),
+      `${tr("welcomeBack")}, ${state.auth.user.displayName || state.auth.user.email}.`
+    );
+    maybePromptScoringPreferenceAfterSignIn(state.auth.user);
+    return;
+  }
+
+  if (result.success && !state.auth.user) {
+    showModal(
+      "Google Sign-In",
+      "Google sign-in returned, but the session could not be loaded. Please try again.",
+      [{ label: tr("close"), variant: "primary" }]
+    );
+    return;
+  }
+
+  if (!result.success) {
+    showModal(
+      "Google Sign-In",
+      escapeHtml(result.message || "Google sign-in could not be completed. Please try again."),
+      [{ label: tr("close"), variant: "primary" }]
+    );
+  }
+}
 
     async function hasSavedProgress() {
       if (!state.auth.user || !state.auth.token || state.auth.guestMode) return false;
@@ -14080,6 +14235,10 @@ function openAuthModal(initialMode = "signin") {
         <button id="authModeRegister" type="button" class="${isRegister ? "primaryBtn" : "secondaryBtn"}">${tr("createAccount")}</button>
       </div>
 
+${!isRegister ? `
+      <button id="googleSignInBtn" type="button" class="secondaryBtn" style="width:100%; margin-bottom:12px;">Continue with Google</button>
+` : ""}
+
 ${isRegister ? `
   <label for="authDisplayName">${tr("displayName")}</label>
   <input id="authDisplayName" type="text" placeholder="${tr("enterDisplayName")}" />
@@ -14127,6 +14286,18 @@ accountAccessBtn.onclick = () => {
     });
   }, 0);
 };
+
+    const googleSignInBtn = document.getElementById("googleSignInBtn");
+    if (googleSignInBtn) {
+      googleSignInBtn.onclick = () => {
+        const authError = document.getElementById("authError");
+        if (authError) {
+          authError.classList.add("hidden");
+          authError.textContent = "";
+        }
+        window.location.assign(`${API_BASE}/api/auth/google/start`);
+      };
+    }
 
     const submitBtn = document.createElement("button");
     submitBtn.type = "button";
@@ -18666,81 +18837,7 @@ async function handleStartTestRequest() {
       });
     }
 
-    (function setupLocalDevTimerHelper() {
-      const host = window.location.hostname;
-      const isLocalHost = host === "localhost" || host === "127.0.0.1";
-      if (!isLocalHost) return;
-
-      window.__GED_DEV_SET_TIMER_SECONDS = function __GED_DEV_SET_TIMER_SECONDS(seconds) {
-        if (state.mode !== "test" || !state.questions.length) {
-          console.warn("GED dev timer helper only works during an active full test.");
-          return;
-        }
-
-        const parsedSeconds = Number(seconds);
-        if (!Number.isFinite(parsedSeconds)) {
-          console.warn("Please provide a finite number of seconds.");
-          return;
-        }
-
-        state.timeRemaining = Math.max(0, Math.floor(parsedSeconds));
-        maybeShowFullTestTimeWarnings();
-        updateStatus();
-      };
-
-      console.log("GED dev timer helper available: __GED_DEV_SET_TIMER_SECONDS(seconds)");
-    })();
-
-    (function setupLocalDevTimeoutHelper() {
-      if (!GED_DEV_IS_LOCALHOST) return;
-
-      window.__GED_DEV_OPEN_TIMEOUT_MODAL = async function __GED_DEV_OPEN_TIMEOUT_MODAL() {
-        if (state.mode !== "test" || !Array.isArray(state.questions) || !state.questions.length) {
-          console.warn("GED dev timeout helper only works during an active full test.");
-          return false;
-        }
-
-        await handleTimeExpired();
-        return true;
-      };
-
-      console.log("GED dev helper available: __GED_DEV_OPEN_TIMEOUT_MODAL()");
-    })();
-
-    (function setupLocalDevQuestionHelpers() {
-      if (!GED_DEV_IS_LOCALHOST) return;
-
-      window.__GED_DEV_GENERATE_QUESTION = async function __GED_DEV_GENERATE_QUESTION(options = {}) {
-        return await generateAndLoadLocalDevQuestion(options);
-      };
-
-      window.__GED_DEV_FORCE_QUESTION_TYPE = async function __GED_DEV_FORCE_QUESTION_TYPE(typeKey, options = {}) {
-        return await generateAndLoadLocalDevQuestion({ ...options, typeKey });
-      };
-
-      window.__GED_DEV_FORCE_HOTSPOT_QUESTION = async function __GED_DEV_FORCE_HOTSPOT_QUESTION(options = {}) {
-        return await generateAndLoadLocalDevQuestion({ ...options, typeKey: "hotspot" });
-      };
-
-      window.__GED_DEV_FORCE_TEST_SCORE = async function __GED_DEV_FORCE_TEST_SCORE(targetPercent) {
-        return await forceLocalDevTestScore(targetPercent);
-      };
-
-      console.log("GED dev helpers available: __GED_DEV_GENERATE_QUESTION(options), __GED_DEV_FORCE_QUESTION_TYPE(typeKey, options), __GED_DEV_FORCE_HOTSPOT_QUESTION(options), __GED_DEV_FORCE_TEST_SCORE(percent)");
-    })();
-
-    (function setupLocalDevQuestionIdHelper() {
-      if (!GED_DEV_IS_LOCALHOST) return;
-
-      window.__GED_DEV_SHOW_QUESTION_ID = function __GED_DEV_SHOW_QUESTION_ID(enabled) {
-        gedDevShowQuestionId = !!enabled;
-        updateDevQuestionIdLabel();
-        console.log(`GED dev question ID label ${gedDevShowQuestionId ? "enabled" : "disabled"}.`);
-        return gedDevShowQuestionId;
-      };
-
-      console.log("GED local dev helper available: window.__GED_DEV_SHOW_QUESTION_ID(true|false)");
-    })();
+    installGedDeveloperHelpers();
 
     initLocalDevToolsEntryPoint();
 
@@ -19035,9 +19132,11 @@ window.addEventListener("unhandledrejection", async (event) => {
       applyLanguage(getSavedLanguage());
       wireGoalControls();
 renderGoalDock();
+      const googleOAuthReturn = consumeGoogleOAuthReturnFromUrl();
       await loadCurrentUser();
       updateStatus();
       await setView("menu");
+      showGoogleOAuthReturnResult(googleOAuthReturn);
       applyLanguage(getSavedLanguage());
       syncLearningSkillDropdown();
       syncScrollTopButtonVisibility();

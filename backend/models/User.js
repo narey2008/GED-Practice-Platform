@@ -19,6 +19,28 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    googleId: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    authProviders: {
+      type: [String],
+      default: []
+    },
+    googleEmailVerifiedAt: {
+      type: Date,
+      default: null
+    },
+    lastGoogleSignInAt: {
+      type: Date,
+      default: null
+    },
+    accessRole: {
+      type: String,
+      enum: ["user", "tester", "developer"],
+      default: "user"
+    },
 
     scoringEnabled: {
       type: Boolean,
