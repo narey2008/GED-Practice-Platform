@@ -10037,12 +10037,7 @@ if (languagePrevBtn) languagePrevBtn.textContent = t.previous;
 if (languageReportQuestionBtn) languageReportQuestionBtn.textContent = t.reportQuestion;
 
 if (languageSubmitTestBtn) {
-  const languageIsTutorial = state.mode === "test-tutorial";
-
-  languageSubmitTestBtn.classList.toggle(
-    "hidden",
-    languageIsTutorial || !["test", "practice"].includes(state.mode)
-  );
+  syncSubmitButtonVisibility();
 }
 
 const languageLoadingTitle = document.getElementById("loadingTitle");
@@ -11408,6 +11403,46 @@ if (goalLauncherBtn) {
       );
     }
 
+function isLastActiveQuestion() {
+  return (
+    Array.isArray(state.questions) &&
+    state.questions.length > 0 &&
+    state.currentIndex === state.questions.length - 1
+  );
+}
+
+function shouldShowFullTestFloatingSubmit(isLastQuestion = isLastActiveQuestion()) {
+  return (
+    state.mode === "test" &&
+    Array.isArray(state.questions) &&
+    state.questions.length > 0 &&
+    !state.timeoutMode &&
+    !isLastQuestion
+  );
+}
+
+function shouldShowPracticeForceSubmit(isLastQuestion = isLastActiveQuestion()) {
+  return (
+    state.mode === "practice" &&
+    Array.isArray(state.questions) &&
+    state.questions.length > 0 &&
+    !state.timeoutMode &&
+    !isLastQuestion
+  );
+}
+
+function syncSubmitButtonVisibility(isLastQuestion = isLastActiveQuestion()) {
+  const submitBtn = document.getElementById("submitTestBtn");
+  if (!submitBtn) return;
+
+  const showPracticeSubmit = shouldShowPracticeForceSubmit(isLastQuestion);
+  const showFullTestSubmit = shouldShowFullTestFloatingSubmit(isLastQuestion);
+
+  submitBtn.classList.toggle("hidden", !(showPracticeSubmit || showFullTestSubmit));
+  submitBtn.innerText = showPracticeSubmit ? tr("submitPractice") : tr("submitTest");
+  submitBtn.disabled = state.isPaused;
+}
+
     function updateTopbarMode() {
   const inActiveSessionView =
     state.mode === "test" ||
@@ -11418,7 +11453,7 @@ if (goalLauncherBtn) {
 
   document.getElementById("timerTop").classList.toggle("hidden", !showTimer);
   document.getElementById("globalMenuBtn").classList.toggle("hidden", !inActiveSessionView);
-  document.getElementById("submitTestBtn").classList.toggle("hidden", !inActiveSessionView);
+  syncSubmitButtonVisibility();
   document.getElementById("pauseBtn").classList.toggle("hidden", state.mode !== "test");
 
   updateNavigatorVisibility();
@@ -15096,10 +15131,6 @@ if (isTutorial) {
   document.getElementById("questionPosition").innerText = `Tutorial ${pos}`;
 }
 
-if (submitBtn) {
-  submitBtn.classList.toggle("hidden", isTutorial || state.mode !== "test");
-}
-
 if (calculatorBtn) {
   const allowed = !isTutorial && state.mode !== "learning" && !!current?.calculatorAllowed;
   calculatorBtn.classList.toggle("hidden", !allowed);
@@ -15155,14 +15186,12 @@ if (clearHighlightsBtn) {
       reportQuestionBtn.disabled = false;
       pauseBtn.disabled = true;
       nextBtn.innerText = "Submit Test";
-      submitBtn.classList.add("hidden");
     } else if (state.mode === "learning") {
       prevBtn.disabled = state.currentIndex === 0;
       nextBtn.disabled = state.isPaused;
       flagBtn.disabled = true;
       reportQuestionBtn.disabled = false;
       pauseBtn.disabled = true;
-      submitBtn.classList.add("hidden");
 
       if (isLastQuestion) {
         nextBtn.innerText = "Finish Lesson";
@@ -15178,10 +15207,8 @@ if (clearHighlightsBtn) {
 
       if (isLastQuestion) {
                 nextBtn.innerText = tr("startPracticeShort");
-        submitBtn.classList.add("hidden");
       } else {
         nextBtn.innerText = tr("next");
-        submitBtn.classList.remove("hidden");
       }
     } else if (state.mode === "practice") {
             prevBtn.disabled = state.currentIndex === 0;
@@ -15192,10 +15219,8 @@ if (clearHighlightsBtn) {
 
       if (isLastQuestion) {
         nextBtn.innerText = tr("submitPractice");
-        submitBtn.classList.add("hidden");
       } else {
         nextBtn.innerText = tr("next");
-        submitBtn.classList.remove("hidden");
       }
     } else if (state.mode === "test") {
             prevBtn.disabled = state.isPaused || state.currentIndex === 0 || state.lockedReviewMode;
@@ -15206,15 +15231,12 @@ if (clearHighlightsBtn) {
 
       if (isLastQuestion) {
                nextBtn.innerText = tr("submitTest");
-        submitBtn.classList.add("hidden");
       } else {
         nextBtn.innerText = tr("next");
-        submitBtn.classList.remove("hidden");
       }
     }
 
-    submitBtn.disabled = state.isPaused;
-    submitBtn.innerText = state.mode === "practice" ? tr("submitPractice") : tr("submitTest");
+    syncSubmitButtonVisibility(isLastQuestion);
     updateQuestionNavigator();
     updateDevQuestionIdLabel();
   } else {
