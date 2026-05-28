@@ -942,10 +942,6 @@ body.theme-light .brandTagline {
   display: none;
 }
 
-#resumePanel h3::before {
-  content: "↩";
-}
-
 #startTestPanel,
 #startPracticePanel,
 #learningModePanel {
@@ -4084,14 +4080,6 @@ body.loadingActive {
 
           <div class="menuActions" style="margin-top:12px;">
             <button id="startPracticeBtn" class="secondaryBtn">Start Practice</button>
-          </div>
-        </div>
-
-                <div id="resumePanel" class="menuPanel hidden">
-          <h3>Resume Unfinished Test</h3>
-          <p>Continue from your saved account progress.</p>
-          <div class="menuActions">
-            <button id="resumeBtn" class="secondaryBtn">Resume</button>
           </div>
         </div>
 
@@ -9117,9 +9105,12 @@ learningModeHelperText: isSpanish
   ? "Aprende una habilidad paso a paso y luego responde preguntas con retroalimentación inmediata."
   : "Learn a skill step by step first, then answer practice questions with immediate feedback.",
 
-    resumeTitle: isSpanish ? "Reanudar Examen Incompleto" : "Resume Unfinished Test",
-    resumeText: isSpanish ? "Continúa desde tu progreso guardado en tu cuenta." : "Continue from your saved account progress.",
-    resume: isSpanish ? "Reanudar" : "Resume",
+    resumeTitle: isSpanish ? "Examen incompleto encontrado" : "Unfinished Test Found",
+    resumeText: isSpanish
+      ? "Tienes progreso guardado de un examen sin terminar. Elige si deseas reanudarlo o comenzar un examen nuevo."
+      : "You have unfinished saved test progress. Choose whether to resume it or start a new test.",
+    resume: isSpanish ? "Reanudar examen incompleto" : "Resume unfinished test",
+    startNewSavedProgressTest: isSpanish ? "Comenzar un examen nuevo" : "Start a new test",
 
     supportTitle: isSpanish ? "Soporte / Contacto" : "Support / Contact",
     supportText: isSpanish
@@ -10012,16 +10003,6 @@ syncLearningSkillDropdown();
       `;
       practiceDifficultySelect.value = currentPracticeDifficulty;
     }
-  }
-
-  const resumePanel = document.getElementById("resumePanel");
-  if (resumePanel) {
-    const h3 = resumePanel.querySelector("h3");
-    const p = resumePanel.querySelector("p");
-    const btn = document.getElementById("resumeBtn");
-    if (h3) h3.textContent = t.resumeTitle;
-    if (p) p.textContent = t.resumeText;
-    if (btn) btn.textContent = t.resume;
   }
 
 const supportPanel = document.getElementById("supportPanel");
@@ -11414,8 +11395,10 @@ if (goalLauncherBtn) {
     }
 
     async function updateResumeVisibility() {
+      const resumePanel = document.getElementById("resumePanel");
+      if (!resumePanel) return;
       const visible = await hasSavedProgress();
-      document.getElementById("resumePanel").classList.toggle("hidden", !visible);
+      resumePanel.classList.toggle("hidden", !visible);
     }
 
     function updateNavigatorVisibility() {
@@ -18482,6 +18465,73 @@ window.addEventListener("resize", () => {
   syncRecommendedPathDockVisibilityForViewport();
 });
 
+function showReplaceSavedProgressWarning() {
+  showModal(
+    tr("warning"),
+    tr("replaceProgressWarning"),
+    [
+      { label: tr("cancel"), variant: "secondary" },
+      {
+        label: tr("startTest"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          closeModal();
+          await clearSavedProgress();
+          await runStartActivity("test", () => startTest());
+        }
+      }
+    ]
+  );
+}
+
+function showUnfinishedTestDecisionModal() {
+  showModal(
+    tr("resumeTitle"),
+    `<p>${tr("resumeText")}</p>`,
+    [
+      {
+        label: tr("resume"),
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          closeModal();
+          await loadSavedProgress();
+        }
+      },
+      {
+        label: tr("startNewSavedProgressTest"),
+        variant: "secondary",
+        keepOpen: true,
+        onClick: () => {
+          showReplaceSavedProgressWarning();
+        }
+      },
+      { label: tr("close"), variant: "secondary" }
+    ]
+  );
+}
+
+async function handleStartTestRequest() {
+  if (state.auth.guestMode) {
+    await runStartActivity("test", () => startTest());
+    return;
+  }
+
+  if (!requireSignedInOrGuestBeforeStart(() => handleStartTestRequest())) {
+    return;
+  }
+
+  const resumeExists = await hasSavedProgress();
+
+  if (resumeExists) {
+    showUnfinishedTestDecisionModal();
+    return;
+  }
+
+  await runStartActivity("test", () => startTest());
+}
+
     const startTestBtn = document.getElementById("startTestBtn");
     if (startTestBtn) {
       startTestBtn.addEventListener("click", async () => {
@@ -18492,36 +18542,7 @@ window.addEventListener("resize", () => {
         startFlowInFlight.test = true;
         startTestBtn.disabled = true;
         try {
-        if (state.auth.guestMode) {
-          await runStartActivity("test", () => startTest());
-          return;
-        }
-
-        if (!requireSignedInOrGuestBeforeStart(() => runStartActivity("test", () => startTest()))) {
-          return;
-        }
-
-        const resumeExists = await hasSavedProgress();
-
-        if (resumeExists) {
-          showModal(
-            tr("warning"),
-            tr("replaceProgressWarning"),
-            [
-              { label: tr("cancel"), variant: "secondary" },
-              {
-                label: tr("startTest"),
-                variant: "primary",
-                onClick: async () => {
-                  await clearSavedProgress();
-                  await runStartActivity("test", () => startTest());
-                }
-              }
-            ]
-          );
-        } else {
-          await runStartActivity("test", () => startTest());
-        }
+          await handleStartTestRequest();
         } finally {
           startFlowInFlight.test = false;
           startTestBtn.disabled = false;
@@ -18629,9 +18650,6 @@ window.addEventListener("resize", () => {
       });
     }
 
-    document.getElementById("resumeBtn").onclick = async () => {
-      await loadSavedProgress();
-    };
         document.getElementById("signInBtnTop").onclick = () => openAuthModal("signin");
 const contactBtnTop = document.getElementById("contactBtnTop");
 if (contactBtnTop) {
