@@ -15,9 +15,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: 60
     },
+    passwordLoginEnabled: {
+      type: Boolean,
+      default: true
+    },
     passwordHash: {
       type: String,
-      required: true
+      required: function () {
+        return this.passwordLoginEnabled !== false;
+      },
+      default: null
     },
     googleId: {
       type: String,

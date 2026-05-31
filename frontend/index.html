@@ -11660,6 +11660,8 @@ function showGoogleOAuthReturnResult(result) {
   if (!result) return;
 
   if (result.success && state.auth.user) {
+    closeModal();
+    updateAuthUI();
     showToast(
       tr("signedIn"),
       `${tr("welcomeBack")}, ${state.auth.user.displayName || state.auth.user.email}.`
@@ -13002,13 +13004,13 @@ function closeFormulaSheet() {
   syncScrollTopButtonVisibility();
 }
 
-function openForgotPasswordModal() {
+function openForgotPasswordModal(prefillEmail = "") {
   showModal(
     tr("forgotPasswordTitle"),
     `
       <p>${tr("forgotPasswordBody")}</p>
       <label for="forgotPasswordEmail">${tr("email")}</label>
-      <input id="forgotPasswordEmail" type="email" placeholder="${tr("enterEmail")}" />
+      <input id="forgotPasswordEmail" type="email" placeholder="${tr("enterEmail")}" value="${escapeHtml(prefillEmail)}" />
       <div id="forgotPasswordError" class="authError hidden"></div>
     `,
     [
@@ -14365,7 +14367,9 @@ accountAccessBtn.onclick = () => {
           authError.classList.add("hidden");
           authError.textContent = "";
         }
-        window.location.assign(`${API_BASE}/api/auth/google/start`);
+        const googleStartUrl = new URL(`${API_BASE}/api/auth/google/start`);
+        googleStartUrl.searchParams.set("returnTo", window.location.origin);
+        window.location.assign(googleStartUrl.toString());
       };
     }
 
@@ -17976,6 +17980,10 @@ async function openProfilePanel(defaultTab = "goals") {
         const nextFocus = skillStats.length > 1 ? skillStats[1].skill : "—";
 
         const encouragement = getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus);
+        const authProviders = Array.isArray(state.auth.user?.authProviders) ? state.auth.user.authProviders : [];
+        const googleConnected = state.auth.user?.googleConnected === true || authProviders.includes("google");
+        const passwordLoginEnabled = state.auth.user?.passwordLoginEnabled !== false;
+        const googleOnlyAccount = googleConnected && !passwordLoginEnabled;
 
 panel.innerHTML = `
   <div class="profileHeader">
@@ -18012,6 +18020,12 @@ panel.innerHTML = `
 
         <span class="profileBadge">
           ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
+        </span>
+
+        ${googleConnected ? `<span class="profileBadge">Google Connected</span>` : ""}
+
+        <span class="profileBadge">
+          ${passwordLoginEnabled ? "Password Login Enabled" : "Google-only Account"}
         </span>
       </div>
 
@@ -18181,11 +18195,16 @@ panel.innerHTML = `
 
   <div id="profileAccountSecuritySectionBody" class="profileContentSectionBody hidden">
     <p>Manage your username, email, password, account access, and security options.</p>
+    ${
+      googleOnlyAccount
+        ? `<p><strong>Google-only account:</strong> You can change your username now. To add email/password login, use Set Password to send a reset link to your verified Google email. Google cannot be disconnected until a GED Practice Platform password is added.</p>`
+        : ""
+    }
 
     <div class="menuActions">
       <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
       <button id="profileChangeEmailBtn" class="secondaryBtn">${tr("changeEmail")}</button>
-      <button id="profileResetPasswordBtn" class="secondaryBtn">${tr("changePassword")}</button>
+      <button id="profileResetPasswordBtn" class="secondaryBtn">${googleOnlyAccount ? "Set Password" : tr("changePassword")}</button>
       <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
       <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
 
@@ -18605,6 +18624,11 @@ if (profileAccountAccessHelpBtn) {
 const profileResetPasswordBtn = document.getElementById("profileResetPasswordBtn");
 if (profileResetPasswordBtn) {
   profileResetPasswordBtn.onclick = async () => {
+    if (googleOnlyAccount) {
+      openForgotPasswordModal(state.auth.user?.email || "");
+      return;
+    }
+
     try {
       await withLoading(
         tr("sendSecurityCode"),

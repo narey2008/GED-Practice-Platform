@@ -107,6 +107,23 @@ function getAccessRoleForUser(user) {
   return hasGoogleIdentity ? getAccessRoleForEmail(user.email) : "user";
 }
 
+function getAuthProvidersForUser(user) {
+  return Array.from(new Set(Array.isArray(user?.authProviders) ? user.authProviders.filter(Boolean) : []));
+}
+
+function hasGoogleProvider(user) {
+  return !!user?.googleId || getAuthProvidersForUser(user).includes("google");
+}
+
+function hasPasswordLogin(user) {
+  return (
+    !!user &&
+    user.passwordLoginEnabled !== false &&
+    typeof user.passwordHash === "string" &&
+    user.passwordHash.length > 0
+  );
+}
+
 function getGoogleOAuthMissingConfigKeys() {
   return ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_OAUTH_REDIRECT_URI"].filter(
     (key) => !String(process.env[key] || "").trim()
@@ -126,6 +143,9 @@ function createToken(user) {
 
 function sanitizeUser(user) {
   const accessRole = getAccessRoleForUser(user);
+  const authProviders = getAuthProvidersForUser(user);
+  const googleConnected = hasGoogleProvider(user);
+  const passwordLoginEnabled = hasPasswordLogin(user);
 
   return {
     id: user._id.toString(),
@@ -137,6 +157,11 @@ function sanitizeUser(user) {
     scoringPreferenceChosen: user.scoringPreferenceChosen === true,
     emailVerified: !!user.emailVerified,
     twoFactorEnabled: !!user.twoFactorEnabled || !!user.emailVerified,
+    authProviders,
+    googleConnected,
+    passwordLoginEnabled,
+    canDisconnectGoogle: googleConnected && passwordLoginEnabled,
+    requiresPasswordSetup: googleConnected && !passwordLoginEnabled,
     hasPendingVerifiedAction:
       !!user.pendingVerifiedAction &&
       !!user.pendingVerifiedActionExpiresAt &&
@@ -149,10 +174,78 @@ function hashOAuthState(state) {
   return crypto.createHash("sha256").update(String(state || "")).digest("hex");
 }
 
+function toBase64Url(value) {
+  return Buffer.from(String(value), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function fromBase64Url(value) {
+  const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+  return Buffer.from(padded, "base64").toString("utf8");
+}
+
+function signOAuthStatePayload(encodedPayload) {
+  return crypto
+    .createHmac("sha256", process.env.JWT_SECRET)
+    .update(encodedPayload)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
 function timingSafeStringEqual(a, b) {
   const aBuffer = Buffer.from(String(a || ""));
   const bBuffer = Buffer.from(String(b || ""));
   return aBuffer.length === bBuffer.length && crypto.timingSafeEqual(aBuffer, bBuffer);
+}
+
+function getAllowedFrontendOrigin(value) {
+  if (!value) return "";
+
+  try {
+    const origin = new URL(value).origin;
+    return allowedOrigins.includes(origin) ? origin : "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function createGoogleOAuthState(returnBase) {
+  const payload = {
+    nonce: crypto.randomBytes(32).toString("hex"),
+    returnBase: getAllowedFrontendOrigin(returnBase),
+    createdAt: Date.now()
+  };
+  const encodedPayload = toBase64Url(JSON.stringify(payload));
+  return `${encodedPayload}.${signOAuthStatePayload(encodedPayload)}`;
+}
+
+function verifyGoogleOAuthState(state) {
+  const [encodedPayload, signature, extra] = String(state || "").split(".");
+  if (!encodedPayload || !signature || extra !== undefined) return null;
+
+  const expectedSignature = signOAuthStatePayload(encodedPayload);
+  if (!timingSafeStringEqual(signature, expectedSignature)) return null;
+
+  try {
+    const payload = JSON.parse(fromBase64Url(encodedPayload));
+    const createdAt = Number(payload.createdAt);
+    const ageMs = Date.now() - createdAt;
+    if (!payload.nonce || !Number.isFinite(createdAt) || ageMs < 0 || ageMs > GOOGLE_OAUTH_STATE_MAX_AGE_SECONDS * 1000) {
+      return null;
+    }
+
+    return {
+      returnBase: getAllowedFrontendOrigin(payload.returnBase)
+    };
+  } catch (error) {
+    return null;
+  }
 }
 
 function getCookieValue(req, name) {
@@ -180,6 +273,17 @@ function shouldUseSecureGoogleOAuthCookie() {
   }
 }
 
+function getGoogleOAuthCookieDomain() {
+  try {
+    const hostname = new URL(process.env.GOOGLE_OAUTH_REDIRECT_URI || "").hostname.toLowerCase();
+    if (hostname === "gedpracticeplatform.com" || hostname.endsWith(".gedpracticeplatform.com")) {
+      return ".gedpracticeplatform.com";
+    }
+  } catch (error) {}
+
+  return "";
+}
+
 function serializeCookie(name, value, options = {}) {
   const parts = [`${name}=${encodeURIComponent(value || "")}`];
 
@@ -190,6 +294,7 @@ function serializeCookie(name, value, options = {}) {
   parts.push(`Path=${options.path || "/"}`);
   parts.push(`SameSite=${options.sameSite || "Lax"}`);
 
+  if (options.domain) parts.push(`Domain=${options.domain}`);
   if (options.httpOnly !== false) parts.push("HttpOnly");
   if (options.secure) parts.push("Secure");
   if (options.expires) parts.push(`Expires=${options.expires.toUTCString()}`);
@@ -204,6 +309,7 @@ function setGoogleOAuthStateCookie(res, state) {
       httpOnly: true,
       sameSite: "Lax",
       secure: shouldUseSecureGoogleOAuthCookie(),
+      domain: getGoogleOAuthCookieDomain(),
       path: "/api/auth/google",
       maxAgeSeconds: GOOGLE_OAUTH_STATE_MAX_AGE_SECONDS
     })
@@ -217,11 +323,26 @@ function clearGoogleOAuthStateCookie(res) {
       httpOnly: true,
       sameSite: "Lax",
       secure: shouldUseSecureGoogleOAuthCookie(),
+      domain: getGoogleOAuthCookieDomain(),
       path: "/api/auth/google",
       maxAgeSeconds: 0,
       expires: new Date(0)
     })
   );
+}
+
+function getGoogleOAuthReturnBase(req) {
+  const returnTo = typeof req.query.returnTo === "string" ? req.query.returnTo : "";
+  const queryReturnOrigin = getAllowedFrontendOrigin(returnTo);
+  if (queryReturnOrigin) return queryReturnOrigin;
+
+  const refererOrigin = getAllowedFrontendOrigin(req.get("referer") || "");
+  if (refererOrigin) return refererOrigin;
+
+  const appBaseOrigin = getAllowedFrontendOrigin(process.env.APP_BASE_URL || "");
+  if (appBaseOrigin) return appBaseOrigin;
+
+  return getFrontendRedirectBase(req);
 }
 
 function getFrontendRedirectBase(req) {
@@ -243,10 +364,10 @@ function getFrontendRedirectBase(req) {
   return `${protocol}://${req.get("host") || `localhost:${PORT}`}`;
 }
 
-function buildOAuthFrontendRedirectUrl(req, hashValues) {
+function buildOAuthFrontendRedirectUrl(req, hashValues, returnBase = "") {
   let redirectUrl;
   try {
-    redirectUrl = new URL(getFrontendRedirectBase(req));
+    redirectUrl = new URL(returnBase || getFrontendRedirectBase(req));
   } catch (error) {
     redirectUrl = new URL(`http://localhost:${PORT}`);
   }
@@ -257,13 +378,13 @@ function buildOAuthFrontendRedirectUrl(req, hashValues) {
   return redirectUrl.toString();
 }
 
-function redirectWithGoogleOAuthError(req, res, code, message) {
+function redirectWithGoogleOAuthError(req, res, code, message, returnBase = "") {
   return res.redirect(
     buildOAuthFrontendRedirectUrl(req, {
       oauthProvider: "google",
       oauthError: code,
       oauthMessage: message
-    })
+    }, returnBase)
   );
 }
 
@@ -408,6 +529,9 @@ async function findOrCreateGoogleUser(googleProfile) {
     user.googleEmailVerifiedAt = now;
     user.lastGoogleSignInAt = now;
     user.accessRole = accessRole;
+    if (user.passwordHash && user.passwordLoginEnabled !== false) {
+      user.passwordLoginEnabled = true;
+    }
 
     if (!user.displayName) {
       user.displayName = googleProfile.displayName;
@@ -417,12 +541,11 @@ async function findOrCreateGoogleUser(googleProfile) {
     return user;
   }
 
-  const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 12);
-
   return await User.create({
     email: googleProfile.email,
     displayName: googleProfile.displayName,
-    passwordHash,
+    passwordHash: null,
+    passwordLoginEnabled: false,
     emailVerified: true,
     twoFactorEnabled: false,
     googleId: googleProfile.googleId,
@@ -1013,6 +1136,7 @@ app.get("/api/debug-support-ticket-version", (req, res) => {
 });
 
 app.get("/api/auth/google/start", (req, res) => {
+  const returnBase = getGoogleOAuthReturnBase(req);
   const missingConfig = getGoogleOAuthMissingConfigKeys();
   if (missingConfig.length) {
     console.warn("Google OAuth start blocked by missing config:", missingConfig.join(", "));
@@ -1020,11 +1144,12 @@ app.get("/api/auth/google/start", (req, res) => {
       req,
       res,
       "google_config_missing",
-      "Google sign-in is not configured yet. Please contact support."
+      "Google sign-in is not configured yet. Please contact support.",
+      returnBase
     );
   }
 
-  const state = crypto.randomBytes(32).toString("hex");
+  const state = createGoogleOAuthState(returnBase);
   setGoogleOAuthStateCookie(res, state);
 
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -1041,6 +1166,16 @@ app.get("/api/auth/google/start", (req, res) => {
 app.get("/api/auth/google/callback", async (req, res) => {
   clearGoogleOAuthStateCookie(res);
 
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  const verifiedState = verifyGoogleOAuthState(state);
+  const oauthReturnBase = verifiedState?.returnBase || "";
+  const expectedStateHash = getCookieValue(req, GOOGLE_OAUTH_STATE_COOKIE);
+  const returnedStateHash = hashOAuthState(state);
+  const hasValidCookieState =
+    !!state &&
+    !!expectedStateHash &&
+    timingSafeStringEqual(returnedStateHash, expectedStateHash);
+
   const missingConfig = getGoogleOAuthMissingConfigKeys();
   if (missingConfig.length) {
     console.warn("Google OAuth callback blocked by missing config:", missingConfig.join(", "));
@@ -1048,20 +1183,19 @@ app.get("/api/auth/google/callback", async (req, res) => {
       req,
       res,
       "google_config_missing",
-      "Google sign-in is not configured yet. Please contact support."
+      "Google sign-in is not configured yet. Please contact support.",
+      oauthReturnBase
     );
   }
 
-  const state = typeof req.query.state === "string" ? req.query.state : "";
-  const expectedStateHash = getCookieValue(req, GOOGLE_OAUTH_STATE_COOKIE);
-  const returnedStateHash = hashOAuthState(state);
-
-  if (!state || !expectedStateHash || !timingSafeStringEqual(returnedStateHash, expectedStateHash)) {
+  if (!verifiedState && !hasValidCookieState) {
+    console.warn("Google OAuth callback failed: invalid state.");
     return redirectWithGoogleOAuthError(
       req,
       res,
       "google_state_invalid",
-      "Google sign-in could not be verified. Please try again."
+      "Google sign-in could not be verified. Please try again.",
+      oauthReturnBase
     );
   }
 
@@ -1071,7 +1205,8 @@ app.get("/api/auth/google/callback", async (req, res) => {
       req,
       res,
       "google_denied",
-      "Google sign-in was canceled or denied."
+      "Google sign-in was canceled or denied.",
+      oauthReturnBase
     );
   }
 
@@ -1081,7 +1216,8 @@ app.get("/api/auth/google/callback", async (req, res) => {
       req,
       res,
       "google_code_missing",
-      "Google sign-in did not return an authorization code."
+      "Google sign-in did not return an authorization code.",
+      oauthReturnBase
     );
   }
 
@@ -1095,16 +1231,16 @@ app.get("/api/auth/google/callback", async (req, res) => {
       buildOAuthFrontendRedirectUrl(req, {
         oauthProvider: "google",
         oauthToken: token
-      })
+      }, oauthReturnBase)
     );
   } catch (error) {
-    console.error("GOOGLE OAUTH CALLBACK ERROR:");
-    console.error(error.message || "Google OAuth sign-in failed.");
+    console.error("Google OAuth callback failed:", error.message || "Google sign-in failed.");
     return redirectWithGoogleOAuthError(
       req,
       res,
       "google_signin_failed",
-      error.message || "Google sign-in failed. Please try again."
+      error.message || "Google sign-in failed. Please try again.",
+      oauthReturnBase
     );
   }
 });
@@ -1159,6 +1295,7 @@ app.post("/api/auth/register", async (req, res) => {
   email: rawEmail,
   displayName: displayNameRaw || rawEmail.split("@")[0],
   passwordHash,
+  passwordLoginEnabled: true,
   scoringEnabled,
   emailVerified: false,
   emailVerificationTokenHash: tokenHash,
@@ -1381,6 +1518,12 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
+    if (!hasPasswordLogin(user)) {
+      return res.status(401).json({
+        error: "This account uses Google sign-in. Use Continue with Google or reset your password to add email/password login."
+      });
+    }
+
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatches) {
       return res.status(401).json({ error: "Invalid email or password." });
@@ -1576,6 +1719,7 @@ app.post("/api/auth/reset-password", async (req, res) => {
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.passwordLoginEnabled = true;
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
     await user.save();
@@ -1775,12 +1919,19 @@ app.post("/api/auth/change-password", authMiddleware, async (req, res) => {
       });
     }
 
+    if (!hasPasswordLogin(user)) {
+      return res.status(400).json({
+        error: "Use password reset to add a GED Practice Platform password to this Google account."
+      });
+    }
+
     const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!passwordMatches) {
       return res.status(401).json({ error: "Current password is incorrect." });
     }
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
+    user.passwordLoginEnabled = true;
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
     user.pendingVerifiedAction = null;
@@ -1834,6 +1985,12 @@ app.post("/api/auth/change-email", authMiddleware, async (req, res) => {
     if (!verifiedForThisAction) {
       return res.status(403).json({
         error: "You must verify this action before changing your email."
+      });
+    }
+
+    if (!hasPasswordLogin(user)) {
+      return res.status(400).json({
+        error: "Add a GED Practice Platform password before changing the email on this Google account."
       });
     }
 
@@ -2076,6 +2233,12 @@ app.post("/api/auth/delete-account", authMiddleware, async (req, res) => {
     const user = await User.findById(req.auth.userId);
     if (!user) {
       return res.status(404).json({ error: "User not found." });
+    }
+
+    if (!hasPasswordLogin(user)) {
+      return res.status(400).json({
+        error: "Add a GED Practice Platform password before deleting this Google account."
+      });
     }
 
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
