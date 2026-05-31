@@ -146,8 +146,10 @@ function sanitizeUser(user) {
   const authProviders = getAuthProvidersForUser(user);
   const googleConnected = hasGoogleProvider(user);
   const passwordLoginEnabled = hasPasswordLogin(user);
+  const googleOnlyAccount = googleConnected && !passwordLoginEnabled;
   const googleEmailVerified = !!user.googleEmailVerifiedAt;
-  const platformEmailVerified = !!user.emailVerified && (!googleConnected || user.twoFactorEnabled === true);
+  const platformEmailVerified = !!user.emailVerified && !googleOnlyAccount;
+  const platformTwoFactorEnabled = !googleOnlyAccount && user.twoFactorEnabled === true;
 
   return {
     id: user._id.toString(),
@@ -157,16 +159,16 @@ function sanitizeUser(user) {
     accessRole,
     scoringEnabled: user.scoringEnabled !== false,
     scoringPreferenceChosen: user.scoringPreferenceChosen === true,
-    emailVerified: !!user.emailVerified,
+    emailVerified: platformEmailVerified,
     platformEmailVerified,
-    twoFactorEnabled: user.twoFactorEnabled === true,
+    twoFactorEnabled: platformTwoFactorEnabled,
     authProviders,
     googleConnected,
     googleEmail: googleConnected ? user.email : "",
     googleEmailVerified,
     passwordLoginEnabled,
     canDisconnectGoogle: googleConnected && passwordLoginEnabled,
-    requiresPasswordSetup: googleConnected && !passwordLoginEnabled,
+    requiresPasswordSetup: googleOnlyAccount,
     hasPendingVerifiedAction:
       !!user.pendingVerifiedAction &&
       !!user.pendingVerifiedActionExpiresAt &&
@@ -526,11 +528,6 @@ async function findOrCreateGoogleUser(googleProfile) {
 
     user.googleId = googleProfile.googleId;
     user.authProviders = Array.from(authProviders);
-    user.emailVerified = true;
-    user.emailVerificationTokenHash = null;
-    user.emailVerificationExpiresAt = null;
-    user.previousEmailVerificationTokenHash = null;
-    user.previousEmailVerificationExpiresAt = null;
     user.googleEmailVerifiedAt = now;
     user.lastGoogleSignInAt = now;
     user.accessRole = accessRole;
@@ -551,7 +548,7 @@ async function findOrCreateGoogleUser(googleProfile) {
     displayName: googleProfile.displayName,
     passwordHash: null,
     passwordLoginEnabled: false,
-    emailVerified: true,
+    emailVerified: false,
     twoFactorEnabled: false,
     googleId: googleProfile.googleId,
     authProviders: ["google"],
@@ -1782,8 +1779,13 @@ app.post("/api/auth/reset-password", async (req, res) => {
       return res.status(400).json({ error: "This reset link is invalid or has expired." });
     }
 
+    const addingPasswordToGoogleAccount = hasGoogleProvider(user) && !hasPasswordLogin(user);
+
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     user.passwordLoginEnabled = true;
+    if (addingPasswordToGoogleAccount) {
+      user.emailVerified = true;
+    }
     user.passwordResetTokenHash = null;
     user.passwordResetExpiresAt = null;
     await user.save();

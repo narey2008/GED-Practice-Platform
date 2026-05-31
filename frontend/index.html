@@ -9024,8 +9024,8 @@ function getTrendMessage(testHistory, practiceHistory, currentFocus, nextFocus) 
 
   if (!testHistory.length) {
     return isSpanish
-      ? `<strong>Bienvenido.</strong> Cuando completes un examen con sesión iniciada, tus notas de progreso aparecerán aquí.`
-      : `<strong>Welcome.</strong> Once you complete a signed-in test, your progress notes will appear here.`;
+      ? `<strong>Bienvenido.</strong> Cuando completes un examen, tus notas de progreso aparecerán aquí.`
+      : `<strong>Welcome.</strong> Once you complete a test, your progress notes will appear here.`;
   }
 
   const latest = Number(testHistory[0]?.score200) || 0;
@@ -18119,10 +18119,6 @@ panel.innerHTML = `
         <span class="profileBadge">
           ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
         </span>
-
-        <span class="profileBadge">
-          ${passwordLoginEnabled ? "Password Login Enabled" : "Google-only Account"}
-        </span>
       </div>
 
       <div style="margin-top:8px;">
@@ -18324,11 +18320,6 @@ panel.innerHTML = `
 
   <div id="profileAccountSecuritySectionBody" class="profileContentSectionBody hidden">
     <p>Manage your username, email, password, account access, and security options.</p>
-    ${
-      googleOnlyAccount
-        ? `<p><strong>Google-only account:</strong> You can change your username now. To add email/password login, use Set Password to send a reset link to your verified Google email. Google cannot be disconnected until a GED Practice Platform password is added.</p>`
-        : ""
-    }
 
     <div class="menuActions">
       <button id="profileChangeUsernameBtn" class="secondaryBtn">${tr("changeUsername")}</button>
