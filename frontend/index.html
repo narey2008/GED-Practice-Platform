@@ -13076,10 +13076,94 @@ function openForgotPasswordModal(prefillEmail = "") {
   );
 }
 
-function openResetPasswordModal(resetEmail, resetToken) {
+function openProfileSetPasswordModal() {
+  const googleEmail = state.auth.user?.googleEmail || state.auth.user?.email || "";
+
   showModal(
-    tr("forgotPasswordTitle"),
+    "Set Password",
     `
+      <p>Add a GED Practice Platform password so you can also sign in with your email and password.</p>
+      <p>The setup link will be sent to your verified Google email:</p>
+      <p><strong>${escapeHtml(googleEmail || "your Google email")}</strong></p>
+      <div id="setPasswordError" class="authError hidden"></div>
+    `,
+    [
+      {
+        label: tr("cancel"),
+        variant: "secondary"
+      },
+      {
+        label: "Send Setup Link",
+        variant: "primary",
+        keepOpen: true,
+        onClick: async () => {
+          const errorEl = document.getElementById("setPasswordError");
+          errorEl.classList.add("hidden");
+          errorEl.textContent = "";
+
+          try {
+            await withLoading(
+              "Sending setup link...",
+              tr(""),
+              async () => {
+                const res = await fetch(`${API_BASE}/api/auth/start-password-setup`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders()
+                  }
+                });
+
+                const contentType = res.headers.get("content-type") || "";
+                let data = null;
+
+                if (contentType.includes("application/json")) {
+                  data = await res.json();
+                } else {
+                  const text = await res.text();
+                  throw new Error(`Password setup returned HTML instead of JSON. Response started with: ${text.slice(0, 80)}`);
+                }
+
+                if (!res.ok) {
+                  throw new Error(data.error || tr("failedAuthentication"));
+                }
+
+                closeModal();
+                showModal(
+                  "Setup Link Sent",
+                  `A secure password setup link was sent to <strong>${escapeHtml(data.email || googleEmail || "your Google email")}</strong>.`,
+                  [{ label: tr("close"), variant: "primary" }]
+                );
+              }
+            );
+          } catch (error) {
+            errorEl.textContent = error.message || tr("failedAuthentication");
+            errorEl.classList.remove("hidden");
+          }
+        }
+      }
+    ]
+  );
+}
+
+function openResetPasswordModal(resetEmail, resetToken, options = {}) {
+  const isPasswordSetup = options.context === "passwordSetup";
+  const removeResetParams = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("resetToken");
+    url.searchParams.delete("resetEmail");
+    url.searchParams.delete("passwordSetup");
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  showModal(
+    isPasswordSetup ? "Set Password" : tr("forgotPasswordTitle"),
+    `
+      ${
+        isPasswordSetup
+          ? `<p>Add a GED Practice Platform password for <strong>${escapeHtml(resetEmail)}</strong> so you can sign in with email/password or Google.</p>`
+          : ""
+      }
       <label for="resetPasswordNew">${tr("newPassword")}</label>
       <input id="resetPasswordNew" type="password" placeholder="${tr("enterNewPassword")}" />
 
@@ -13093,14 +13177,11 @@ function openResetPasswordModal(resetEmail, resetToken) {
         label: tr("cancel"),
         variant: "secondary",
         onClick: () => {
-          const url = new URL(window.location.href);
-          url.searchParams.delete("resetToken");
-          url.searchParams.delete("resetEmail");
-          window.history.replaceState({}, "", url.toString());
+          removeResetParams();
         }
       },
       {
-        label: tr("resetPasswordNow"),
+        label: isPasswordSetup ? "Set Password" : tr("resetPasswordNow"),
         variant: "primary",
         keepOpen: true,
         onClick: async () => {
@@ -13119,7 +13200,7 @@ function openResetPasswordModal(resetEmail, resetToken) {
 
           try {
             await withLoading(
-              tr("resetPasswordLoading"),
+              isPasswordSetup ? "Setting password..." : tr("resetPasswordLoading"),
               tr(""),
               async () => {
                 const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
@@ -13146,25 +13227,30 @@ function openResetPasswordModal(resetEmail, resetToken) {
                   throw new Error(data.error || tr("invalidResetLink"));
                 }
 
-                const url = new URL(window.location.href);
-                url.searchParams.delete("resetToken");
-                url.searchParams.delete("resetEmail");
-                window.history.replaceState({}, "", url.toString());
+                removeResetParams();
+
+                if (isPasswordSetup && state.auth.token) {
+                  await loadCurrentUser();
+                }
 
                 closeModal();
                 showModal(
-                  tr("passwordResetSuccess"),
-                  tr("passwordResetSuccessBody"),
-                  [
-                    {
-                      label: tr("signIn"),
-                      variant: "primary",
-                      keepOpen: true,
-                      onClick: () => {
-                        openAuthModal("signin");
-                      }
-                    }
-                  ]
+                  isPasswordSetup ? "Password Set" : tr("passwordResetSuccess"),
+                  isPasswordSetup
+                    ? "Your GED Practice Platform password has been added. You can now use email/password login or Continue with Google."
+                    : tr("passwordResetSuccessBody"),
+                  isPasswordSetup
+                    ? [{ label: tr("close"), variant: "primary" }]
+                    : [
+                        {
+                          label: tr("signIn"),
+                          variant: "primary",
+                          keepOpen: true,
+                          onClick: () => {
+                            openAuthModal("signin");
+                          }
+                        }
+                      ]
                 );
               }
             );
@@ -17984,6 +18070,28 @@ async function openProfilePanel(defaultTab = "goals") {
         const googleConnected = state.auth.user?.googleConnected === true || authProviders.includes("google");
         const passwordLoginEnabled = state.auth.user?.passwordLoginEnabled !== false;
         const googleOnlyAccount = googleConnected && !passwordLoginEnabled;
+        const googleEmail = state.auth.user?.googleEmail || (googleConnected ? state.auth.user?.email || "" : "");
+        const googleEmailVerified = state.auth.user?.googleEmailVerified === true;
+        const platformEmailVerified =
+          state.auth.user?.platformEmailVerified === true ||
+          (!googleConnected && state.auth.user?.emailVerified === true);
+        const platformTwoFactorEnabled = state.auth.user?.twoFactorEnabled === true;
+        const platformSecurityBadges = googleOnlyAccount
+          ? ""
+          : `
+              <span class="profileBadge">
+                ${platformEmailVerified ? "Email Verified" : "Email Not Verified"}
+              </span>
+
+              <span class="profileBadge">
+                ${platformTwoFactorEnabled ? tr("twoFactorEnabledLabel") : "2FA Not Enabled"}
+              </span>
+            `;
+        const twoFactorControlMarkup = googleOnlyAccount
+          ? ""
+          : platformTwoFactorEnabled
+            ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
+            : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`;
 
 panel.innerHTML = `
   <div class="profileHeader">
@@ -18006,23 +18114,11 @@ panel.innerHTML = `
       </div>
 
       <div class="profileBadgeRow">
-        <span class="profileBadge">
-          ${state.auth.user?.emailVerified === true ? "Email Verified" : "Email Not Verified"}
-        </span>
-
-        <span class="profileBadge">
-          ${
-            (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
-              ? tr("twoFactorEnabledLabel")
-              : "2FA Not Enabled"
-          }
-        </span>
+        ${platformSecurityBadges}
 
         <span class="profileBadge">
           ${state.auth.user?.scoringEnabled === false ? "Scoring Off" : "Scoring On"}
         </span>
-
-        ${googleConnected ? `<span class="profileBadge">Google Connected</span>` : ""}
 
         <span class="profileBadge">
           ${passwordLoginEnabled ? "Password Login Enabled" : "Google-only Account"}
@@ -18065,6 +18161,11 @@ panel.innerHTML = `
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileHistorySection">
       <span class="profileAccountNavIcon">📚</span>
       <span>History</span>
+    </button>
+
+    <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileConnectionsSection">
+      <span class="profileAccountNavIcon">G</span>
+      <span>Connections</span>
     </button>
 
     <button class="profileAccountNavItem" type="button" data-profile-scroll-target="profileAccountSecuritySection">
@@ -18185,6 +18286,34 @@ panel.innerHTML = `
   </div>
 </section>
 
+<section id="profileConnectionsSection" class="profileContentSection profileSectionAnchor">
+  <div class="profileContentSectionHeader">
+    <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileConnectionsSectionBody" aria-expanded="false">
+      <h3 class="profileContentSectionTitle">Connections</h3>
+      <span class="profileSectionToggleIcon">▾</span>
+    </button>
+  </div>
+
+  <div id="profileConnectionsSectionBody" class="profileContentSectionBody hidden">
+    <div class="reviewTop">
+      <div class="reviewStat">
+        <div class="reviewStatLabel">Google</div>
+        <div class="reviewStatValue">${googleConnected ? "Connected" : "Not Connected"}</div>
+        <div class="profileContentSectionText" style="margin-top:8px;">
+          ${
+            googleConnected
+              ? `
+                <div>${escapeHtml(googleEmail || state.auth.user?.email || "")}</div>
+                ${googleEmailVerified ? `<div>Verified by Google</div>` : ""}
+              `
+              : `<div>Use Continue with Google from Sign In to connect Google.</div>`
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="profileAccountSecuritySection" class="profileContentSection profileSectionAnchor">
   <div class="profileContentSectionHeader">
     <button type="button" class="profileSectionToggleBtn" data-profile-collapse-target="profileAccountSecuritySectionBody" aria-expanded="false">
@@ -18208,11 +18337,7 @@ panel.innerHTML = `
       <button id="profileAccountAccessHelpBtn" class="secondaryBtn">${tr("accountAccessHelp")}</button>
       <button id="deleteAccountBtn" class="dangerBtn">${tr("deleteAccount")}</button>
 
-      ${
-        (state.auth.user?.twoFactorEnabled === true || state.auth.user?.emailVerified === true)
-          ? `<button class="secondaryBtn" disabled>${tr("twoFactorEnabledLabel")}</button>`
-          : `<button id="profileEnable2faBtn" class="secondaryBtn">${tr("enable2fa")}</button>`
-      }
+      ${twoFactorControlMarkup}
     </div>
   </div>
 </section>
@@ -18474,8 +18599,9 @@ panel.innerHTML = `
         setProfileSectionExpanded("profileGoalsSection", false);
         setProfileSectionExpanded("profileProgressSection", false);
         setProfileSectionExpanded("profileGoalsFocusSection", false);
-        setProfileSectionExpanded("profileAccountSecuritySection", false);
         setProfileSectionExpanded("profileHistorySection", false);
+        setProfileSectionExpanded("profileConnectionsSection", false);
+        setProfileSectionExpanded("profileAccountSecuritySection", false);
 
         const initialTab = defaultTab === "goals" ? null : defaultTab;
         if (initialTab && historyTabs[initialTab]) {
@@ -18625,7 +18751,7 @@ const profileResetPasswordBtn = document.getElementById("profileResetPasswordBtn
 if (profileResetPasswordBtn) {
   profileResetPasswordBtn.onclick = async () => {
     if (googleOnlyAccount) {
-      openForgotPasswordModal(state.auth.user?.email || "");
+      openProfileSetPasswordModal();
       return;
     }
 
@@ -19238,6 +19364,7 @@ renderGoalDock();
       const url = new URL(window.location.href);
       const resetToken = url.searchParams.get("resetToken");
       const resetEmail = url.searchParams.get("resetEmail");
+      const passwordSetup = url.searchParams.get("passwordSetup") === "1";
       const verifyToken = url.searchParams.get("verifyToken");
       const verifyEmail = url.searchParams.get("verifyEmail");
 
@@ -19247,7 +19374,9 @@ renderGoalDock();
       }
 
       if (resetToken && resetEmail) {
-        openResetPasswordModal(resetEmail, resetToken);
+        openResetPasswordModal(resetEmail, resetToken, {
+          context: passwordSetup ? "passwordSetup" : "resetPassword"
+        });
         return;
       }
 

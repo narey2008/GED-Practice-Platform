@@ -146,6 +146,8 @@ function sanitizeUser(user) {
   const authProviders = getAuthProvidersForUser(user);
   const googleConnected = hasGoogleProvider(user);
   const passwordLoginEnabled = hasPasswordLogin(user);
+  const googleEmailVerified = !!user.googleEmailVerifiedAt;
+  const platformEmailVerified = !!user.emailVerified && (!googleConnected || user.twoFactorEnabled === true);
 
   return {
     id: user._id.toString(),
@@ -156,9 +158,12 @@ function sanitizeUser(user) {
     scoringEnabled: user.scoringEnabled !== false,
     scoringPreferenceChosen: user.scoringPreferenceChosen === true,
     emailVerified: !!user.emailVerified,
-    twoFactorEnabled: !!user.twoFactorEnabled || !!user.emailVerified,
+    platformEmailVerified,
+    twoFactorEnabled: user.twoFactorEnabled === true,
     authProviders,
     googleConnected,
+    googleEmail: googleConnected ? user.email : "",
+    googleEmailVerified,
     passwordLoginEnabled,
     canDisconnectGoogle: googleConnected && passwordLoginEnabled,
     requiresPasswordSetup: googleConnected && !passwordLoginEnabled,
@@ -886,21 +891,33 @@ async function sendPendingEmailChangeVerificationEmail({ email, rawToken }) {
   });
 }
 
-async function sendPasswordResetEmail({ email, rawToken }) {
+async function sendPasswordResetEmail({ email, rawToken, mode = "reset" }) {
   
 
-  const resetUrl = `${process.env.APP_BASE_URL}/?resetToken=${encodeURIComponent(rawToken)}&resetEmail=${encodeURIComponent(email)}`;
+  const isPasswordSetup = mode === "setPassword";
+  const resetParams = new URLSearchParams({
+    resetToken: rawToken,
+    resetEmail: email
+  });
+
+  if (isPasswordSetup) {
+    resetParams.set("passwordSetup", "1");
+  }
+
+  const resetUrl = `${process.env.APP_BASE_URL}/?${resetParams.toString()}`;
 
   const html = buildEmailTemplate({
-    title: "Reset Your Password",
-    body: `We received a request to reset your password.<br><br>If this was you, click below.`,
-    buttonText: "Reset Password",
+    title: isPasswordSetup ? "Set Your Password" : "Reset Your Password",
+    body: isPasswordSetup
+      ? `We received a request to add a GED Practice Platform password to your Google-connected account.<br><br>If this was you, click below.`
+      : `We received a request to reset your password.<br><br>If this was you, click below.`,
+    buttonText: isPasswordSetup ? "Set Password" : "Reset Password",
     buttonUrl: resetUrl
   });
 
   await sendEmail({
         to: email,
-    subject: "Reset your password",
+    subject: isPasswordSetup ? "Set your GED Practice Platform password" : "Reset your password",
     html
   });
 }
@@ -1677,6 +1694,53 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 
     return res.status(500).json({
       error: error.message || "Failed to start password reset."
+    });
+  }
+});
+
+app.post("/api/auth/start-password-setup", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    if (!hasGoogleProvider(user)) {
+      return res.status(400).json({
+        error: "Password setup is only available for Google-connected accounts."
+      });
+    }
+
+    if (hasPasswordLogin(user)) {
+      return res.status(400).json({
+        error: "This account already has password login. Use Change Password instead."
+      });
+    }
+
+    const { rawToken, tokenHash, expiresAt } = createPasswordResetToken();
+
+    user.passwordResetTokenHash = tokenHash;
+    user.passwordResetExpiresAt = expiresAt;
+    await user.save();
+
+    await sendPasswordResetEmail({
+      email: user.email,
+      rawToken,
+      mode: "setPassword"
+    });
+
+    return res.json({
+      success: true,
+      message: "Password setup link sent.",
+      email: user.email
+    });
+  } catch (error) {
+    console.error("START PASSWORD SETUP ERROR:");
+    console.error(error);
+
+    return res.status(500).json({
+      error: error.message || "Failed to start password setup."
     });
   }
 });
