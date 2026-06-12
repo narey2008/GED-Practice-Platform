@@ -11627,27 +11627,69 @@ if (goalLauncherBtn) {
       updateAuthUI();
     }
 
-function consumeGoogleOAuthReturnFromUrl() {
+async function consumeGoogleOAuthReturnFromUrl() {
+  const currentUrl = new URL(window.location.href);
+  const searchParams = currentUrl.searchParams;
   const rawHash = window.location.hash || "";
-  if (!rawHash || !rawHash.includes("oauth")) return null;
+  const hasSearchOAuthReturn =
+    searchParams.has("oauth") ||
+    searchParams.has("oauthCode") ||
+    searchParams.has("authError") ||
+    searchParams.has("oauthError");
+  const hasHashOAuthReturn = rawHash && rawHash.includes("oauth");
+
+  if (!hasSearchOAuthReturn && !hasHashOAuthReturn) return null;
 
   const hashParams = new URLSearchParams(rawHash.replace(/^#/, ""));
-  const provider = hashParams.get("oauthProvider") || "";
-  const token = hashParams.get("oauthToken") || "";
-  const error = hashParams.get("oauthError") || "";
-  const message = hashParams.get("oauthMessage") || "";
+  const provider = searchParams.get("oauthProvider") || hashParams.get("oauthProvider") || "";
+  const oauthCode = searchParams.get("oauthCode") || hashParams.get("oauthCode") || "";
+  const token = searchParams.get("oauthToken") || hashParams.get("oauthToken") || "";
+  const error = searchParams.get("authError") || searchParams.get("oauthError") || hashParams.get("oauthError") || "";
+  const message = searchParams.get("oauthMessage") || hashParams.get("oauthMessage") || "";
 
-  if (provider !== "google" && !token && !error) return null;
+  if (provider !== "google" && !oauthCode && !token && !error) return null;
 
-  const cleanUrl = new URL(window.location.href);
+  const cleanUrl = new URL(currentUrl.toString());
+  ["oauth", "oauthProvider", "oauthCode", "oauthToken", "authError", "oauthError", "oauthMessage"].forEach((key) => {
+    cleanUrl.searchParams.delete(key);
+  });
   cleanUrl.hash = "";
-  window.history.replaceState({}, document.title, cleanUrl.pathname + cleanUrl.search);
+  const cleanSearch = cleanUrl.searchParams.toString();
+  window.history.replaceState({}, document.title, cleanUrl.pathname + (cleanSearch ? `?${cleanSearch}` : ""));
 
   if (token) {
     setAuthToken(token);
     state.auth.user = null;
     setGuestMode(false);
     return { success: true };
+  }
+
+  if (oauthCode) {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/google/exchange`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oauthCode })
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.token || !data?.user) {
+        throw new Error(data?.error || "Google sign-in could not be completed. Please try again.");
+      }
+
+      setAuthToken(data.token);
+      state.auth.user = data.user;
+      setGuestMode(false);
+      return { success: true, userLoaded: true };
+    } catch (exchangeError) {
+      setAuthToken("");
+      state.auth.user = null;
+      setGuestMode(false);
+      return {
+        success: false,
+        message: exchangeError.message || "Google sign-in could not be completed. Please try again."
+      };
+    }
   }
 
   return {
@@ -19343,7 +19385,7 @@ window.addEventListener("unhandledrejection", async (event) => {
       applyLanguage(getSavedLanguage());
       wireGoalControls();
 renderGoalDock();
-      const googleOAuthReturn = consumeGoogleOAuthReturnFromUrl();
+      const googleOAuthReturn = await consumeGoogleOAuthReturnFromUrl();
       await loadCurrentUser();
       updateStatus();
       await setView("menu");

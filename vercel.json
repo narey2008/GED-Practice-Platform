@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/auth/google/:path*", "destination": "https://api.gedpracticeplatform.com/api/auth/google/:path*" },
     { "source": "/home", "destination": "/index.html" },
     { "source": "/home/", "destination": "/index.html" },
     { "source": "/profile", "destination": "/index.html" },

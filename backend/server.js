@@ -33,8 +33,10 @@ const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";
 const GOOGLE_OAUTH_STATE_COOKIE = "ged_google_oauth_state";
 const GOOGLE_OAUTH_STATE_MAX_AGE_SECONDS = 10 * 60;
+const GOOGLE_OAUTH_EXCHANGE_CODE_MAX_AGE_SECONDS = 2 * 60;
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
+const googleOAuthExchangeCodes = new Map();
 
 const requiredEnv = ["MONGODB_URI", "JWT_SECRET"];
 for (const key of requiredEnv) {
@@ -255,6 +257,43 @@ function verifyGoogleOAuthState(state) {
   }
 }
 
+function cleanupExpiredGoogleOAuthExchangeCodes() {
+  const now = Date.now();
+  for (const [code, record] of googleOAuthExchangeCodes.entries()) {
+    if (!record?.expiresAt || record.expiresAt <= now) {
+      googleOAuthExchangeCodes.delete(code);
+    }
+  }
+}
+
+function createGoogleOAuthExchangeCode(user, token) {
+  cleanupExpiredGoogleOAuthExchangeCodes();
+
+  const code = crypto.randomBytes(32).toString("base64url");
+  googleOAuthExchangeCodes.set(code, {
+    userId: user._id.toString(),
+    token,
+    expiresAt: Date.now() + GOOGLE_OAUTH_EXCHANGE_CODE_MAX_AGE_SECONDS * 1000
+  });
+  return code;
+}
+
+function consumeGoogleOAuthExchangeCode(code) {
+  cleanupExpiredGoogleOAuthExchangeCodes();
+
+  const normalizedCode = String(code || "").trim();
+  if (!normalizedCode) return null;
+
+  const record = googleOAuthExchangeCodes.get(normalizedCode);
+  googleOAuthExchangeCodes.delete(normalizedCode);
+
+  if (!record || record.expiresAt <= Date.now()) {
+    return null;
+  }
+
+  return record;
+}
+
 function getCookieValue(req, name) {
   const cookieHeader = req.headers.cookie || "";
   const prefix = `${name}=`;
@@ -380,16 +419,16 @@ function buildOAuthFrontendRedirectUrl(req, hashValues, returnBase = "") {
   }
 
   redirectUrl.pathname = "/";
-  redirectUrl.search = "";
-  redirectUrl.hash = new URLSearchParams(hashValues).toString();
+  redirectUrl.search = new URLSearchParams(hashValues).toString();
+  redirectUrl.hash = "";
   return redirectUrl.toString();
 }
 
 function redirectWithGoogleOAuthError(req, res, code, message, returnBase = "") {
   return res.redirect(
     buildOAuthFrontendRedirectUrl(req, {
+      authError: code,
       oauthProvider: "google",
-      oauthError: code,
       oauthMessage: message
     }, returnBase)
   );
@@ -1240,11 +1279,13 @@ app.get("/api/auth/google/callback", async (req, res) => {
     const googleProfile = await verifyGoogleIdentity(tokens.id_token);
     const user = await findOrCreateGoogleUser(googleProfile);
     const token = createToken(user);
+    const oauthCode = createGoogleOAuthExchangeCode(user, token);
 
     return res.redirect(
       buildOAuthFrontendRedirectUrl(req, {
+        oauth: "success",
         oauthProvider: "google",
-        oauthToken: token
+        oauthCode
       }, oauthReturnBase)
     );
   } catch (error) {
@@ -1256,6 +1297,30 @@ app.get("/api/auth/google/callback", async (req, res) => {
       error.message || "Google sign-in failed. Please try again.",
       oauthReturnBase
     );
+  }
+});
+
+app.post("/api/auth/google/exchange", async (req, res) => {
+  try {
+    const code = typeof req.body?.oauthCode === "string" ? req.body.oauthCode.trim() : "";
+    const exchangeRecord = consumeGoogleOAuthExchangeCode(code);
+
+    if (!exchangeRecord) {
+      return res.status(400).json({ error: "Google sign-in could not be completed. Please try again." });
+    }
+
+    const user = await User.findById(exchangeRecord.userId);
+    if (!user) {
+      return res.status(400).json({ error: "Google sign-in could not be completed. Please try again." });
+    }
+
+    return res.json({
+      token: exchangeRecord.token,
+      user: sanitizeUser(user)
+    });
+  } catch (error) {
+    console.error("Google OAuth exchange failed:", error.message || "Google sign-in failed.");
+    return res.status(500).json({ error: "Google sign-in could not be completed. Please try again." });
   }
 });
 
